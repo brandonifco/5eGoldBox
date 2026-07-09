@@ -39,6 +39,7 @@ public sealed class CharacterResolver
         ValidateClassSkillChoices(draft, issues);
         ValidateBackgroundSelection(draft, issues);
         ValidateEquippedArmor(draft, issues);
+        ValidateArmorProficiency(draft, issues);
         ValidateEquippedWeapons(draft, issues);
 
         if (draft.Level is < ProficiencyRules.MinimumLevel or > ProficiencyRules.MaximumLevel)
@@ -783,5 +784,55 @@ public sealed class CharacterResolver
 
         return selectedClass.WeaponProficiencies.Contains(categoryProficiencyId)
             || selectedClass.WeaponProficiencies.Contains(weapon.Id);
+    }
+    private void ValidateArmorProficiency(CharacterDraft draft, List<ValidationIssue> issues)
+    {
+        if (_ruleset is null || _ruleset.Armors.Count == 0)
+        {
+            return;
+        }
+
+        ClassDefinition? selectedClass = GetSelectedClass(draft);
+
+        ArmorDefinition? equippedArmor = GetEquippedArmor(draft);
+        ArmorDefinition? equippedShield = GetEquippedShield(draft);
+
+        if (equippedArmor is not null && !IsProficientWithArmor(equippedArmor, selectedClass))
+        {
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Warning,
+                "character.armor.not_proficient",
+                $"Character is not proficient with equipped armor '{equippedArmor.Id}'."));
+        }
+
+        if (equippedShield is not null && !IsProficientWithArmor(equippedShield, selectedClass))
+        {
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Warning,
+                "character.shield.not_proficient",
+                $"Character is not proficient with equipped shield '{equippedShield.Id}'."));
+        }
+    }
+
+    private static bool IsProficientWithArmor(
+        ArmorDefinition armor,
+        ClassDefinition? selectedClass)
+    {
+        if (selectedClass is null)
+        {
+            return false;
+        }
+
+        string categoryProficiencyId = armor.Category switch
+        {
+            ArmorCategory.Light => "armor.light",
+            ArmorCategory.Medium => "armor.medium",
+            ArmorCategory.Heavy => "armor.heavy",
+            ArmorCategory.Shield => "armor.shields",
+            _ => throw new InvalidOperationException($"Unsupported armor category '{armor.Category}'.")
+        };
+
+        return selectedClass.ArmorProficiencies.Contains(categoryProficiencyId)
+            || selectedClass.ArmorProficiencies.Contains(armor.Id);
     }
 }
