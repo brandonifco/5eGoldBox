@@ -20,4 +20,7 @@ public sealed record RulesetDefinition
 
     public IReadOnlyList<ArmorDefinition> Armors { get; init; }
         = Array.Empty<ArmorDefinition>();
+
+    public IReadOnlyList<WeaponDefinition> Weapons { get; init; }
+        = Array.Empty<WeaponDefinition>();
 }

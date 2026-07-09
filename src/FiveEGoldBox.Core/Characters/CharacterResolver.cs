@@ -39,6 +39,7 @@ public sealed class CharacterResolver
         ValidateClassSkillChoices(draft, issues);
         ValidateBackgroundSelection(draft, issues);
         ValidateEquippedArmor(draft, issues);
+        ValidateEquippedWeapons(draft, issues);
 
         if (draft.Level is < ProficiencyRules.MinimumLevel or > ProficiencyRules.MaximumLevel)
         {
@@ -105,6 +106,7 @@ public sealed class CharacterResolver
         BackgroundDefinition? selectedBackground = GetSelectedBackground(draft);
         ArmorDefinition? equippedArmor = GetEquippedArmor(draft);
         ArmorDefinition? equippedShield = GetEquippedShield(draft);
+        IReadOnlyList<WeaponDefinition> equippedWeapons = GetEquippedWeapons(draft);
 
         Dictionary<Ability, int> abilityScores = draft.BaseAbilityScores.ToDictionary(
             pair => pair.Key,
@@ -197,6 +199,14 @@ public sealed class CharacterResolver
                 })
                 .ToArray();
 
+        IReadOnlyList<WeaponAttack> weaponAttacks = equippedWeapons
+            .Select(weapon => CreateWeaponAttack(
+                weapon,
+                selectedClass,
+                abilityModifiers,
+                proficiencyBonus))
+            .ToArray();
+
         return new CharacterSnapshot
         {
             Name = draft.Name!.Trim(),
@@ -220,6 +230,13 @@ public sealed class CharacterResolver
             EquippedShieldId = equippedShield?.Id,
             EquippedShieldName = equippedShield?.Name,
             ArmorClass = armorClass,
+            EquippedWeaponIds = equippedWeapons
+                .Select(weapon => weapon.Id)
+                .ToArray(),
+            EquippedWeaponNames = equippedWeapons
+                .Select(weapon => weapon.Name)
+                .ToArray(),
+            WeaponAttacks = weaponAttacks,
             ProficiencyBonus = proficiencyBonus,
             AbilityScores = abilityScores,
             AbilityModifiers = abilityModifiers,
@@ -613,6 +630,21 @@ public sealed class CharacterResolver
         return _ruleset.Armors.SingleOrDefault(armor => armor.Id == draft.EquippedShieldId);
     }
 
+    private IReadOnlyList<WeaponDefinition> GetEquippedWeapons(CharacterDraft draft)
+    {
+        if (_ruleset is null || draft.EquippedWeaponIds.Count == 0)
+        {
+            return Array.Empty<WeaponDefinition>();
+        }
+
+        return draft.EquippedWeaponIds
+            .Select(equippedWeaponId => _ruleset.Weapons.SingleOrDefault(
+                weapon => weapon.Id == equippedWeaponId))
+            .Where(weapon => weapon is not null)
+            .Cast<WeaponDefinition>()
+            .ToArray();
+    }
+
     private static int CalculateArmorClass(
         int dexterityModifier,
         ArmorDefinition? equippedArmor,
@@ -644,5 +676,112 @@ public sealed class CharacterResolver
         }
 
         return armorClass;
+    }
+
+    private void ValidateEquippedWeapons(CharacterDraft draft, List<ValidationIssue> issues)
+    {
+        if (_ruleset is null || _ruleset.Weapons.Count == 0)
+        {
+            return;
+        }
+
+        int equippedWeaponCount = draft.EquippedWeaponIds.Count;
+        int distinctEquippedWeaponCount = draft.EquippedWeaponIds
+            .Distinct()
+            .Count();
+
+        if (distinctEquippedWeaponCount != equippedWeaponCount)
+        {
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Error,
+                "character.weapons.duplicate",
+                "Equipped weapons must not contain duplicates."));
+        }
+
+        foreach (string equippedWeaponId in draft.EquippedWeaponIds)
+        {
+            bool weaponExists = _ruleset.Weapons.Any(weapon => weapon.Id == equippedWeaponId);
+
+            if (!weaponExists)
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "character.weapon.not_found",
+                    $"Weapon '{equippedWeaponId}' was not found in ruleset '{_ruleset.Id}'."));
+            }
+        }
+    }
+
+    private static WeaponAttack CreateWeaponAttack(
+        WeaponDefinition weapon,
+        ClassDefinition? selectedClass,
+        IReadOnlyDictionary<Ability, int> abilityModifiers,
+        int proficiencyBonus)
+    {
+        Ability attackAbility = GetWeaponAttackAbility(weapon, abilityModifiers);
+        int abilityModifier = abilityModifiers[attackAbility];
+
+        bool isProficient = IsProficientWithWeapon(weapon, selectedClass);
+        int appliedProficiencyBonus = isProficient ? proficiencyBonus : 0;
+
+        return new WeaponAttack
+        {
+            WeaponId = weapon.Id,
+            WeaponName = weapon.Name,
+            Category = weapon.Category,
+            AttackKind = weapon.AttackKind,
+            AttackAbility = attackAbility,
+            AbilityModifier = abilityModifier,
+            IsProficient = isProficient,
+            ProficiencyBonus = appliedProficiencyBonus,
+            AttackBonus = abilityModifier + appliedProficiencyBonus,
+            Damage = weapon.Damage,
+            DamageType = weapon.DamageType,
+            DamageBonus = abilityModifier,
+            Properties = weapon.Properties,
+            NormalRangeFeet = weapon.NormalRangeFeet,
+            LongRangeFeet = weapon.LongRangeFeet
+        };
+    }
+
+    private static Ability GetWeaponAttackAbility(
+        WeaponDefinition weapon,
+        IReadOnlyDictionary<Ability, int> abilityModifiers)
+    {
+        bool isFinesse = weapon.Properties.Contains("weapon_property.finesse");
+
+        if (isFinesse)
+        {
+            int strengthModifier = abilityModifiers[Ability.Strength];
+            int dexterityModifier = abilityModifiers[Ability.Dexterity];
+
+            return dexterityModifier > strengthModifier
+                ? Ability.Dexterity
+                : Ability.Strength;
+        }
+
+        return weapon.AttackKind == WeaponAttackKind.Ranged
+            ? Ability.Dexterity
+            : Ability.Strength;
+    }
+
+    private static bool IsProficientWithWeapon(
+        WeaponDefinition weapon,
+        ClassDefinition? selectedClass)
+    {
+        if (selectedClass is null)
+        {
+            return false;
+        }
+
+        string categoryProficiencyId = weapon.Category switch
+        {
+            WeaponCategory.Simple => "weapon.simple",
+            WeaponCategory.Martial => "weapon.martial",
+            _ => throw new InvalidOperationException($"Unsupported weapon category '{weapon.Category}'.")
+        };
+
+        return selectedClass.WeaponProficiencies.Contains(categoryProficiencyId)
+            || selectedClass.WeaponProficiencies.Contains(weapon.Id);
     }
 }

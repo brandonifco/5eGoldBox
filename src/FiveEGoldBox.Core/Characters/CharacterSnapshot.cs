@@ -41,6 +41,15 @@ public sealed record CharacterSnapshot
 
     public int? ArmorClass { get; init; }
 
+    public IReadOnlyList<string> EquippedWeaponIds { get; init; }
+        = Array.Empty<string>();
+
+    public IReadOnlyList<string> EquippedWeaponNames { get; init; }
+        = Array.Empty<string>();
+
+    public IReadOnlyList<WeaponAttack> WeaponAttacks { get; init; }
+        = Array.Empty<WeaponAttack>();
+
     public required int ProficiencyBonus { get; init; }
 
     public required IReadOnlyDictionary<Ability, int> AbilityScores { get; init; }
