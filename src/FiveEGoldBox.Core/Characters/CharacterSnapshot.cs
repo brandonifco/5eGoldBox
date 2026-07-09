@@ -1,0 +1,63 @@
+using FiveEGoldBox.Core.Rules;
+
+namespace FiveEGoldBox.Core.Characters;
+
+public sealed record CharacterSnapshot
+{
+    public required string Name { get; init; }
+
+    public required int Level { get; init; }
+
+    public string? RaceId { get; init; }
+
+    public string? RaceName { get; init; }
+
+    public string? SubraceId { get; init; }
+
+    public string? SubraceName { get; init; }
+
+    public string? ClassId { get; init; }
+
+    public string? ClassName { get; init; }
+
+    public string? BackgroundId { get; init; }
+
+    public string? BackgroundName { get; init; }
+
+    public string? BackgroundFeatureId { get; init; }
+    public DieType? HitDie { get; init; }
+
+    public int? MaxHitPoints { get; init; }
+
+    public int? SpeedFeet { get; init; }
+
+    public required int ProficiencyBonus { get; init; }
+
+    public required IReadOnlyDictionary<Ability, int> AbilityScores { get; init; }
+
+    public required IReadOnlyDictionary<Ability, int> AbilityModifiers { get; init; }
+
+    public IReadOnlyList<Ability> SavingThrowProficiencies { get; init; }
+        = Array.Empty<Ability>();
+
+    public IReadOnlyList<string> ArmorProficiencies { get; init; }
+        = Array.Empty<string>();
+
+    public IReadOnlyList<string> WeaponProficiencies { get; init; }
+        = Array.Empty<string>();
+
+    public IReadOnlyList<string> ToolProficiencies { get; init; }
+        = Array.Empty<string>();
+
+    public IReadOnlyList<string> SkillProficiencies { get; init; }
+        = Array.Empty<string>();
+
+    public IReadOnlyList<string> Languages { get; init; }
+        = Array.Empty<string>();
+
+    public IReadOnlyList<string> Traits { get; init; }
+        = Array.Empty<string>();
+
+    public IReadOnlyList<string> ClassFeatures { get; init; }
+        = Array.Empty<string>();
+}
