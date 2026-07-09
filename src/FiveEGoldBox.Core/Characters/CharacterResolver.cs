@@ -133,11 +133,15 @@ public sealed class CharacterResolver
             pair => pair.Key,
             pair => AbilityRules.GetModifier(pair.Value));
 
-        int armorClass = CalculateArmorClass(
+        int? armorClass = CalculateArmorClass(
             abilityModifiers[Ability.Dexterity],
             equippedArmor,
             equippedShield);
 
+        int? speedFeet = CalculateSpeedFeet(
+            selectedRace,
+            equippedArmor,
+            abilityScores);
 
         IReadOnlyList<string> languages = (selectedRace?.Languages ?? Array.Empty<string>())
             .Concat(selectedSubrace?.Languages ?? Array.Empty<string>())
@@ -225,7 +229,7 @@ public sealed class CharacterResolver
             RaceName = selectedRace?.Name,
             SubraceId = selectedSubrace?.Id,
             SubraceName = selectedSubrace?.Name,
-            SpeedFeet = selectedRace?.BaseSpeedFeet,
+            SpeedFeet = speedFeet,
             EquippedArmorId = equippedArmor?.Id,
             EquippedArmorName = equippedArmor?.Name,
             EquippedShieldId = equippedShield?.Id,
@@ -679,6 +683,29 @@ public sealed class CharacterResolver
         return armorClass;
     }
 
+    private static int? CalculateSpeedFeet(
+        RaceDefinition? selectedRace,
+        ArmorDefinition? equippedArmor,
+        IReadOnlyDictionary<Ability, int> abilityScores)
+    {
+        if (selectedRace is null)
+        {
+            return null;
+        }
+
+        int speedFeet = selectedRace.BaseSpeedFeet;
+
+        if (equippedArmor?.StrengthRequirement is not int strengthRequirement)
+        {
+            return speedFeet;
+        }
+
+        int strengthScore = abilityScores[Ability.Strength];
+
+        return strengthScore < strengthRequirement
+            ? speedFeet - 10
+            : speedFeet;
+    }
     private void ValidateEquippedWeapons(CharacterDraft draft, List<ValidationIssue> issues)
     {
         if (_ruleset is null || _ruleset.Weapons.Count == 0)
