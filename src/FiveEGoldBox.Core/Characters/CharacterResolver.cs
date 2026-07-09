@@ -38,6 +38,7 @@ public sealed class CharacterResolver
         ValidateClassSelection(draft, issues);
         ValidateClassSkillChoices(draft, issues);
         ValidateBackgroundSelection(draft, issues);
+        ValidateEquippedArmor(draft, issues);
 
         if (draft.Level is < ProficiencyRules.MinimumLevel or > ProficiencyRules.MaximumLevel)
         {
@@ -102,6 +103,8 @@ public sealed class CharacterResolver
         SubraceDefinition? selectedSubrace = GetSelectedSubrace(draft, selectedRace);
         ClassDefinition? selectedClass = GetSelectedClass(draft);
         BackgroundDefinition? selectedBackground = GetSelectedBackground(draft);
+        ArmorDefinition? equippedArmor = GetEquippedArmor(draft);
+        ArmorDefinition? equippedShield = GetEquippedShield(draft);
 
         Dictionary<Ability, int> abilityScores = draft.BaseAbilityScores.ToDictionary(
             pair => pair.Key,
@@ -127,6 +130,12 @@ public sealed class CharacterResolver
             pair => pair.Key,
             pair => AbilityRules.GetModifier(pair.Value));
 
+        int armorClass = CalculateArmorClass(
+            abilityModifiers[Ability.Dexterity],
+            equippedArmor,
+            equippedShield);
+
+
         IReadOnlyList<string> languages = (selectedRace?.Languages ?? Array.Empty<string>())
             .Concat(selectedSubrace?.Languages ?? Array.Empty<string>())
             .Concat(selectedBackground?.Languages ?? Array.Empty<string>())
@@ -148,6 +157,24 @@ public sealed class CharacterResolver
             .ToArray();
 
         int proficiencyBonus = ProficiencyRules.GetBonus(draft.Level);
+
+        IReadOnlyList<SavingThrowBonus> savingThrowBonuses = Enum
+            .GetValues<Ability>()
+            .Select(ability =>
+            {
+                bool isProficient = selectedClass?.SavingThrowProficiencies.Contains(ability) ?? false;
+                int abilityModifier = abilityModifiers[ability];
+
+                return new SavingThrowBonus
+                {
+                    Ability = ability,
+                    AbilityModifier = abilityModifier,
+                    IsProficient = isProficient,
+                    ProficiencyBonus = isProficient ? proficiencyBonus : 0,
+                    TotalBonus = abilityModifier + (isProficient ? proficiencyBonus : 0)
+                };
+            })
+            .ToArray();
 
         IReadOnlyList<SkillBonus> skillBonuses = _ruleset is null
             ? Array.Empty<SkillBonus>()
@@ -188,9 +215,15 @@ public sealed class CharacterResolver
             SubraceId = selectedSubrace?.Id,
             SubraceName = selectedSubrace?.Name,
             SpeedFeet = selectedRace?.BaseSpeedFeet,
+            EquippedArmorId = equippedArmor?.Id,
+            EquippedArmorName = equippedArmor?.Name,
+            EquippedShieldId = equippedShield?.Id,
+            EquippedShieldName = equippedShield?.Name,
+            ArmorClass = armorClass,
             ProficiencyBonus = proficiencyBonus,
             AbilityScores = abilityScores,
             AbilityModifiers = abilityModifiers,
+            SavingThrowBonuses = savingThrowBonuses,
             SavingThrowProficiencies = selectedClass?.SavingThrowProficiencies ?? Array.Empty<Ability>(),
             ArmorProficiencies = selectedClass?.ArmorProficiencies ?? Array.Empty<string>(),
             WeaponProficiencies = selectedClass?.WeaponProficiencies ?? Array.Empty<string>(),
@@ -508,5 +541,108 @@ public sealed class CharacterResolver
                 "character.background.not_found",
                 $"Background '{draft.BackgroundId}' was not found in ruleset '{_ruleset.Id}'."));
         }
+    }
+
+    private void ValidateEquippedArmor(CharacterDraft draft, List<ValidationIssue> issues)
+    {
+        if (_ruleset is null || _ruleset.Armors.Count == 0)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(draft.EquippedArmorId))
+        {
+            ArmorDefinition? equippedArmor = _ruleset.Armors.SingleOrDefault(
+                armor => armor.Id == draft.EquippedArmorId);
+
+            if (equippedArmor is null)
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "character.armor.not_found",
+                    $"Armor '{draft.EquippedArmorId}' was not found in ruleset '{_ruleset.Id}'."));
+            }
+            else if (equippedArmor.Category == ArmorCategory.Shield)
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "character.armor.invalid_category",
+                    $"Armor '{draft.EquippedArmorId}' cannot be equipped as body armor because it is a shield."));
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(draft.EquippedShieldId))
+        {
+            ArmorDefinition? equippedShield = _ruleset.Armors.SingleOrDefault(
+                armor => armor.Id == draft.EquippedShieldId);
+
+            if (equippedShield is null)
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "character.shield.not_found",
+                    $"Shield '{draft.EquippedShieldId}' was not found in ruleset '{_ruleset.Id}'."));
+            }
+            else if (equippedShield.Category != ArmorCategory.Shield)
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "character.shield.invalid_category",
+                    $"Armor '{draft.EquippedShieldId}' cannot be equipped as a shield."));
+            }
+        }
+    }
+
+    private ArmorDefinition? GetEquippedArmor(CharacterDraft draft)
+    {
+        if (_ruleset is null || string.IsNullOrWhiteSpace(draft.EquippedArmorId))
+        {
+            return null;
+        }
+
+        return _ruleset.Armors.SingleOrDefault(armor => armor.Id == draft.EquippedArmorId);
+    }
+
+    private ArmorDefinition? GetEquippedShield(CharacterDraft draft)
+    {
+        if (_ruleset is null || string.IsNullOrWhiteSpace(draft.EquippedShieldId))
+        {
+            return null;
+        }
+
+        return _ruleset.Armors.SingleOrDefault(armor => armor.Id == draft.EquippedShieldId);
+    }
+
+    private static int CalculateArmorClass(
+        int dexterityModifier,
+        ArmorDefinition? equippedArmor,
+        ArmorDefinition? equippedShield)
+    {
+        int armorClass;
+
+        if (equippedArmor is null)
+        {
+            armorClass = 10 + dexterityModifier;
+        }
+        else
+        {
+            armorClass = equippedArmor.BaseArmorClass + equippedArmor.ArmorClassBonus;
+
+            if (equippedArmor.AddsDexterityModifier)
+            {
+                int appliedDexterityModifier = equippedArmor.MaximumDexterityModifier.HasValue
+                    ? Math.Min(dexterityModifier, equippedArmor.MaximumDexterityModifier.Value)
+                    : dexterityModifier;
+
+                armorClass += appliedDexterityModifier;
+            }
+        }
+
+        if (equippedShield is not null)
+        {
+            armorClass += equippedShield.ArmorClassBonus;
+        }
+
+        return armorClass;
     }
 }

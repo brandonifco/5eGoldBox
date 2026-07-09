@@ -17,4 +17,7 @@ public sealed record RulesetDefinition
 
     public IReadOnlyList<SkillDefinition> Skills { get; init; }
         = Array.Empty<SkillDefinition>();
+
+    public IReadOnlyList<ArmorDefinition> Armors { get; init; }
+        = Array.Empty<ArmorDefinition>();
 }

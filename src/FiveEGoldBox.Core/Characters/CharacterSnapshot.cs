@@ -31,11 +31,24 @@ public sealed record CharacterSnapshot
 
     public int? SpeedFeet { get; init; }
 
+    public string? EquippedArmorId { get; init; }
+
+    public string? EquippedArmorName { get; init; }
+
+    public string? EquippedShieldId { get; init; }
+
+    public string? EquippedShieldName { get; init; }
+
+    public int? ArmorClass { get; init; }
+
     public required int ProficiencyBonus { get; init; }
 
     public required IReadOnlyDictionary<Ability, int> AbilityScores { get; init; }
 
     public required IReadOnlyDictionary<Ability, int> AbilityModifiers { get; init; }
+
+    public IReadOnlyList<SavingThrowBonus> SavingThrowBonuses { get; init; }
+        = Array.Empty<SavingThrowBonus>();
 
     public IReadOnlyList<Ability> SavingThrowProficiencies { get; init; }
         = Array.Empty<Ability>();

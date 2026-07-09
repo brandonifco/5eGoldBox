@@ -24,4 +24,8 @@ public sealed record CharacterDraft
 
     public IReadOnlyList<string> SelectedSkillIds { get; init; }
         = Array.Empty<string>();
+
+    public string? EquippedArmorId { get; init; }
+
+    public string? EquippedShieldId { get; init; }
 }
