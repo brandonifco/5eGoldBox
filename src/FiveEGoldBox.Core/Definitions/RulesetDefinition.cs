@@ -14,4 +14,7 @@ public sealed record RulesetDefinition
 
     public IReadOnlyList<BackgroundDefinition> Backgrounds { get; init; }
         = Array.Empty<BackgroundDefinition>();
+
+    public IReadOnlyList<SkillDefinition> Skills { get; init; }
+        = Array.Empty<SkillDefinition>();
 }

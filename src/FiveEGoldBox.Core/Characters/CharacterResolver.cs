@@ -140,6 +140,36 @@ public sealed class CharacterResolver
                 .Distinct()
                 .ToArray();
 
+        IReadOnlyList<string> skillProficiencies = (selectedClass is null
+                ? Array.Empty<string>()
+                : draft.SelectedSkillIds)
+            .Concat(selectedBackground?.SkillProficiencies ?? Array.Empty<string>())
+            .Distinct()
+            .ToArray();
+
+        int proficiencyBonus = ProficiencyRules.GetBonus(draft.Level);
+
+        IReadOnlyList<SkillBonus> skillBonuses = _ruleset is null
+            ? Array.Empty<SkillBonus>()
+            : _ruleset.Skills
+                .Select(skill =>
+                {
+                    bool isProficient = skillProficiencies.Contains(skill.Id);
+                    int abilityModifier = abilityModifiers[skill.Ability];
+
+                    return new SkillBonus
+                    {
+                        SkillId = skill.Id,
+                        SkillName = skill.Name,
+                        Ability = skill.Ability,
+                        AbilityModifier = abilityModifier,
+                        IsProficient = isProficient,
+                        ProficiencyBonus = isProficient ? proficiencyBonus : 0,
+                        TotalBonus = abilityModifier + (isProficient ? proficiencyBonus : 0)
+                    };
+                })
+                .ToArray();
+
         return new CharacterSnapshot
         {
             Name = draft.Name!.Trim(),
@@ -158,7 +188,7 @@ public sealed class CharacterResolver
             SubraceId = selectedSubrace?.Id,
             SubraceName = selectedSubrace?.Name,
             SpeedFeet = selectedRace?.BaseSpeedFeet,
-            ProficiencyBonus = ProficiencyRules.GetBonus(draft.Level),
+            ProficiencyBonus = proficiencyBonus,
             AbilityScores = abilityScores,
             AbilityModifiers = abilityModifiers,
             SavingThrowProficiencies = selectedClass?.SavingThrowProficiencies ?? Array.Empty<Ability>(),
@@ -168,12 +198,8 @@ public sealed class CharacterResolver
                 .Concat(selectedBackground?.ToolProficiencies ?? Array.Empty<string>())
                 .Distinct()
                 .ToArray(),
-            SkillProficiencies = (selectedClass is null
-                    ? Array.Empty<string>()
-                    : draft.SelectedSkillIds)
-                .Concat(selectedBackground?.SkillProficiencies ?? Array.Empty<string>())
-                .Distinct()
-                .ToArray(),
+            SkillProficiencies = skillProficiencies,
+            SkillBonuses = skillBonuses,
             Languages = languages,
             Traits = traits,
             ClassFeatures = selectedClass is null

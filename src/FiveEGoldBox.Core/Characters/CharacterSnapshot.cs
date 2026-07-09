@@ -52,6 +52,9 @@ public sealed record CharacterSnapshot
     public IReadOnlyList<string> SkillProficiencies { get; init; }
         = Array.Empty<string>();
 
+    public IReadOnlyList<SkillBonus> SkillBonuses { get; init; }
+        = Array.Empty<SkillBonus>();
+
     public IReadOnlyList<string> Languages { get; init; }
         = Array.Empty<string>();
 
