@@ -215,7 +215,7 @@ public sealed class CharacterResolver
 
         int passivePerception = CalculatePassivePerception(
             skillBonuses,
-            abilityModifiers);        
+            abilityModifiers);
 
         return new CharacterSnapshot
         {
@@ -227,9 +227,10 @@ public sealed class CharacterResolver
             BackgroundName = selectedBackground?.Name,
             BackgroundFeatureId = selectedBackground?.FeatureId,
             HitDie = selectedClass?.HitDie,
-            MaxHitPoints = selectedClass is null
-                ? null
-                : (int)selectedClass.HitDie + abilityModifiers[Ability.Constitution],
+            MaxHitPoints = CalculateMaxHitPoints(
+                selectedClass,
+                draft.Level,
+                abilityModifiers),
             RaceId = selectedRace?.Id,
             RaceName = selectedRace?.Name,
             SubraceId = selectedSubrace?.Id,
@@ -276,6 +277,43 @@ public sealed class CharacterResolver
         };
     }
 
+    private static int? CalculateMaxHitPoints(
+        ClassDefinition? selectedClass,
+        int level,
+        IReadOnlyDictionary<Ability, int> abilityModifiers)
+    {
+        if (selectedClass is null)
+        {
+            return null;
+        }
+
+        int constitutionModifier = abilityModifiers[Ability.Constitution];
+        int firstLevelHitPoints = (int)selectedClass.HitDie + constitutionModifier;
+
+        if (level == 1)
+        {
+            return firstLevelHitPoints;
+        }
+
+        int additionalHitPointsPerLevel =
+            GetFixedHitPointsAfterFirstLevel(selectedClass.HitDie)
+            + constitutionModifier;
+
+        return firstLevelHitPoints
+            + ((level - 1) * additionalHitPointsPerLevel);
+    }
+
+    private static int GetFixedHitPointsAfterFirstLevel(DieType hitDie)
+    {
+        return hitDie switch
+        {
+            DieType.D6 => 4,
+            DieType.D8 => 5,
+            DieType.D10 => 6,
+            DieType.D12 => 7,
+            _ => throw new InvalidOperationException($"Unsupported class hit die '{hitDie}'.")
+        };
+    }
     private static void ValidatePointBuy(CharacterDraft draft, List<ValidationIssue> issues)
     {
         bool hasInvalidPointBuyScore = false;
@@ -727,6 +765,8 @@ public sealed class CharacterResolver
 
         return 10 + abilityModifiers[Ability.Wisdom];
     }
+
+
     private static int? CalculateSpeedFeet(
         RaceDefinition? selectedRace,
         ArmorDefinition? equippedArmor,
