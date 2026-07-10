@@ -35,6 +35,9 @@ public sealed record CharacterSnapshot
 
     public int? SpeedFeet { get; init; }
 
+    public IReadOnlyList<CharacterSense> Senses { get; init; }
+        = Array.Empty<CharacterSense>();    
+
     public required int CarryingCapacityPounds { get; init; }
 
     public required int PushDragLiftPounds { get; init; }

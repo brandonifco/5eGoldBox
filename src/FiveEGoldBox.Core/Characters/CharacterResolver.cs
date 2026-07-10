@@ -113,6 +113,9 @@ public sealed class CharacterResolver
         ClassDefinition? selectedClass = GetSelectedClass(draft);
         BackgroundDefinition? selectedBackground = GetSelectedBackground(draft);
         CharacterSize size = selectedRace?.Size ?? CharacterSize.Medium;
+        IReadOnlyList<CharacterSense> senses = ResolveSenses(
+            selectedRace,
+            selectedSubrace);
         ArmorDefinition? equippedArmor = GetEquippedArmor(draft);
         ArmorDefinition? equippedShield = GetEquippedShield(draft);
         IReadOnlyList<WeaponDefinition> equippedWeapons = GetEquippedWeapons(draft);
@@ -275,6 +278,7 @@ public sealed class CharacterResolver
             SubraceId = selectedSubrace?.Id,
             SubraceName = selectedSubrace?.Name,
             SpeedFeet = speedFeet,
+            Senses = senses,
             CarryingCapacityPounds = abilityScores[Ability.Strength] * 15,
             PushDragLiftPounds = abilityScores[Ability.Strength] * 30,
             EquippedWeightPounds = equippedWeightPounds,
@@ -326,7 +330,43 @@ public sealed class CharacterResolver
                     .ToArray()
         };
     }
+    private static IReadOnlyList<CharacterSense> ResolveSenses(
+        RaceDefinition? selectedRace,
+        SubraceDefinition? selectedSubrace)
+    {
+        Dictionary<SenseType, int> sensesByType = [];
 
+        AddSenses(sensesByType, selectedRace?.Senses);
+        AddSenses(sensesByType, selectedSubrace?.Senses);
+
+        return sensesByType
+            .OrderBy(sense => sense.Key)
+            .Select(sense => new CharacterSense
+            {
+                Type = sense.Key,
+                RangeFeet = sense.Value
+            })
+            .ToArray();
+    }
+
+    private static void AddSenses(
+        Dictionary<SenseType, int> sensesByType,
+        IReadOnlyList<SenseDefinition>? senses)
+    {
+        if (senses is null)
+        {
+            return;
+        }
+
+        foreach (SenseDefinition sense in senses)
+        {
+            if (!sensesByType.TryGetValue(sense.Type, out int existingRangeFeet)
+                || sense.RangeFeet > existingRangeFeet)
+            {
+                sensesByType[sense.Type] = sense.RangeFeet;
+            }
+        }
+    }
     private static bool HasNegativeCurrencyAmount(CurrencyAmount currency)
     {
         return currency.CopperPieces < 0

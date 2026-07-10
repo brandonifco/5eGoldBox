@@ -16,4 +16,7 @@ public sealed record SubraceDefinition
 
     public IReadOnlyList<string> Traits { get; init; }
         = Array.Empty<string>();
+
+    public IReadOnlyList<SenseDefinition> Senses { get; init; }
+        = Array.Empty<SenseDefinition>();        
 }

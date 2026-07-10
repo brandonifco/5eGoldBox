@@ -22,4 +22,7 @@ public sealed record RaceDefinition
 
     public IReadOnlyList<SubraceDefinition> Subraces { get; init; }
         = Array.Empty<SubraceDefinition>();
+
+    public IReadOnlyList<SenseDefinition> Senses { get; init; }
+        = Array.Empty<SenseDefinition>();
 }
