@@ -237,6 +237,7 @@ public sealed class CharacterResolver
             EquippedShieldName = equippedShield?.Name,
             HasStealthDisadvantage = equippedArmor?.HasStealthDisadvantage ?? false,
             ArmorClass = armorClass,
+            InitiativeBonus = abilityModifiers[Ability.Dexterity],
             EquippedWeaponIds = equippedWeapons
                 .Select(weapon => weapon.Id)
                 .ToArray(),
