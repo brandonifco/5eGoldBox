@@ -186,6 +186,73 @@ public sealed class DamageRulesTests
     }
 
     [Fact]
+    public void GetDamageDiceForAttackOutcome_WithMiss_ReturnsNull()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        DamageDice? result = DamageRules.GetDamageDiceForAttackOutcome(
+            damage,
+            AttackRollOutcome.Miss);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetDamageDiceForAttackOutcome_WithHit_ReturnsNormalDamageDice()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        DamageDice? result = DamageRules.GetDamageDiceForAttackOutcome(
+            damage,
+            AttackRollOutcome.Hit);
+
+        Assert.NotNull(result);
+        Assert.Equal(1, result.Count);
+        Assert.Equal(DieType.D8, result.Die);
+    }
+
+    [Fact]
+    public void GetDamageDiceForAttackOutcome_WithCriticalHit_ReturnsDoubledDamageDice()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        DamageDice? result = DamageRules.GetDamageDiceForAttackOutcome(
+            damage,
+            AttackRollOutcome.CriticalHit);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count);
+        Assert.Equal(DieType.D8, result.Die);
+    }
+
+    [Fact]
+    public void GetDamageDiceForAttackOutcome_WithInvalidDamageDiceCountAndHit_Throws()
+    {
+        DamageDice damage = new()
+        {
+            Count = 0,
+            Die = DieType.D6
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            DamageRules.GetDamageDiceForAttackOutcome(
+                damage,
+                AttackRollOutcome.Hit));
+    }
+
+    [Fact]
     public void GetDamageDiceTotal_WithSingleDamageDie_ReturnsRollTotal()
     {
         DamageDice damage = new()

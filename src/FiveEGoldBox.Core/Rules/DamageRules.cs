@@ -73,7 +73,30 @@ public static class DamageRules
             Count = damage.Count * 2
         };
     }
+    public static DamageDice? GetDamageDiceForAttackOutcome(
+        DamageDice damage,
+        AttackRollOutcome outcome)
+    {
+        if (outcome == AttackRollOutcome.Miss)
+        {
+            return null;
+        }
 
+        if (damage.Count < 1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(damage),
+                damage.Count,
+                "Damage dice count must be at least 1.");
+        }
+
+        if (outcome == AttackRollOutcome.CriticalHit)
+        {
+            return GetCriticalHitDamageDice(damage);
+        }
+
+        return damage;
+    }
     public static int GetDamageDiceTotal(
         DamageDice damage,
         IReadOnlyList<int> rolls)
