@@ -152,6 +152,75 @@ public sealed class SmallCharacterHeavyWeaponTests
         Assert.False(attack.HasDisadvantage);
     }
 
+    [Fact]
+    public void Resolve_WithSmallCharacterAndHeavyWeapon_AddsDisadvantageReason()
+    {
+        RulesetDefinition ruleset = CreateRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.halfling",
+            EquippedWeaponIds =
+            [
+                "weapon.greatsword"
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        CharacterSnapshot snapshot = resolver.Resolve(draft);
+
+        WeaponAttack attack = Assert.Single(snapshot.WeaponAttacks);
+
+        Assert.Contains("weapon.heavy.small_size", attack.DisadvantageReasons);
+    }
+
+    [Fact]
+    public void Resolve_WithMediumCharacterAndHeavyWeapon_LeavesDisadvantageReasonsEmpty()
+    {
+        RulesetDefinition ruleset = CreateRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.human",
+            EquippedWeaponIds =
+            [
+                "weapon.greatsword"
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        CharacterSnapshot snapshot = resolver.Resolve(draft);
+
+        WeaponAttack attack = Assert.Single(snapshot.WeaponAttacks);
+
+        Assert.Empty(attack.DisadvantageReasons);
+    }
+
+    [Fact]
+    public void Resolve_WithSmallCharacterAndNonHeavyWeapon_LeavesDisadvantageReasonsEmpty()
+    {
+        RulesetDefinition ruleset = CreateRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.halfling",
+            EquippedWeaponIds =
+            [
+                "weapon.longsword"
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        CharacterSnapshot snapshot = resolver.Resolve(draft);
+
+        WeaponAttack attack = Assert.Single(snapshot.WeaponAttacks);
+
+        Assert.Empty(attack.DisadvantageReasons);
+    }
+
     private static CharacterDraft CreateValidDraft()
     {
         return new CharacterDraft

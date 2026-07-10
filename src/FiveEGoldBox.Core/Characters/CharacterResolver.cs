@@ -1097,8 +1097,11 @@ public sealed class CharacterResolver
         int attackBonus = abilityModifier + appliedProficiencyBonus;
         int damageBonus = abilityModifier;
 
-        bool hasDisadvantage = size == CharacterSize.Small
-            && weapon.Properties.Contains("weapon_property.heavy");
+        IReadOnlyList<string> disadvantageReasons = GetWeaponAttackDisadvantageReasons(
+            weapon,
+            size);
+
+        bool hasDisadvantage = disadvantageReasons.Count > 0;
 
         int? ammunitionQuantityAvailable = weapon.AmmunitionItemId is null
             ? null
@@ -1119,6 +1122,7 @@ public sealed class CharacterResolver
             ProficiencyBonus = appliedProficiencyBonus,
             AttackBonus = attackBonus,
             HasDisadvantage = hasDisadvantage,
+            DisadvantageReasons = disadvantageReasons,
             Damage = weapon.Damage,
             VersatileDamage = weapon.VersatileDamage,
             DamageType = weapon.DamageType,
@@ -1130,6 +1134,20 @@ public sealed class CharacterResolver
             AmmunitionItemId = weapon.AmmunitionItemId,
             AmmunitionQuantityAvailable = ammunitionQuantityAvailable
         };
+    }
+    private static IReadOnlyList<string> GetWeaponAttackDisadvantageReasons(
+        WeaponDefinition weapon,
+        CharacterSize size)
+    {
+        List<string> reasons = [];
+
+        if (size == CharacterSize.Small
+            && weapon.Properties.Contains("weapon_property.heavy"))
+        {
+            reasons.Add("weapon.heavy.small_size");
+        }
+
+        return reasons;
     }
 
     private static Ability GetWeaponAttackAbility(

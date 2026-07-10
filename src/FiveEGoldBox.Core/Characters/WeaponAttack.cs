@@ -25,6 +25,9 @@ public sealed record WeaponAttack
 
     public required bool HasDisadvantage { get; init; }
 
+    public IReadOnlyList<string> DisadvantageReasons { get; init; }
+        = Array.Empty<string>(); 
+    
     public required DamageDice Damage { get; init; }
 
     public DamageDice? VersatileDamage { get; init; }
