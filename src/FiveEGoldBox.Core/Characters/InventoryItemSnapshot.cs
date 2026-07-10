@@ -12,6 +12,10 @@ public sealed record InventoryItemSnapshot
 
     public required decimal TotalWeightPounds { get; init; }
 
+    public int? UnitValueInCopperPieces { get; init; }
+
+    public int? TotalValueInCopperPieces { get; init; }
+
     public IReadOnlyList<string> Tags { get; init; }
         = Array.Empty<string>();
 }

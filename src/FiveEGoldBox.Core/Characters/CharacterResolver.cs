@@ -412,6 +412,10 @@ public sealed class CharacterResolver
                     Quantity = inventoryItem.Quantity,
                     UnitWeightPounds = definition.WeightPounds,
                     TotalWeightPounds = definition.WeightPounds * inventoryItem.Quantity,
+                    UnitValueInCopperPieces = definition.CostInCopperPieces,
+                    TotalValueInCopperPieces = definition.CostInCopperPieces is null
+                        ? null
+                        : definition.CostInCopperPieces * inventoryItem.Quantity,                    
                     Tags = definition.Tags
                 };
             })

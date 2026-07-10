@@ -41,6 +41,8 @@ public sealed class CharacterResolverInventoryResolutionTests
         Assert.Equal(1, backpack.Quantity);
         Assert.Equal(5m, backpack.UnitWeightPounds);
         Assert.Equal(5m, backpack.TotalWeightPounds);
+        Assert.Equal(200, backpack.UnitValueInCopperPieces);
+        Assert.Equal(200, backpack.TotalValueInCopperPieces);
         Assert.Contains("equipment_tag.container", backpack.Tags);
 
         InventoryItemSnapshot torch = GetInventoryItem(snapshot, "equipment.torch");
@@ -49,7 +51,37 @@ public sealed class CharacterResolverInventoryResolutionTests
         Assert.Equal(10, torch.Quantity);
         Assert.Equal(1m, torch.UnitWeightPounds);
         Assert.Equal(10m, torch.TotalWeightPounds);
+        Assert.Equal(1, torch.UnitValueInCopperPieces);
+        Assert.Equal(10, torch.TotalValueInCopperPieces);
         Assert.Contains("equipment_tag.adventuring_gear", torch.Tags);
+    }
+
+    [Fact]
+    public void Resolve_WithInventoryItemThatHasNoCost_LeavesValueNull()
+    {
+        RulesetDefinition ruleset = CreateEquipmentRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.test",
+            InventoryItems =
+            [
+                new InventoryItemDraft
+                {
+                    ItemId = "equipment.keepsake",
+                    Quantity = 1
+                }
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        CharacterSnapshot snapshot = resolver.Resolve(draft);
+
+        InventoryItemSnapshot keepsake = GetInventoryItem(snapshot, "equipment.keepsake");
+
+        Assert.Null(keepsake.UnitValueInCopperPieces);
+        Assert.Null(keepsake.TotalValueInCopperPieces);
     }
 
     [Fact]
@@ -170,6 +202,7 @@ public sealed class CharacterResolverInventoryResolutionTests
                     Id = "equipment.backpack",
                     Name = "Backpack",
                     WeightPounds = 5m,
+                    CostInCopperPieces = 200,
                     Tags =
                     [
                         "equipment_tag.container",
@@ -181,10 +214,17 @@ public sealed class CharacterResolverInventoryResolutionTests
                     Id = "equipment.torch",
                     Name = "Torch",
                     WeightPounds = 1m,
+                    CostInCopperPieces = 1,
                     Tags =
                     [
                         "equipment_tag.adventuring_gear"
                     ]
+                },
+                new EquipmentItemDefinition
+                {
+                    Id = "equipment.keepsake",
+                    Name = "Keepsake",
+                    WeightPounds = 0m
                 }
             ]
         };
