@@ -1009,7 +1009,8 @@ public sealed class CharacterResolver
             DamageBonus = abilityModifier,
             Properties = weapon.Properties,
             NormalRangeFeet = weapon.NormalRangeFeet,
-            LongRangeFeet = weapon.LongRangeFeet
+            LongRangeFeet = weapon.LongRangeFeet,
+            AmmunitionItemId = weapon.AmmunitionItemId
         };
     }
 
