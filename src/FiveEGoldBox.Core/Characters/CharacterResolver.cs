@@ -116,6 +116,9 @@ public sealed class CharacterResolver
         IReadOnlyList<CharacterSense> senses = ResolveSenses(
             selectedRace,
             selectedSubrace);
+        IReadOnlyList<CharacterDamageResponse> damageResponses = ResolveDamageResponses(
+            selectedRace,
+            selectedSubrace);
         ArmorDefinition? equippedArmor = GetEquippedArmor(draft);
         ArmorDefinition? equippedShield = GetEquippedShield(draft);
         IReadOnlyList<WeaponDefinition> equippedWeapons = GetEquippedWeapons(draft);
@@ -285,6 +288,7 @@ public sealed class CharacterResolver
             SpeedFeet = speedFeet,
             MovementSpeeds = movementSpeeds,
             Senses = senses,
+            DamageResponses = damageResponses,
             CarryingCapacityPounds = abilityScores[Ability.Strength] * 15,
             PushDragLiftPounds = abilityScores[Ability.Strength] * 30,
             EquippedWeightPounds = equippedWeightPounds,
@@ -335,6 +339,42 @@ public sealed class CharacterResolver
                     .Distinct()
                     .ToArray()
         };
+    }
+    private static IReadOnlyList<CharacterDamageResponse> ResolveDamageResponses(
+        RaceDefinition? selectedRace,
+        SubraceDefinition? selectedSubrace)
+    {
+        HashSet<(string DamageType, DamageResponseType ResponseType)> responses = [];
+
+        AddDamageResponses(responses, selectedRace?.DamageResponses);
+        AddDamageResponses(responses, selectedSubrace?.DamageResponses);
+
+        return responses
+            .OrderBy(response => response.DamageType)
+            .ThenBy(response => response.ResponseType)
+            .Select(response => new CharacterDamageResponse
+            {
+                DamageType = response.DamageType,
+                ResponseType = response.ResponseType
+            })
+            .ToArray();
+    }
+
+    private static void AddDamageResponses(
+        HashSet<(string DamageType, DamageResponseType ResponseType)> responses,
+        IReadOnlyList<DamageResponseDefinition>? damageResponses)
+    {
+        if (damageResponses is null)
+        {
+            return;
+        }
+
+        foreach (DamageResponseDefinition damageResponse in damageResponses)
+        {
+            responses.Add((
+                damageResponse.DamageType,
+                damageResponse.ResponseType));
+        }
     }
     private static IReadOnlyList<CharacterMovementSpeed> ResolveMovementSpeeds(
         RaceDefinition? selectedRace,

@@ -22,4 +22,7 @@ public sealed record SubraceDefinition
 
     public IReadOnlyList<MovementSpeedDefinition> MovementSpeeds { get; init; }
         = Array.Empty<MovementSpeedDefinition>();
+
+    public IReadOnlyList<DamageResponseDefinition> DamageResponses { get; init; }
+        = Array.Empty<DamageResponseDefinition>();
 }

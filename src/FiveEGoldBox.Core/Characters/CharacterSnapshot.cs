@@ -41,6 +41,9 @@ public sealed record CharacterSnapshot
     public IReadOnlyList<CharacterSense> Senses { get; init; }
         = Array.Empty<CharacterSense>();
 
+    public IReadOnlyList<CharacterDamageResponse> DamageResponses { get; init; }
+        = Array.Empty<CharacterDamageResponse>();
+        
     public required int CarryingCapacityPounds { get; init; }
 
     public required int PushDragLiftPounds { get; init; }
