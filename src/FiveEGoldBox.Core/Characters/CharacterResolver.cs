@@ -201,7 +201,9 @@ public sealed class CharacterResolver
                         AbilityModifier = abilityModifier,
                         IsProficient = isProficient,
                         ProficiencyBonus = isProficient ? proficiencyBonus : 0,
-                        TotalBonus = abilityModifier + (isProficient ? proficiencyBonus : 0)
+                        TotalBonus = abilityModifier + (isProficient ? proficiencyBonus : 0),
+                        HasDisadvantage = skill.Id == "skill.stealth"
+                            && (equippedArmor?.HasStealthDisadvantage ?? false)
                     };
                 })
                 .ToArray();
