@@ -43,6 +43,7 @@ public sealed class CharacterResolver
         ValidateEquippedWeapons(draft, issues);
         ValidateWeaponProficiency(draft, issues);
         ValidateCarryingCapacity(draft, issues);
+        ValidateInventoryItems(draft, issues);
 
         if (draft.Level is < ProficiencyRules.MinimumLevel or > ProficiencyRules.MaximumLevel)
         {
@@ -719,6 +720,53 @@ public sealed class CharacterResolver
                 ValidationSeverity.Warning,
                 "character.weapon.not_proficient",
                 $"Character is not proficient with equipped weapon '{equippedWeapon.Id}'."));
+        }
+    }
+
+    private void ValidateInventoryItems(CharacterDraft draft, List<ValidationIssue> issues)
+    {
+        foreach (InventoryItemDraft inventoryItem in draft.InventoryItems)
+        {
+            if (inventoryItem.Quantity <= 0)
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "character.inventory.quantity.invalid",
+                    $"Inventory item '{inventoryItem.ItemId}' must have a quantity greater than 0."));
+            }
+        }
+
+        int inventoryItemCount = draft.InventoryItems.Count;
+        int distinctInventoryItemCount = draft.InventoryItems
+            .Select(item => item.ItemId)
+            .Distinct()
+            .Count();
+
+        if (distinctInventoryItemCount != inventoryItemCount)
+        {
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Error,
+                "character.inventory.duplicate",
+                "Inventory items must not contain duplicate item IDs."));
+        }
+
+        if (_ruleset is null || _ruleset.EquipmentItems.Count == 0)
+        {
+            return;
+        }
+
+        foreach (InventoryItemDraft inventoryItem in draft.InventoryItems)
+        {
+            bool itemExists = _ruleset.EquipmentItems.Any(
+                item => item.Id == inventoryItem.ItemId);
+
+            if (!itemExists)
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "character.inventory.item_not_found",
+                    $"Inventory item '{inventoryItem.ItemId}' was not found in ruleset '{_ruleset.Id}'."));
+            }
         }
     }
     private ArmorDefinition? GetEquippedArmor(CharacterDraft draft)
