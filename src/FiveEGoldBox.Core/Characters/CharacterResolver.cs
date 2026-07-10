@@ -234,6 +234,7 @@ public sealed class CharacterResolver
             EquippedArmorName = equippedArmor?.Name,
             EquippedShieldId = equippedShield?.Id,
             EquippedShieldName = equippedShield?.Name,
+            HasStealthDisadvantage = equippedArmor?.HasStealthDisadvantage ?? false,
             ArmorClass = armorClass,
             EquippedWeaponIds = equippedWeapons
                 .Select(weapon => weapon.Id)

@@ -41,6 +41,8 @@ public sealed record CharacterSnapshot
 
     public int? ArmorClass { get; init; }
 
+    public bool HasStealthDisadvantage { get; init; }
+
     public IReadOnlyList<string> EquippedWeaponIds { get; init; }
         = Array.Empty<string>();
 
