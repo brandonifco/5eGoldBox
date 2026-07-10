@@ -184,4 +184,83 @@ public sealed class DamageRulesTests
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             DamageRules.GetCriticalHitDamageDice(damage));
     }
+
+    [Fact]
+    public void GetDamageDiceTotal_WithSingleDamageDie_ReturnsRollTotal()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        int result = DamageRules.GetDamageDiceTotal(
+            damage,
+            [6]);
+
+        Assert.Equal(6, result);
+    }
+
+    [Fact]
+    public void GetDamageDiceTotal_WithMultipleDamageDice_ReturnsRollTotal()
+    {
+        DamageDice damage = new()
+        {
+            Count = 2,
+            Die = DieType.D6
+        };
+
+        int result = DamageRules.GetDamageDiceTotal(
+            damage,
+            [4, 5]);
+
+        Assert.Equal(9, result);
+    }
+
+    [Fact]
+    public void GetDamageDiceTotal_WithInvalidDamageDiceCount_Throws()
+    {
+        DamageDice damage = new()
+        {
+            Count = 0,
+            Die = DieType.D6
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            DamageRules.GetDamageDiceTotal(
+                damage,
+                []));
+    }
+
+    [Fact]
+    public void GetDamageDiceTotal_WithWrongNumberOfRolls_Throws()
+    {
+        DamageDice damage = new()
+        {
+            Count = 2,
+            Die = DieType.D6
+        };
+
+        Assert.Throws<ArgumentException>(() =>
+            DamageRules.GetDamageDiceTotal(
+                damage,
+                [4]));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(7)]
+    public void GetDamageDiceTotal_WithOutOfRangeRoll_Throws(int roll)
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D6
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            DamageRules.GetDamageDiceTotal(
+                damage,
+                [roll]));
+    }
 }

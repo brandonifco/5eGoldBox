@@ -73,4 +73,39 @@ public static class DamageRules
             Count = damage.Count * 2
         };
     }
+
+    public static int GetDamageDiceTotal(
+        DamageDice damage,
+        IReadOnlyList<int> rolls)
+    {
+        if (damage.Count < 1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(damage),
+                damage.Count,
+                "Damage dice count must be at least 1.");
+        }
+
+        if (rolls.Count != damage.Count)
+        {
+            throw new ArgumentException(
+                $"Expected {damage.Count} damage roll(s), but received {rolls.Count}.",
+                nameof(rolls));
+        }
+
+        int maximumRoll = (int)damage.Die;
+
+        foreach (int roll in rolls)
+        {
+            if (roll is < 1 || roll > maximumRoll)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(rolls),
+                    roll,
+                    $"Damage roll must be between 1 and {maximumRoll}.");
+            }
+        }
+
+        return rolls.Sum();
+    }
 }
