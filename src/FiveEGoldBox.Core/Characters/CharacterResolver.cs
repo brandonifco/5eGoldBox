@@ -228,6 +228,8 @@ public sealed class CharacterResolver
             equippedShield,
             equippedWeapons);
 
+        IReadOnlyList<InventoryItemSnapshot> inventoryItems = ResolveInventoryItems(draft);
+
         return new CharacterSnapshot
         {
             Name = draft.Name!.Trim(),
@@ -254,6 +256,7 @@ public sealed class CharacterResolver
             PushDragLiftPounds = abilityScores[Ability.Strength] * 30,
             EquippedWeightPounds = equippedWeightPounds,
             IsOverCarryingCapacity = equippedWeightPounds > carryingCapacityPounds,
+            InventoryItems = inventoryItems,
             EquippedArmorId = equippedArmor?.Id,
             EquippedArmorName = equippedArmor?.Name,
             EquippedShieldId = equippedShield?.Id,
@@ -352,6 +355,38 @@ public sealed class CharacterResolver
             DieType.D12 => 7,
             _ => throw new InvalidOperationException($"Unsupported class hit die '{hitDie}'.")
         };
+    }
+    private IReadOnlyList<InventoryItemSnapshot> ResolveInventoryItems(CharacterDraft draft)
+    {
+        if (_ruleset is null || _ruleset.EquipmentItems.Count == 0)
+        {
+            return Array.Empty<InventoryItemSnapshot>();
+        }
+
+        return draft.InventoryItems
+            .Select(inventoryItem =>
+            {
+                EquipmentItemDefinition? definition = _ruleset.EquipmentItems
+                    .SingleOrDefault(item => item.Id == inventoryItem.ItemId);
+
+                if (definition is null)
+                {
+                    return null;
+                }
+
+                return new InventoryItemSnapshot
+                {
+                    ItemId = definition.Id,
+                    ItemName = definition.Name,
+                    Quantity = inventoryItem.Quantity,
+                    UnitWeightPounds = definition.WeightPounds,
+                    TotalWeightPounds = definition.WeightPounds * inventoryItem.Quantity,
+                    Tags = definition.Tags
+                };
+            })
+            .Where(item => item is not null)
+            .Cast<InventoryItemSnapshot>()
+            .ToArray();
     }
     private static void ValidatePointBuy(CharacterDraft draft, List<ValidationIssue> issues)
     {
