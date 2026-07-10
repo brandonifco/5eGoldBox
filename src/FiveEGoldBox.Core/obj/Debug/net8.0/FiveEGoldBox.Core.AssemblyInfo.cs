@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FiveEGoldBox.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+947d405027e909330a8cfa15566d445df59fbf69")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0ce63d166a7887f9ce27e8b72769ee449db8359c")]
 [assembly: System.Reflection.AssemblyProductAttribute("FiveEGoldBox.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FiveEGoldBox.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
