@@ -41,6 +41,8 @@ public sealed record CharacterSnapshot
 
     public required decimal InventoryWeightPounds { get; init; }
 
+    public required decimal CurrencyWeightPounds { get; init; }
+
     public required decimal TotalCarriedWeightPounds { get; init; }
 
     public required bool IsOverCarryingCapacity { get; init; }

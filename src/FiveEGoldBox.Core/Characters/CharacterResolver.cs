@@ -234,7 +234,11 @@ public sealed class CharacterResolver
         decimal inventoryWeightPounds = inventoryItems
             .Sum(item => item.TotalWeightPounds);
 
-        decimal totalCarriedWeightPounds = equippedWeightPounds + inventoryWeightPounds;
+        decimal currencyWeightPounds = CalculateCurrencyWeight(draft.Currency);
+
+        decimal totalCarriedWeightPounds = equippedWeightPounds
+            + inventoryWeightPounds
+            + currencyWeightPounds;
 
         return new CharacterSnapshot
         {
@@ -262,6 +266,7 @@ public sealed class CharacterResolver
             PushDragLiftPounds = abilityScores[Ability.Strength] * 30,
             EquippedWeightPounds = equippedWeightPounds,
             InventoryWeightPounds = inventoryWeightPounds,
+            CurrencyWeightPounds = currencyWeightPounds,
             TotalCarriedWeightPounds = totalCarriedWeightPounds,
             IsOverCarryingCapacity = totalCarriedWeightPounds > carryingCapacityPounds,
             InventoryItems = inventoryItems,
@@ -1198,5 +1203,15 @@ public sealed class CharacterResolver
             ValidationSeverity.Error,
             "character.currency.amount.invalid",
             $"{currencyPropertyName} must not be negative."));
+    }
+    private static decimal CalculateCurrencyWeight(CurrencyAmount currency)
+    {
+        int totalCoins = currency.CopperPieces
+            + currency.SilverPieces
+            + currency.ElectrumPieces
+            + currency.GoldPieces
+            + currency.PlatinumPieces;
+
+        return totalCoins / 50m;
     }
 }
