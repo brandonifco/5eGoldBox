@@ -41,6 +41,7 @@ public sealed class CharacterResolver
         ValidateEquippedArmor(draft, issues);
         ValidateArmorProficiency(draft, issues);
         ValidateEquippedWeapons(draft, issues);
+        ValidateWeaponProficiency(draft, issues);
 
         if (draft.Level is < ProficiencyRules.MinimumLevel or > ProficiencyRules.MaximumLevel)
         {
@@ -616,6 +617,28 @@ public sealed class CharacterResolver
         }
     }
 
+    private void ValidateWeaponProficiency(CharacterDraft draft, List<ValidationIssue> issues)
+    {
+        if (_ruleset is null || _ruleset.Weapons.Count == 0)
+        {
+            return;
+        }
+
+        ClassDefinition? selectedClass = GetSelectedClass(draft);
+
+        foreach (WeaponDefinition equippedWeapon in GetEquippedWeapons(draft))
+        {
+            if (IsProficientWithWeapon(equippedWeapon, selectedClass))
+            {
+                continue;
+            }
+
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Warning,
+                "character.weapon.not_proficient",
+                $"Character is not proficient with equipped weapon '{equippedWeapon.Id}'."));
+        }
+    }
     private ArmorDefinition? GetEquippedArmor(CharacterDraft draft)
     {
         if (_ruleset is null || string.IsNullOrWhiteSpace(draft.EquippedArmorId))
