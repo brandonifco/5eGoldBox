@@ -43,6 +43,8 @@ public sealed record CharacterSnapshot
 
     public required int InitiativeBonus { get; init; }
 
+    public required int PassivePerception { get; init; }
+
     public bool HasStealthDisadvantage { get; init; }
 
     public IReadOnlyList<string> EquippedWeaponIds { get; init; }

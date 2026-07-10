@@ -213,6 +213,10 @@ public sealed class CharacterResolver
                 proficiencyBonus))
             .ToArray();
 
+        int passivePerception = CalculatePassivePerception(
+            skillBonuses,
+            abilityModifiers);        
+
         return new CharacterSnapshot
         {
             Name = draft.Name!.Trim(),
@@ -237,6 +241,7 @@ public sealed class CharacterResolver
             EquippedShieldName = equippedShield?.Name,
             HasStealthDisadvantage = equippedArmor?.HasStealthDisadvantage ?? false,
             ArmorClass = armorClass,
+            PassivePerception = passivePerception,
             InitiativeBonus = abilityModifiers[Ability.Dexterity],
             EquippedWeaponIds = equippedWeapons
                 .Select(weapon => weapon.Id)
@@ -708,6 +713,20 @@ public sealed class CharacterResolver
         return armorClass;
     }
 
+    private static int CalculatePassivePerception(
+        IReadOnlyList<SkillBonus> skillBonuses,
+        IReadOnlyDictionary<Ability, int> abilityModifiers)
+    {
+        SkillBonus? perception = skillBonuses.SingleOrDefault(
+            skill => skill.SkillId == "skill.perception");
+
+        if (perception is not null)
+        {
+            return 10 + perception.TotalBonus;
+        }
+
+        return 10 + abilityModifiers[Ability.Wisdom];
+    }
     private static int? CalculateSpeedFeet(
         RaceDefinition? selectedRace,
         ArmorDefinition? equippedArmor,
