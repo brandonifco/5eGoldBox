@@ -326,6 +326,7 @@ public sealed class CharacterResolver
 
         return totalWeight;
     }
+
     private static int? CalculateMaxHitPoints(
         ClassDefinition? selectedClass,
         int level,
@@ -1103,7 +1104,11 @@ public sealed class CharacterResolver
             GetEquippedShield(draft),
             GetEquippedWeapons(draft));
 
-        if (equippedWeightPounds <= carryingCapacityPounds)
+        decimal inventoryWeightPounds = CalculateInventoryWeight(draft);
+
+        decimal totalCarriedWeightPounds = equippedWeightPounds + inventoryWeightPounds;
+
+        if (totalCarriedWeightPounds <= carryingCapacityPounds)
         {
             return;
         }
@@ -1111,8 +1116,9 @@ public sealed class CharacterResolver
         issues.Add(new ValidationIssue(
             ValidationSeverity.Warning,
             "character.carrying_capacity.exceeded",
-            $"Equipped weight {equippedWeightPounds} lb. exceeds carrying capacity {carryingCapacityPounds} lb."));
+            $"Total carried weight {totalCarriedWeightPounds} lb. exceeds carrying capacity {carryingCapacityPounds} lb."));
     }
+
     private static bool IsProficientWithArmor(
         ArmorDefinition armor,
         ClassDefinition? selectedClass)
@@ -1133,5 +1139,25 @@ public sealed class CharacterResolver
 
         return selectedClass.ArmorProficiencies.Contains(categoryProficiencyId)
             || selectedClass.ArmorProficiencies.Contains(armor.Id);
+    }
+    private decimal CalculateInventoryWeight(CharacterDraft draft)
+    {
+        if (_ruleset is null || _ruleset.EquipmentItems.Count == 0)
+        {
+            return 0m;
+        }
+
+        return draft.InventoryItems
+            .Where(inventoryItem => inventoryItem.Quantity > 0)
+            .Select(inventoryItem =>
+            {
+                EquipmentItemDefinition? definition = _ruleset.EquipmentItems
+                    .SingleOrDefault(item => item.Id == inventoryItem.ItemId);
+
+                return definition is null
+                    ? 0m
+                    : definition.WeightPounds * inventoryItem.Quantity;
+            })
+            .Sum();
     }
 }
