@@ -14,6 +14,8 @@ public sealed record WeaponDefinition
 
     public required DamageDice Damage { get; init; }
 
+    public DamageDice? VersatileDamage { get; init; }
+
     public required string DamageType { get; init; }
 
     public IReadOnlyList<string> Properties { get; init; }

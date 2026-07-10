@@ -25,6 +25,8 @@ public sealed record WeaponAttack
 
     public required DamageDice Damage { get; init; }
 
+    public DamageDice? VersatileDamage { get; init; }
+
     public required string DamageType { get; init; }
 
     public required int DamageBonus { get; init; }

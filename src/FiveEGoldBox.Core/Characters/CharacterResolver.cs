@@ -1004,6 +1004,7 @@ public sealed class CharacterResolver
             ProficiencyBonus = appliedProficiencyBonus,
             AttackBonus = abilityModifier + appliedProficiencyBonus,
             Damage = weapon.Damage,
+            VersatileDamage = weapon.VersatileDamage,
             DamageType = weapon.DamageType,
             DamageBonus = abilityModifier,
             Properties = weapon.Properties,
