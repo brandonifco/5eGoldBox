@@ -21,6 +21,8 @@ public sealed record WeaponDefinition
     public IReadOnlyList<string> Properties { get; init; }
         = Array.Empty<string>();
 
+    public int? ReachFeet { get; init; }
+
     public int? NormalRangeFeet { get; init; }
 
     public int? LongRangeFeet { get; init; }
