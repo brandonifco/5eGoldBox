@@ -42,6 +42,7 @@ public sealed class CharacterResolver
         ValidateArmorProficiency(draft, issues);
         ValidateEquippedWeapons(draft, issues);
         ValidateWeaponProficiency(draft, issues);
+        ValidateCarryingCapacity(draft, issues);
 
         if (draft.Level is < ProficiencyRules.MinimumLevel or > ProficiencyRules.MaximumLevel)
         {
@@ -956,7 +957,67 @@ public sealed class CharacterResolver
                 $"Character is not proficient with equipped shield '{equippedShield.Id}'."));
         }
     }
+    private void ValidateCarryingCapacity(CharacterDraft draft, List<ValidationIssue> issues)
+    {
+        if (_ruleset is null)
+        {
+            return;
+        }
 
+        if (!draft.BaseAbilityScores.TryGetValue(Ability.Strength, out int baseStrength))
+        {
+            return;
+        }
+
+        if (baseStrength is < AbilityRules.MinimumScore or > AbilityRules.MaximumScore)
+        {
+            return;
+        }
+
+        RaceDefinition? selectedRace = GetSelectedRace(draft);
+        SubraceDefinition? selectedSubrace = GetSelectedSubrace(draft, selectedRace);
+
+        int strengthScore = baseStrength;
+
+        if (selectedRace is not null)
+        {
+            foreach (AbilityScoreIncrease increase in selectedRace.AbilityScoreIncreases)
+            {
+                if (increase.Ability == Ability.Strength)
+                {
+                    strengthScore += increase.Amount;
+                }
+            }
+        }
+
+        if (selectedSubrace is not null)
+        {
+            foreach (AbilityScoreIncrease increase in selectedSubrace.AbilityScoreIncreases)
+            {
+                if (increase.Ability == Ability.Strength)
+                {
+                    strengthScore += increase.Amount;
+                }
+            }
+        }
+
+        int carryingCapacityPounds = strengthScore * 15;
+
+        decimal equippedWeightPounds = CalculateEquippedWeight(
+            GetEquippedArmor(draft),
+            GetEquippedShield(draft),
+            GetEquippedWeapons(draft));
+
+        if (equippedWeightPounds <= carryingCapacityPounds)
+        {
+            return;
+        }
+
+        issues.Add(new ValidationIssue(
+            ValidationSeverity.Warning,
+            "character.carrying_capacity.exceeded",
+            $"Equipped weight {equippedWeightPounds} lb. exceeds carrying capacity {carryingCapacityPounds} lb."));
+    }
     private static bool IsProficientWithArmor(
         ArmorDefinition armor,
         ClassDefinition? selectedClass)
