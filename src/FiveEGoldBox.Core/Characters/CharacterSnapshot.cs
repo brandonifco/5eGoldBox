@@ -42,12 +42,14 @@ public sealed record CharacterSnapshot
     public required decimal InventoryWeightPounds { get; init; }
 
     public required decimal TotalCarriedWeightPounds { get; init; }
-    
+
     public required bool IsOverCarryingCapacity { get; init; }
     
     public IReadOnlyList<InventoryItemSnapshot> InventoryItems { get; init; }
         = Array.Empty<InventoryItemSnapshot>();
     
+    public CurrencyAmount Currency { get; init; } = new();
+
     public string? EquippedArmorId { get; init; }
 
     public string? EquippedArmorName { get; init; }

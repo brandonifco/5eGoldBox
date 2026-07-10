@@ -264,6 +264,7 @@ public sealed class CharacterResolver
             TotalCarriedWeightPounds = totalCarriedWeightPounds,
             IsOverCarryingCapacity = totalCarriedWeightPounds > carryingCapacityPounds,
             InventoryItems = inventoryItems,
+            Currency = draft.Currency,
             EquippedArmorId = equippedArmor?.Id,
             EquippedArmorName = equippedArmor?.Name,
             EquippedShieldId = equippedShield?.Id,
