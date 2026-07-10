@@ -238,6 +238,10 @@ public sealed class CharacterResolver
             SpeedFeet = speedFeet,
             CarryingCapacityPounds = abilityScores[Ability.Strength] * 15,
             PushDragLiftPounds = abilityScores[Ability.Strength] * 30,
+            EquippedWeightPounds = CalculateEquippedWeight(
+                equippedArmor,
+                equippedShield,
+                equippedWeapons),
             EquippedArmorId = equippedArmor?.Id,
             EquippedArmorName = equippedArmor?.Name,
             EquippedShieldId = equippedShield?.Id,
@@ -279,6 +283,27 @@ public sealed class CharacterResolver
         };
     }
 
+    private static decimal CalculateEquippedWeight(
+        ArmorDefinition? equippedArmor,
+        ArmorDefinition? equippedShield,
+        IReadOnlyList<WeaponDefinition> equippedWeapons)
+    {
+        decimal totalWeight = 0m;
+
+        if (equippedArmor is not null)
+        {
+            totalWeight += equippedArmor.WeightPounds;
+        }
+
+        if (equippedShield is not null)
+        {
+            totalWeight += equippedShield.WeightPounds;
+        }
+
+        totalWeight += equippedWeapons.Sum(weapon => weapon.WeightPounds);
+
+        return totalWeight;
+    }
     private static int? CalculateMaxHitPoints(
         ClassDefinition? selectedClass,
         int level,
