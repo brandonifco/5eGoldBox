@@ -119,6 +119,9 @@ public sealed class CharacterResolver
         IReadOnlyList<CharacterDamageResponse> damageResponses = ResolveDamageResponses(
             selectedRace,
             selectedSubrace);
+        IReadOnlyList<CharacterConditionImmunity> conditionImmunities = ResolveConditionImmunities(
+            selectedRace,
+            selectedSubrace);
         ArmorDefinition? equippedArmor = GetEquippedArmor(draft);
         ArmorDefinition? equippedShield = GetEquippedShield(draft);
         IReadOnlyList<WeaponDefinition> equippedWeapons = GetEquippedWeapons(draft);
@@ -289,6 +292,7 @@ public sealed class CharacterResolver
             MovementSpeeds = movementSpeeds,
             Senses = senses,
             DamageResponses = damageResponses,
+            ConditionImmunities = conditionImmunities,
             CarryingCapacityPounds = abilityScores[Ability.Strength] * 15,
             PushDragLiftPounds = abilityScores[Ability.Strength] * 30,
             EquippedWeightPounds = equippedWeightPounds,
@@ -339,6 +343,38 @@ public sealed class CharacterResolver
                     .Distinct()
                     .ToArray()
         };
+    }
+    private static IReadOnlyList<CharacterConditionImmunity> ResolveConditionImmunities(
+        RaceDefinition? selectedRace,
+        SubraceDefinition? selectedSubrace)
+    {
+        HashSet<ConditionType> immunities = [];
+
+        AddConditionImmunities(immunities, selectedRace?.ConditionImmunities);
+        AddConditionImmunities(immunities, selectedSubrace?.ConditionImmunities);
+
+        return immunities
+            .OrderBy(condition => condition)
+            .Select(condition => new CharacterConditionImmunity
+            {
+                Condition = condition
+            })
+            .ToArray();
+    }
+
+    private static void AddConditionImmunities(
+        HashSet<ConditionType> immunities,
+        IReadOnlyList<ConditionImmunityDefinition>? conditionImmunities)
+    {
+        if (conditionImmunities is null)
+        {
+            return;
+        }
+
+        foreach (ConditionImmunityDefinition conditionImmunity in conditionImmunities)
+        {
+            immunities.Add(conditionImmunity.Condition);
+        }
     }
     private static IReadOnlyList<CharacterDamageResponse> ResolveDamageResponses(
         RaceDefinition? selectedRace,

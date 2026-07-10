@@ -25,4 +25,8 @@ public sealed record SubraceDefinition
 
     public IReadOnlyList<DamageResponseDefinition> DamageResponses { get; init; }
         = Array.Empty<DamageResponseDefinition>();
+
+    public IReadOnlyList<ConditionImmunityDefinition> ConditionImmunities { get; init; }
+        = Array.Empty<ConditionImmunityDefinition>();
+
 }

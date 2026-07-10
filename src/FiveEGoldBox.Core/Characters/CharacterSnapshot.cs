@@ -43,7 +43,10 @@ public sealed record CharacterSnapshot
 
     public IReadOnlyList<CharacterDamageResponse> DamageResponses { get; init; }
         = Array.Empty<CharacterDamageResponse>();
-        
+
+    public IReadOnlyList<CharacterConditionImmunity> ConditionImmunities { get; init; }
+        = Array.Empty<CharacterConditionImmunity>();
+
     public required int CarryingCapacityPounds { get; init; }
 
     public required int PushDragLiftPounds { get; init; }
