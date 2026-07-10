@@ -43,7 +43,71 @@ public sealed class AmmunitionWeaponTests
     }
 
     [Fact]
-    public void Resolve_WithNonAmmunitionWeapon_LeavesAmmunitionItemIdNull()
+    public void Resolve_WithAmmunitionWeaponAndMatchingInventory_CarriesAvailableAmmunitionQuantityIntoWeaponAttack()
+    {
+        RulesetDefinition ruleset = CreateRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.test",
+            EquippedWeaponIds =
+            [
+                "weapon.shortbow"
+            ],
+            InventoryItems =
+            [
+                new InventoryItemDraft
+                {
+                    ItemId = "equipment.arrow",
+                    Quantity = 20
+                }
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        CharacterSnapshot snapshot = resolver.Resolve(draft);
+
+        WeaponAttack attack = Assert.Single(snapshot.WeaponAttacks);
+
+        Assert.Equal("equipment.arrow", attack.AmmunitionItemId);
+        Assert.Equal(20, attack.AmmunitionQuantityAvailable);
+    }
+
+    [Fact]
+    public void Resolve_WithAmmunitionWeaponAndNoMatchingInventory_SetsAvailableAmmunitionQuantityToZero()
+    {
+        RulesetDefinition ruleset = CreateRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.test",
+            EquippedWeaponIds =
+            [
+                "weapon.shortbow"
+            ],
+            InventoryItems =
+            [
+                new InventoryItemDraft
+                {
+                    ItemId = "equipment.torch",
+                    Quantity = 3
+                }
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        CharacterSnapshot snapshot = resolver.Resolve(draft);
+
+        WeaponAttack attack = Assert.Single(snapshot.WeaponAttacks);
+
+        Assert.Equal("equipment.arrow", attack.AmmunitionItemId);
+        Assert.Equal(0, attack.AmmunitionQuantityAvailable);
+    }
+
+    [Fact]
+    public void Resolve_WithNonAmmunitionWeapon_LeavesAmmunitionFieldsNull()
     {
         RulesetDefinition ruleset = CreateRuleset();
 
@@ -64,6 +128,7 @@ public sealed class AmmunitionWeaponTests
 
         Assert.Equal("weapon.longsword", attack.WeaponId);
         Assert.Null(attack.AmmunitionItemId);
+        Assert.Null(attack.AmmunitionQuantityAvailable);
     }
 
     private static CharacterDraft CreateValidDraft()
@@ -113,6 +178,13 @@ public sealed class AmmunitionWeaponTests
                     Name = "Arrow",
                     WeightPounds = 0.05m,
                     CostInCopperPieces = 5
+                },
+                new EquipmentItemDefinition
+                {
+                    Id = "equipment.torch",
+                    Name = "Torch",
+                    WeightPounds = 1m,
+                    CostInCopperPieces = 1
                 }
             ]
         };

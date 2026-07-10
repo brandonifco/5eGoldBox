@@ -215,7 +215,8 @@ public sealed class CharacterResolver
                 weapon,
                 selectedClass,
                 abilityModifiers,
-                proficiencyBonus))
+                proficiencyBonus,
+                draft.InventoryItems))
             .ToArray();
 
         int passivePerception = CalculatePassivePerception(
@@ -984,13 +985,20 @@ public sealed class CharacterResolver
         WeaponDefinition weapon,
         ClassDefinition? selectedClass,
         IReadOnlyDictionary<Ability, int> abilityModifiers,
-        int proficiencyBonus)
+        int proficiencyBonus,
+        IReadOnlyList<InventoryItemDraft> inventoryItems)
     {
         Ability attackAbility = GetWeaponAttackAbility(weapon, abilityModifiers);
         int abilityModifier = abilityModifiers[attackAbility];
 
         bool isProficient = IsProficientWithWeapon(weapon, selectedClass);
         int appliedProficiencyBonus = isProficient ? proficiencyBonus : 0;
+        int? ammunitionQuantityAvailable = weapon.AmmunitionItemId is null
+            ? null
+            : inventoryItems
+                .Where(item => item.ItemId == weapon.AmmunitionItemId)
+                .Where(item => item.Quantity > 0)
+                .Sum(item => item.Quantity);
 
         return new WeaponAttack
         {
@@ -1010,7 +1018,8 @@ public sealed class CharacterResolver
             Properties = weapon.Properties,
             NormalRangeFeet = weapon.NormalRangeFeet,
             LongRangeFeet = weapon.LongRangeFeet,
-            AmmunitionItemId = weapon.AmmunitionItemId
+            AmmunitionItemId = weapon.AmmunitionItemId,
+            AmmunitionQuantityAvailable = ammunitionQuantityAvailable
         };
     }
 

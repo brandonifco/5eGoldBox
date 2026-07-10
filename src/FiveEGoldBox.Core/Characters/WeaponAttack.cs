@@ -39,4 +39,6 @@ public sealed record WeaponAttack
     public int? LongRangeFeet { get; init; }
 
     public string? AmmunitionItemId { get; init; }
+
+    public int? AmmunitionQuantityAvailable { get; init; }
 }
