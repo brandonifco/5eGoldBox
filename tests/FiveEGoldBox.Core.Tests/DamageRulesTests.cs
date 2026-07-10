@@ -263,4 +263,60 @@ public sealed class DamageRulesTests
                 damage,
                 [roll]));
     }
+
+    [Fact]
+    public void ResolveDamageRoll_ReturnsDamageRollDetails()
+    {
+        DamageDice damage = new()
+        {
+            Count = 2,
+            Die = DieType.D6
+        };
+
+        DamageRollResult result = DamageRules.ResolveDamageRoll(
+            damage,
+            [4, 5],
+            damageBonus: 3);
+
+        Assert.Equal(damage, result.DamageDice);
+        Assert.Equal([4, 5], result.Rolls);
+        Assert.Equal(9, result.DiceTotal);
+        Assert.Equal(3, result.DamageBonus);
+        Assert.Equal(12, result.Total);
+    }
+
+    [Fact]
+    public void ResolveDamageRoll_WithNegativeDamageBonus_AllowsNegativeBonus()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        DamageRollResult result = DamageRules.ResolveDamageRoll(
+            damage,
+            [6],
+            damageBonus: -2);
+
+        Assert.Equal(6, result.DiceTotal);
+        Assert.Equal(-2, result.DamageBonus);
+        Assert.Equal(4, result.Total);
+    }
+
+    [Fact]
+    public void ResolveDamageRoll_WithInvalidRolls_Throws()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D6
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            DamageRules.ResolveDamageRoll(
+                damage,
+                [7],
+                damageBonus: 3));
+    }
 }

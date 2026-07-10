@@ -108,4 +108,22 @@ public static class DamageRules
 
         return rolls.Sum();
     }
+    public static DamageRollResult ResolveDamageRoll(
+        DamageDice damage,
+        IReadOnlyList<int> rolls,
+        int damageBonus)
+    {
+        int diceTotal = GetDamageDiceTotal(
+            damage,
+            rolls);
+
+        return new DamageRollResult
+        {
+            DamageDice = damage,
+            Rolls = rolls,
+            DiceTotal = diceTotal,
+            DamageBonus = damageBonus,
+            Total = diceTotal + damageBonus
+        };
+    }
 }
