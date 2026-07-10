@@ -31,6 +31,9 @@ public sealed record CharacterSnapshot
 
     public int? SpeedFeet { get; init; }
 
+    public required int CarryingCapacityPounds { get; init; }
+
+    public required int PushDragLiftPounds { get; init; }
     public string? EquippedArmorId { get; init; }
 
     public string? EquippedArmorName { get; init; }

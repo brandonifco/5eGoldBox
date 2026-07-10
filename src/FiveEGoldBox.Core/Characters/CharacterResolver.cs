@@ -236,6 +236,8 @@ public sealed class CharacterResolver
             SubraceId = selectedSubrace?.Id,
             SubraceName = selectedSubrace?.Name,
             SpeedFeet = speedFeet,
+            CarryingCapacityPounds = abilityScores[Ability.Strength] * 15,
+            PushDragLiftPounds = abilityScores[Ability.Strength] * 30,
             EquippedArmorId = equippedArmor?.Id,
             EquippedArmorName = equippedArmor?.Name,
             EquippedShieldId = equippedShield?.Id,
