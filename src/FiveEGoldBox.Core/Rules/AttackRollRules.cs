@@ -49,4 +49,34 @@ public static class AttackRollRules
             attackBonus,
             targetArmorClass);
     }
+
+    public static AttackRollResult ResolveResult(
+        D20RollMode rollMode,
+        int firstRoll,
+        int? secondRoll,
+        int attackBonus,
+        int targetArmorClass)
+    {
+        int naturalRoll = D20Rules.ResolveNaturalRoll(
+            rollMode,
+            firstRoll,
+            secondRoll);
+
+        AttackRollOutcome outcome = ResolveOutcome(
+            naturalRoll,
+            attackBonus,
+            targetArmorClass);
+
+        return new AttackRollResult
+        {
+            RollMode = rollMode,
+            FirstRoll = firstRoll,
+            SecondRoll = secondRoll,
+            NaturalRoll = naturalRoll,
+            AttackBonus = attackBonus,
+            Total = naturalRoll + attackBonus,
+            TargetArmorClass = targetArmorClass,
+            Outcome = outcome
+        };
+    }
 }
