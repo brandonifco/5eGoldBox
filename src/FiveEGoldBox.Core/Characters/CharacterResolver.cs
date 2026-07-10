@@ -47,6 +47,7 @@ public sealed class CharacterResolver
         ValidateCurrency(draft, issues);
         ValidateWeaponAmmunition(draft, issues);
         ValidateTwoHandedWeaponsWithShield(draft, issues);
+        ValidateSmallCharacterHeavyWeapons(draft, issues);
 
         if (draft.Level is < ProficiencyRules.MinimumLevel or > ProficiencyRules.MaximumLevel)
         {
@@ -905,6 +906,36 @@ public sealed class CharacterResolver
                 ValidationSeverity.Warning,
                 "character.weapon.two_handed.shield_equipped",
                 $"Equipped weapon '{weapon.Name}' has the two-handed property and cannot be used while shield '{equippedShield.Name}' is equipped."));
+        }
+    }
+
+    private void ValidateSmallCharacterHeavyWeapons(CharacterDraft draft, List<ValidationIssue> issues)
+    {
+        if (_ruleset is null)
+        {
+            return;
+        }
+
+        RaceDefinition? selectedRace = GetSelectedRace(draft);
+
+        if (selectedRace?.Size != CharacterSize.Small)
+        {
+            return;
+        }
+
+        IReadOnlyList<WeaponDefinition> equippedWeapons = GetEquippedWeapons(draft);
+
+        foreach (WeaponDefinition weapon in equippedWeapons)
+        {
+            if (!weapon.Properties.Contains("weapon_property.heavy"))
+            {
+                continue;
+            }
+
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Warning,
+                "character.weapon.heavy.small_size",
+                $"Small character has disadvantage on attack rolls with heavy weapon '{weapon.Name}'."));
         }
     }
     private ArmorDefinition? GetEquippedArmor(CharacterDraft draft)
