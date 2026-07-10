@@ -238,6 +238,8 @@ public sealed class CharacterResolver
             ? 0m
             : CalculateCurrencyWeight(draft.Currency);
 
+        int currencyValueInCopperPieces = CalculateCurrencyValueInCopperPieces(draft.Currency);
+
         decimal totalCarriedWeightPounds = equippedWeightPounds
             + inventoryWeightPounds
             + currencyWeightPounds;
@@ -272,6 +274,7 @@ public sealed class CharacterResolver
             TotalCarriedWeightPounds = totalCarriedWeightPounds,
             IsOverCarryingCapacity = totalCarriedWeightPounds > carryingCapacityPounds,
             InventoryItems = inventoryItems,
+            CurrencyValueInCopperPieces = currencyValueInCopperPieces,
             Currency = draft.Currency,
             EquippedArmorId = equippedArmor?.Id,
             EquippedArmorName = equippedArmor?.Name,
@@ -1229,5 +1232,13 @@ public sealed class CharacterResolver
             + currency.PlatinumPieces;
 
         return totalCoins / 50m;
+    }
+    private static int CalculateCurrencyValueInCopperPieces(CurrencyAmount currency)
+    {
+        return currency.CopperPieces
+            + (currency.SilverPieces * 10)
+            + (currency.ElectrumPieces * 50)
+            + (currency.GoldPieces * 100)
+            + (currency.PlatinumPieces * 1000);
     }
 }

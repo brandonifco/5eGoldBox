@@ -52,6 +52,8 @@ public sealed record CharacterSnapshot
     
     public CurrencyAmount Currency { get; init; } = new();
 
+    public required int CurrencyValueInCopperPieces { get; init; }
+
     public string? EquippedArmorId { get; init; }
 
     public string? EquippedArmorName { get; init; }
