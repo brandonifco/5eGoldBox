@@ -1,3 +1,4 @@
+using FiveEGoldBox.Core.Rules;
 namespace FiveEGoldBox.Core.Definitions;
 
 public sealed record RaceDefinition
@@ -5,6 +6,8 @@ public sealed record RaceDefinition
     public required string Id { get; init; }
 
     public required string Name { get; init; }
+
+    public CharacterSize Size { get; init; } = CharacterSize.Medium;
 
     public required int BaseSpeedFeet { get; init; }
 

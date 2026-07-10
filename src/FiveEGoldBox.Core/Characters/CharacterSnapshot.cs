@@ -12,6 +12,8 @@ public sealed record CharacterSnapshot
 
     public string? RaceName { get; init; }
 
+    public required CharacterSize Size { get; init; }
+
     public string? SubraceId { get; init; }
 
     public string? SubraceName { get; init; }

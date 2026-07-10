@@ -111,6 +111,7 @@ public sealed class CharacterResolver
         SubraceDefinition? selectedSubrace = GetSelectedSubrace(draft, selectedRace);
         ClassDefinition? selectedClass = GetSelectedClass(draft);
         BackgroundDefinition? selectedBackground = GetSelectedBackground(draft);
+        CharacterSize size = selectedRace?.Size ?? CharacterSize.Medium;
         ArmorDefinition? equippedArmor = GetEquippedArmor(draft);
         ArmorDefinition? equippedShield = GetEquippedShield(draft);
         IReadOnlyList<WeaponDefinition> equippedWeapons = GetEquippedWeapons(draft);
@@ -268,6 +269,7 @@ public sealed class CharacterResolver
                 abilityModifiers),
             RaceId = selectedRace?.Id,
             RaceName = selectedRace?.Name,
+            Size = size,
             SubraceId = selectedSubrace?.Id,
             SubraceName = selectedSubrace?.Name,
             SpeedFeet = speedFeet,
