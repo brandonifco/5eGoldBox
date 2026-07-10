@@ -1,3 +1,5 @@
+using FiveEGoldBox.Core.Definitions;
+
 namespace FiveEGoldBox.Core.Rules;
 
 public static class DamageRules
@@ -54,5 +56,21 @@ public static class DamageRules
         }
 
         return result;
+    }
+
+    public static DamageDice GetCriticalHitDamageDice(DamageDice damage)
+    {
+        if (damage.Count < 1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(damage),
+                damage.Count,
+                "Damage dice count must be at least 1.");
+        }
+
+        return damage with
+        {
+            Count = damage.Count * 2
+        };
     }
 }

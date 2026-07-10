@@ -1,3 +1,4 @@
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Tests;
@@ -139,5 +140,48 @@ public sealed class DamageRulesTests
             DamageRules.ApplyDamageResponses(
                 -1,
                 [DamageResponseType.Resistance]));
+    }
+
+    [Fact]
+    public void GetCriticalHitDamageDice_DoublesDamageDiceCount()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        DamageDice result = DamageRules.GetCriticalHitDamageDice(damage);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal(DieType.D8, result.Die);
+    }
+
+    [Fact]
+    public void GetCriticalHitDamageDice_WithMultipleDice_DoublesDamageDiceCount()
+    {
+        DamageDice damage = new()
+        {
+            Count = 2,
+            Die = DieType.D6
+        };
+
+        DamageDice result = DamageRules.GetCriticalHitDamageDice(damage);
+
+        Assert.Equal(4, result.Count);
+        Assert.Equal(DieType.D6, result.Die);
+    }
+
+    [Fact]
+    public void GetCriticalHitDamageDice_WithInvalidDamageDiceCount_Throws()
+    {
+        DamageDice damage = new()
+        {
+            Count = 0,
+            Die = DieType.D6
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            DamageRules.GetCriticalHitDamageDice(damage));
     }
 }
