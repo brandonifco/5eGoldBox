@@ -37,6 +37,8 @@ public sealed record CharacterSnapshot
 
     public required decimal EquippedWeightPounds { get; init; }
 
+    public required bool IsOverCarryingCapacity { get; init; }
+
     public string? EquippedArmorId { get; init; }
 
     public string? EquippedArmorName { get; init; }

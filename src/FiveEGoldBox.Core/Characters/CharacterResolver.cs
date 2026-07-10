@@ -216,6 +216,13 @@ public sealed class CharacterResolver
         int passivePerception = CalculatePassivePerception(
             skillBonuses,
             abilityModifiers);
+        int carryingCapacityPounds = abilityScores[Ability.Strength] * 15;
+        int pushDragLiftPounds = abilityScores[Ability.Strength] * 30;
+
+        decimal equippedWeightPounds = CalculateEquippedWeight(
+            equippedArmor,
+            equippedShield,
+            equippedWeapons);
 
         return new CharacterSnapshot
         {
@@ -238,10 +245,8 @@ public sealed class CharacterResolver
             SpeedFeet = speedFeet,
             CarryingCapacityPounds = abilityScores[Ability.Strength] * 15,
             PushDragLiftPounds = abilityScores[Ability.Strength] * 30,
-            EquippedWeightPounds = CalculateEquippedWeight(
-                equippedArmor,
-                equippedShield,
-                equippedWeapons),
+            EquippedWeightPounds = equippedWeightPounds,
+            IsOverCarryingCapacity = equippedWeightPounds > carryingCapacityPounds,
             EquippedArmorId = equippedArmor?.Id,
             EquippedArmorName = equippedArmor?.Name,
             EquippedShieldId = equippedShield?.Id,
