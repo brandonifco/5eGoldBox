@@ -230,6 +230,11 @@ public sealed class CharacterResolver
 
         IReadOnlyList<InventoryItemSnapshot> inventoryItems = ResolveInventoryItems(draft);
 
+        decimal inventoryWeightPounds = inventoryItems
+            .Sum(item => item.TotalWeightPounds);
+
+        decimal totalCarriedWeightPounds = equippedWeightPounds + inventoryWeightPounds;
+
         return new CharacterSnapshot
         {
             Name = draft.Name!.Trim(),
@@ -255,7 +260,9 @@ public sealed class CharacterResolver
             CarryingCapacityPounds = abilityScores[Ability.Strength] * 15,
             PushDragLiftPounds = abilityScores[Ability.Strength] * 30,
             EquippedWeightPounds = equippedWeightPounds,
-            IsOverCarryingCapacity = equippedWeightPounds > carryingCapacityPounds,
+            InventoryWeightPounds = inventoryWeightPounds,
+            TotalCarriedWeightPounds = totalCarriedWeightPounds,
+            IsOverCarryingCapacity = totalCarriedWeightPounds > carryingCapacityPounds,
             InventoryItems = inventoryItems,
             EquippedArmorId = equippedArmor?.Id,
             EquippedArmorName = equippedArmor?.Name,
