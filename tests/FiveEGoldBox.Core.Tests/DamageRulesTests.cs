@@ -319,4 +319,80 @@ public sealed class DamageRulesTests
                 [7],
                 damageBonus: 3));
     }
+
+    [Fact]
+    public void ResolveDamage_WithNoResponses_ReturnsDamageRollTotalAsFinalDamage()
+    {
+        DamageDice damage = new()
+        {
+            Count = 2,
+            Die = DieType.D6
+        };
+
+        DamageResolutionResult result = DamageRules.ResolveDamage(
+            damage,
+            [4, 5],
+            damageBonus: 3,
+            responseTypes: []);
+
+        Assert.Equal(12, result.DamageRoll.Total);
+        Assert.Empty(result.ResponseTypes);
+        Assert.Equal(12, result.FinalDamage);
+    }
+
+    [Fact]
+    public void ResolveDamage_WithResistance_AppliesResistanceToDamageRollTotal()
+    {
+        DamageDice damage = new()
+        {
+            Count = 2,
+            Die = DieType.D6
+        };
+
+        DamageResolutionResult result = DamageRules.ResolveDamage(
+            damage,
+            [4, 5],
+            damageBonus: 3,
+            responseTypes: [DamageResponseType.Resistance]);
+
+        Assert.Equal(12, result.DamageRoll.Total);
+        Assert.Equal([DamageResponseType.Resistance], result.ResponseTypes);
+        Assert.Equal(6, result.FinalDamage);
+    }
+
+    [Fact]
+    public void ResolveDamage_WithImmunity_ReturnsZeroFinalDamage()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        DamageResolutionResult result = DamageRules.ResolveDamage(
+            damage,
+            [6],
+            damageBonus: 2,
+            responseTypes: [DamageResponseType.Immunity]);
+
+        Assert.Equal(8, result.DamageRoll.Total);
+        Assert.Equal(0, result.FinalDamage);
+    }
+
+    [Fact]
+    public void ResolveDamage_WithInvalidRolls_Throws()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D6
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            DamageRules.ResolveDamage(
+                damage,
+                [7],
+                damageBonus: 3,
+                responseTypes: []));
+    }
 }

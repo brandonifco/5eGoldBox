@@ -126,4 +126,26 @@ public static class DamageRules
             Total = diceTotal + damageBonus
         };
     }
+    public static DamageResolutionResult ResolveDamage(
+    DamageDice damage,
+    IReadOnlyList<int> rolls,
+    int damageBonus,
+    IReadOnlyList<DamageResponseType> responseTypes)
+    {
+        DamageRollResult damageRoll = ResolveDamageRoll(
+            damage,
+            rolls,
+            damageBonus);
+
+        int finalDamage = ApplyDamageResponses(
+            damageRoll.Total,
+            responseTypes);
+
+        return new DamageResolutionResult
+        {
+            DamageRoll = damageRoll,
+            ResponseTypes = responseTypes,
+            FinalDamage = finalDamage
+        };
+    }
 }
