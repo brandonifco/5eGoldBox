@@ -171,4 +171,49 @@ public static class DamageRules
             FinalDamage = finalDamage
         };
     }
+    public static AttackDamageResolutionResult ResolveAttackDamage(
+    DamageDice damage,
+    AttackRollOutcome attackOutcome,
+    IReadOnlyList<int> rolls,
+    int damageBonus,
+    IReadOnlyList<DamageResponseType> responseTypes)
+    {
+        DamageDice? damageDice = GetDamageDiceForAttackOutcome(
+            damage,
+            attackOutcome);
+
+        if (damageDice is null)
+        {
+            if (rolls.Count > 0)
+            {
+                throw new ArgumentException(
+                    "Missed attacks should not include damage rolls.",
+                    nameof(rolls));
+            }
+
+            return new AttackDamageResolutionResult
+            {
+                AttackOutcome = attackOutcome,
+                DamageDice = null,
+                DamageRoll = null,
+                ResponseTypes = responseTypes,
+                FinalDamage = 0
+            };
+        }
+
+        DamageResolutionResult damageResolution = ResolveDamage(
+            damageDice,
+            rolls,
+            damageBonus,
+            responseTypes);
+
+        return new AttackDamageResolutionResult
+        {
+            AttackOutcome = attackOutcome,
+            DamageDice = damageDice,
+            DamageRoll = damageResolution.DamageRoll,
+            ResponseTypes = responseTypes,
+            FinalDamage = damageResolution.FinalDamage
+        };
+    }
 }

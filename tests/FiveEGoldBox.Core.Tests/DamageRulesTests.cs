@@ -462,4 +462,118 @@ public sealed class DamageRulesTests
                 damageBonus: 3,
                 responseTypes: []));
     }
+
+    [Fact]
+    public void ResolveAttackDamage_WithMiss_ReturnsZeroDamageWithoutDamageRoll()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        AttackDamageResolutionResult result = DamageRules.ResolveAttackDamage(
+            damage,
+            AttackRollOutcome.Miss,
+            rolls: [],
+            damageBonus: 3,
+            responseTypes: []);
+
+        Assert.Equal(AttackRollOutcome.Miss, result.AttackOutcome);
+        Assert.Null(result.DamageDice);
+        Assert.Null(result.DamageRoll);
+        Assert.Empty(result.ResponseTypes);
+        Assert.Equal(0, result.FinalDamage);
+    }
+
+    [Fact]
+    public void ResolveAttackDamage_WithMissAndDamageRolls_Throws()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        Assert.Throws<ArgumentException>(() =>
+            DamageRules.ResolveAttackDamage(
+                damage,
+                AttackRollOutcome.Miss,
+                rolls: [6],
+                damageBonus: 3,
+                responseTypes: []));
+    }
+
+    [Fact]
+    public void ResolveAttackDamage_WithHit_UsesNormalDamageDice()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        AttackDamageResolutionResult result = DamageRules.ResolveAttackDamage(
+            damage,
+            AttackRollOutcome.Hit,
+            rolls: [6],
+            damageBonus: 3,
+            responseTypes: []);
+
+        Assert.Equal(AttackRollOutcome.Hit, result.AttackOutcome);
+        Assert.NotNull(result.DamageDice);
+        Assert.Equal(1, result.DamageDice.Count);
+        Assert.Equal(DieType.D8, result.DamageDice.Die);
+        Assert.NotNull(result.DamageRoll);
+        Assert.Equal(9, result.DamageRoll.Total);
+        Assert.Equal(9, result.FinalDamage);
+    }
+
+    [Fact]
+    public void ResolveAttackDamage_WithCriticalHit_UsesDoubledDamageDice()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        AttackDamageResolutionResult result = DamageRules.ResolveAttackDamage(
+            damage,
+            AttackRollOutcome.CriticalHit,
+            rolls: [6, 4],
+            damageBonus: 3,
+            responseTypes: []);
+
+        Assert.Equal(AttackRollOutcome.CriticalHit, result.AttackOutcome);
+        Assert.NotNull(result.DamageDice);
+        Assert.Equal(2, result.DamageDice.Count);
+        Assert.Equal(DieType.D8, result.DamageDice.Die);
+        Assert.NotNull(result.DamageRoll);
+        Assert.Equal(10, result.DamageRoll.DiceTotal);
+        Assert.Equal(13, result.DamageRoll.Total);
+        Assert.Equal(13, result.FinalDamage);
+    }
+
+    [Fact]
+    public void ResolveAttackDamage_WithResistance_AppliesResponseAfterDamageRoll()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+
+        AttackDamageResolutionResult result = DamageRules.ResolveAttackDamage(
+            damage,
+            AttackRollOutcome.Hit,
+            rolls: [6],
+            damageBonus: 3,
+            responseTypes: [DamageResponseType.Resistance]);
+
+        Assert.NotNull(result.DamageRoll);
+        Assert.Equal(9, result.DamageRoll.Total);
+        Assert.Equal([DamageResponseType.Resistance], result.ResponseTypes);
+        Assert.Equal(4, result.FinalDamage);
+    }
 }
