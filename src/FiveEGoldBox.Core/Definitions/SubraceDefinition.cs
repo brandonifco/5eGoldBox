@@ -18,5 +18,8 @@ public sealed record SubraceDefinition
         = Array.Empty<string>();
 
     public IReadOnlyList<SenseDefinition> Senses { get; init; }
-        = Array.Empty<SenseDefinition>();        
+        = Array.Empty<SenseDefinition>();
+
+    public IReadOnlyList<MovementSpeedDefinition> MovementSpeeds { get; init; }
+        = Array.Empty<MovementSpeedDefinition>();
 }

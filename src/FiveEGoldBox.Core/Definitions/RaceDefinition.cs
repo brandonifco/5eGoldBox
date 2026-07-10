@@ -25,4 +25,7 @@ public sealed record RaceDefinition
 
     public IReadOnlyList<SenseDefinition> Senses { get; init; }
         = Array.Empty<SenseDefinition>();
+        
+    public IReadOnlyList<MovementSpeedDefinition> MovementSpeeds { get; init; }
+        = Array.Empty<MovementSpeedDefinition>();
 }

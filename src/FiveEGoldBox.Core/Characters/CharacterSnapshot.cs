@@ -35,8 +35,11 @@ public sealed record CharacterSnapshot
 
     public int? SpeedFeet { get; init; }
 
+    public IReadOnlyList<CharacterMovementSpeed> MovementSpeeds { get; init; }
+        = Array.Empty<CharacterMovementSpeed>();
+
     public IReadOnlyList<CharacterSense> Senses { get; init; }
-        = Array.Empty<CharacterSense>();    
+        = Array.Empty<CharacterSense>();
 
     public required int CarryingCapacityPounds { get; init; }
 
@@ -51,16 +54,16 @@ public sealed record CharacterSnapshot
     public required decimal TotalCarriedWeightPounds { get; init; }
 
     public required bool IsOverCarryingCapacity { get; init; }
-    
+
     public IReadOnlyList<InventoryItemSnapshot> InventoryItems { get; init; }
         = Array.Empty<InventoryItemSnapshot>();
-    
+
     public CurrencyAmount Currency { get; init; } = new();
 
     public required int CurrencyValueInCopperPieces { get; init; }
 
     public required decimal CurrencyValueInGoldPieces { get; init; }
-    
+
     public string? EquippedArmorId { get; init; }
 
     public string? EquippedArmorName { get; init; }

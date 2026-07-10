@@ -154,6 +154,11 @@ public sealed class CharacterResolver
             equippedArmor,
             abilityScores);
 
+        IReadOnlyList<CharacterMovementSpeed> movementSpeeds = ResolveMovementSpeeds(
+            selectedRace,
+            selectedSubrace,
+            speedFeet);
+
         IReadOnlyList<string> languages = (selectedRace?.Languages ?? Array.Empty<string>())
             .Concat(selectedSubrace?.Languages ?? Array.Empty<string>())
             .Concat(selectedBackground?.Languages ?? Array.Empty<string>())
@@ -278,6 +283,7 @@ public sealed class CharacterResolver
             SubraceId = selectedSubrace?.Id,
             SubraceName = selectedSubrace?.Name,
             SpeedFeet = speedFeet,
+            MovementSpeeds = movementSpeeds,
             Senses = senses,
             CarryingCapacityPounds = abilityScores[Ability.Strength] * 15,
             PushDragLiftPounds = abilityScores[Ability.Strength] * 30,
@@ -329,6 +335,49 @@ public sealed class CharacterResolver
                     .Distinct()
                     .ToArray()
         };
+    }
+    private static IReadOnlyList<CharacterMovementSpeed> ResolveMovementSpeeds(
+        RaceDefinition? selectedRace,
+        SubraceDefinition? selectedSubrace,
+        int? speedFeet)
+    {
+        Dictionary<MovementMode, int> speedsByMode = [];
+
+        AddMovementSpeeds(speedsByMode, selectedRace?.MovementSpeeds);
+        AddMovementSpeeds(speedsByMode, selectedSubrace?.MovementSpeeds);
+
+        if (speedFeet is not null)
+        {
+            speedsByMode[MovementMode.Walk] = speedFeet.Value;
+        }
+
+        return speedsByMode
+            .OrderBy(speed => speed.Key)
+            .Select(speed => new CharacterMovementSpeed
+            {
+                Mode = speed.Key,
+                SpeedFeet = speed.Value
+            })
+            .ToArray();
+    }
+
+    private static void AddMovementSpeeds(
+        Dictionary<MovementMode, int> speedsByMode,
+        IReadOnlyList<MovementSpeedDefinition>? movementSpeeds)
+    {
+        if (movementSpeeds is null)
+        {
+            return;
+        }
+
+        foreach (MovementSpeedDefinition movementSpeed in movementSpeeds)
+        {
+            if (!speedsByMode.TryGetValue(movementSpeed.Mode, out int existingSpeedFeet)
+                || movementSpeed.SpeedFeet > existingSpeedFeet)
+            {
+                speedsByMode[movementSpeed.Mode] = movementSpeed.SpeedFeet;
+            }
+        }
     }
     private static IReadOnlyList<CharacterSense> ResolveSenses(
         RaceDefinition? selectedRace,
