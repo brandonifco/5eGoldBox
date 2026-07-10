@@ -24,4 +24,7 @@ public sealed record WeaponDefinition
     public int? LongRangeFeet { get; init; }
 
     public decimal WeightPounds { get; init; }
+    
+    public int? CostInCopperPieces { get; init; }
+
 }

@@ -8,6 +8,8 @@ public sealed record EquipmentItemDefinition
 
     public decimal WeightPounds { get; init; }
 
+    public int? CostInCopperPieces { get; init; }
+
     public IReadOnlyList<string> Tags { get; init; }
         = Array.Empty<string>();
 }

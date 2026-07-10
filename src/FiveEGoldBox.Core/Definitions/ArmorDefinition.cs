@@ -23,4 +23,7 @@ public sealed record ArmorDefinition
     public bool HasStealthDisadvantage { get; init; }
 
     public decimal WeightPounds { get; init; }
+
+    public int? CostInCopperPieces { get; init; }
+
 }
