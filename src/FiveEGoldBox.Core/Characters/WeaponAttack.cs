@@ -27,7 +27,9 @@ public sealed record WeaponAttack
 
     public IReadOnlyList<string> DisadvantageReasons { get; init; }
         = Array.Empty<string>(); 
-    
+
+    public required D20RollMode AttackRollMode { get; init; }
+
     public required DamageDice Damage { get; init; }
 
     public DamageDice? VersatileDamage { get; init; }

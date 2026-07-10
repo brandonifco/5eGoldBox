@@ -1267,7 +1267,9 @@ public sealed class CharacterResolver
             size);
 
         bool hasDisadvantage = disadvantageReasons.Count > 0;
-
+        D20RollMode attackRollMode = D20Rules.ResolveRollMode(
+            hasAdvantage: false,
+            hasDisadvantage);
         int? ammunitionQuantityAvailable = weapon.AmmunitionItemId is null
             ? null
             : inventoryItems
@@ -1288,6 +1290,7 @@ public sealed class CharacterResolver
             AttackBonus = attackBonus,
             HasDisadvantage = hasDisadvantage,
             DisadvantageReasons = disadvantageReasons,
+            AttackRollMode = attackRollMode,
             Damage = weapon.Damage,
             VersatileDamage = weapon.VersatileDamage,
             DamageType = weapon.DamageType,
