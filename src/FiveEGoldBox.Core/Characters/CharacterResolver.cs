@@ -46,6 +46,7 @@ public sealed class CharacterResolver
         ValidateInventoryItems(draft, issues);
         ValidateCurrency(draft, issues);
         ValidateWeaponAmmunition(draft, issues);
+        ValidateTwoHandedWeaponsWithShield(draft, issues);
 
         if (draft.Level is < ProficiencyRules.MinimumLevel or > ProficiencyRules.MaximumLevel)
         {
@@ -872,6 +873,36 @@ public sealed class CharacterResolver
                 ValidationSeverity.Warning,
                 "character.weapon.ammunition.missing",
                 $"Equipped weapon '{weapon.Name}' requires ammunition item '{weapon.AmmunitionItemId}', but none is available."));
+        }
+    }
+
+    private void ValidateTwoHandedWeaponsWithShield(CharacterDraft draft, List<ValidationIssue> issues)
+    {
+        if (_ruleset is null)
+        {
+            return;
+        }
+
+        ArmorDefinition? equippedShield = GetEquippedShield(draft);
+
+        if (equippedShield is null)
+        {
+            return;
+        }
+
+        IReadOnlyList<WeaponDefinition> equippedWeapons = GetEquippedWeapons(draft);
+
+        foreach (WeaponDefinition weapon in equippedWeapons)
+        {
+            if (!weapon.Properties.Contains("weapon_property.two_handed"))
+            {
+                continue;
+            }
+
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Warning,
+                "character.weapon.two_handed.shield_equipped",
+                $"Equipped weapon '{weapon.Name}' has the two-handed property and cannot be used while shield '{equippedShield.Name}' is equipped."));
         }
     }
     private ArmorDefinition? GetEquippedArmor(CharacterDraft draft)
