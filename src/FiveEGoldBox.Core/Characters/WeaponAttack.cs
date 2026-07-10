@@ -23,6 +23,8 @@ public sealed record WeaponAttack
 
     public required int AttackBonus { get; init; }
 
+    public required bool HasDisadvantage { get; init; }
+
     public required DamageDice Damage { get; init; }
 
     public DamageDice? VersatileDamage { get; init; }

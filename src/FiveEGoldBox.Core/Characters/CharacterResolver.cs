@@ -220,7 +220,8 @@ public sealed class CharacterResolver
                 selectedClass,
                 abilityModifiers,
                 proficiencyBonus,
-                draft.InventoryItems))
+                draft.InventoryItems,
+                size))
             .ToArray();
 
         int passivePerception = CalculatePassivePerception(
@@ -1084,13 +1085,21 @@ public sealed class CharacterResolver
         ClassDefinition? selectedClass,
         IReadOnlyDictionary<Ability, int> abilityModifiers,
         int proficiencyBonus,
-        IReadOnlyList<InventoryItemDraft> inventoryItems)
+        IReadOnlyList<InventoryItemDraft> inventoryItems,
+        CharacterSize size)
     {
         Ability attackAbility = GetWeaponAttackAbility(weapon, abilityModifiers);
         int abilityModifier = abilityModifiers[attackAbility];
 
         bool isProficient = IsProficientWithWeapon(weapon, selectedClass);
         int appliedProficiencyBonus = isProficient ? proficiencyBonus : 0;
+
+        int attackBonus = abilityModifier + appliedProficiencyBonus;
+        int damageBonus = abilityModifier;
+
+        bool hasDisadvantage = size == CharacterSize.Small
+            && weapon.Properties.Contains("weapon_property.heavy");
+
         int? ammunitionQuantityAvailable = weapon.AmmunitionItemId is null
             ? null
             : inventoryItems
@@ -1108,11 +1117,12 @@ public sealed class CharacterResolver
             AbilityModifier = abilityModifier,
             IsProficient = isProficient,
             ProficiencyBonus = appliedProficiencyBonus,
-            AttackBonus = abilityModifier + appliedProficiencyBonus,
+            AttackBonus = attackBonus,
+            HasDisadvantage = hasDisadvantage,
             Damage = weapon.Damage,
             VersatileDamage = weapon.VersatileDamage,
             DamageType = weapon.DamageType,
-            DamageBonus = abilityModifier,
+            DamageBonus = damageBonus,
             Properties = weapon.Properties,
             ReachFeet = weapon.ReachFeet,
             NormalRangeFeet = weapon.NormalRangeFeet,

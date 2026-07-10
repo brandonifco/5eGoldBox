@@ -80,6 +80,78 @@ public sealed class SmallCharacterHeavyWeaponTests
             issue => issue.Code == "character.weapon.heavy.small_size");
     }
 
+    [Fact]
+    public void Resolve_WithSmallCharacterAndHeavyWeapon_SetsWeaponAttackDisadvantage()
+    {
+        RulesetDefinition ruleset = CreateRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.halfling",
+            EquippedWeaponIds =
+            [
+                "weapon.greatsword"
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        CharacterSnapshot snapshot = resolver.Resolve(draft);
+
+        WeaponAttack attack = Assert.Single(snapshot.WeaponAttacks);
+
+        Assert.Equal("weapon.greatsword", attack.WeaponId);
+        Assert.True(attack.HasDisadvantage);
+    }
+
+    [Fact]
+    public void Resolve_WithMediumCharacterAndHeavyWeapon_DoesNotSetWeaponAttackDisadvantage()
+    {
+        RulesetDefinition ruleset = CreateRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.human",
+            EquippedWeaponIds =
+            [
+                "weapon.greatsword"
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        CharacterSnapshot snapshot = resolver.Resolve(draft);
+
+        WeaponAttack attack = Assert.Single(snapshot.WeaponAttacks);
+
+        Assert.Equal("weapon.greatsword", attack.WeaponId);
+        Assert.False(attack.HasDisadvantage);
+    }
+
+    [Fact]
+    public void Resolve_WithSmallCharacterAndNonHeavyWeapon_DoesNotSetWeaponAttackDisadvantage()
+    {
+        RulesetDefinition ruleset = CreateRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.halfling",
+            EquippedWeaponIds =
+            [
+                "weapon.longsword"
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        CharacterSnapshot snapshot = resolver.Resolve(draft);
+
+        WeaponAttack attack = Assert.Single(snapshot.WeaponAttacks);
+
+        Assert.Equal("weapon.longsword", attack.WeaponId);
+        Assert.False(attack.HasDisadvantage);
+    }
+
     private static CharacterDraft CreateValidDraft()
     {
         return new CharacterDraft
