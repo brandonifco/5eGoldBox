@@ -237,6 +237,9 @@ public sealed class CharacterResolver
             BackgroundName = selectedBackground?.Name,
             BackgroundFeatureId = selectedBackground?.FeatureId,
             HitDie = selectedClass?.HitDie,
+            HitDiceCount = selectedClass is null
+                ? null
+                : draft.Level,
             MaxHitPoints = CalculateMaxHitPoints(
                 selectedClass,
                 draft.Level,

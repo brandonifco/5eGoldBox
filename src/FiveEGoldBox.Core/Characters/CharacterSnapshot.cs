@@ -27,6 +27,8 @@ public sealed record CharacterSnapshot
     public string? BackgroundFeatureId { get; init; }
     public DieType? HitDie { get; init; }
 
+    public int? HitDiceCount { get; init; }
+
     public int? MaxHitPoints { get; init; }
 
     public int? SpeedFeet { get; init; }
