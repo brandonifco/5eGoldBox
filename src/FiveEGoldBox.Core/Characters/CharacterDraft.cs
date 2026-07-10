@@ -31,4 +31,7 @@ public sealed record CharacterDraft
 
     public IReadOnlyList<string> EquippedWeaponIds { get; init; }
         = Array.Empty<string>();
+
+    public IReadOnlyList<InventoryItemDraft> InventoryItems { get; init; }
+        = Array.Empty<InventoryItemDraft>();
 }
