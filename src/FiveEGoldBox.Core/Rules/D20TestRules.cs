@@ -21,4 +21,52 @@ public static class D20TestRules
             ? D20TestOutcome.Success
             : D20TestOutcome.Failure;
     }
+
+    public static D20TestOutcome ResolveOutcome(
+        D20RollMode rollMode,
+        int firstRoll,
+        int? secondRoll,
+        int bonus,
+        int difficultyClass)
+    {
+        int naturalRoll = D20Rules.ResolveNaturalRoll(
+            rollMode,
+            firstRoll,
+            secondRoll);
+
+        return ResolveOutcome(
+            naturalRoll,
+            bonus,
+            difficultyClass);
+    }
+
+    public static D20TestResult ResolveResult(
+        D20RollMode rollMode,
+        int firstRoll,
+        int? secondRoll,
+        int bonus,
+        int difficultyClass)
+    {
+        int naturalRoll = D20Rules.ResolveNaturalRoll(
+            rollMode,
+            firstRoll,
+            secondRoll);
+
+        D20TestOutcome outcome = ResolveOutcome(
+            naturalRoll,
+            bonus,
+            difficultyClass);
+
+        return new D20TestResult
+        {
+            RollMode = rollMode,
+            FirstRoll = firstRoll,
+            SecondRoll = secondRoll,
+            NaturalRoll = naturalRoll,
+            Bonus = bonus,
+            Total = naturalRoll + bonus,
+            DifficultyClass = difficultyClass,
+            Outcome = outcome
+        };
+    }
 }
