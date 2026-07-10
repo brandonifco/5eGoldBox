@@ -44,6 +44,7 @@ public sealed class CharacterResolver
         ValidateWeaponProficiency(draft, issues);
         ValidateCarryingCapacity(draft, issues);
         ValidateInventoryItems(draft, issues);
+        ValidateCurrency(draft, issues);
 
         if (draft.Level is < ProficiencyRules.MinimumLevel or > ProficiencyRules.MaximumLevel)
         {
@@ -1160,5 +1161,42 @@ public sealed class CharacterResolver
                     : definition.WeightPounds * inventoryItem.Quantity;
             })
             .Sum();
+    }
+    private static void ValidateCurrency(CharacterDraft draft, List<ValidationIssue> issues)
+    {
+        if (draft.Currency.CopperPieces < 0)
+        {
+            AddNegativeCurrencyIssue(issues, "CopperPieces");
+        }
+
+        if (draft.Currency.SilverPieces < 0)
+        {
+            AddNegativeCurrencyIssue(issues, "SilverPieces");
+        }
+
+        if (draft.Currency.ElectrumPieces < 0)
+        {
+            AddNegativeCurrencyIssue(issues, "ElectrumPieces");
+        }
+
+        if (draft.Currency.GoldPieces < 0)
+        {
+            AddNegativeCurrencyIssue(issues, "GoldPieces");
+        }
+
+        if (draft.Currency.PlatinumPieces < 0)
+        {
+            AddNegativeCurrencyIssue(issues, "PlatinumPieces");
+        }
+    }
+
+    private static void AddNegativeCurrencyIssue(
+        List<ValidationIssue> issues,
+        string currencyPropertyName)
+    {
+        issues.Add(new ValidationIssue(
+            ValidationSeverity.Error,
+            "character.currency.amount.invalid",
+            $"{currencyPropertyName} must not be negative."));
     }
 }
