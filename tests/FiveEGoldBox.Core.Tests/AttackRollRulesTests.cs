@@ -70,4 +70,55 @@ public sealed class AttackRollRulesTests
                 attackBonus: 0,
                 targetArmorClass: 10));
     }
+
+    [Fact]
+    public void ResolveOutcome_WithRollModeNormal_UsesFirstRoll()
+    {
+        AttackRollOutcome result = AttackRollRules.ResolveOutcome(
+            D20RollMode.Normal,
+            firstRoll: 12,
+            secondRoll: 20,
+            attackBonus: 5,
+            targetArmorClass: 17);
+
+        Assert.Equal(AttackRollOutcome.Hit, result);
+    }
+
+    [Fact]
+    public void ResolveOutcome_WithRollModeAdvantage_UsesHigherRoll()
+    {
+        AttackRollOutcome result = AttackRollRules.ResolveOutcome(
+            D20RollMode.Advantage,
+            firstRoll: 7,
+            secondRoll: 20,
+            attackBonus: 0,
+            targetArmorClass: 30);
+
+        Assert.Equal(AttackRollOutcome.CriticalHit, result);
+    }
+
+    [Fact]
+    public void ResolveOutcome_WithRollModeDisadvantage_UsesLowerRoll()
+    {
+        AttackRollOutcome result = AttackRollRules.ResolveOutcome(
+            D20RollMode.Disadvantage,
+            firstRoll: 20,
+            secondRoll: 1,
+            attackBonus: 99,
+            targetArmorClass: 10);
+
+        Assert.Equal(AttackRollOutcome.Miss, result);
+    }
+
+    [Fact]
+    public void ResolveOutcome_WithRollModeAdvantageAndMissingSecondRoll_Throws()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            AttackRollRules.ResolveOutcome(
+                D20RollMode.Advantage,
+                firstRoll: 7,
+                secondRoll: null,
+                attackBonus: 5,
+                targetArmorClass: 17));
+    }
 }

@@ -31,4 +31,22 @@ public static class AttackRollRules
             ? AttackRollOutcome.Hit
             : AttackRollOutcome.Miss;
     }
+
+    public static AttackRollOutcome ResolveOutcome(
+        D20RollMode rollMode,
+        int firstRoll,
+        int? secondRoll,
+        int attackBonus,
+        int targetArmorClass)
+    {
+        int naturalRoll = D20Rules.ResolveNaturalRoll(
+            rollMode,
+            firstRoll,
+            secondRoll);
+
+        return ResolveOutcome(
+            naturalRoll,
+            attackBonus,
+            targetArmorClass);
+    }
 }
