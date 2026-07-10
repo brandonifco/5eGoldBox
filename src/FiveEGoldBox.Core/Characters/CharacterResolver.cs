@@ -234,7 +234,9 @@ public sealed class CharacterResolver
         decimal inventoryWeightPounds = inventoryItems
             .Sum(item => item.TotalWeightPounds);
 
-        decimal currencyWeightPounds = CalculateCurrencyWeight(draft.Currency);
+        decimal currencyWeightPounds = HasNegativeCurrencyAmount(draft.Currency)
+            ? 0m
+            : CalculateCurrencyWeight(draft.Currency);
 
         decimal totalCarriedWeightPounds = equippedWeightPounds
             + inventoryWeightPounds
@@ -312,6 +314,14 @@ public sealed class CharacterResolver
         };
     }
 
+    private static bool HasNegativeCurrencyAmount(CurrencyAmount currency)
+    {
+        return currency.CopperPieces < 0
+            || currency.SilverPieces < 0
+            || currency.ElectrumPieces < 0
+            || currency.GoldPieces < 0
+            || currency.PlatinumPieces < 0;
+    }
     private static decimal CalculateEquippedWeight(
         ArmorDefinition? equippedArmor,
         ArmorDefinition? equippedShield,
@@ -1113,7 +1123,13 @@ public sealed class CharacterResolver
 
         decimal inventoryWeightPounds = CalculateInventoryWeight(draft);
 
-        decimal totalCarriedWeightPounds = equippedWeightPounds + inventoryWeightPounds;
+        decimal currencyWeightPounds = HasNegativeCurrencyAmount(draft.Currency)
+            ? 0m
+            : CalculateCurrencyWeight(draft.Currency);
+
+        decimal totalCarriedWeightPounds = equippedWeightPounds
+            + inventoryWeightPounds
+            + currencyWeightPounds;
 
         if (totalCarriedWeightPounds <= carryingCapacityPounds)
         {
