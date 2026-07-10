@@ -45,6 +45,7 @@ public sealed class CharacterResolver
         ValidateCarryingCapacity(draft, issues);
         ValidateInventoryItems(draft, issues);
         ValidateCurrency(draft, issues);
+        ValidateWeaponAmmunition(draft, issues);
 
         if (draft.Level is < ProficiencyRules.MinimumLevel or > ProficiencyRules.MaximumLevel)
         {
@@ -416,7 +417,7 @@ public sealed class CharacterResolver
                     UnitValueInCopperPieces = definition.CostInCopperPieces,
                     TotalValueInCopperPieces = definition.CostInCopperPieces is null
                         ? null
-                        : definition.CostInCopperPieces * inventoryItem.Quantity,                    
+                        : definition.CostInCopperPieces * inventoryItem.Quantity,
                     Tags = definition.Tags
                 };
             })
@@ -838,6 +839,39 @@ public sealed class CharacterResolver
                     "character.inventory.item_not_found",
                     $"Inventory item '{inventoryItem.ItemId}' was not found in ruleset '{_ruleset.Id}'."));
             }
+        }
+    }
+
+    private void ValidateWeaponAmmunition(CharacterDraft draft, List<ValidationIssue> issues)
+    {
+        if (_ruleset is null)
+        {
+            return;
+        }
+
+        IReadOnlyList<WeaponDefinition> equippedWeapons = GetEquippedWeapons(draft);
+
+        foreach (WeaponDefinition weapon in equippedWeapons)
+        {
+            if (weapon.AmmunitionItemId is null)
+            {
+                continue;
+            }
+
+            int ammunitionQuantity = draft.InventoryItems
+                .Where(item => item.ItemId == weapon.AmmunitionItemId)
+                .Where(item => item.Quantity > 0)
+                .Sum(item => item.Quantity);
+
+            if (ammunitionQuantity > 0)
+            {
+                continue;
+            }
+
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Warning,
+                "character.weapon.ammunition.missing",
+                $"Equipped weapon '{weapon.Name}' requires ammunition item '{weapon.AmmunitionItemId}', but none is available."));
         }
     }
     private ArmorDefinition? GetEquippedArmor(CharacterDraft draft)

@@ -1,6 +1,7 @@
 using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
+using FiveEGoldBox.Core.Validation;
 
 namespace FiveEGoldBox.Core.Tests;
 
@@ -129,6 +130,87 @@ public sealed class AmmunitionWeaponTests
         Assert.Equal("weapon.longsword", attack.WeaponId);
         Assert.Null(attack.AmmunitionItemId);
         Assert.Null(attack.AmmunitionQuantityAvailable);
+    }
+
+    [Fact]
+    public void Validate_WithAmmunitionWeaponAndNoMatchingInventory_AddsMissingAmmunitionWarning()
+    {
+        RulesetDefinition ruleset = CreateRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.test",
+            EquippedWeaponIds =
+            [
+                "weapon.shortbow"
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        ValidationResult result = resolver.Validate(draft);
+
+        ValidationIssue issue = Assert.Single(
+            result.Issues,
+            issue => issue.Code == "character.weapon.ammunition.missing");
+
+        Assert.Equal(ValidationSeverity.Warning, issue.Severity);
+        Assert.Contains("Shortbow", issue.Message);
+        Assert.Contains("equipment.arrow", issue.Message);
+    }
+
+    [Fact]
+    public void Validate_WithAmmunitionWeaponAndMatchingInventory_DoesNotAddMissingAmmunitionWarning()
+    {
+        RulesetDefinition ruleset = CreateRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.test",
+            EquippedWeaponIds =
+            [
+                "weapon.shortbow"
+            ],
+            InventoryItems =
+            [
+                new InventoryItemDraft
+                {
+                    ItemId = "equipment.arrow",
+                    Quantity = 20
+                }
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        ValidationResult result = resolver.Validate(draft);
+
+        Assert.DoesNotContain(
+            result.Issues,
+            issue => issue.Code == "character.weapon.ammunition.missing");
+    }
+
+    [Fact]
+    public void Validate_WithNonAmmunitionWeapon_DoesNotAddMissingAmmunitionWarning()
+    {
+        RulesetDefinition ruleset = CreateRuleset();
+
+        CharacterDraft draft = CreateValidDraft() with
+        {
+            RaceId = "race.test",
+            EquippedWeaponIds =
+            [
+                "weapon.longsword"
+            ]
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        ValidationResult result = resolver.Validate(draft);
+
+        Assert.DoesNotContain(
+            result.Issues,
+            issue => issue.Code == "character.weapon.ammunition.missing");
     }
 
     private static CharacterDraft CreateValidDraft()
