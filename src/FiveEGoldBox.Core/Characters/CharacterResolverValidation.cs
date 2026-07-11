@@ -310,7 +310,7 @@ public sealed partial class CharacterResolver
 
     private void ValidateBackgroundSelection(CharacterDraft draft, List<ValidationIssue> issues)
     {
-        if (_ruleset is null || _ruleset.Backgrounds.Count == 0)
+        if (_ruleset is null || _rulesetIndex is null || _rulesetIndex.BackgroundsById.Count == 0)
         {
             return;
         }
@@ -325,7 +325,7 @@ public sealed partial class CharacterResolver
             return;
         }
 
-        bool backgroundExists = _ruleset.Backgrounds.Any(background => background.Id == draft.BackgroundId);
+        bool backgroundExists = _rulesetIndex.BackgroundsById.ContainsKey(draft.BackgroundId);
 
         if (!backgroundExists)
         {
