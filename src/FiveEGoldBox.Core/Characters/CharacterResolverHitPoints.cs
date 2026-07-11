@@ -16,16 +16,19 @@ public sealed partial class CharacterResolver
         }
 
         int constitutionModifier = abilityModifiers[Ability.Constitution];
-        int firstLevelHitPoints = (int)selectedClass.HitDie + constitutionModifier;
+        int firstLevelHitPoints = Math.Max(
+            1,
+            (int)selectedClass.HitDie + constitutionModifier);
 
         if (level == 1)
         {
             return firstLevelHitPoints;
         }
 
-        int additionalHitPointsPerLevel =
+        int additionalHitPointsPerLevel = Math.Max(
+            1,
             GetFixedHitPointsAfterFirstLevel(selectedClass.HitDie)
-            + constitutionModifier;
+                + constitutionModifier);
 
         return firstLevelHitPoints
             + ((level - 1) * additionalHitPointsPerLevel);
