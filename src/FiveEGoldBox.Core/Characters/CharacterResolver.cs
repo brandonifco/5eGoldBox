@@ -88,55 +88,23 @@ public sealed partial class CharacterResolver
                 .Distinct()
                 .ToArray();
 
-        IReadOnlyList<string> skillProficiencies = (selectedClass is null
-                ? Array.Empty<string>()
-                : draft.SelectedSkillIds)
-            .Concat(selectedBackground?.SkillProficiencies ?? Array.Empty<string>())
-            .Distinct()
-            .ToArray();
+        IReadOnlyList<string> skillProficiencies = ResolveSkillProficiencies(
+            draft,
+            selectedClass,
+            selectedBackground);
 
         int proficiencyBonus = ProficiencyRules.GetBonus(draft.Level);
 
-        IReadOnlyList<SavingThrowBonus> savingThrowBonuses = Enum
-            .GetValues<Ability>()
-            .Select(ability =>
-            {
-                bool isProficient = selectedClass?.SavingThrowProficiencies.Contains(ability) ?? false;
-                int abilityModifier = abilityModifiers[ability];
+        IReadOnlyList<SavingThrowBonus> savingThrowBonuses = ResolveSavingThrowBonuses(
+            selectedClass,
+            abilityModifiers,
+            proficiencyBonus);
 
-                return new SavingThrowBonus
-                {
-                    Ability = ability,
-                    AbilityModifier = abilityModifier,
-                    IsProficient = isProficient,
-                    ProficiencyBonus = isProficient ? proficiencyBonus : 0,
-                    TotalBonus = abilityModifier + (isProficient ? proficiencyBonus : 0)
-                };
-            })
-            .ToArray();
-
-        IReadOnlyList<SkillBonus> skillBonuses = _ruleset is null
-            ? Array.Empty<SkillBonus>()
-            : _ruleset.Skills
-                .Select(skill =>
-                {
-                    bool isProficient = skillProficiencies.Contains(skill.Id);
-                    int abilityModifier = abilityModifiers[skill.Ability];
-
-                    return new SkillBonus
-                    {
-                        SkillId = skill.Id,
-                        SkillName = skill.Name,
-                        Ability = skill.Ability,
-                        AbilityModifier = abilityModifier,
-                        IsProficient = isProficient,
-                        ProficiencyBonus = isProficient ? proficiencyBonus : 0,
-                        TotalBonus = abilityModifier + (isProficient ? proficiencyBonus : 0),
-                        HasDisadvantage = skill.Id == RuleIds.Skills.Stealth
-                            && (equippedArmor?.HasStealthDisadvantage ?? false)
-                    };
-                })
-                .ToArray();
+        IReadOnlyList<SkillBonus> skillBonuses = ResolveSkillBonuses(
+            skillProficiencies,
+            abilityModifiers,
+            proficiencyBonus,
+            equippedArmor);
 
         IReadOnlyList<WeaponAttack> weaponAttacks = equippedWeapons
             .Select(weapon => CreateWeaponAttack(
@@ -538,20 +506,7 @@ public sealed partial class CharacterResolver
         return armorClass;
     }
 
-    private static int CalculatePassivePerception(
-        IReadOnlyList<SkillBonus> skillBonuses,
-        IReadOnlyDictionary<Ability, int> abilityModifiers)
-    {
-        SkillBonus? perception = skillBonuses.SingleOrDefault(
-            skill => skill.SkillId == RuleIds.Skills.Perception);
 
-        if (perception is not null)
-        {
-            return 10 + perception.TotalBonus;
-        }
-
-        return 10 + abilityModifiers[Ability.Wisdom];
-    }
 
 
     private static int? CalculateSpeedFeet(
