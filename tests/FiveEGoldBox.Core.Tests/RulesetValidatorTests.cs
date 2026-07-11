@@ -181,6 +181,146 @@ public sealed class RulesetValidatorTests
     }
 
     [Fact]
+    public void Validate_WithInvalidTopLevelDefinitionNumericValues_ReturnsErrors()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Races =
+            [
+                CreateRace("race.invalid", "Invalid Race") with
+                {
+                    BaseSpeedFeet = 0,
+                    MovementSpeeds =
+                    [
+                        new MovementSpeedDefinition
+                        {
+                            Mode = MovementMode.Fly,
+                            SpeedFeet = 0
+                        }
+                    ],
+                    Senses =
+                    [
+                        new SenseDefinition
+                        {
+                            Type = SenseType.Darkvision,
+                            RangeFeet = 0
+                        }
+                    ]
+                }
+            ],
+            Armors =
+            [
+                CreateArmor("armor.invalid", "Invalid Armor") with
+                {
+                    BaseArmorClass = 0,
+                    MaximumDexterityModifier = -1,
+                    StrengthRequirement = -1,
+                    WeightPounds = -0.1m,
+                    CostInCopperPieces = -1
+                }
+            ],
+            Weapons =
+            [
+                CreateWeapon("weapon.invalid", "Invalid Weapon") with
+                {
+                    Damage = new DamageDice
+                    {
+                        Count = 0,
+                        Die = DieType.D6
+                    },
+                    VersatileDamage = new DamageDice
+                    {
+                        Count = -1,
+                        Die = DieType.D8
+                    },
+                    ReachFeet = 0,
+                    NormalRangeFeet = -1,
+                    LongRangeFeet = 0,
+                    WeightPounds = -0.1m,
+                    CostInCopperPieces = -1
+                }
+            ],
+            EquipmentItems =
+            [
+                CreateEquipmentItem("item.invalid", "Invalid Item") with
+                {
+                    WeightPounds = -0.1m,
+                    CostInCopperPieces = -1
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.races.base_speed.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.races.movement_speeds.speed.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.races.senses.range.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.armors.base_armor_class.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.armors.maximum_dexterity_modifier.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.armors.strength_requirement.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.armors.weight.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.armors.cost.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.weapons.damage.count.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.weapons.versatile_damage.count.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.weapons.reach.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.weapons.normal_range.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.weapons.long_range.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.weapons.weight.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.weapons.cost.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.equipment_items.weight.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.equipment_items.cost.invalid");
+    }
+
+    [Fact]
+    public void Validate_WithInvalidSubraceNumericValues_ReturnsErrors()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Races =
+            [
+                CreateRace("race.test", "Test Race") with
+                {
+                    Subraces =
+                    [
+                        new SubraceDefinition
+                        {
+                            Id = "subrace.invalid",
+                            Name = "Invalid Subrace",
+                            MovementSpeeds =
+                            [
+                                new MovementSpeedDefinition
+                                {
+                                    Mode = MovementMode.Climb,
+                                    SpeedFeet = 0
+                                }
+                            ],
+                            Senses =
+                            [
+                                new SenseDefinition
+                                {
+                                    Type = SenseType.Darkvision,
+                                    RangeFeet = 0
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.races.subraces.movement_speeds.speed.invalid");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.races.subraces.senses.range.invalid");
+    }
+
+    [Fact]
     public void Validate_WithNullRuleset_Throws()
     {
         Assert.Throws<ArgumentNullException>(() => RulesetValidator.Validate(null!));
