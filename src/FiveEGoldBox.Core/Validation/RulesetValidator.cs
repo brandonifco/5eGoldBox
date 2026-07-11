@@ -9,6 +9,80 @@ public static class RulesetValidator
         ArgumentNullException.ThrowIfNull(ruleset);
 
         List<ValidationIssue> issues = [];
+                AddRequiredStringIssue(
+            issues,
+            ruleset.Id,
+            "ruleset.id.required",
+            "Ruleset ID is required.");
+
+        AddRequiredStringIssue(
+            issues,
+            ruleset.Name,
+            "ruleset.name.required",
+            "Ruleset name is required.");
+
+        AddRequiredDefinitionStringIssues(
+            issues,
+            ruleset.Races,
+            "ruleset.races.id.required",
+            "ruleset.races.name.required",
+            "race",
+            race => race.Id,
+            race => race.Name);
+
+        AddRequiredDefinitionStringIssues(
+            issues,
+            ruleset.Classes,
+            "ruleset.classes.id.required",
+            "ruleset.classes.name.required",
+            "class",
+            characterClass => characterClass.Id,
+            characterClass => characterClass.Name);
+
+        AddRequiredDefinitionStringIssues(
+            issues,
+            ruleset.Backgrounds,
+            "ruleset.backgrounds.id.required",
+            "ruleset.backgrounds.name.required",
+            "background",
+            background => background.Id,
+            background => background.Name);
+
+        AddRequiredDefinitionStringIssues(
+            issues,
+            ruleset.Skills,
+            "ruleset.skills.id.required",
+            "ruleset.skills.name.required",
+            "skill",
+            skill => skill.Id,
+            skill => skill.Name);
+
+        AddRequiredDefinitionStringIssues(
+            issues,
+            ruleset.Armors,
+            "ruleset.armors.id.required",
+            "ruleset.armors.name.required",
+            "armor",
+            armor => armor.Id,
+            armor => armor.Name);
+
+        AddRequiredDefinitionStringIssues(
+            issues,
+            ruleset.Weapons,
+            "ruleset.weapons.id.required",
+            "ruleset.weapons.name.required",
+            "weapon",
+            weapon => weapon.Id,
+            weapon => weapon.Name);
+
+        AddRequiredDefinitionStringIssues(
+            issues,
+            ruleset.EquipmentItems,
+            "ruleset.equipment_items.id.required",
+            "ruleset.equipment_items.name.required",
+            "equipment item",
+            equipmentItem => equipmentItem.Id,
+            equipmentItem => equipmentItem.Name);
 
         AddDuplicateIdIssues(
             issues,
@@ -63,7 +137,47 @@ public static class RulesetValidator
             ? ValidationResult.Success
             : new ValidationResult(issues);
     }
+        private static void AddRequiredStringIssue(
+        List<ValidationIssue> issues,
+        string? value,
+        string issueCode,
+        string message)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
 
+        issues.Add(new ValidationIssue(
+            ValidationSeverity.Error,
+            issueCode,
+            message));
+    }
+
+    private static void AddRequiredDefinitionStringIssues<TDefinition>(
+        List<ValidationIssue> issues,
+        IReadOnlyList<TDefinition> definitions,
+        string missingIdIssueCode,
+        string missingNameIssueCode,
+        string definitionName,
+        Func<TDefinition, string> getId,
+        Func<TDefinition, string> getName)
+    {
+        foreach (TDefinition definition in definitions)
+        {
+            AddRequiredStringIssue(
+                issues,
+                getId(definition),
+                missingIdIssueCode,
+                $"Ruleset contains {definitionName} with missing ID.");
+
+            AddRequiredStringIssue(
+                issues,
+                getName(definition),
+                missingNameIssueCode,
+                $"Ruleset contains {definitionName} with missing name.");
+        }
+    }
     private static void AddDuplicateIdIssues<TDefinition>(
         List<ValidationIssue> issues,
         IReadOnlyList<TDefinition> definitions,

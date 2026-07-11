@@ -20,7 +20,44 @@ public sealed class RulesetValidatorTests
         Assert.True(result.IsValid);
         Assert.Empty(result.Issues);
     }
+        [Fact]
+    public void Validate_WithMissingTopLevelIdsOrNames_ReturnsErrors()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = " ",
+            Name = "",
+            Races = [CreateRace(" ", "")],
+            Classes = [CreateClass(" ", "")],
+            Backgrounds = [CreateBackground(" ", "")],
+            Skills = [CreateSkill(" ", "")],
+            Armors = [CreateArmor(" ", "")],
+            Weapons = [CreateWeapon(" ", "")],
+            EquipmentItems = [CreateEquipmentItem(" ", "")]
+        };
 
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.id.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.name.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.races.id.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.races.name.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.classes.id.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.classes.name.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.backgrounds.id.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.backgrounds.name.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.skills.id.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.skills.name.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.armors.id.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.armors.name.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.weapons.id.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.weapons.name.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.equipment_items.id.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.equipment_items.name.required");
+        Assert.All(result.Issues, issue => Assert.Equal(ValidationSeverity.Error, issue.Severity));
+    }
     [Fact]
     public void Validate_WithDuplicateTopLevelIds_ReturnsErrors()
     {
