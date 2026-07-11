@@ -1,5 +1,5 @@
 using FiveEGoldBox.Core.Characters;
-using FiveEGoldBox.Core.Rules;
+using FiveEGoldBox.Core.Tests.Builders;
 
 namespace FiveEGoldBox.Core.Tests;
 
@@ -8,7 +8,7 @@ public sealed class CharacterResolverCurrencyValueTests
     [Fact]
     public void Resolve_WithNoCurrency_SetsCurrencyValueToZeroCopperPieces()
     {
-        CharacterDraft draft = CreateValidDraft();
+        CharacterDraft draft = TestCharacterDraftBuilder.Valid();
 
         CharacterResolver resolver = new();
 
@@ -20,7 +20,7 @@ public sealed class CharacterResolverCurrencyValueTests
     [Fact]
     public void Resolve_WithOnlyCopperPieces_UsesCopperPiecesAsValue()
     {
-        CharacterDraft draft = CreateValidDraft() with
+        CharacterDraft draft = TestCharacterDraftBuilder.Valid() with
         {
             Currency = new CurrencyAmount
             {
@@ -38,7 +38,7 @@ public sealed class CharacterResolverCurrencyValueTests
     [Fact]
     public void Resolve_WithEachCoinType_UsesCorrectCopperPieceConversionRates()
     {
-        CharacterDraft draft = CreateValidDraft() with
+        CharacterDraft draft = TestCharacterDraftBuilder.Valid() with
         {
             Currency = new CurrencyAmount
             {
@@ -60,7 +60,7 @@ public sealed class CharacterResolverCurrencyValueTests
     [Fact]
     public void Resolve_WithMixedCurrencyTotals_AllCoinValues()
     {
-        CharacterDraft draft = CreateValidDraft() with
+        CharacterDraft draft = TestCharacterDraftBuilder.Valid() with
         {
             Currency = new CurrencyAmount
             {
@@ -77,24 +77,5 @@ public sealed class CharacterResolverCurrencyValueTests
         CharacterSnapshot snapshot = resolver.Resolve(draft);
 
         Assert.Equal(3717, snapshot.CurrencyValueInCopperPieces);
-    }
-
-    private static CharacterDraft CreateValidDraft()
-    {
-        return new CharacterDraft
-        {
-            Name = "Currency Value Character",
-            Level = 1,
-            AbilityScoreGenerationMethod = AbilityScoreGenerationMethod.Manual,
-            BaseAbilityScores = new Dictionary<Ability, int>
-            {
-                [Ability.Strength] = 10,
-                [Ability.Dexterity] = 10,
-                [Ability.Constitution] = 10,
-                [Ability.Intelligence] = 10,
-                [Ability.Wisdom] = 10,
-                [Ability.Charisma] = 10
-            }
-        };
     }
 }
