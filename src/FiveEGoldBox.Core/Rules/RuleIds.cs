@@ -10,9 +10,11 @@ public static class RuleIds
 
     public static class WeaponProperties
     {
+        public const string Ammunition = "weapon_property.ammunition";
         public const string Finesse = "weapon_property.finesse";
         public const string Heavy = "weapon_property.heavy";
         public const string TwoHanded = "weapon_property.two_handed";
+        public const string Versatile = "weapon_property.versatile";
     }
 
     public static class WeaponProficiencies
