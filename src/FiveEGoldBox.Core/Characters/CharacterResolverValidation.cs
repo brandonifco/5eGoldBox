@@ -388,7 +388,7 @@ public sealed partial class CharacterResolver
 
     private void ValidateWeaponProficiency(CharacterDraft draft, List<ValidationIssue> issues)
     {
-        if (_ruleset is null || _ruleset.Weapons.Count == 0)
+        if (_ruleset is null || _rulesetIndex is null || _rulesetIndex.WeaponsById.Count == 0)
         {
             return;
         }
@@ -552,7 +552,7 @@ public sealed partial class CharacterResolver
 
     private void ValidateEquippedWeapons(CharacterDraft draft, List<ValidationIssue> issues)
     {
-        if (_ruleset is null || _ruleset.Weapons.Count == 0)
+        if (_ruleset is null || _rulesetIndex is null || _rulesetIndex.WeaponsById.Count == 0)
         {
             return;
         }
@@ -572,7 +572,7 @@ public sealed partial class CharacterResolver
 
         foreach (string equippedWeaponId in draft.EquippedWeaponIds)
         {
-            bool weaponExists = _ruleset.Weapons.Any(weapon => weapon.Id == equippedWeaponId);
+            bool weaponExists = _rulesetIndex.WeaponsById.ContainsKey(equippedWeaponId);
 
             if (!weaponExists)
             {
