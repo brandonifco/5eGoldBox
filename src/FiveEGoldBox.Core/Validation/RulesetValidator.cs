@@ -195,7 +195,21 @@ public static class RulesetValidator
             "class",
             characterClass => characterClass.Id,
             "weapon proficiency");
-            
+
+                HashSet<string> equipmentItemIds = ruleset.EquipmentItems
+            .Select(item => item.Id)
+            .ToHashSet();
+
+        AddUnknownOptionalReferenceIssues(
+            issues,
+            ruleset.Weapons,
+            weapon => weapon.AmmunitionItemId,
+            equipmentItemIds,
+            "ruleset.weapons.ammunition_item.unknown_item",
+            "weapon",
+            weapon => weapon.Id,
+            "equipment item");
+
         return issues.Count == 0
             ? ValidationResult.Success
             : new ValidationResult(issues);
@@ -282,6 +296,32 @@ public static class RulesetValidator
                     issueCode,
                     $"Ruleset {definitionName} '{getDefinitionId(definition)}' references unknown {referencedDefinitionName} ID '{referencedId}'."));
             }
+        }
+    }
+        private static void AddUnknownOptionalReferenceIssues<TDefinition>(
+        List<ValidationIssue> issues,
+        IReadOnlyList<TDefinition> definitions,
+        Func<TDefinition, string?> getReferencedId,
+        IReadOnlySet<string> validIds,
+        string issueCode,
+        string definitionName,
+        Func<TDefinition, string> getDefinitionId,
+        string referencedDefinitionName)
+    {
+        foreach (TDefinition definition in definitions)
+        {
+            string? referencedId = getReferencedId(definition);
+
+            if (string.IsNullOrWhiteSpace(referencedId)
+                || validIds.Contains(referencedId))
+            {
+                continue;
+            }
+
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Error,
+                issueCode,
+                $"Ruleset {definitionName} '{getDefinitionId(definition)}' references unknown {referencedDefinitionName} ID '{referencedId}'."));
         }
     }
 }

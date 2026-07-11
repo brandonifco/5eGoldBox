@@ -218,6 +218,43 @@ public sealed class RulesetValidatorTests
                 || issue.Message.Contains(RuleIds.WeaponProficiencies.Simple)
                 || issue.Message.Contains("weapon.known"));
     }
+        [Fact]
+    public void Validate_WithUnknownWeaponAmmunitionItemReference_ReturnsError()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            EquipmentItems =
+            [
+                CreateEquipmentItem("item.known", "Known Item")
+            ],
+            Weapons =
+            [
+                CreateWeapon("weapon.known", "Known Weapon") with
+                {
+                    AmmunitionItemId = "item.known"
+                },
+                CreateWeapon("weapon.unknown", "Unknown Ammunition Weapon") with
+                {
+                    AmmunitionItemId = "item.unknown"
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.weapons.ammunition_item.unknown_item"
+                && issue.Message.Contains("item.unknown"));
+
+        Assert.DoesNotContain(
+            result.Issues,
+            issue => issue.Message.Contains("item.known"));
+    }
     private static RaceDefinition CreateRace(string id, string name)
     {
         return new RaceDefinition
