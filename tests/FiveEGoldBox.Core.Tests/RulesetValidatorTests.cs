@@ -20,7 +20,7 @@ public sealed class RulesetValidatorTests
         Assert.True(result.IsValid);
         Assert.Empty(result.Issues);
     }
-        [Fact]
+    [Fact]
     public void Validate_WithMissingTopLevelIdsOrNames_ReturnsErrors()
     {
         RulesetDefinition ruleset = new()
@@ -162,7 +162,7 @@ public sealed class RulesetValidatorTests
             issue => issue.Code == "ruleset.backgrounds.skill_proficiencies.unknown_skill"
                 && issue.Message.Contains("skill.unknown.background"));
     }
-        [Fact]
+    [Fact]
     public void Validate_WithUnknownClassArmorOrWeaponProficiencyReferences_ReturnsErrors()
     {
         RulesetDefinition ruleset = new()
@@ -218,7 +218,7 @@ public sealed class RulesetValidatorTests
                 || issue.Message.Contains(RuleIds.WeaponProficiencies.Simple)
                 || issue.Message.Contains("weapon.known"));
     }
-        [Fact]
+    [Fact]
     public void Validate_WithUnknownWeaponAmmunitionItemReference_ReturnsError()
     {
         RulesetDefinition ruleset = new()

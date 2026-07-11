@@ -34,6 +34,6 @@ public sealed record CharacterDraft
 
     public IReadOnlyList<InventoryItemDraft> InventoryItems { get; init; }
         = Array.Empty<InventoryItemDraft>();
-    
-    public CurrencyAmount Currency { get; init; } = new();        
+
+    public CurrencyAmount Currency { get; init; } = new();
 }

@@ -30,7 +30,7 @@ public sealed record WeaponDefinition
     public string? AmmunitionItemId { get; init; }
 
     public decimal WeightPounds { get; init; }
-    
+
     public int? CostInCopperPieces { get; init; }
 
 }

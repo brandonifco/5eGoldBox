@@ -9,11 +9,11 @@ public static class RulesetValidator
         ArgumentNullException.ThrowIfNull(ruleset);
 
         List<ValidationIssue> issues = [];
-                AddRequiredStringIssue(
-            issues,
-            ruleset.Id,
-            "ruleset.id.required",
-            "Ruleset ID is required.");
+        AddRequiredStringIssue(
+    issues,
+    ruleset.Id,
+    "ruleset.id.required",
+    "Ruleset ID is required.");
 
         AddRequiredStringIssue(
             issues,
@@ -132,9 +132,9 @@ public static class RulesetValidator
             "ruleset.equipment_items.duplicate_id",
             "equipment item",
             equipmentItem => equipmentItem.Id);
-                HashSet<string> skillIds = ruleset.Skills
-            .Select(skill => skill.Id)
-            .ToHashSet();
+        HashSet<string> skillIds = ruleset.Skills
+    .Select(skill => skill.Id)
+    .ToHashSet();
 
         AddUnknownReferenceIssues(
             issues,
@@ -156,16 +156,16 @@ public static class RulesetValidator
             background => background.Id,
             "skill");
 
-                HashSet<string> armorProficiencyIds = ruleset.Armors
-            .Select(armor => armor.Id)
-            .Concat(
-            [
-                RuleIds.ArmorProficiencies.Light,
+        HashSet<string> armorProficiencyIds = ruleset.Armors
+    .Select(armor => armor.Id)
+    .Concat(
+    [
+        RuleIds.ArmorProficiencies.Light,
                 RuleIds.ArmorProficiencies.Medium,
                 RuleIds.ArmorProficiencies.Heavy,
                 RuleIds.ArmorProficiencies.Shields
-            ])
-            .ToHashSet();
+    ])
+    .ToHashSet();
 
         AddUnknownReferenceIssues(
             issues,
@@ -196,9 +196,9 @@ public static class RulesetValidator
             characterClass => characterClass.Id,
             "weapon proficiency");
 
-                HashSet<string> equipmentItemIds = ruleset.EquipmentItems
-            .Select(item => item.Id)
-            .ToHashSet();
+        HashSet<string> equipmentItemIds = ruleset.EquipmentItems
+    .Select(item => item.Id)
+    .ToHashSet();
 
         AddUnknownOptionalReferenceIssues(
             issues,
@@ -214,11 +214,11 @@ public static class RulesetValidator
             ? ValidationResult.Success
             : new ValidationResult(issues);
     }
-        private static void AddRequiredStringIssue(
-        List<ValidationIssue> issues,
-        string? value,
-        string issueCode,
-        string message)
+    private static void AddRequiredStringIssue(
+    List<ValidationIssue> issues,
+    string? value,
+    string issueCode,
+    string message)
     {
         if (!string.IsNullOrWhiteSpace(value))
         {
@@ -272,15 +272,15 @@ public static class RulesetValidator
                 $"Ruleset contains duplicate {definitionName} ID '{duplicateGroup.Key}'."));
         }
     }
-        private static void AddUnknownReferenceIssues<TDefinition>(
-        List<ValidationIssue> issues,
-        IReadOnlyList<TDefinition> definitions,
-        Func<TDefinition, IReadOnlyList<string>> getReferencedIds,
-        IReadOnlySet<string> validIds,
-        string issueCode,
-        string definitionName,
-        Func<TDefinition, string> getDefinitionId,
-        string referencedDefinitionName)
+    private static void AddUnknownReferenceIssues<TDefinition>(
+    List<ValidationIssue> issues,
+    IReadOnlyList<TDefinition> definitions,
+    Func<TDefinition, IReadOnlyList<string>> getReferencedIds,
+    IReadOnlySet<string> validIds,
+    string issueCode,
+    string definitionName,
+    Func<TDefinition, string> getDefinitionId,
+    string referencedDefinitionName)
     {
         foreach (TDefinition definition in definitions)
         {
@@ -298,15 +298,15 @@ public static class RulesetValidator
             }
         }
     }
-        private static void AddUnknownOptionalReferenceIssues<TDefinition>(
-        List<ValidationIssue> issues,
-        IReadOnlyList<TDefinition> definitions,
-        Func<TDefinition, string?> getReferencedId,
-        IReadOnlySet<string> validIds,
-        string issueCode,
-        string definitionName,
-        Func<TDefinition, string> getDefinitionId,
-        string referencedDefinitionName)
+    private static void AddUnknownOptionalReferenceIssues<TDefinition>(
+    List<ValidationIssue> issues,
+    IReadOnlyList<TDefinition> definitions,
+    Func<TDefinition, string?> getReferencedId,
+    IReadOnlySet<string> validIds,
+    string issueCode,
+    string definitionName,
+    Func<TDefinition, string> getDefinitionId,
+    string referencedDefinitionName)
     {
         foreach (TDefinition definition in definitions)
         {

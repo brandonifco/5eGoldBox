@@ -1,6 +1,6 @@
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Validation;
-using FiveEGoldBox.Core.Definitions;
 
 namespace FiveEGoldBox.Core.Characters;
 
@@ -225,7 +225,7 @@ public sealed partial class CharacterResolver
                     .ToArray()
         };
     }
- 
+
 
 
 

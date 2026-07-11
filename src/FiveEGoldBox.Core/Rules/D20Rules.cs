@@ -55,5 +55,5 @@ public static class D20Rules
                 "D20 roll must be between 1 and 20.");
         }
     }
-    
+
 }
