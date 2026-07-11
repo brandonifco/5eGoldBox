@@ -17,6 +17,6 @@ public sealed record SkillBonus
     public required int ProficiencyBonus { get; init; }
 
     public required int TotalBonus { get; init; }
-    
+
     public bool HasDisadvantage { get; init; }
 }

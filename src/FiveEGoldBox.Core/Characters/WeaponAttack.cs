@@ -26,7 +26,7 @@ public sealed record WeaponAttack
     public required bool HasDisadvantage { get; init; }
 
     public IReadOnlyList<string> DisadvantageReasons { get; init; }
-        = Array.Empty<string>(); 
+        = Array.Empty<string>();
 
     public required D20RollMode AttackRollMode { get; init; }
 

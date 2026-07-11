@@ -43,9 +43,9 @@ public sealed class HitPointRulesTests
     {
         HitPointState state = HitPointRules.Create(
             maximumHitPoints: 20) with
-            {
-                TemporaryHitPoints = 8
-            };
+        {
+            TemporaryHitPoints = 8
+        };
 
         HitPointState result = HitPointRules.ApplyDamage(
             state,
@@ -62,9 +62,9 @@ public sealed class HitPointRulesTests
     {
         HitPointState state = HitPointRules.Create(
             maximumHitPoints: 20) with
-            {
-                TemporaryHitPoints = 5
-            };
+        {
+            TemporaryHitPoints = 5
+        };
 
         HitPointState result = HitPointRules.ApplyDamage(
             state,
@@ -94,9 +94,9 @@ public sealed class HitPointRulesTests
     {
         HitPointState state = HitPointRules.Create(
             maximumHitPoints: 20) with
-            {
-                CurrentHitPoints = 6
-            };
+        {
+            CurrentHitPoints = 6
+        };
 
         HitPointState result = HitPointRules.ApplyDamage(
             state,
@@ -156,9 +156,9 @@ public sealed class HitPointRulesTests
     {
         HitPointState state = HitPointRules.Create(
             maximumHitPoints: 20) with
-            {
-                CurrentHitPoints = 8
-            };
+        {
+            CurrentHitPoints = 8
+        };
 
         HitPointState result = HitPointRules.ApplyHealing(
             state,
@@ -173,9 +173,9 @@ public sealed class HitPointRulesTests
     {
         HitPointState state = HitPointRules.Create(
             maximumHitPoints: 20) with
-            {
-                CurrentHitPoints = 8
-            };
+        {
+            CurrentHitPoints = 8
+        };
 
         HitPointState result = HitPointRules.ApplyHealing(
             state,
@@ -190,10 +190,10 @@ public sealed class HitPointRulesTests
     {
         HitPointState state = HitPointRules.Create(
             maximumHitPoints: 20) with
-            {
-                CurrentHitPoints = 8,
-                TemporaryHitPoints = 6
-            };
+        {
+            CurrentHitPoints = 8,
+            TemporaryHitPoints = 6
+        };
 
         HitPointState result = HitPointRules.ApplyHealing(
             state,
@@ -208,9 +208,9 @@ public sealed class HitPointRulesTests
     {
         HitPointState state = HitPointRules.Create(
             maximumHitPoints: 20) with
-            {
-                CurrentHitPoints = 8
-            };
+        {
+            CurrentHitPoints = 8
+        };
 
         HitPointState result = HitPointRules.ApplyHealing(
             state,
@@ -236,9 +236,9 @@ public sealed class HitPointRulesTests
     {
         HitPointState state = HitPointRules.Create(
             maximumHitPoints: 20) with
-            {
-                TemporaryHitPoints = 3
-            };
+        {
+            TemporaryHitPoints = 3
+        };
 
         HitPointState result = HitPointRules.ApplyTemporaryHitPoints(
             state,
@@ -253,9 +253,9 @@ public sealed class HitPointRulesTests
     {
         HitPointState state = HitPointRules.Create(
             maximumHitPoints: 20) with
-            {
-                TemporaryHitPoints = 5
-            };
+        {
+            TemporaryHitPoints = 5
+        };
 
         HitPointState result = HitPointRules.ApplyTemporaryHitPoints(
             state,
@@ -269,9 +269,9 @@ public sealed class HitPointRulesTests
     {
         HitPointState state = HitPointRules.Create(
             maximumHitPoints: 20) with
-            {
-                TemporaryHitPoints = 5
-            };
+        {
+            TemporaryHitPoints = 5
+        };
 
         HitPointState result = HitPointRules.ApplyTemporaryHitPoints(
             state,

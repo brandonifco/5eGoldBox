@@ -56,9 +56,9 @@ public sealed class CombatTurnResourceRulesTests
     {
         CombatTurnResources resources = CombatTurnResourceRules
             .StartTurn(movementSpeedFeet: 30) with
-            {
-                HasActionAvailable = false
-            };
+        {
+            HasActionAvailable = false
+        };
 
         Assert.Throws<InvalidOperationException>(() =>
             CombatTurnResourceRules.SpendAction(resources));
@@ -83,9 +83,9 @@ public sealed class CombatTurnResourceRulesTests
     {
         CombatTurnResources resources = CombatTurnResourceRules
             .StartTurn(movementSpeedFeet: 30) with
-            {
-                HasBonusActionAvailable = false
-            };
+        {
+            HasBonusActionAvailable = false
+        };
 
         Assert.Throws<InvalidOperationException>(() =>
             CombatTurnResourceRules.SpendBonusAction(resources));
@@ -110,9 +110,9 @@ public sealed class CombatTurnResourceRulesTests
     {
         CombatTurnResources resources = CombatTurnResourceRules
             .StartTurn(movementSpeedFeet: 30) with
-            {
-                HasReactionAvailable = false
-            };
+        {
+            HasReactionAvailable = false
+        };
 
         Assert.Throws<InvalidOperationException>(() =>
             CombatTurnResourceRules.SpendReaction(resources));
