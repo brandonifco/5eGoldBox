@@ -338,15 +338,15 @@ public sealed partial class CharacterResolver
 
     private void ValidateEquippedArmor(CharacterDraft draft, List<ValidationIssue> issues)
     {
-        if (_ruleset is null || _ruleset.Armors.Count == 0)
+        if (_ruleset is null || _rulesetIndex is null || _rulesetIndex.ArmorsById.Count == 0)
         {
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(draft.EquippedArmorId))
         {
-            ArmorDefinition? equippedArmor = _ruleset.Armors.SingleOrDefault(
-                armor => armor.Id == draft.EquippedArmorId);
+            ArmorDefinition? equippedArmor = _rulesetIndex.ArmorsById.GetValueOrDefault(
+                draft.EquippedArmorId);
 
             if (equippedArmor is null)
             {
@@ -366,8 +366,8 @@ public sealed partial class CharacterResolver
 
         if (!string.IsNullOrWhiteSpace(draft.EquippedShieldId))
         {
-            ArmorDefinition? equippedShield = _ruleset.Armors.SingleOrDefault(
-                armor => armor.Id == draft.EquippedShieldId);
+            ArmorDefinition? equippedShield = _rulesetIndex.ArmorsById.GetValueOrDefault(
+                draft.EquippedShieldId);
 
             if (equippedShield is null)
             {
@@ -585,7 +585,7 @@ public sealed partial class CharacterResolver
 
     private void ValidateArmorProficiency(CharacterDraft draft, List<ValidationIssue> issues)
     {
-        if (_ruleset is null || _ruleset.Armors.Count == 0)
+        if (_ruleset is null || _rulesetIndex is null || _rulesetIndex.ArmorsById.Count == 0)
         {
             return;
         }
