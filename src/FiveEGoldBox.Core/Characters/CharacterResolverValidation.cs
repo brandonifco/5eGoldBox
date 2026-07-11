@@ -143,7 +143,7 @@ public sealed partial class CharacterResolver
 
     private void ValidateRaceSelection(CharacterDraft draft, List<ValidationIssue> issues)
     {
-        if (_ruleset is null)
+        if (_ruleset is null || _rulesetIndex is null)
         {
             return;
         }
@@ -158,7 +158,7 @@ public sealed partial class CharacterResolver
             return;
         }
 
-        bool raceExists = _ruleset.Races.Any(race => race.Id == draft.RaceId);
+        bool raceExists = _rulesetIndex.RacesById.ContainsKey(draft.RaceId);
 
         if (!raceExists)
         {
@@ -224,7 +224,7 @@ public sealed partial class CharacterResolver
 
     private void ValidateClassSelection(CharacterDraft draft, List<ValidationIssue> issues)
     {
-        if (_ruleset is null || _ruleset.Classes.Count == 0)
+        if (_ruleset is null || _rulesetIndex is null || _rulesetIndex.ClassesById.Count == 0)
         {
             return;
         }
@@ -239,7 +239,7 @@ public sealed partial class CharacterResolver
             return;
         }
 
-        bool classExists = _ruleset.Classes.Any(characterClass => characterClass.Id == draft.ClassId);
+        bool classExists = _rulesetIndex.ClassesById.ContainsKey(draft.ClassId);
 
         if (!classExists)
         {
