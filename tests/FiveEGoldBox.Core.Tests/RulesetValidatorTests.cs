@@ -121,7 +121,47 @@ public sealed class RulesetValidatorTests
     {
         Assert.Throws<ArgumentNullException>(() => RulesetValidator.Validate(null!));
     }
+    [Fact]
+    public void Validate_WithUnknownClassOrBackgroundSkillReferences_ReturnsErrors()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Skills =
+            [
+                CreateSkill("skill.known", "Known Skill")
+            ],
+            Classes =
+            [
+                CreateClass("class.test", "Test Class") with
+                {
+                    SkillChoices = ["skill.known", "skill.unknown.class"]
+                }
+            ],
+            Backgrounds =
+            [
+                CreateBackground("background.test", "Test Background") with
+                {
+                    SkillProficiencies = ["skill.known", "skill.unknown.background"]
+                }
+            ]
+        };
 
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.classes.skill_choices.unknown_skill"
+                && issue.Message.Contains("skill.unknown.class"));
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.backgrounds.skill_proficiencies.unknown_skill"
+                && issue.Message.Contains("skill.unknown.background"));
+    }
     private static RaceDefinition CreateRace(string id, string name)
     {
         return new RaceDefinition

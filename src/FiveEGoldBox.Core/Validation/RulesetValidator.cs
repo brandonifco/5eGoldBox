@@ -132,7 +132,29 @@ public static class RulesetValidator
             "ruleset.equipment_items.duplicate_id",
             "equipment item",
             equipmentItem => equipmentItem.Id);
+                HashSet<string> skillIds = ruleset.Skills
+            .Select(skill => skill.Id)
+            .ToHashSet();
 
+        AddUnknownReferenceIssues(
+            issues,
+            ruleset.Classes,
+            characterClass => characterClass.SkillChoices,
+            skillIds,
+            "ruleset.classes.skill_choices.unknown_skill",
+            "class",
+            characterClass => characterClass.Id,
+            "skill");
+
+        AddUnknownReferenceIssues(
+            issues,
+            ruleset.Backgrounds,
+            background => background.SkillProficiencies,
+            skillIds,
+            "ruleset.backgrounds.skill_proficiencies.unknown_skill",
+            "background",
+            background => background.Id,
+            "skill");
         return issues.Count == 0
             ? ValidationResult.Success
             : new ValidationResult(issues);
@@ -193,6 +215,32 @@ public static class RulesetValidator
                 ValidationSeverity.Error,
                 issueCode,
                 $"Ruleset contains duplicate {definitionName} ID '{duplicateGroup.Key}'."));
+        }
+    }
+        private static void AddUnknownReferenceIssues<TDefinition>(
+        List<ValidationIssue> issues,
+        IReadOnlyList<TDefinition> definitions,
+        Func<TDefinition, IReadOnlyList<string>> getReferencedIds,
+        IReadOnlySet<string> validIds,
+        string issueCode,
+        string definitionName,
+        Func<TDefinition, string> getDefinitionId,
+        string referencedDefinitionName)
+    {
+        foreach (TDefinition definition in definitions)
+        {
+            foreach (string referencedId in getReferencedIds(definition))
+            {
+                if (validIds.Contains(referencedId))
+                {
+                    continue;
+                }
+
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    issueCode,
+                    $"Ruleset {definitionName} '{getDefinitionId(definition)}' references unknown {referencedDefinitionName} ID '{referencedId}'."));
+            }
         }
     }
 }
