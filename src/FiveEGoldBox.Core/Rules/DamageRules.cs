@@ -146,7 +146,7 @@ public static class DamageRules
             Rolls = rolls,
             DiceTotal = diceTotal,
             DamageBonus = damageBonus,
-            Total = diceTotal + damageBonus
+            Total = Math.Max(0, diceTotal + damageBonus),
         };
     }
     public static DamageResolutionResult ResolveDamage(

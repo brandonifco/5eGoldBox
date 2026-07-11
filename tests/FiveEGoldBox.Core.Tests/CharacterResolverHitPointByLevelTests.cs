@@ -87,7 +87,24 @@ public sealed class CharacterResolverHitPointByLevelTests
 
         Assert.Equal(19, snapshot.MaxHitPoints);
     }
+    [Fact]
+    public void Resolve_WhenConstitutionModifierWouldReduceLevelGain_FloorsAdditionalHitPointsAtOne()
+    {
+        RulesetDefinition ruleset = CreateClassRuleset(DieType.D6);
 
+        CharacterDraft draft = CreateConstitutionOneDraft() with
+        {
+            Level = 3,
+            RaceId = "race.test",
+            ClassId = "class.test"
+        };
+
+        CharacterResolver resolver = new(ruleset);
+
+        CharacterSnapshot snapshot = resolver.Resolve(draft);
+
+        Assert.Equal(3, snapshot.MaxHitPoints);
+    }
     [Fact]
     public void Resolve_WithoutSelectedClass_LeavesMaxHitPointsNull()
     {
@@ -135,7 +152,23 @@ public sealed class CharacterResolverHitPointByLevelTests
             }
         };
     }
-
+    private static CharacterDraft CreateConstitutionOneDraft()
+    {
+        return new CharacterDraft
+        {
+            Name = "Extremely Fragile Character",
+            AbilityScoreGenerationMethod = AbilityScoreGenerationMethod.Manual,
+            BaseAbilityScores = new Dictionary<Ability, int>
+            {
+                [Ability.Strength] = 10,
+                [Ability.Dexterity] = 10,
+                [Ability.Constitution] = 1,
+                [Ability.Intelligence] = 10,
+                [Ability.Wisdom] = 10,
+                [Ability.Charisma] = 10
+            }
+        };
+    }
     private static RulesetDefinition CreateClassRuleset(DieType hitDie)
     {
         return new RulesetDefinition

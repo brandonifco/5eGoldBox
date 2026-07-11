@@ -370,7 +370,24 @@ public sealed class DamageRulesTests
         Assert.Equal(-2, result.DamageBonus);
         Assert.Equal(4, result.Total);
     }
+    [Fact]
+    public void ResolveDamageRoll_WhenDamageBonusWouldReduceTotalBelowOne_FloorsTotalAtZero()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D4
+        };
 
+        DamageRollResult result = DamageRules.ResolveDamageRoll(
+            damage,
+            [1],
+            damageBonus: -5);
+
+        Assert.Equal(1, result.DiceTotal);
+        Assert.Equal(-5, result.DamageBonus);
+        Assert.Equal(0, result.Total);
+    }
     [Fact]
     public void ResolveDamageRoll_WithInvalidRolls_Throws()
     {
@@ -406,7 +423,24 @@ public sealed class DamageRulesTests
         Assert.Empty(result.ResponseTypes);
         Assert.Equal(12, result.FinalDamage);
     }
+    [Fact]
+    public void ResolveDamage_WhenDamageBonusWouldReduceTotalBelowOne_ReturnsZeroFinalDamage()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D4
+        };
 
+        DamageResolutionResult result = DamageRules.ResolveDamage(
+            damage,
+            [1],
+            damageBonus: -5,
+            responseTypes: []);
+
+        Assert.Equal(0, result.DamageRoll.Total);
+        Assert.Equal(0, result.FinalDamage);
+    }
     [Fact]
     public void ResolveDamage_WithResistance_AppliesResistanceToDamageRollTotal()
     {
