@@ -436,15 +436,16 @@ public sealed partial class CharacterResolver
                 "Inventory items must not contain duplicate item IDs."));
         }
 
-        if (_ruleset is null || _ruleset.EquipmentItems.Count == 0)
+        if (_ruleset is null || _rulesetIndex is null || _rulesetIndex.EquipmentItemsById.Count == 0)
+
         {
             return;
         }
 
         foreach (InventoryItemDraft inventoryItem in draft.InventoryItems)
         {
-            bool itemExists = _ruleset.EquipmentItems.Any(
-                item => item.Id == inventoryItem.ItemId);
+            bool itemExists = _rulesetIndex.EquipmentItemsById.ContainsKey(
+                inventoryItem.ItemId);
 
             if (!itemExists)
             {
