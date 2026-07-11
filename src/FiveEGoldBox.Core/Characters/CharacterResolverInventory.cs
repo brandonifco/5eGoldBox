@@ -37,7 +37,7 @@ public sealed partial class CharacterResolver
 
     private IReadOnlyList<InventoryItemSnapshot> ResolveInventoryItems(CharacterDraft draft)
     {
-        if (_ruleset is null || _ruleset.EquipmentItems.Count == 0)
+        if (_rulesetIndex is null || _rulesetIndex.EquipmentItemsById.Count == 0)
         {
             return Array.Empty<InventoryItemSnapshot>();
         }
@@ -45,8 +45,8 @@ public sealed partial class CharacterResolver
         return draft.InventoryItems
             .Select(inventoryItem =>
             {
-                EquipmentItemDefinition? definition = _ruleset.EquipmentItems
-                    .SingleOrDefault(item => item.Id == inventoryItem.ItemId);
+                EquipmentItemDefinition? definition = _rulesetIndex.EquipmentItemsById
+                    .GetValueOrDefault(inventoryItem.ItemId);
 
                 if (definition is null)
                 {
@@ -74,7 +74,7 @@ public sealed partial class CharacterResolver
 
     private decimal CalculateInventoryWeight(CharacterDraft draft)
     {
-        if (_ruleset is null || _ruleset.EquipmentItems.Count == 0)
+        if (_rulesetIndex is null || _rulesetIndex.EquipmentItemsById.Count == 0)
         {
             return 0m;
         }
@@ -83,8 +83,8 @@ public sealed partial class CharacterResolver
             .Where(inventoryItem => inventoryItem.Quantity > 0)
             .Select(inventoryItem =>
             {
-                EquipmentItemDefinition? definition = _ruleset.EquipmentItems
-                    .SingleOrDefault(item => item.Id == inventoryItem.ItemId);
+                EquipmentItemDefinition? definition = _rulesetIndex.EquipmentItemsById
+                    .GetValueOrDefault(inventoryItem.ItemId);
 
                 return definition is null
                     ? 0m
