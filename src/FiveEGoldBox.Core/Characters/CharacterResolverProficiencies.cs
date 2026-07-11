@@ -48,9 +48,9 @@ public sealed partial class CharacterResolver
         int proficiencyBonus,
         ArmorDefinition? equippedArmor)
     {
-        return _ruleset is null
+        return _rulesetIndex is null
             ? Array.Empty<SkillBonus>()
-            : _ruleset.Skills
+            : _rulesetIndex.SkillsById.Values
                 .Select(skill =>
                 {
                     bool isProficient = skillProficiencies.Contains(skill.Id);
