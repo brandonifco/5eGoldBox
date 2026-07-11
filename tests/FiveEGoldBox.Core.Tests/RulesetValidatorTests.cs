@@ -162,6 +162,62 @@ public sealed class RulesetValidatorTests
             issue => issue.Code == "ruleset.backgrounds.skill_proficiencies.unknown_skill"
                 && issue.Message.Contains("skill.unknown.background"));
     }
+        [Fact]
+    public void Validate_WithUnknownClassArmorOrWeaponProficiencyReferences_ReturnsErrors()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Armors =
+            [
+                CreateArmor("armor.known", "Known Armor")
+            ],
+            Weapons =
+            [
+                CreateWeapon("weapon.known", "Known Weapon")
+            ],
+            Classes =
+            [
+                CreateClass("class.test", "Test Class") with
+                {
+                    ArmorProficiencies =
+                    [
+                        RuleIds.ArmorProficiencies.Light,
+                        "armor.known",
+                        "armor.unknown"
+                    ],
+                    WeaponProficiencies =
+                    [
+                        RuleIds.WeaponProficiencies.Simple,
+                        "weapon.known",
+                        "weapon.unknown"
+                    ]
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.classes.armor_proficiencies.unknown_armor"
+                && issue.Message.Contains("armor.unknown"));
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.classes.weapon_proficiencies.unknown_weapon"
+                && issue.Message.Contains("weapon.unknown"));
+
+        Assert.DoesNotContain(
+            result.Issues,
+            issue => issue.Message.Contains(RuleIds.ArmorProficiencies.Light)
+                || issue.Message.Contains("armor.known")
+                || issue.Message.Contains(RuleIds.WeaponProficiencies.Simple)
+                || issue.Message.Contains("weapon.known"));
+    }
     private static RaceDefinition CreateRace(string id, string name)
     {
         return new RaceDefinition

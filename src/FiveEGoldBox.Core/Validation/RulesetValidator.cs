@@ -1,5 +1,5 @@
 using FiveEGoldBox.Core.Definitions;
-
+using FiveEGoldBox.Core.Rules;
 namespace FiveEGoldBox.Core.Validation;
 
 public static class RulesetValidator
@@ -155,6 +155,47 @@ public static class RulesetValidator
             "background",
             background => background.Id,
             "skill");
+
+                HashSet<string> armorProficiencyIds = ruleset.Armors
+            .Select(armor => armor.Id)
+            .Concat(
+            [
+                RuleIds.ArmorProficiencies.Light,
+                RuleIds.ArmorProficiencies.Medium,
+                RuleIds.ArmorProficiencies.Heavy,
+                RuleIds.ArmorProficiencies.Shields
+            ])
+            .ToHashSet();
+
+        AddUnknownReferenceIssues(
+            issues,
+            ruleset.Classes,
+            characterClass => characterClass.ArmorProficiencies,
+            armorProficiencyIds,
+            "ruleset.classes.armor_proficiencies.unknown_armor",
+            "class",
+            characterClass => characterClass.Id,
+            "armor proficiency");
+
+        HashSet<string> weaponProficiencyIds = ruleset.Weapons
+            .Select(weapon => weapon.Id)
+            .Concat(
+            [
+                RuleIds.WeaponProficiencies.Simple,
+                RuleIds.WeaponProficiencies.Martial
+            ])
+            .ToHashSet();
+
+        AddUnknownReferenceIssues(
+            issues,
+            ruleset.Classes,
+            characterClass => characterClass.WeaponProficiencies,
+            weaponProficiencyIds,
+            "ruleset.classes.weapon_proficiencies.unknown_weapon",
+            "class",
+            characterClass => characterClass.Id,
+            "weapon proficiency");
+            
         return issues.Count == 0
             ? ValidationResult.Success
             : new ValidationResult(issues);
