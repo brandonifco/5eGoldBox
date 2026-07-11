@@ -133,6 +133,7 @@ public static class RulesetValidator
             "equipment item",
             equipmentItem => equipmentItem.Id);
         AddNumericDefinitionIssues(issues, ruleset);
+        AddWeaponDefinitionIssues(issues, ruleset.Weapons);
         AddSubraceIssues(issues, ruleset.Races);
 
         HashSet<string> skillIds = ruleset.Skills
@@ -217,6 +218,40 @@ public static class RulesetValidator
             ? ValidationResult.Success
             : new ValidationResult(issues);
     }
+    private static void AddWeaponDefinitionIssues(
+        List<ValidationIssue> issues,
+        IReadOnlyList<WeaponDefinition> weapons)
+    {
+        HashSet<string> knownWeaponPropertyIds =
+        [
+            RuleIds.WeaponProperties.Finesse,
+            RuleIds.WeaponProperties.Heavy,
+            RuleIds.WeaponProperties.TwoHanded
+        ];
+
+        foreach (WeaponDefinition weapon in weapons)
+        {
+            AddRequiredStringIssue(
+                issues,
+                weapon.DamageType,
+                "ruleset.weapons.damage_type.required",
+                $"Ruleset weapon '{weapon.Id}' has missing damage type.");
+
+            foreach (string propertyId in weapon.Properties)
+            {
+                if (knownWeaponPropertyIds.Contains(propertyId))
+                {
+                    continue;
+                }
+
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "ruleset.weapons.properties.unknown_property",
+                    $"Ruleset weapon '{weapon.Id}' references unknown weapon property '{propertyId}'."));
+            }
+        }
+    }
+
     private static void AddNumericDefinitionIssues(
         List<ValidationIssue> issues,
         RulesetDefinition ruleset)

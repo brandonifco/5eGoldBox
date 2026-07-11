@@ -423,6 +423,66 @@ public sealed class RulesetValidatorTests
                 || issue.Message.Contains("weapon.known"));
     }
     [Fact]
+    public void Validate_WithMissingWeaponDamageType_ReturnsError()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Weapons =
+            [
+                CreateWeapon("weapon.invalid", "Invalid Weapon") with
+                {
+                    DamageType = ""
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.weapons.damage_type.required"
+                && issue.Message.Contains("weapon.invalid"));
+    }
+
+    [Fact]
+    public void Validate_WithUnknownWeaponProperty_ReturnsError()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Weapons =
+            [
+                CreateWeapon("weapon.test", "Test Weapon") with
+                {
+                    Properties =
+                    [
+                        RuleIds.WeaponProperties.Finesse,
+                        "weapon_property.unknown"
+                    ]
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.weapons.properties.unknown_property"
+                && issue.Message.Contains("weapon_property.unknown"));
+
+        Assert.DoesNotContain(
+            result.Issues,
+            issue => issue.Message.Contains(RuleIds.WeaponProperties.Finesse));
+    }
+
+    [Fact]
     public void Validate_WithUnknownWeaponAmmunitionItemReference_ReturnsError()
     {
         RulesetDefinition ruleset = new()
