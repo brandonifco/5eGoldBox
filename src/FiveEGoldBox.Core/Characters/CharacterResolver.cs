@@ -222,7 +222,7 @@ public sealed class CharacterResolver
                         IsProficient = isProficient,
                         ProficiencyBonus = isProficient ? proficiencyBonus : 0,
                         TotalBonus = abilityModifier + (isProficient ? proficiencyBonus : 0),
-                        HasDisadvantage = skill.Id == "skill.stealth"
+                        HasDisadvantage = skill.Id == RuleIds.Skills.Stealth
                             && (equippedArmor?.HasStealthDisadvantage ?? false)
                     };
                 })
@@ -1063,7 +1063,7 @@ public sealed class CharacterResolver
 
         foreach (WeaponDefinition weapon in equippedWeapons)
         {
-            if (!weapon.Properties.Contains("weapon_property.two_handed"))
+            if (!weapon.Properties.Contains(RuleIds.WeaponProperties.TwoHanded))
             {
                 continue;
             }
@@ -1093,7 +1093,7 @@ public sealed class CharacterResolver
 
         foreach (WeaponDefinition weapon in equippedWeapons)
         {
-            if (!weapon.Properties.Contains("weapon_property.heavy"))
+            if (!weapon.Properties.Contains(RuleIds.WeaponProperties.Heavy))
             {
                 continue;
             }
@@ -1177,7 +1177,7 @@ public sealed class CharacterResolver
         IReadOnlyDictionary<Ability, int> abilityModifiers)
     {
         SkillBonus? perception = skillBonuses.SingleOrDefault(
-            skill => skill.SkillId == "skill.perception");
+            skill => skill.SkillId == RuleIds.Skills.Perception);
 
         if (perception is not null)
         {
@@ -1310,9 +1310,9 @@ public sealed class CharacterResolver
         List<string> reasons = [];
 
         if (size == CharacterSize.Small
-            && weapon.Properties.Contains("weapon_property.heavy"))
+            && weapon.Properties.Contains(RuleIds.WeaponProperties.Heavy))
         {
-            reasons.Add("weapon.heavy.small_size");
+            reasons.Add(RuleIds.DisadvantageReasons.HeavyWeaponSmallSize);
         }
 
         return reasons;
@@ -1322,7 +1322,7 @@ public sealed class CharacterResolver
         WeaponDefinition weapon,
         IReadOnlyDictionary<Ability, int> abilityModifiers)
     {
-        bool isFinesse = weapon.Properties.Contains("weapon_property.finesse");
+        bool isFinesse = weapon.Properties.Contains(RuleIds.WeaponProperties.Finesse);
 
         if (isFinesse)
         {
@@ -1350,8 +1350,8 @@ public sealed class CharacterResolver
 
         string categoryProficiencyId = weapon.Category switch
         {
-            WeaponCategory.Simple => "weapon.simple",
-            WeaponCategory.Martial => "weapon.martial",
+            WeaponCategory.Simple => RuleIds.WeaponProficiencies.Simple,
+            WeaponCategory.Martial => RuleIds.WeaponProficiencies.Martial,
             _ => throw new InvalidOperationException($"Unsupported weapon category '{weapon.Category}'.")
         };
 
@@ -1469,10 +1469,10 @@ public sealed class CharacterResolver
 
         string categoryProficiencyId = armor.Category switch
         {
-            ArmorCategory.Light => "armor.light",
-            ArmorCategory.Medium => "armor.medium",
-            ArmorCategory.Heavy => "armor.heavy",
-            ArmorCategory.Shield => "armor.shields",
+            ArmorCategory.Light => RuleIds.ArmorProficiencies.Light,
+            ArmorCategory.Medium => RuleIds.ArmorProficiencies.Medium,
+            ArmorCategory.Heavy => RuleIds.ArmorProficiencies.Heavy,
+            ArmorCategory.Shield => RuleIds.ArmorProficiencies.Shields,
             _ => throw new InvalidOperationException($"Unsupported armor category '{armor.Category}'.")
         };
 
