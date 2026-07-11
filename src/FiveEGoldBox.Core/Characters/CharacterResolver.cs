@@ -19,7 +19,14 @@ public sealed partial class CharacterResolver
 
         _ruleset = ruleset;
         _rulesetIndex = new RulesetIndex(ruleset);
+    }
 
+    public CharacterResolver(ValidatedRuleset ruleset)
+    {
+        ArgumentNullException.ThrowIfNull(ruleset);
+
+        _ruleset = ruleset.Definition;
+        _rulesetIndex = ruleset.Index;
     }
 
     public CharacterSnapshot Resolve(CharacterDraft draft)

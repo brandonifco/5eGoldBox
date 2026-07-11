@@ -10,7 +10,7 @@ internal sealed class TestRulesetBuilder
     private IReadOnlyList<RaceDefinition> _races = [HumanRace()];
     private IReadOnlyList<ClassDefinition> _classes = [FighterClass()];
     private IReadOnlyList<BackgroundDefinition> _backgrounds = Array.Empty<BackgroundDefinition>();
-    private IReadOnlyList<SkillDefinition> _skills = Array.Empty<SkillDefinition>();
+    private IReadOnlyList<SkillDefinition> _skills = FighterSkillDefinitions();
     private IReadOnlyList<ArmorDefinition> _armors = Array.Empty<ArmorDefinition>();
     private IReadOnlyList<WeaponDefinition> _weapons = Array.Empty<WeaponDefinition>();
     private IReadOnlyList<EquipmentItemDefinition> _equipmentItems = Array.Empty<EquipmentItemDefinition>();
@@ -138,5 +138,60 @@ internal sealed class TestRulesetBuilder
             ],
             NumberOfSkillChoices = 2
         };
+    }
+
+    public static IReadOnlyList<SkillDefinition> FighterSkillDefinitions()
+    {
+        return
+        [
+            new SkillDefinition
+            {
+                Id = "skill.acrobatics",
+                Name = "Acrobatics",
+                Ability = Ability.Dexterity
+            },
+            new SkillDefinition
+            {
+                Id = "skill.animal_handling",
+                Name = "Animal Handling",
+                Ability = Ability.Wisdom
+            },
+            new SkillDefinition
+            {
+                Id = "skill.athletics",
+                Name = "Athletics",
+                Ability = Ability.Strength
+            },
+            new SkillDefinition
+            {
+                Id = "skill.history",
+                Name = "History",
+                Ability = Ability.Intelligence
+            },
+            new SkillDefinition
+            {
+                Id = "skill.insight",
+                Name = "Insight",
+                Ability = Ability.Wisdom
+            },
+            new SkillDefinition
+            {
+                Id = "skill.intimidation",
+                Name = "Intimidation",
+                Ability = Ability.Charisma
+            },
+            new SkillDefinition
+            {
+                Id = "skill.perception",
+                Name = "Perception",
+                Ability = Ability.Wisdom
+            },
+            new SkillDefinition
+            {
+                Id = "skill.survival",
+                Name = "Survival",
+                Ability = Ability.Wisdom
+            }
+        ];
     }
 }
