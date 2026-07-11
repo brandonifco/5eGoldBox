@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Validation;
 
@@ -48,7 +49,7 @@ public static partial class RulesetValidator
         {
             AddInvalidNumericIssue(
                 issues,
-                armor.BaseArmorClass <= 0,
+                armor.Category != ArmorCategory.Shield && armor.BaseArmorClass <= 0,
                 "ruleset.armors.base_armor_class.invalid",
                 $"Ruleset armor '{armor.Id}' has invalid base armor class '{armor.BaseArmorClass}'.");
 

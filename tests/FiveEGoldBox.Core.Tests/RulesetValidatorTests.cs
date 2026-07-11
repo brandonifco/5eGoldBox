@@ -620,6 +620,156 @@ public sealed class RulesetValidatorTests
             result.Issues,
             issue => issue.Message.Contains("item.known"));
     }
+    [Fact]
+    public void Validate_WithValidShieldArmorDefinition_ReturnsSuccess()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Armors =
+            [
+                new ArmorDefinition
+                {
+                    Id = "armor.shield",
+                    Name = "Shield",
+                    Category = ArmorCategory.Shield,
+                    BaseArmorClass = 0,
+                    ArmorClassBonus = 2
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public void Validate_WithInvalidArmorSemantics_ReturnsErrors()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Armors =
+            [
+                CreateArmor("armor.dex_cap_without_dex", "Dex Cap Without Dex") with
+                {
+                    AddsDexterityModifier = false,
+                    MaximumDexterityModifier = 2
+                },
+                new ArmorDefinition
+                {
+                    Id = "armor.bad_shield",
+                    Name = "Bad Shield",
+                    Category = ArmorCategory.Shield,
+                    BaseArmorClass = 0,
+                    ArmorClassBonus = 0
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.armors.maximum_dexterity_modifier.unused"
+                && issue.Message.Contains("armor.dex_cap_without_dex"));
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.armors.shield_bonus.invalid"
+                && issue.Message.Contains("armor.bad_shield"));
+    }
+
+    [Fact]
+    public void Validate_WithInvalidWeaponRangeSemantics_ReturnsErrors()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Weapons =
+            [
+                CreateWeapon("weapon.ranged_without_range", "Ranged Without Range") with
+                {
+                    AttackKind = WeaponAttackKind.Ranged
+                },
+                CreateWeapon("weapon.long_without_normal", "Long Without Normal") with
+                {
+                    LongRangeFeet = 120
+                },
+                CreateWeapon("weapon.invalid_long_range", "Invalid Long Range") with
+                {
+                    NormalRangeFeet = 80,
+                    LongRangeFeet = 80
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.weapons.range.required"
+                && issue.Message.Contains("weapon.ranged_without_range"));
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.weapons.long_range.requires_normal_range"
+                && issue.Message.Contains("weapon.long_without_normal"));
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.weapons.long_range.invalid"
+                && issue.Message.Contains("weapon.invalid_long_range"));
+    }
+
+    [Fact]
+    public void Validate_WithKnownWeaponProperties_ReturnsSuccess()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Weapons =
+            [
+                CreateWeapon("weapon.shortbow", "Shortbow") with
+                {
+                    AttackKind = WeaponAttackKind.Ranged,
+                    Properties =
+                    [
+                        RuleIds.WeaponProperties.Ammunition,
+                        RuleIds.WeaponProperties.TwoHanded
+                    ],
+                    NormalRangeFeet = 80,
+                    LongRangeFeet = 320
+                },
+                CreateWeapon("weapon.longsword", "Longsword") with
+                {
+                    Properties =
+                    [
+                        RuleIds.WeaponProperties.Versatile
+                    ],
+                    VersatileDamage = new DamageDice
+                    {
+                        Count = 1,
+                        Die = DieType.D10
+                    }
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.True(result.IsValid);
+    }
+
     private static RaceDefinition CreateRace(string id, string name)
     {
         return new RaceDefinition

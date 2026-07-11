@@ -11,9 +11,11 @@ public static partial class RulesetValidator
     {
         HashSet<string> knownWeaponPropertyIds =
         [
+            RuleIds.WeaponProperties.Ammunition,
             RuleIds.WeaponProperties.Finesse,
             RuleIds.WeaponProperties.Heavy,
-            RuleIds.WeaponProperties.TwoHanded
+            RuleIds.WeaponProperties.TwoHanded,
+            RuleIds.WeaponProperties.Versatile
         ];
 
         foreach (WeaponDefinition weapon in weapons)
