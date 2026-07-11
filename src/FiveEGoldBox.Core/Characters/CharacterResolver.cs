@@ -7,6 +7,7 @@ namespace FiveEGoldBox.Core.Characters;
 public sealed partial class CharacterResolver
 {
     private readonly RulesetDefinition? _ruleset;
+    private readonly RulesetIndex? _rulesetIndex;
 
     public CharacterResolver()
     {
@@ -17,6 +18,8 @@ public sealed partial class CharacterResolver
         ArgumentNullException.ThrowIfNull(ruleset);
 
         _ruleset = ruleset;
+        _rulesetIndex = new RulesetIndex(ruleset);
+
     }
 
     public CharacterSnapshot Resolve(CharacterDraft draft)
