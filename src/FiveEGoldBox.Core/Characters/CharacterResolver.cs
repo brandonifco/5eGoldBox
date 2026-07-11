@@ -53,29 +53,12 @@ public sealed partial class CharacterResolver
         ArmorDefinition? equippedShield = GetEquippedShield(draft);
         IReadOnlyList<WeaponDefinition> equippedWeapons = GetEquippedWeapons(draft);
 
-        Dictionary<Ability, int> abilityScores = draft.BaseAbilityScores.ToDictionary(
-            pair => pair.Key,
-            pair => pair.Value);
+        IReadOnlyDictionary<Ability, int> abilityScores = CalculateAbilityScores(
+            draft,
+            selectedRace,
+            selectedSubrace);
 
-        if (selectedRace is not null)
-        {
-            foreach (AbilityScoreIncrease increase in selectedRace.AbilityScoreIncreases)
-            {
-                abilityScores[increase.Ability] += increase.Amount;
-            }
-        }
-
-        if (selectedSubrace is not null)
-        {
-            foreach (AbilityScoreIncrease increase in selectedSubrace.AbilityScoreIncreases)
-            {
-                abilityScores[increase.Ability] += increase.Amount;
-            }
-        }
-
-        Dictionary<Ability, int> abilityModifiers = abilityScores.ToDictionary(
-            pair => pair.Key,
-            pair => AbilityRules.GetModifier(pair.Value));
+        IReadOnlyDictionary<Ability, int> abilityModifiers = CalculateAbilityModifiers(abilityScores);
 
         int? armorClass = CalculateArmorClass(
             abilityModifiers[Ability.Dexterity],
