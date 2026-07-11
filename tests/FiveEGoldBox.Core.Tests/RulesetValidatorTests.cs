@@ -117,6 +117,70 @@ public sealed class RulesetValidatorTests
     }
 
     [Fact]
+    public void Validate_WithMissingSubraceIdsOrNames_ReturnsErrors()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Races =
+            [
+                CreateRace("race.test", "Test Race") with
+                {
+                    Subraces =
+                    [
+                        new SubraceDefinition
+                        {
+                            Id = " ",
+                            Name = ""
+                        }
+                    ]
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.races.subraces.id.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.races.subraces.name.required");
+    }
+
+    [Fact]
+    public void Validate_WithDuplicateSubraceIdsWithinSameRace_ReturnsError()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Races =
+            [
+                CreateRace("race.test", "Test Race") with
+                {
+                    Subraces =
+                    [
+                        new SubraceDefinition
+                        {
+                            Id = "subrace.duplicate",
+                            Name = "Subrace One"
+                        },
+                        new SubraceDefinition
+                        {
+                            Id = "subrace.duplicate",
+                            Name = "Subrace Two"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.races.subraces.duplicate_id");
+    }
+
+    [Fact]
     public void Validate_WithNullRuleset_Throws()
     {
         Assert.Throws<ArgumentNullException>(() => RulesetValidator.Validate(null!));
