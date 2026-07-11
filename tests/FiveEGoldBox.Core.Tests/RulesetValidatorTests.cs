@@ -367,6 +367,107 @@ public sealed class RulesetValidatorTests
                 && issue.Message.Contains("skill.unknown.background"));
     }
     [Fact]
+    public void Validate_WithInvalidClassSkillChoiceCount_ReturnsErrors()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Skills =
+            [
+                CreateSkill("skill.known", "Known Skill")
+            ],
+            Classes =
+            [
+                CreateClass("class.negative", "Negative Skill Choices") with
+                {
+                    NumberOfSkillChoices = -1
+                },
+                CreateClass("class.too_many", "Too Many Skill Choices") with
+                {
+                    SkillChoices = ["skill.known"],
+                    NumberOfSkillChoices = 2
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.classes.skill_choice_count.invalid"
+                && issue.Message.Contains("class.negative"));
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.classes.skill_choice_count.exceeds_available"
+                && issue.Message.Contains("class.too_many"));
+    }
+
+    [Fact]
+    public void Validate_WithInvalidClassFeaturesByLevel_ReturnsErrors()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Classes =
+            [
+                CreateClass("class.invalid", "Invalid Features") with
+                {
+                    FeaturesByLevel = new Dictionary<int, IReadOnlyList<string>>
+                    {
+                        [0] = ["feature.valid"],
+                        [1] = ["", "feature.valid"]
+                    }
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.classes.features.level.invalid"
+                && issue.Message.Contains("class.invalid"));
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.classes.features.feature_id.required"
+                && issue.Message.Contains("class.invalid"));
+    }
+
+    [Fact]
+    public void Validate_WithBlankBackgroundFeatureId_ReturnsError()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Backgrounds =
+            [
+                CreateBackground("background.invalid", "Invalid Background") with
+                {
+                    FeatureId = ""
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.backgrounds.feature_id.required"
+                && issue.Message.Contains("background.invalid"));
+    }
+
+    [Fact]
     public void Validate_WithUnknownClassArmorOrWeaponProficiencyReferences_ReturnsErrors()
     {
         RulesetDefinition ruleset = new()

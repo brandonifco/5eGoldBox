@@ -13,6 +13,7 @@ public static partial class RulesetValidator
         AddRulesetIdentityIssues(issues, ruleset);
         AddRequiredDefinitionIdentityIssues(issues, ruleset);
         AddDuplicateDefinitionIdIssues(issues, ruleset);
+        AddCharacterOptionDefinitionIssues(issues, ruleset);
         AddNumericDefinitionIssues(issues, ruleset);
         AddWeaponDefinitionIssues(issues, ruleset.Weapons);
         AddSubraceIssues(issues, ruleset.Races);
