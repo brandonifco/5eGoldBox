@@ -134,7 +134,7 @@ public static class DeathSavingThrowRules
         };
     }
 
-    private static void ValidateState(
+    internal static void ValidateState(
         DeathSavingThrowState state)
     {
         if (state.SuccessCount is < 0 or >= SuccessesRequired)
