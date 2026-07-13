@@ -25,6 +25,15 @@ public static class HitPointRules
         HitPointState state,
         int damageAmount)
     {
+        return ResolveDamage(
+            state,
+            damageAmount).State;
+    }
+
+    public static HitPointDamageResult ResolveDamage(
+        HitPointState state,
+        int damageAmount)
+    {
         ArgumentNullException.ThrowIfNull(state);
 
         ValidateState(state);
@@ -37,27 +46,55 @@ public static class HitPointRules
                 "Damage amount must not be negative.");
         }
 
+        bool startedAtZeroHitPoints =
+            state.IsAtZeroHitPoints;
+
         if (damageAmount == 0)
         {
-            return state;
+            return new HitPointDamageResult
+            {
+                DamageAmount = damageAmount,
+                DamageAbsorbedByTemporaryHitPoints = 0,
+                DamageAppliedToCurrentHitPoints = 0,
+                DamageRemainingAfterReachingZeroHitPoints = 0,
+                StartedAtZeroHitPoints = startedAtZeroHitPoints,
+                State = state
+            };
         }
 
         int damageAbsorbedByTemporaryHitPoints = Math.Min(
             state.TemporaryHitPoints,
             damageAmount);
 
-        int remainingDamage = damageAmount - damageAbsorbedByTemporaryHitPoints;
+        int damageAfterTemporaryHitPoints =
+            damageAmount - damageAbsorbedByTemporaryHitPoints;
 
-        int newTemporaryHitPoints = state.TemporaryHitPoints - damageAbsorbedByTemporaryHitPoints;
+        int damageAppliedToCurrentHitPoints = Math.Min(
+            state.CurrentHitPoints,
+            damageAfterTemporaryHitPoints);
 
-        int newCurrentHitPoints = Math.Max(
-            0,
-            state.CurrentHitPoints - remainingDamage);
+        int damageRemainingAfterReachingZeroHitPoints =
+            damageAfterTemporaryHitPoints - damageAppliedToCurrentHitPoints;
 
-        return state with
+        HitPointState resolvedState = state with
         {
-            CurrentHitPoints = newCurrentHitPoints,
-            TemporaryHitPoints = newTemporaryHitPoints
+            CurrentHitPoints =
+                state.CurrentHitPoints - damageAppliedToCurrentHitPoints,
+            TemporaryHitPoints =
+                state.TemporaryHitPoints - damageAbsorbedByTemporaryHitPoints
+        };
+
+        return new HitPointDamageResult
+        {
+            DamageAmount = damageAmount,
+            DamageAbsorbedByTemporaryHitPoints =
+                damageAbsorbedByTemporaryHitPoints,
+            DamageAppliedToCurrentHitPoints =
+                damageAppliedToCurrentHitPoints,
+            DamageRemainingAfterReachingZeroHitPoints =
+                damageRemainingAfterReachingZeroHitPoints,
+            StartedAtZeroHitPoints = startedAtZeroHitPoints,
+            State = resolvedState
         };
     }
 
