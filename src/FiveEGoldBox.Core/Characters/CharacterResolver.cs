@@ -130,7 +130,6 @@ public sealed partial class CharacterResolver
             skillBonuses,
             abilityModifiers);
         int carryingCapacityPounds = abilityScores[Ability.Strength] * 15;
-        int pushDragLiftPounds = abilityScores[Ability.Strength] * 30;
 
         decimal equippedWeightPounds = CalculateEquippedWeight(
             equippedArmor,
