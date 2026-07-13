@@ -154,7 +154,7 @@ public static class HitPointRules
         };
     }
 
-    private static void ValidateState(
+    internal static void ValidateState(
         HitPointState state)
     {
         if (state.MaximumHitPoints <= 0)
