@@ -89,8 +89,119 @@ public static class CombatantHealthRules
             State = resolvedState
         };
     }
+    public static CombatantHealthHealingResult ResolveHealing(
+        CombatantHealthState state,
+        int healingAmount)
+    {
+        ArgumentNullException.ThrowIfNull(state);
 
-    private static void ValidateState(
+        ValidateState(state);
+
+        if (state.IsDead)
+        {
+            throw new InvalidOperationException(
+                "A dead creature cannot regain hit points.");
+        }
+
+        HitPointState resolvedHitPoints =
+            HitPointRules.ApplyHealing(
+                state.HitPoints,
+                healingAmount);
+
+        int hitPointsRestored =
+            resolvedHitPoints.CurrentHitPoints
+            - state.HitPoints.CurrentHitPoints;
+
+        if (hitPointsRestored == 0)
+        {
+            return new CombatantHealthHealingResult
+            {
+                HealingAmount = healingAmount,
+                HitPointsRestored = 0,
+                ResetDeathSavingThrows = false,
+                State = state
+            };
+        }
+
+        bool resetDeathSavingThrows =
+            state.HitPoints.IsAtZeroHitPoints
+            && !resolvedHitPoints.IsAtZeroHitPoints;
+
+        CombatantHealthState resolvedState = new()
+        {
+            HitPoints = resolvedHitPoints,
+            DeathSavingThrows = resetDeathSavingThrows
+                ? DeathSavingThrowRules.Create()
+                : state.DeathSavingThrows,
+            IsInstantlyDead = false
+        };
+
+        return new CombatantHealthHealingResult
+        {
+            HealingAmount = healingAmount,
+            HitPointsRestored = hitPointsRestored,
+            ResetDeathSavingThrows =
+                resetDeathSavingThrows,
+            State = resolvedState
+        };
+    }
+
+    public static CombatantHealthDeathSavingThrowResult
+        ResolveDeathSavingThrow(
+            CombatantHealthState state,
+            D20RollMode rollMode,
+            int firstRoll,
+            int? secondRoll,
+            int savingThrowBonus)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+
+        ValidateState(state);
+
+        if (state.IsDead)
+        {
+            throw new InvalidOperationException(
+                "A dead creature cannot make death saving throws.");
+        }
+
+        if (!state.HitPoints.IsAtZeroHitPoints)
+        {
+            throw new InvalidOperationException(
+                "A creature with hit points cannot make death saving throws.");
+        }
+
+        DeathSavingThrowResult deathSavingThrow =
+            DeathSavingThrowRules.ResolveDeathSavingThrow(
+                state.DeathSavingThrows,
+                rollMode,
+                firstRoll,
+                secondRoll,
+                savingThrowBonus);
+
+        HitPointState resolvedHitPoints =
+            deathSavingThrow.Outcome
+                == DeathSavingThrowOutcome.RegainedHitPoint
+            ? HitPointRules.ApplyHealing(
+                state.HitPoints,
+                healingAmount: 1)
+            : state.HitPoints;
+
+        CombatantHealthState resolvedState = new()
+        {
+            HitPoints = resolvedHitPoints,
+            DeathSavingThrows =
+                deathSavingThrow.State,
+            IsInstantlyDead = false
+        };
+
+        return new CombatantHealthDeathSavingThrowResult
+        {
+            DeathSavingThrow = deathSavingThrow,
+            State = resolvedState
+        };
+    }
+
+    internal static void ValidateState(
         CombatantHealthState state)
     {
         ArgumentNullException.ThrowIfNull(
