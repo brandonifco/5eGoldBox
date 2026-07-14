@@ -102,7 +102,7 @@ public static class CombatTurnResourceRules
         };
     }
 
-    private static void ValidateResources(
+    internal static void ValidateResources(
         CombatTurnResources resources)
     {
         if (resources.MovementSpeedFeet < 0)

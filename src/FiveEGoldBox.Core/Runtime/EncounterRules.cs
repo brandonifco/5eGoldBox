@@ -6,7 +6,7 @@ public static class EncounterRules
 {
     public static EncounterState Start(
         string encounterId,
-        IReadOnlyList<EncounterParticipantState> participants,
+        IReadOnlyList<EncounterParticipantSetup> participants,
         IReadOnlyList<InitiativeOrderEntry> initiativeOrder)
     {
         if (string.IsNullOrWhiteSpace(encounterId))
@@ -19,15 +19,21 @@ public static class EncounterRules
         ArgumentNullException.ThrowIfNull(participants);
         ArgumentNullException.ThrowIfNull(initiativeOrder);
 
-        ValidateParticipants(participants, allowTerminalCombatants: false);
+        EncounterParticipantState[] participantStates =
+            participants
+                .Select(CreateParticipantState)
+                .ToArray();
+
+        ValidateParticipants(
+            participantStates,
+            allowTerminalCombatants: false);
         ValidateInitiativeOrder(
-            participants,
+            participantStates,
             initiativeOrder);
 
         IReadOnlyList<EncounterParticipantState>
             protectedParticipants =
-                Array.AsReadOnly(
-                    participants.ToArray());
+                Array.AsReadOnly(participantStates);
 
         IReadOnlyList<InitiativeOrderEntry>
             canonicalInitiativeOrder =
@@ -139,6 +145,24 @@ public static class EncounterRules
         }
     }
 
+    private static EncounterParticipantState
+        CreateParticipantState(
+            EncounterParticipantSetup participant)
+    {
+        ArgumentNullException.ThrowIfNull(participant);
+        ArgumentNullException.ThrowIfNull(
+            participant.Combatant);
+
+        return new EncounterParticipantState
+        {
+            Combatant = participant.Combatant,
+            SideId = participant.SideId,
+            TurnResources =
+                CombatTurnResourceRules.StartTurn(
+                    participant.MovementSpeedFeet)
+        };
+    }
+
     private static void ValidateParticipants(
         IReadOnlyList<EncounterParticipantState> participants, bool allowTerminalCombatants)
     {
@@ -161,7 +185,11 @@ public static class EncounterRules
             ArgumentNullException.ThrowIfNull(participant);
             ArgumentNullException.ThrowIfNull(
                 participant.Combatant);
+            ArgumentNullException.ThrowIfNull(
+                participant.TurnResources);
 
+            CombatTurnResourceRules.ValidateResources(
+                participant.TurnResources);
             CombatantRules.ValidateState(
                 participant.Combatant);
 

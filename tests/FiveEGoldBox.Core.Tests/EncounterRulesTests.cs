@@ -8,26 +8,28 @@ public sealed class EncounterRulesTests
     [Fact]
     public void Start_WithValidParticipants_CreatesActiveEncounter()
     {
-        EncounterParticipantState[] participants =
+        EncounterParticipantSetup[] participants =
         [
             CreateParticipant(
-                combatantId: "combatant.hero",
-                sideId: "side.party"),
-            CreateParticipant(
-                combatantId: "combatant.enemy",
-                sideId: "side.enemies")
+            combatantId: "combatant.hero",
+            sideId: "side.party",
+            movementSpeedFeet: 30),
+        CreateParticipant(
+            combatantId: "combatant.enemy",
+            sideId: "side.enemies",
+            movementSpeedFeet: 25)
         ];
 
         InitiativeOrderEntry[] initiativeOrder =
         [
             CreateInitiativeEntry(
-                combatantId: "combatant.hero",
-                position: 1,
-                total: 15),
-            CreateInitiativeEntry(
-                combatantId: "combatant.enemy",
-                position: 2,
-                total: 10)
+            combatantId: "combatant.hero",
+            position: 1,
+            total: 15),
+        CreateInitiativeEntry(
+            combatantId: "combatant.enemy",
+            position: 2,
+            total: 10)
         ];
 
         EncounterState state = EncounterRules.Start(
@@ -46,12 +48,43 @@ public sealed class EncounterRulesTests
         Assert.Equal(
             "combatant.hero",
             state.ActiveCombatantId);
+
+        Assert.True(
+            state.Participants[0]
+                .TurnResources.HasActionAvailable);
+        Assert.True(
+            state.Participants[0]
+                .TurnResources.HasBonusActionAvailable);
+        Assert.True(
+            state.Participants[0]
+                .TurnResources.HasReactionAvailable);
+        Assert.Equal(
+            30,
+            state.Participants[0]
+                .TurnResources.MovementSpeedFeet);
+        Assert.Equal(
+            0,
+            state.Participants[0]
+                .TurnResources.MovementSpentFeet);
+        Assert.Equal(
+            30,
+            state.Participants[0]
+                .TurnResources.MovementRemainingFeet);
+
+        Assert.Equal(
+            25,
+            state.Participants[1]
+                .TurnResources.MovementSpeedFeet);
+        Assert.Equal(
+            25,
+            state.Participants[1]
+                .TurnResources.MovementRemainingFeet);
     }
 
     [Fact]
     public void Start_WithUnorderedInitiativeEntries_OrdersByPosition()
     {
-        EncounterParticipantState[] participants =
+        EncounterParticipantSetup[] participants =
         [
             CreateParticipant(
                 combatantId: "combatant.hero",
@@ -92,7 +125,7 @@ public sealed class EncounterRulesTests
     [Fact]
     public void Start_ProtectsParticipantsFromSourceCollectionMutation()
     {
-        EncounterParticipantState[] participants =
+        EncounterParticipantSetup[] participants =
         [
             CreateParticipant(
                 combatantId: "combatant.hero",
@@ -139,19 +172,36 @@ public sealed class EncounterRulesTests
             "combatant.hero",
             state.ActiveCombatantId);
     }
-
-    private static EncounterParticipantState[]
+    private static EncounterParticipantSetup[]
         CreateParticipants()
     {
         return
         [
             CreateParticipant(
-                combatantId: "combatant.hero",
-                sideId: "side.party"),
-            CreateParticipant(
-                combatantId: "combatant.enemy",
-                sideId: "side.enemies")
+            combatantId: "combatant.hero",
+            sideId: "side.party"),
+        CreateParticipant(
+            combatantId: "combatant.enemy",
+            sideId: "side.enemies")
         ];
+    }
+
+    private static EncounterParticipantSetup
+        CreateParticipant(
+            string combatantId,
+            string sideId,
+            int movementSpeedFeet = 30)
+    {
+        return new EncounterParticipantSetup
+        {
+            Combatant = CombatantRules.Create(
+                combatantId,
+                maximumHitPoints: 10,
+                CombatantZeroHitPointPolicy
+                    .DeathSavingThrows),
+            SideId = sideId,
+            MovementSpeedFeet = movementSpeedFeet
+        };
     }
 
     private static InitiativeOrderEntry[]
@@ -160,30 +210,14 @@ public sealed class EncounterRulesTests
         return
         [
             CreateInitiativeEntry(
-                combatantId: "combatant.hero",
-                position: 1,
-                total: 15),
-            CreateInitiativeEntry(
-                combatantId: "combatant.enemy",
-                position: 2,
-                total: 10)
+            combatantId: "combatant.hero",
+            position: 1,
+            total: 15),
+        CreateInitiativeEntry(
+            combatantId: "combatant.enemy",
+            position: 2,
+            total: 10)
         ];
-    }
-
-    private static EncounterParticipantState
-        CreateParticipant(
-            string combatantId,
-            string sideId)
-    {
-        return new EncounterParticipantState
-        {
-            Combatant = CombatantRules.Create(
-                combatantId,
-                maximumHitPoints: 10,
-                CombatantZeroHitPointPolicy
-                    .DeathSavingThrows),
-            SideId = sideId
-        };
     }
 
     private static InitiativeOrderEntry
@@ -225,7 +259,7 @@ public sealed class EncounterRulesTests
             EncounterRules.Start(
                 encounterId: "encounter.test",
                 participants:
-                    Array.Empty<EncounterParticipantState>(),
+                    Array.Empty<EncounterParticipantSetup>(),
                 initiativeOrder:
                     Array.Empty<InitiativeOrderEntry>()));
     }
@@ -233,7 +267,7 @@ public sealed class EncounterRulesTests
     [Fact]
     public void Start_WithOnlyOneSide_Throws()
     {
-        EncounterParticipantState[] participants =
+        EncounterParticipantSetup[] participants =
         [
             CreateParticipant(
             combatantId: "combatant.hero.one",
@@ -265,7 +299,7 @@ public sealed class EncounterRulesTests
     [Fact]
     public void Start_WithDuplicateCombatantIds_Throws()
     {
-        EncounterParticipantState[] participants =
+        EncounterParticipantSetup[] participants =
         [
             CreateParticipant(
             combatantId: "combatant.duplicate",
@@ -285,7 +319,7 @@ public sealed class EncounterRulesTests
     [Fact]
     public void Start_WithBlankSideId_Throws()
     {
-        EncounterParticipantState[] participants =
+        EncounterParticipantSetup[] participants =
         [
             CreateParticipant(
             combatantId: "combatant.hero",
@@ -315,15 +349,16 @@ public sealed class EncounterRulesTests
                 isCriticalHit: false)
             .State;
 
-        EncounterParticipantState[] participants =
+        EncounterParticipantSetup[] participants =
         [
             CreateParticipant(
             combatantId: "combatant.hero",
             sideId: "side.party"),
-        new EncounterParticipantState
+        new EncounterParticipantSetup
         {
             Combatant = defeatedCombatant,
-            SideId = "side.enemies"
+            SideId = "side.enemies",
+            MovementSpeedFeet = 30
         }
         ];
 
@@ -706,5 +741,61 @@ public sealed class EncounterRulesTests
             CombatantLifecycleState.Defeated,
             result.Participants[1]
                 .Combatant.LifecycleState);
+    }
+    [Fact]
+    public void Start_WithNegativeMovementSpeed_Throws()
+    {
+        EncounterParticipantSetup[] participants =
+        [
+            CreateParticipant(
+            combatantId: "combatant.hero",
+            sideId: "side.party",
+            movementSpeedFeet: -1),
+        CreateParticipant(
+            combatantId: "combatant.enemy",
+            sideId: "side.enemies")
+        ];
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            EncounterRules.Start(
+                encounterId: "encounter.test",
+                participants,
+                CreateInitiativeOrder()));
+    }
+    [Fact]
+    public void DeclareOutcome_WhenParticipantTurnResourcesAreInvalid_ThrowsBeforeTransition()
+    {
+        EncounterState state = EncounterRules.Start(
+            encounterId: "encounter.test",
+            CreateParticipants(),
+            CreateInitiativeOrder());
+
+        EncounterParticipantState[] invalidParticipants =
+        [
+            state.Participants[0] with
+        {
+            TurnResources =
+                state.Participants[0].TurnResources with
+                {
+                    MovementSpentFeet = 31
+                }
+        },
+        state.Participants[1]
+        ];
+
+        state = state with
+        {
+            Participants =
+                Array.AsReadOnly(invalidParticipants)
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            EncounterRules.DeclareOutcome(
+                state,
+                EncounterLifecycleState.Victory));
+
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            state.LifecycleState);
     }
 }
