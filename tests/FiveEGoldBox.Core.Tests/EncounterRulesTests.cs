@@ -38,6 +38,7 @@ public sealed class EncounterRulesTests
             initiativeOrder);
 
         Assert.Equal("encounter.test", state.EncounterId);
+        Assert.Equal(1, state.Revision);
         Assert.Equal(
             EncounterLifecycleState.Active,
             state.LifecycleState);
@@ -494,6 +495,9 @@ public sealed class EncounterRulesTests
             state.LifecycleState);
         Assert.Equal(outcome, result.LifecycleState);
         Assert.Equal(
+            state.Revision + 1,
+            result.Revision);
+        Assert.Equal(
             state.EncounterId,
             result.EncounterId);
         Assert.Equal(
@@ -794,6 +798,50 @@ public sealed class EncounterRulesTests
                 state,
                 EncounterLifecycleState.Victory));
 
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            state.LifecycleState);
+    }
+    [Fact]
+    public void DeclareOutcome_WhenRevisionIsInvalid_ThrowsBeforeTransition()
+    {
+        EncounterState state = EncounterRules.Start(
+            encounterId: "encounter.test",
+            CreateParticipants(),
+            CreateInitiativeOrder())
+            with
+        {
+            Revision = 0
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            EncounterRules.DeclareOutcome(
+                state,
+                EncounterLifecycleState.Victory));
+
+        Assert.Equal(0, state.Revision);
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            state.LifecycleState);
+    }
+    [Fact]
+    public void DeclareOutcome_WhenRevisionCannotIncrement_ThrowsBeforeTransition()
+    {
+        EncounterState state = EncounterRules.Start(
+            encounterId: "encounter.test",
+            CreateParticipants(),
+            CreateInitiativeOrder())
+            with
+        {
+            Revision = long.MaxValue
+        };
+
+        Assert.Throws<OverflowException>(() =>
+            EncounterRules.DeclareOutcome(
+                state,
+                EncounterLifecycleState.Victory));
+
+        Assert.Equal(long.MaxValue, state.Revision);
         Assert.Equal(
             EncounterLifecycleState.Active,
             state.LifecycleState);
