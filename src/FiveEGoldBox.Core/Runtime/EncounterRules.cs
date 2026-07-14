@@ -49,6 +49,7 @@ public static class EncounterRules
         return new EncounterState
         {
             EncounterId = encounterId,
+            Revision = 1,
             Participants = protectedParticipants,
             TurnState = turnState,
             LifecycleState =
@@ -82,6 +83,7 @@ public static class EncounterRules
 
         return state with
         {
+            Revision = checked(state.Revision + 1),
             LifecycleState = outcome
         };
     }
@@ -96,6 +98,14 @@ public static class EncounterRules
             throw new ArgumentException(
                 "Encounter ID is required.",
                 nameof(state));
+        }
+
+        if (state.Revision < 1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(state),
+                state.Revision,
+                "Encounter revision must be at least 1.");
         }
 
         if (!Enum.IsDefined(state.LifecycleState))

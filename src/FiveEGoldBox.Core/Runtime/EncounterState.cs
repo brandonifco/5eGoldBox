@@ -6,6 +6,8 @@ public sealed record EncounterState
 {
     public required string EncounterId { get; init; }
 
+    public required long Revision { get; init; }
+
     public required IReadOnlyList<EncounterParticipantState>
         Participants { get; init; }
 
