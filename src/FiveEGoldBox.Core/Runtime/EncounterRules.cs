@@ -186,6 +186,53 @@ public static class EncounterRules
                         .ToArray())
         };
     }
+    private static EncounterCombatProfile
+        ProtectCombatProfile(
+            EncounterCombatProfile combatProfile)
+    {
+        ArgumentNullException.ThrowIfNull(combatProfile);
+
+        if (combatProfile.ArmorClass <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(combatProfile),
+                combatProfile.ArmorClass,
+                "Armor class must be greater than 0.");
+        }
+
+        ArgumentNullException.ThrowIfNull(
+            combatProfile.WeaponAttacks);
+        ArgumentNullException.ThrowIfNull(
+            combatProfile.DamageResponses);
+
+        return combatProfile with
+        {
+            WeaponAttacks =
+                Array.AsReadOnly(
+                    combatProfile.WeaponAttacks.ToArray()),
+            DamageResponses =
+                Array.AsReadOnly(
+                    combatProfile.DamageResponses.ToArray())
+        };
+    }
+    private static void ValidateCombatProfile(
+        EncounterCombatProfile combatProfile)
+    {
+        ArgumentNullException.ThrowIfNull(combatProfile);
+
+        if (combatProfile.ArmorClass <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(combatProfile),
+                combatProfile.ArmorClass,
+                "Armor class must be greater than 0.");
+        }
+
+        ArgumentNullException.ThrowIfNull(
+            combatProfile.WeaponAttacks);
+        ArgumentNullException.ThrowIfNull(
+            combatProfile.DamageResponses);
+    }
 
     private static EncounterParticipantState
         CreateParticipantState(
@@ -194,10 +241,15 @@ public static class EncounterRules
         ArgumentNullException.ThrowIfNull(participant);
         ArgumentNullException.ThrowIfNull(
             participant.Combatant);
+        ArgumentNullException.ThrowIfNull(
+            participant.CombatProfile);
 
         return new EncounterParticipantState
         {
             Combatant = participant.Combatant,
+            CombatProfile =
+                ProtectCombatProfile(
+                    participant.CombatProfile),
             SideId = participant.SideId,
             TurnResources =
                 CombatTurnResourceRules.StartTurn(
@@ -309,9 +361,10 @@ public static class EncounterRules
         foreach (EncounterParticipantState participant
             in participants)
         {
-            ArgumentNullException.ThrowIfNull(participant);
             ArgumentNullException.ThrowIfNull(
                 participant.Combatant);
+            ArgumentNullException.ThrowIfNull(
+                participant.CombatProfile);
             ArgumentNullException.ThrowIfNull(
                 participant.TurnResources);
 
@@ -319,6 +372,8 @@ public static class EncounterRules
                 participant.TurnResources);
             CombatantRules.ValidateState(
                 participant.Combatant);
+            ValidateCombatProfile(
+                participant.CombatProfile);
 
             if (!allowTerminalCombatants
                 && participant.Combatant.IsTerminal)
