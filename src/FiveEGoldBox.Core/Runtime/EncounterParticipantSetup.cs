@@ -7,4 +7,6 @@ public sealed record EncounterParticipantSetup
     public required string SideId { get; init; }
 
     public required int MovementSpeedFeet { get; init; }
+
+    public required GridPosition StartingPosition { get; init; }
 }

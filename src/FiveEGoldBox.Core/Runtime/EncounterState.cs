@@ -8,6 +8,9 @@ public sealed record EncounterState
 
     public required long Revision { get; init; }
 
+    public required EncounterBattlefieldState
+        Battlefield { get; init; }
+
     public required IReadOnlyList<EncounterParticipantState>
         Participants { get; init; }
 

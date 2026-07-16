@@ -61,7 +61,8 @@ public sealed class EncounterActionDiscoveryRulesTests
                     CombatantZeroHitPointPolicy
                         .DeathSavingThrows),
                 SideId = "side.party",
-                MovementSpeedFeet = 30
+                MovementSpeedFeet = 30,
+                StartingPosition = new GridPosition(1, 1)
             },
             new EncounterParticipantSetup
             {
@@ -71,7 +72,8 @@ public sealed class EncounterActionDiscoveryRulesTests
                     CombatantZeroHitPointPolicy
                         .DeathSavingThrows),
                 SideId = "side.enemies",
-                MovementSpeedFeet = 30
+                MovementSpeedFeet = 30,
+                StartingPosition = new GridPosition(2, 1)
             }
         ];
 
@@ -89,8 +91,24 @@ public sealed class EncounterActionDiscoveryRulesTests
 
         return EncounterRules.Start(
             encounterId: "encounter.test",
+            CreateBattlefield(),
             participants,
             initiativeOrder);
+
+    }
+    private static EncounterBattlefieldState
+        CreateBattlefield()
+    {
+        return new EncounterBattlefieldState
+        {
+            BattlefieldId = "battlefield.test",
+            Width = 12,
+            Height = 12,
+            BlockedPositions =
+                Array.Empty<GridPosition>(),
+            DifficultTerrainPositions =
+                Array.Empty<GridPosition>()
+        };
     }
 
     private static EncounterActionCandidate
