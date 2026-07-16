@@ -6,6 +6,7 @@ public static class EncounterRules
 {
     public static EncounterState Start(
         string encounterId,
+        EncounterBattlefieldState battlefield,
         IReadOnlyList<EncounterParticipantSetup> participants,
         IReadOnlyList<InitiativeOrderEntry> initiativeOrder)
     {
@@ -16,8 +17,12 @@ public static class EncounterRules
                 nameof(encounterId));
         }
 
+        ArgumentNullException.ThrowIfNull(battlefield);
         ArgumentNullException.ThrowIfNull(participants);
         ArgumentNullException.ThrowIfNull(initiativeOrder);
+
+        EncounterBattlefieldState protectedBattlefield =
+            ProtectBattlefield(battlefield);
 
         EncounterParticipantState[] participantStates =
             participants
@@ -26,6 +31,7 @@ public static class EncounterRules
 
         ValidateParticipants(
             participantStates,
+            protectedBattlefield,
             allowTerminalCombatants: false);
         ValidateInitiativeOrder(
             participantStates,
@@ -50,6 +56,7 @@ public static class EncounterRules
         {
             EncounterId = encounterId,
             Revision = 1,
+            Battlefield = protectedBattlefield,
             Participants = protectedParticipants,
             TurnState = turnState,
             LifecycleState =
@@ -117,16 +124,21 @@ public static class EncounterRules
         }
 
         ArgumentNullException.ThrowIfNull(
+            state.Battlefield);
+        ArgumentNullException.ThrowIfNull(
             state.Participants);
         ArgumentNullException.ThrowIfNull(
             state.TurnState);
 
+        ValidateBattlefield(state.Battlefield);
         ValidateParticipants(
             state.Participants,
+            state.Battlefield,
             allowTerminalCombatants: true);
         ValidateInitiativeOrder(
             state.Participants,
             state.TurnState.InitiativeOrder);
+
         for (int index = 0;
             index < state.TurnState.InitiativeOrder.Count;
             index++)
@@ -139,6 +151,7 @@ public static class EncounterRules
                     nameof(state));
             }
         }
+
         string activeCombatantId =
             CombatTurnRules.GetActiveCombatant(
                 state.TurnState)
@@ -155,6 +168,25 @@ public static class EncounterRules
         }
     }
 
+    private static EncounterBattlefieldState
+        ProtectBattlefield(
+            EncounterBattlefieldState battlefield)
+    {
+        ValidateBattlefield(battlefield);
+
+        return battlefield with
+        {
+            BlockedPositions =
+                Array.AsReadOnly(
+                    battlefield.BlockedPositions.ToArray()),
+            DifficultTerrainPositions =
+                Array.AsReadOnly(
+                    battlefield
+                        .DifficultTerrainPositions
+                        .ToArray())
+        };
+    }
+
     private static EncounterParticipantState
         CreateParticipantState(
             EncounterParticipantSetup participant)
@@ -169,12 +201,92 @@ public static class EncounterRules
             SideId = participant.SideId,
             TurnResources =
                 CombatTurnResourceRules.StartTurn(
-                    participant.MovementSpeedFeet)
+                    participant.MovementSpeedFeet),
+            Position = participant.StartingPosition
         };
     }
 
+    private static void ValidateBattlefield(
+        EncounterBattlefieldState battlefield)
+    {
+        if (string.IsNullOrWhiteSpace(
+            battlefield.BattlefieldId))
+        {
+            throw new ArgumentException(
+                "Battlefield ID is required.",
+                nameof(battlefield));
+        }
+
+        if (battlefield.Width <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(battlefield),
+                battlefield.Width,
+                "Battlefield width must be greater than 0.");
+        }
+
+        if (battlefield.Height <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(battlefield),
+                battlefield.Height,
+                "Battlefield height must be greater than 0.");
+        }
+
+        ArgumentNullException.ThrowIfNull(
+            battlefield.BlockedPositions);
+        ArgumentNullException.ThrowIfNull(
+            battlefield.DifficultTerrainPositions);
+
+        HashSet<GridPosition> blockedPositions = new();
+
+        foreach (GridPosition position
+            in battlefield.BlockedPositions)
+        {
+            ValidatePositionWithinBattlefield(
+                battlefield,
+                position,
+                nameof(battlefield));
+
+            if (!blockedPositions.Add(position))
+            {
+                throw new ArgumentException(
+                    $"Duplicate blocked position '{position}' is not allowed.",
+                    nameof(battlefield));
+            }
+        }
+
+        HashSet<GridPosition> difficultTerrainPositions =
+            new();
+
+        foreach (GridPosition position
+            in battlefield.DifficultTerrainPositions)
+        {
+            ValidatePositionWithinBattlefield(
+                battlefield,
+                position,
+                nameof(battlefield));
+
+            if (!difficultTerrainPositions.Add(position))
+            {
+                throw new ArgumentException(
+                    $"Duplicate difficult-terrain position '{position}' is not allowed.",
+                    nameof(battlefield));
+            }
+
+            if (blockedPositions.Contains(position))
+            {
+                throw new ArgumentException(
+                    $"Position '{position}' cannot be both blocked and difficult terrain.",
+                    nameof(battlefield));
+            }
+        }
+    }
+
     private static void ValidateParticipants(
-        IReadOnlyList<EncounterParticipantState> participants, bool allowTerminalCombatants)
+        IReadOnlyList<EncounterParticipantState> participants,
+        EncounterBattlefieldState battlefield,
+        bool allowTerminalCombatants)
     {
         if (participants.Count == 0)
         {
@@ -188,6 +300,11 @@ public static class EncounterRules
 
         HashSet<string> sideIds =
             new(StringComparer.Ordinal);
+
+        HashSet<GridPosition> occupiedPositions = new();
+
+        HashSet<GridPosition> blockedPositions =
+            battlefield.BlockedPositions.ToHashSet();
 
         foreach (EncounterParticipantState participant
             in participants)
@@ -203,7 +320,8 @@ public static class EncounterRules
             CombatantRules.ValidateState(
                 participant.Combatant);
 
-            if (!allowTerminalCombatants && participant.Combatant.IsTerminal)
+            if (!allowTerminalCombatants
+                && participant.Combatant.IsTerminal)
             {
                 throw new ArgumentException(
                     $"Terminal combatant '{participant.Combatant.CombatantId}' cannot enter a new encounter.",
@@ -227,6 +345,27 @@ public static class EncounterRules
             }
 
             sideIds.Add(participant.SideId);
+
+            ValidatePositionWithinBattlefield(
+                battlefield,
+                participant.Position,
+                nameof(participants));
+
+            if (blockedPositions.Contains(
+                participant.Position))
+            {
+                throw new ArgumentException(
+                    $"Combatant '{participant.Combatant.CombatantId}' cannot occupy blocked position '{participant.Position}'.",
+                    nameof(participants));
+            }
+
+            if (!occupiedPositions.Add(
+                participant.Position))
+            {
+                throw new ArgumentException(
+                    $"Multiple combatants cannot occupy position '{participant.Position}'.",
+                    nameof(participants));
+            }
         }
 
         if (sideIds.Count < 2)
@@ -317,6 +456,23 @@ public static class EncounterRules
             throw new ArgumentException(
                 "Initiative order must match the encounter participant set.",
                 nameof(initiativeOrder));
+        }
+    }
+
+    private static void ValidatePositionWithinBattlefield(
+        EncounterBattlefieldState battlefield,
+        GridPosition position,
+        string parameterName)
+    {
+        if (position.X < 0
+            || position.X >= battlefield.Width
+            || position.Y < 0
+            || position.Y >= battlefield.Height)
+        {
+            throw new ArgumentOutOfRangeException(
+                parameterName,
+                position,
+                $"Position '{position}' must be within the battlefield.");
         }
     }
 }
