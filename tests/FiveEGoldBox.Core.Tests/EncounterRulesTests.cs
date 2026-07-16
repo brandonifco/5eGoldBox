@@ -173,6 +173,30 @@ public sealed class EncounterRulesTests
             "combatant.hero",
             state.ActiveCombatantId);
     }
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Start_WithNonpositiveArmorClass_Throws(
+    int armorClass)
+    {
+        EncounterParticipantSetup[] participants =
+            CreateParticipants();
+
+        participants[0] = participants[0] with
+        {
+            CombatProfile =
+                participants[0].CombatProfile with
+                {
+                    ArmorClass = armorClass
+                }
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            StartEncounter(
+                encounterId: "encounter.test",
+                participants,
+                CreateInitiativeOrder()));
+    }
     private static EncounterParticipantSetup[]
         CreateParticipants()
     {
@@ -201,6 +225,10 @@ public sealed class EncounterRulesTests
                 maximumHitPoints: 10,
                 CombatantZeroHitPointPolicy
                     .DeathSavingThrows),
+            CombatProfile = new EncounterCombatProfile
+            {
+                ArmorClass = 10
+            },
             SideId = sideId,
             MovementSpeedFeet = movementSpeedFeet,
             StartingPosition =
@@ -370,6 +398,10 @@ public sealed class EncounterRulesTests
         new EncounterParticipantSetup
         {
             Combatant = defeatedCombatant,
+            CombatProfile = new EncounterCombatProfile
+            {
+                ArmorClass = 10
+            },
             SideId = "side.enemies",
             MovementSpeedFeet = 30,
             StartingPosition = new GridPosition(2, 1)

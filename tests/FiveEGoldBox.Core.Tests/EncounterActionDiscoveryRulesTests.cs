@@ -60,6 +60,10 @@ public sealed class EncounterActionDiscoveryRulesTests
                     maximumHitPoints: 10,
                     CombatantZeroHitPointPolicy
                         .DeathSavingThrows),
+                    CombatProfile = new EncounterCombatProfile
+                    {
+                        ArmorClass = 10
+                    },
                 SideId = "side.party",
                 MovementSpeedFeet = 30,
                 StartingPosition = new GridPosition(1, 1)
@@ -71,6 +75,10 @@ public sealed class EncounterActionDiscoveryRulesTests
                     maximumHitPoints: 10,
                     CombatantZeroHitPointPolicy
                         .DeathSavingThrows),
+                    CombatProfile = new EncounterCombatProfile
+                    {
+                        ArmorClass = 10
+                    },
                 SideId = "side.enemies",
                 MovementSpeedFeet = 30,
                 StartingPosition = new GridPosition(2, 1)
