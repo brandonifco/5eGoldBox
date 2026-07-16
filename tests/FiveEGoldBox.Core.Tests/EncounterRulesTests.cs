@@ -1377,4 +1377,36 @@ public sealed class EncounterRulesTests
             EncounterLifecycleState.Active,
             state.LifecycleState);
     }
+
+    [Fact]
+    public void DeclareOutcome_WhenParticipantIsNull_ThrowsBeforeTransition()
+    {
+        EncounterState state = StartEncounter(
+            encounterId: "encounter.test",
+            CreateParticipants(),
+            CreateInitiativeOrder());
+
+        EncounterParticipantState[] invalidParticipants =
+            new EncounterParticipantState[]
+            {
+                state.Participants[0],
+                null!
+            };
+
+        state = state with
+        {
+            Participants =
+                Array.AsReadOnly(invalidParticipants)
+        };
+
+        Assert.Throws<ArgumentNullException>(() =>
+            EncounterRules.DeclareOutcome(
+                state,
+                EncounterLifecycleState.Victory));
+
+        Assert.Equal(1, state.Revision);
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            state.LifecycleState);
+    }
 }

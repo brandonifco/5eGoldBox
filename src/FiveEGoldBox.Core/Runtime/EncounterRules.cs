@@ -361,6 +361,7 @@ public static class EncounterRules
         foreach (EncounterParticipantState participant
             in participants)
         {
+            ArgumentNullException.ThrowIfNull(participant);
             ArgumentNullException.ThrowIfNull(
                 participant.Combatant);
             ArgumentNullException.ThrowIfNull(
