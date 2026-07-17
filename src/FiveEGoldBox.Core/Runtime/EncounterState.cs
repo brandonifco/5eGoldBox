@@ -9,14 +9,18 @@ public sealed record EncounterState
     public required long Revision { get; init; }
 
     public required EncounterBattlefieldState
-        Battlefield { get; init; }
+        Battlefield
+    { get; init; }
 
     public required IReadOnlyList<EncounterParticipantState>
-        Participants { get; init; }
+        Participants
+    { get; init; }
 
     public required CombatTurnState TurnState { get; init; }
 
     public required EncounterLifecycleState LifecycleState { get; init; }
+
+    public string? PendingDeathSavingThrowCombatantId { get; init; }
 
     public IReadOnlyList<InitiativeOrderEntry> InitiativeOrder =>
         TurnState.InitiativeOrder;

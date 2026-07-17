@@ -48,6 +48,15 @@ public static class EncounterTurnAdvancementRules
                 "Only the active combatant can end the current turn.");
         }
 
+        if (string.Equals(
+            state.PendingDeathSavingThrowCombatantId,
+            command.ActorCombatantId,
+            StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "The active combatant must resolve its pending death saving throw before ending the turn.");
+        }
+
         long resolvedRevision =
             checked(state.Revision + 1);
 
@@ -130,12 +139,20 @@ public static class EncounterTurnAdvancementRules
                 Array.AsReadOnly(
                     skippedCombatantIds.ToArray());
 
+        string? pendingDeathSavingThrowCombatantId =
+            nextParticipant.Combatant.LifecycleState
+                == CombatantLifecycleState.Dying
+            ? nextParticipant.Combatant.CombatantId
+            : null;
+
         EncounterState resolvedState = state with
         {
             Revision = resolvedRevision,
             TurnState = resolvedTurnState,
             Participants =
-                Array.AsReadOnly(participants)
+                Array.AsReadOnly(participants),
+            PendingDeathSavingThrowCombatantId =
+                pendingDeathSavingThrowCombatantId
         };
 
         EncounterRules.ValidateState(resolvedState);
