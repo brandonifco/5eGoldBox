@@ -91,6 +91,18 @@ public static class EncounterWeaponAttackRules
             actor.Position,
             target.Position);
 
+        EncounterLineOfSightResult lineOfSight =
+            EncounterLineOfSightRules.Evaluate(
+                state.Battlefield,
+                actor.Position,
+                target.Position);
+
+        if (!lineOfSight.HasLineOfSight)
+        {
+            throw new InvalidOperationException(
+                $"Target does not have line of sight from the attacker because position '{lineOfSight.BlockingPosition}' blocks the path.");
+        }
+
         D20RollMode attackRollMode =
             ResolveAttackRollMode(
                 weapon,
@@ -194,6 +206,7 @@ public static class EncounterWeaponAttackRules
                 command.TargetCombatantId,
             WeaponId = command.WeaponId,
             DistanceFeet = distanceFeet,
+            LineOfSight = lineOfSight,
             Attack = attack,
             TargetDamage = targetDamage,
             State = resolvedState

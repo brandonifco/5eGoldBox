@@ -1047,12 +1047,129 @@ public sealed class EncounterWeaponAttackRulesTests
         AssertStateUnchanged(state);
     }
 
+    [Fact]
+    public void Resolve_WithClearLineOfSight_ReturnsLineOfSightDetails()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 30,
+            longRangeFeet: 120);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(5, 1));
+
+        EncounterWeaponAttackResult result =
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 12,
+                    damageRolls: [4]));
+
+        Assert.True(
+            result.LineOfSight.HasLineOfSight);
+        Assert.Null(
+            result.LineOfSight.BlockingPosition);
+        Assert.Equal(
+            new GridPosition(1, 1),
+            result.LineOfSight.SourcePosition);
+        Assert.Equal(
+            new GridPosition(5, 1),
+            result.LineOfSight.TargetPosition);
+        Assert.Equal(
+            [
+                new GridPosition(2, 1),
+                new GridPosition(3, 1),
+                new GridPosition(4, 1)
+            ],
+            result.LineOfSight
+                .IntermediatePositions);
+    }
+
+    [Fact]
+    public void Resolve_WhenRangedAttackLineOfSightIsBlocked_ThrowsBeforeTransition()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 30,
+            longRangeFeet: 120,
+            ammunitionItemId: "item.arrow",
+            ammunitionQuantityAvailable: 5);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(5, 1),
+            blockedPositions:
+            [
+                new GridPosition(3, 1)
+            ]);
+
+        InvalidOperationException exception =
+            Assert.Throws<InvalidOperationException>(() =>
+                EncounterWeaponAttackRules.Resolve(
+                    state,
+                    CreateCommand(
+                        state,
+                        firstAttackRoll: 12,
+                        damageRolls: [4])));
+
+        Assert.Contains(
+            new GridPosition(3, 1).ToString(),
+            exception.Message,
+            StringComparison.Ordinal);
+
+        AssertStateUnchanged(state);
+
+        WeaponAttack unchangedWeapon =
+            Assert.Single(
+                FindParticipant(
+                    state,
+                    "combatant.hero")
+                .CombatProfile.WeaponAttacks);
+
+        Assert.Equal(
+            5,
+            unchangedWeapon
+                .AmmunitionQuantityAvailable);
+    }
+
+    [Fact]
+    public void Resolve_WhenExtendedReachMeleeLineOfSightIsBlocked_ThrowsBeforeTransition()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            reachFeet: 10);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(3, 1),
+            blockedPositions:
+            [
+                new GridPosition(2, 1)
+            ]);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 12,
+                    damageRolls: [4])));
+
+        AssertStateUnchanged(state);
+    }
+
     private static EncounterState CreateEncounter(
         WeaponAttack? heroWeapon = null,
         GridPosition? enemyPosition = null,
         IReadOnlyList<CharacterDamageResponse>?
             enemyDamageResponses = null,
-        bool includeAlly = false)
+        bool includeAlly = false,
+        IReadOnlyList<GridPosition>?
+            blockedPositions = null)
     {
         WeaponAttack defaultWeapon =
             CreateWeapon();
@@ -1108,7 +1225,8 @@ public sealed class EncounterWeaponAttackRulesTests
                 Width = 12,
                 Height = 12,
                 BlockedPositions =
-                    Array.Empty<GridPosition>(),
+                    blockedPositions
+                    ?? Array.Empty<GridPosition>(),
                 DifficultTerrainPositions =
                     Array.Empty<GridPosition>()
             },
