@@ -608,15 +608,381 @@ public sealed class EncounterWeaponAttackRulesTests
     }
 
     [Fact]
-    public void Resolve_WithRangedWeapon_ThrowsBeforeTransition()
+    public void Resolve_WithRangedWeaponInsideNormalRange_UsesConfiguredRollModeAndConsumesAmmunition()
     {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 20,
+            longRangeFeet: 60,
+            ammunitionItemId: "item.arrow",
+            ammunitionQuantityAvailable: 5);
+
         EncounterState state = CreateEncounter(
-            heroWeapon:
-                CreateWeapon(
-                    attackKind:
-                        WeaponAttackKind.Ranged));
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(5, 1));
+
+        EncounterWeaponAttackResult result =
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 12,
+                    damageRolls: [4]));
+
+        WeaponAttack resolvedWeapon =
+            Assert.Single(
+                FindParticipant(
+                    result.State,
+                    "combatant.hero")
+                .CombatProfile.WeaponAttacks);
+
+        Assert.Equal(20, result.DistanceFeet);
+        Assert.Equal(
+            D20RollMode.Normal,
+            result.Attack.AttackRoll.RollMode);
+        Assert.Equal(
+            AttackRollOutcome.Hit,
+            result.Attack.AttackRoll.Outcome);
+        Assert.Equal(
+            4,
+            resolvedWeapon
+                .AmmunitionQuantityAvailable);
+
+        Assert.Equal(
+            5,
+            weapon.AmmunitionQuantityAvailable);
+    }
+
+    [Fact]
+    public void Resolve_WithRangedWeaponBeyondNormalRange_UsesDisadvantage()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 20,
+            longRangeFeet: 60);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(7, 1));
+
+        EncounterWeaponAttackResult result =
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 18,
+                    secondAttackRoll: 12,
+                    damageRolls: [4]));
+
+        Assert.Equal(30, result.DistanceFeet);
+        Assert.Equal(
+            D20RollMode.Disadvantage,
+            result.Attack.AttackRoll.RollMode);
+        Assert.Equal(
+            12,
+            result.Attack.AttackRoll.NaturalRoll);
+        Assert.Equal(
+            AttackRollOutcome.Hit,
+            result.Attack.AttackRoll.Outcome);
+    }
+
+    [Fact]
+    public void Resolve_WhenLongRangeDisadvantageOpposesAdvantage_UsesNormalRollMode()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            attackRollMode: D20RollMode.Advantage,
+            normalRangeFeet: 20,
+            longRangeFeet: 60);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(7, 1));
+
+        EncounterWeaponAttackResult result =
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 12,
+                    damageRolls: [4]));
+
+        Assert.Equal(
+            D20RollMode.Normal,
+            result.Attack.AttackRoll.RollMode);
+        Assert.Equal(
+            12,
+            result.Attack.AttackRoll.NaturalRoll);
+    }
+
+    [Fact]
+    public void Resolve_WhenLongRangeWeaponAlreadyHasDisadvantage_PreservesDisadvantage()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            attackRollMode:
+                D20RollMode.Disadvantage,
+            normalRangeFeet: 20,
+            longRangeFeet: 60);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(7, 1));
+
+        EncounterWeaponAttackResult result =
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 18,
+                    secondAttackRoll: 2,
+                    damageRolls: []));
+
+        Assert.Equal(
+            D20RollMode.Disadvantage,
+            result.Attack.AttackRoll.RollMode);
+        Assert.Equal(
+            2,
+            result.Attack.AttackRoll.NaturalRoll);
+        Assert.Equal(
+            AttackRollOutcome.Miss,
+            result.Attack.AttackRoll.Outcome);
+    }
+
+    [Fact]
+    public void Resolve_WhenRangedAttackMisses_StillConsumesAmmunition()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 20,
+            longRangeFeet: 60,
+            ammunitionItemId: "item.arrow",
+            ammunitionQuantityAvailable: 2);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(5, 1));
+
+        EncounterWeaponAttackResult result =
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 2,
+                    damageRolls: []));
+
+        WeaponAttack resolvedWeapon =
+            Assert.Single(
+                FindParticipant(
+                    result.State,
+                    "combatant.hero")
+                .CombatProfile.WeaponAttacks);
+
+        Assert.Equal(
+            AttackRollOutcome.Miss,
+            result.Attack.AttackRoll.Outcome);
+        Assert.Equal(
+            1,
+            resolvedWeapon
+                .AmmunitionQuantityAvailable);
+        Assert.False(
+            FindParticipant(
+                result.State,
+                "combatant.hero")
+            .TurnResources.HasActionAvailable);
+    }
+
+    [Fact]
+    public void Resolve_WithRangedWeaponBeyondLongRange_ThrowsBeforeTransition()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 20,
+            longRangeFeet: 40,
+            ammunitionItemId: "item.arrow",
+            ammunitionQuantityAvailable: 5);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(10, 1));
 
         Assert.Throws<InvalidOperationException>(() =>
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 12,
+                    damageRolls: [4])));
+
+        AssertStateUnchanged(state);
+
+        WeaponAttack unchangedWeapon =
+            Assert.Single(
+                FindParticipant(
+                    state,
+                    "combatant.hero")
+                .CombatProfile.WeaponAttacks);
+
+        Assert.Equal(
+            5,
+            unchangedWeapon
+                .AmmunitionQuantityAvailable);
+    }
+
+    [Fact]
+    public void Resolve_WithNoAvailableAmmunition_ThrowsBeforeTransition()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 20,
+            longRangeFeet: 60,
+            ammunitionItemId: "item.arrow",
+            ammunitionQuantityAvailable: 0);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(5, 1));
+
+        Assert.Throws<InvalidOperationException>(() =>
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 12,
+                    damageRolls: [4])));
+
+        AssertStateUnchanged(state);
+    }
+
+    [Fact]
+    public void Resolve_WithUntrackedRangedAmmunition_AllowsAttack()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 20,
+            longRangeFeet: 60);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(5, 1));
+
+        EncounterWeaponAttackResult result =
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 12,
+                    damageRolls: [4]));
+
+        WeaponAttack resolvedWeapon =
+            Assert.Single(
+                FindParticipant(
+                    result.State,
+                    "combatant.hero")
+                .CombatProfile.WeaponAttacks);
+
+        Assert.Null(
+            resolvedWeapon.AmmunitionItemId);
+        Assert.Null(
+            resolvedWeapon
+                .AmmunitionQuantityAvailable);
+        Assert.Equal(2, result.State.Revision);
+    }
+
+    [Fact]
+    public void Resolve_WithRangedWeaponMissingNormalRange_ThrowsBeforeTransition()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 20,
+            longRangeFeet: 60)
+            with
+        {
+            NormalRangeFeet = null
+        };
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 12,
+                    damageRolls: [4])));
+
+        AssertStateUnchanged(state);
+    }
+
+    [Fact]
+    public void Resolve_WithRangedWeaponLongRangeShorterThanNormalRange_ThrowsBeforeTransition()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 60,
+            longRangeFeet: 20);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon);
+
+        Assert.Throws<ArgumentException>(() =>
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 12,
+                    damageRolls: [4])));
+
+        AssertStateUnchanged(state);
+    }
+
+    [Fact]
+    public void Resolve_WithIncompleteAmmunitionMetadata_ThrowsBeforeTransition()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 20,
+            longRangeFeet: 60,
+            ammunitionItemId: "item.arrow",
+            ammunitionQuantityAvailable: null);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon);
+
+        Assert.Throws<ArgumentException>(() =>
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 12,
+                    damageRolls: [4])));
+
+        AssertStateUnchanged(state);
+    }
+
+    [Fact]
+    public void Resolve_WithNegativeAmmunitionQuantity_ThrowsBeforeTransition()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 20,
+            longRangeFeet: 60,
+            ammunitionItemId: "item.arrow",
+            ammunitionQuantityAvailable: -1);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
             EncounterWeaponAttackRules.Resolve(
                 state,
                 CreateCommand(
@@ -790,7 +1156,11 @@ public sealed class EncounterWeaponAttackRulesTests
             WeaponAttackKind.Melee,
         D20RollMode attackRollMode =
             D20RollMode.Normal,
-        int? reachFeet = null)
+        int? reachFeet = null,
+        int? normalRangeFeet = null,
+        int? longRangeFeet = null,
+        string? ammunitionItemId = null,
+        int? ammunitionQuantityAvailable = null)
     {
         return new WeaponAttack
         {
@@ -819,12 +1189,15 @@ public sealed class EncounterWeaponAttackRulesTests
             DamageBonus = 3,
             Properties = Array.Empty<string>(),
             ReachFeet = reachFeet,
-            NormalRangeFeet = null,
-            LongRangeFeet = null,
-            AmmunitionItemId = null,
-            AmmunitionQuantityAvailable = null
+            NormalRangeFeet = normalRangeFeet,
+            LongRangeFeet = longRangeFeet,
+            AmmunitionItemId =
+                ammunitionItemId,
+            AmmunitionQuantityAvailable =
+                ammunitionQuantityAvailable
         };
     }
+
 
     private static EncounterWeaponAttackCommand
         CreateCommand(

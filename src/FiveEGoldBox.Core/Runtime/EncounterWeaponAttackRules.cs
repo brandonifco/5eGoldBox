@@ -87,26 +87,16 @@ public static class EncounterWeaponAttackRules
 
         ValidateWeaponAttack(weapon);
 
-        if (weapon.AttackKind
-            != WeaponAttackKind.Melee)
-        {
-            throw new InvalidOperationException(
-                "This transition currently supports only melee weapon attacks.");
-        }
-
         int distanceFeet = CalculateDistanceFeet(
             actor.Position,
             target.Position);
 
-        int reachFeet =
-            weapon.ReachFeet
-            ?? DefaultMeleeReachFeet;
+        D20RollMode attackRollMode =
+            ResolveAttackRollMode(
+                weapon,
+                distanceFeet);
 
-        if (distanceFeet > reachFeet)
-        {
-            throw new InvalidOperationException(
-                $"Target is {distanceFeet} feet away, beyond the weapon's {reachFeet}-foot reach.");
-        }
+        EnsureAmmunitionAvailable(weapon);
 
         long resolvedRevision =
             checked(state.Revision + 1);
@@ -117,7 +107,7 @@ public static class EncounterWeaponAttackRules
 
         AttackRollResult attackRoll =
             AttackRollRules.ResolveResult(
-                weapon.AttackRollMode,
+                attackRollMode,
                 command.FirstAttackRoll,
                 command.SecondAttackRoll,
                 weapon.AttackBonus,
@@ -146,12 +136,10 @@ public static class EncounterWeaponAttackRules
         EncounterParticipantState[] participants =
             state.Participants.ToArray();
 
-        participants[actorIndex] = actor with
-        {
-            TurnResources =
-                CombatTurnResourceRules.SpendAction(
-                    actor.TurnResources)
-        };
+        participants[actorIndex] =
+            PrepareActorAfterAttack(
+                actor,
+                weapon);
 
         EncounterState actionSpentState = state with
         {
@@ -374,6 +362,209 @@ public static class EncounterWeaponAttackRules
                 weapon.ReachFeet,
                 "Weapon reach must be greater than 0.");
         }
+
+        if (weapon.AttackKind
+            != WeaponAttackKind.Ranged)
+        {
+            return;
+        }
+
+        if (weapon.NormalRangeFeet is null
+            or <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(weapon),
+                weapon.NormalRangeFeet,
+                "A ranged weapon's normal range must be greater than 0.");
+        }
+
+        if (weapon.LongRangeFeet is null
+            or <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(weapon),
+                weapon.LongRangeFeet,
+                "A ranged weapon's long range must be greater than 0.");
+        }
+
+        if (weapon.LongRangeFeet
+            < weapon.NormalRangeFeet)
+        {
+            throw new ArgumentException(
+                "A ranged weapon's long range cannot be shorter than its normal range.",
+                nameof(weapon));
+        }
+
+        bool hasAmmunitionItemId =
+            weapon.AmmunitionItemId is not null;
+
+        bool hasAmmunitionQuantity =
+            weapon.AmmunitionQuantityAvailable
+                is not null;
+
+        if (hasAmmunitionItemId
+            && string.IsNullOrWhiteSpace(
+                weapon.AmmunitionItemId))
+        {
+            throw new ArgumentException(
+                "Ammunition item ID cannot be blank.",
+                nameof(weapon));
+        }
+
+        if (hasAmmunitionItemId
+            != hasAmmunitionQuantity)
+        {
+            throw new ArgumentException(
+                "A ranged weapon must provide both an ammunition item ID and an available quantity, or neither.",
+                nameof(weapon));
+        }
+
+        if (weapon.AmmunitionQuantityAvailable
+            is < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(weapon),
+                weapon.AmmunitionQuantityAvailable,
+                "Available ammunition quantity cannot be negative.");
+        }
+    }
+
+    private static D20RollMode
+        ResolveAttackRollMode(
+            WeaponAttack weapon,
+            int distanceFeet)
+    {
+        if (weapon.AttackKind
+            == WeaponAttackKind.Melee)
+        {
+            int reachFeet =
+                weapon.ReachFeet
+                ?? DefaultMeleeReachFeet;
+
+            if (distanceFeet > reachFeet)
+            {
+                throw new InvalidOperationException(
+                    $"Target is {distanceFeet} feet away, beyond the weapon's {reachFeet}-foot reach.");
+            }
+
+            return weapon.AttackRollMode;
+        }
+
+        int normalRangeFeet =
+            weapon.NormalRangeFeet!.Value;
+
+        int longRangeFeet =
+            weapon.LongRangeFeet!.Value;
+
+        if (distanceFeet > longRangeFeet)
+        {
+            throw new InvalidOperationException(
+                $"Target is {distanceFeet} feet away, beyond the weapon's {longRangeFeet}-foot long range.");
+        }
+
+        if (distanceFeet <= normalRangeFeet)
+        {
+            return weapon.AttackRollMode;
+        }
+
+        return ApplyDisadvantage(
+            weapon.AttackRollMode);
+    }
+
+    private static D20RollMode ApplyDisadvantage(
+        D20RollMode rollMode)
+    {
+        return rollMode switch
+        {
+            D20RollMode.Normal =>
+                D20RollMode.Disadvantage,
+
+            D20RollMode.Advantage =>
+                D20RollMode.Normal,
+
+            D20RollMode.Disadvantage =>
+                D20RollMode.Disadvantage,
+
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(rollMode),
+                rollMode,
+                "Unsupported attack roll mode.")
+        };
+    }
+
+    private static void EnsureAmmunitionAvailable(
+        WeaponAttack weapon)
+    {
+        if (weapon.AttackKind
+                != WeaponAttackKind.Ranged
+            || weapon.AmmunitionItemId is null)
+        {
+            return;
+        }
+
+        if (weapon.AmmunitionQuantityAvailable
+            <= 0)
+        {
+            throw new InvalidOperationException(
+                $"Weapon '{weapon.WeaponId}' has no available ammunition.");
+        }
+    }
+
+    private static EncounterParticipantState
+        PrepareActorAfterAttack(
+            EncounterParticipantState actor,
+            WeaponAttack weapon)
+    {
+        EncounterCombatProfile resolvedCombatProfile =
+            actor.CombatProfile;
+
+        if (weapon.AttackKind
+                == WeaponAttackKind.Ranged
+            && weapon.AmmunitionItemId is not null)
+        {
+            WeaponAttack[] weaponAttacks =
+                actor.CombatProfile.WeaponAttacks
+                    .ToArray();
+
+            int weaponIndex = Array.FindIndex(
+                weaponAttacks,
+                candidate => string.Equals(
+                    candidate.WeaponId,
+                    weapon.WeaponId,
+                    StringComparison.Ordinal));
+
+            if (weaponIndex < 0)
+            {
+                throw new InvalidOperationException(
+                    $"Weapon '{weapon.WeaponId}' could not be updated after the attack.");
+            }
+
+            weaponAttacks[weaponIndex] =
+                weapon with
+                {
+                    AmmunitionQuantityAvailable =
+                        weapon
+                            .AmmunitionQuantityAvailable!
+                            .Value - 1
+                };
+
+            resolvedCombatProfile =
+                actor.CombatProfile with
+                {
+                    WeaponAttacks =
+                        Array.AsReadOnly(
+                            weaponAttacks)
+                };
+        }
+
+        return actor with
+        {
+            CombatProfile =
+                resolvedCombatProfile,
+            TurnResources =
+                CombatTurnResourceRules.SpendAction(
+                    actor.TurnResources)
+        };
     }
 
     private static IReadOnlyList<DamageResponseType>
