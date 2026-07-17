@@ -153,30 +153,48 @@ public static class EncounterWeaponAttackRules
                     actor.TurnResources)
         };
 
-        CombatantDamageResult? targetDamage = null;
-
-        if (attackRoll.Outcome
-            != AttackRollOutcome.Miss)
+        EncounterState actionSpentState = state with
         {
-            targetDamage =
-                CombatantRules.ResolveDamage(
-                    target.Combatant,
-                    attackDamage.FinalDamage,
-                    attackRoll.Outcome
-                        == AttackRollOutcome.CriticalHit);
-
-            participants[targetIndex] = target with
-            {
-                Combatant = targetDamage.State
-            };
-        }
-
-        EncounterState resolvedState = state with
-        {
-            Revision = resolvedRevision,
             Participants =
                 Array.AsReadOnly(participants)
         };
+
+        CombatantDamageResult? targetDamage = null;
+
+        EncounterState resolvedState;
+
+        if (attackRoll.Outcome
+            == AttackRollOutcome.Miss)
+        {
+            resolvedState = actionSpentState with
+            {
+                Revision = resolvedRevision
+            };
+        }
+        else
+        {
+            EncounterDamageResult damageResult =
+                EncounterDamageRules.Resolve(
+                    actionSpentState,
+                    new EncounterDamageCommand
+                    {
+                        ExpectedRevision =
+                            command.ExpectedRevision,
+                        TargetCombatantId =
+                            command.TargetCombatantId,
+                        DamageAmount =
+                            attackDamage.FinalDamage,
+                        IsCriticalHit =
+                            attackRoll.Outcome
+                                == AttackRollOutcome.CriticalHit
+                    });
+
+            targetDamage =
+                damageResult.CombatantDamage;
+
+            resolvedState =
+                damageResult.State;
+        }
 
         EncounterRules.ValidateState(resolvedState);
 
