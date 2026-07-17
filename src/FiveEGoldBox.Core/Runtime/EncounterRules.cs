@@ -52,6 +52,18 @@ public static class EncounterRules
             CombatTurnRules.StartCombat(
                 canonicalInitiativeOrder);
 
+        string activeCombatantId =
+            CombatTurnRules.GetActiveCombatant(
+                turnState)
+            .CombatantId;
+
+        EncounterParticipantState activeParticipant =
+            protectedParticipants.Single(
+                participant => string.Equals(
+                    participant.Combatant.CombatantId,
+                    activeCombatantId,
+                    StringComparison.Ordinal));
+
         return new EncounterState
         {
             EncounterId = encounterId,
@@ -60,7 +72,12 @@ public static class EncounterRules
             Participants = protectedParticipants,
             TurnState = turnState,
             LifecycleState =
-                EncounterLifecycleState.Active
+                EncounterLifecycleState.Active,
+            PendingDeathSavingThrowCombatantId =
+                activeParticipant.Combatant.LifecycleState
+                    == CombatantLifecycleState.Dying
+                ? activeCombatantId
+                : null
         };
     }
 
@@ -88,11 +105,16 @@ public static class EncounterRules
                 "Encounter outcome must be victory or defeat.");
         }
 
-        return state with
+        EncounterState resolvedState = state with
         {
             Revision = checked(state.Revision + 1),
-            LifecycleState = outcome
+            LifecycleState = outcome,
+            PendingDeathSavingThrowCombatantId = null
         };
+
+        ValidateState(resolvedState);
+
+        return resolvedState;
     }
 
     internal static void ValidateState(
@@ -157,14 +179,58 @@ public static class EncounterRules
                 state.TurnState)
             .CombatantId;
 
-        if (!state.Participants.Any(
-            participant =>
-                participant.Combatant.CombatantId
-                == activeCombatantId))
+        EncounterParticipantState? activeParticipant =
+            state.Participants.FirstOrDefault(
+                participant => string.Equals(
+                    participant.Combatant.CombatantId,
+                    activeCombatantId,
+                    StringComparison.Ordinal));
+
+        if (activeParticipant is null)
         {
             throw new ArgumentException(
                 "The active combatant must be an encounter participant.",
                 nameof(state));
+        }
+
+        if (state.LifecycleState
+                != EncounterLifecycleState.Active
+            && state.PendingDeathSavingThrowCombatantId
+                is not null)
+        {
+            throw new ArgumentException(
+                "A completed encounter cannot have a pending death saving throw.",
+                nameof(state));
+        }
+
+        if (state.PendingDeathSavingThrowCombatantId
+            is not null)
+        {
+            if (string.IsNullOrWhiteSpace(
+                state.PendingDeathSavingThrowCombatantId))
+            {
+                throw new ArgumentException(
+                    "Pending death-saving-throw combatant ID cannot be blank.",
+                    nameof(state));
+            }
+
+            if (!string.Equals(
+                state.PendingDeathSavingThrowCombatantId,
+                activeCombatantId,
+                StringComparison.Ordinal))
+            {
+                throw new ArgumentException(
+                    "A pending death saving throw must belong to the active combatant.",
+                    nameof(state));
+            }
+
+            if (activeParticipant.Combatant.LifecycleState
+                != CombatantLifecycleState.Dying)
+            {
+                throw new ArgumentException(
+                    "Only a dying active combatant can have a pending death saving throw.",
+                    nameof(state));
+            }
         }
     }
 
