@@ -349,16 +349,13 @@ public sealed class EncounterTurnAdvancementRulesTests
         Assert.Equal(1, state.TurnState.ActivePosition);
     }
 
-    [Theory]
-    [InlineData(EncounterLifecycleState.Victory)]
-    [InlineData(EncounterLifecycleState.Defeat)]
-    public void Resolve_WhenEncounterIsComplete_Throws(
-        EncounterLifecycleState outcome)
+    [Fact]
+    public void Resolve_WhenEncounterIsComplete_Throws()
     {
         EncounterState state =
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 CreateEncounter(),
-                outcome);
+                winningSideId: "side.party");
 
         Assert.Throws<InvalidOperationException>(() =>
             EncounterTurnAdvancementRules.Resolve(

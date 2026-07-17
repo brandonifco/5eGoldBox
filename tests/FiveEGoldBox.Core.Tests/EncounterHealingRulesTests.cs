@@ -183,12 +183,112 @@ public sealed class EncounterHealingRulesTests
     }
 
     [Fact]
-    public void Resolve_WhenActiveStableCombatantRegainsHitPoints_BecomesConscious()
+    public void Resolve_WhenHealingRemovesLastDyingCombatant_CompletesEncounter()
     {
         EncounterState state = CreateEncounter(
-            hero: CreateStableCombatant(
-                "combatant.hero"));
+            hero: CreateDyingCombatant(
+                "combatant.hero"),
+            enemy: CreateStableCombatant(
+                "combatant.enemy"));
 
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            state.LifecycleState);
+        Assert.Null(state.WinningSideId);
+        Assert.Equal(
+            "combatant.hero",
+            state.PendingDeathSavingThrowCombatantId);
+
+        EncounterHealingResult result =
+            EncounterHealingRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    targetCombatantId:
+                        "combatant.hero",
+                    healingAmount: 1));
+
+        Assert.Equal(
+            CombatantLifecycleState.Conscious,
+            result.LifecycleState);
+        Assert.True(
+            result.ClearedPendingDeathSavingThrow);
+        Assert.Equal(
+            EncounterLifecycleState.Completed,
+            result.State.LifecycleState);
+        Assert.Equal(
+            "side.party",
+            result.State.WinningSideId);
+        Assert.Null(
+            result.State
+                .PendingDeathSavingThrowCombatantId);
+
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            state.LifecycleState);
+        Assert.Null(state.WinningSideId);
+    }
+
+    [Fact]
+    public void Resolve_WhenActiveStableCombatantRegainsHitPoints_BecomesConscious()
+    {
+        EncounterParticipantSetup[] participants =
+        [
+            CreateParticipant(
+                CreateStableCombatant(
+                    "combatant.hero"),
+                sideId: "side.party",
+                movementSpeedFeet: 30,
+                position: new GridPosition(1, 1)),
+            CreateParticipant(
+                CombatantRules.Create(
+                    combatantId:
+                        "combatant.ally",
+                    maximumHitPoints: 10,
+                    CombatantZeroHitPointPolicy
+                        .DeathSavingThrows),
+                sideId: "side.party",
+                movementSpeedFeet: 30,
+                position: new GridPosition(1, 2)),
+            CreateParticipant(
+                CombatantRules.Create(
+                    combatantId:
+                        "combatant.enemy",
+                    maximumHitPoints: 10,
+                    CombatantZeroHitPointPolicy
+                        .DeathSavingThrows),
+                sideId: "side.enemies",
+                movementSpeedFeet: 25,
+                position: new GridPosition(2, 1))
+        ];
+
+        InitiativeOrderEntry[] initiativeOrder =
+        [
+            CreateInitiativeEntry(
+                combatantId: "combatant.hero",
+                position: 1,
+                total: 15),
+            CreateInitiativeEntry(
+                combatantId: "combatant.ally",
+                position: 2,
+                total: 12),
+            CreateInitiativeEntry(
+                combatantId: "combatant.enemy",
+                position: 3,
+                total: 10)
+        ];
+
+        EncounterState state =
+            EncounterRules.Start(
+                encounterId: "encounter.test",
+                CreateBattlefield(),
+                participants,
+                initiativeOrder);
+
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            state.LifecycleState);
+        Assert.Null(state.WinningSideId);
         Assert.Null(
             state.PendingDeathSavingThrowCombatantId);
 
@@ -224,6 +324,10 @@ public sealed class EncounterHealingRulesTests
         Assert.Null(
             result.State
                 .PendingDeathSavingThrowCombatantId);
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            result.State.LifecycleState);
+        Assert.Null(result.State.WinningSideId);
     }
 
     [Fact]
@@ -386,20 +490,17 @@ public sealed class EncounterHealingRulesTests
             .Combatant.LifecycleState);
     }
 
-    [Theory]
-    [InlineData(EncounterLifecycleState.Victory)]
-    [InlineData(EncounterLifecycleState.Defeat)]
-    public void Resolve_WhenEncounterIsComplete_Throws(
-        EncounterLifecycleState outcome)
+    [Fact]
+    public void Resolve_WhenEncounterIsComplete_Throws()
     {
         EncounterState state =
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 CreateEncounter(
                     hero:
                         CreateInjuredCombatant(
                             "combatant.hero",
                             damageAmount: 2)),
-                outcome);
+                winningSideId: "side.party");
 
         Assert.Throws<InvalidOperationException>(() =>
             EncounterHealingRules.Resolve(

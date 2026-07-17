@@ -20,6 +20,8 @@ public sealed record EncounterState
 
     public required EncounterLifecycleState LifecycleState { get; init; }
 
+    public string? WinningSideId { get; init; }
+
     public string? PendingDeathSavingThrowCombatantId { get; init; }
 
     public IReadOnlyList<InitiativeOrderEntry> InitiativeOrder =>

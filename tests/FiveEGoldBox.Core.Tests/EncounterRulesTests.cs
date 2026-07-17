@@ -83,6 +83,166 @@ public sealed class EncounterRulesTests
     }
 
     [Fact]
+    public void Start_WhenOnlyOneSideIsOutcomeViable_CompletesWithWinningSide()
+    {
+        CombatantState dyingEnemy =
+            CombatantRules.ResolveDamage(
+                CombatantRules.Create(
+                    combatantId:
+                        "combatant.enemy",
+                    maximumHitPoints: 10,
+                    CombatantZeroHitPointPolicy
+                        .DeathSavingThrows),
+                damageAmount: 10,
+                isCriticalHit: false)
+            .State;
+
+        CombatantState stableEnemy =
+            dyingEnemy with
+            {
+                Health = dyingEnemy.Health with
+                {
+                    DeathSavingThrows =
+                        DeathSavingThrowRules.Create() with
+                        {
+                            IsStable = true
+                        }
+                }
+            };
+
+        EncounterParticipantSetup[] participants =
+        [
+            CreateParticipant(
+                combatantId: "combatant.hero",
+                sideId: "side.party",
+                movementSpeedFeet: 30),
+            CreateParticipant(
+                combatantId: "combatant.enemy",
+                sideId: "side.enemies",
+                movementSpeedFeet: 25) with
+            {
+                Combatant = stableEnemy
+            }
+        ];
+
+        EncounterState state = StartEncounter(
+            encounterId: "encounter.test",
+            participants,
+            CreateInitiativeOrder());
+
+        Assert.Equal(
+            EncounterLifecycleState.Completed,
+            state.LifecycleState);
+        Assert.Equal(
+            "side.party",
+            state.WinningSideId);
+        Assert.Equal(1, state.Revision);
+        Assert.Null(
+            state.PendingDeathSavingThrowCombatantId);
+    }
+
+    [Fact]
+    public void Start_WhenOnlyViableSideHasDyingCombatant_RemainsActive()
+    {
+        CombatantState dyingAlly =
+            CombatantRules.ResolveDamage(
+                CombatantRules.Create(
+                    combatantId:
+                        "combatant.ally",
+                    maximumHitPoints: 10,
+                    CombatantZeroHitPointPolicy
+                        .DeathSavingThrows),
+                damageAmount: 10,
+                isCriticalHit: false)
+            .State;
+
+        CombatantState dyingEnemy =
+            CombatantRules.ResolveDamage(
+                CombatantRules.Create(
+                    combatantId:
+                        "combatant.enemy",
+                    maximumHitPoints: 10,
+                    CombatantZeroHitPointPolicy
+                        .DeathSavingThrows),
+                damageAmount: 10,
+                isCriticalHit: false)
+            .State;
+
+        CombatantState stableEnemy =
+            dyingEnemy with
+            {
+                Health = dyingEnemy.Health with
+                {
+                    DeathSavingThrows =
+                        DeathSavingThrowRules.Create() with
+                        {
+                            IsStable = true
+                        }
+                }
+            };
+
+        EncounterParticipantSetup[] participants =
+        [
+            CreateParticipant(
+                combatantId: "combatant.hero",
+                sideId: "side.party",
+                movementSpeedFeet: 30,
+                startingPosition:
+                    new GridPosition(1, 1)),
+            CreateParticipant(
+                combatantId: "combatant.ally",
+                sideId: "side.party",
+                movementSpeedFeet: 30,
+                startingPosition:
+                    new GridPosition(1, 2)) with
+            {
+                Combatant = dyingAlly
+            },
+            CreateParticipant(
+                combatantId: "combatant.enemy",
+                sideId: "side.enemies",
+                movementSpeedFeet: 25,
+                startingPosition:
+                    new GridPosition(2, 1)) with
+            {
+                Combatant = stableEnemy
+            }
+        ];
+
+        InitiativeOrderEntry[] initiativeOrder =
+        [
+            CreateInitiativeEntry(
+                combatantId: "combatant.hero",
+                position: 1,
+                total: 15),
+            CreateInitiativeEntry(
+                combatantId: "combatant.ally",
+                position: 2,
+                total: 12),
+            CreateInitiativeEntry(
+                combatantId: "combatant.enemy",
+                position: 3,
+                total: 10)
+        ];
+
+        EncounterState state = StartEncounter(
+            encounterId: "encounter.test",
+            participants,
+            initiativeOrder);
+
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            state.LifecycleState);
+        Assert.Null(state.WinningSideId);
+        Assert.Equal(
+            CombatantLifecycleState.Dying,
+            state.Participants[1]
+                .Combatant.LifecycleState);
+        Assert.Null(
+            state.PendingDeathSavingThrowCombatantId);
+    }
+
+    [Fact]
     public void Start_WithUnorderedInitiativeEntries_OrdersByPosition()
     {
         EncounterParticipantSetup[] participants =
@@ -520,11 +680,8 @@ public sealed class EncounterRulesTests
                 CreateParticipants(),
                 initiativeOrder));
     }
-    [Theory]
-    [InlineData(EncounterLifecycleState.Victory)]
-    [InlineData(EncounterLifecycleState.Defeat)]
-    public void DeclareOutcome_WhenEncounterIsActive_ReturnsCompletedState(
-    EncounterLifecycleState outcome)
+    [Fact]
+    public void Complete_WhenEncounterIsActive_ReturnsCompletedState()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -532,14 +689,20 @@ public sealed class EncounterRulesTests
             CreateInitiativeOrder());
 
         EncounterState result =
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                outcome);
+                winningSideId: "side.party");
 
         Assert.Equal(
             EncounterLifecycleState.Active,
             state.LifecycleState);
-        Assert.Equal(outcome, result.LifecycleState);
+        Assert.Null(state.WinningSideId);
+        Assert.Equal(
+            EncounterLifecycleState.Completed,
+            result.LifecycleState);
+        Assert.Equal(
+            "side.party",
+            result.WinningSideId);
         Assert.Equal(
             state.Revision + 1,
             result.Revision);
@@ -553,52 +716,76 @@ public sealed class EncounterRulesTests
     }
 
     [Fact]
-    public void DeclareOutcome_WithActiveOutcome_Throws()
+    public void Complete_WithNullWinningSideId_ReturnsCompletedStateWithoutWinner()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
             CreateParticipants(),
             CreateInitiativeOrder());
 
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            EncounterRules.DeclareOutcome(
+        EncounterState result =
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Active));
+                winningSideId: null);
+
+        Assert.Equal(
+            EncounterLifecycleState.Completed,
+            result.LifecycleState);
+        Assert.Null(result.WinningSideId);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("\t")]
+    public void Complete_WithBlankWinningSideId_Throws(
+        string winningSideId)
+    {
+        EncounterState state = StartEncounter(
+            encounterId: "encounter.test",
+            CreateParticipants(),
+            CreateInitiativeOrder());
+
+        Assert.Throws<ArgumentException>(() =>
+            EncounterRules.Complete(
+                state,
+                winningSideId));
     }
 
     [Fact]
-    public void DeclareOutcome_WithUnsupportedOutcome_Throws()
+    public void Complete_WithUnrepresentedWinningSideId_Throws()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
             CreateParticipants(),
             CreateInitiativeOrder());
 
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            EncounterRules.DeclareOutcome(
+        Assert.Throws<ArgumentException>(() =>
+            EncounterRules.Complete(
                 state,
-                (EncounterLifecycleState)999));
+                winningSideId: "side.outsiders"));
     }
 
     [Fact]
-    public void DeclareOutcome_WhenEncounterIsAlreadyComplete_Throws()
+    public void Complete_WhenEncounterIsAlreadyComplete_Throws()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
             CreateParticipants(),
             CreateInitiativeOrder());
 
-        state = EncounterRules.DeclareOutcome(
+        state = EncounterRules.Complete(
             state,
-            EncounterLifecycleState.Victory);
+            winningSideId: "side.party");
 
         Assert.Throws<InvalidOperationException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Defeat));
+                winningSideId: "side.enemies"));
     }
+
     [Fact]
-    public void DeclareOutcome_WhenRoundNumberIsInvalid_ThrowsBeforeTransition()
+    public void Complete_WhenRoundNumberIsInvalid_ThrowsBeforeTransition()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -617,9 +804,9 @@ public sealed class EncounterRulesTests
         };
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory));
+                winningSideId: "side.party"));
 
         Assert.Equal(
             EncounterLifecycleState.Active,
@@ -627,7 +814,7 @@ public sealed class EncounterRulesTests
     }
 
     [Fact]
-    public void DeclareOutcome_WhenActivePositionIsInvalid_ThrowsBeforeTransition()
+    public void Complete_WhenActivePositionIsInvalid_ThrowsBeforeTransition()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -643,9 +830,9 @@ public sealed class EncounterRulesTests
         };
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory));
+                winningSideId: "side.party"));
 
         Assert.Equal(
             EncounterLifecycleState.Active,
@@ -653,7 +840,7 @@ public sealed class EncounterRulesTests
     }
 
     [Fact]
-    public void DeclareOutcome_WhenLifecycleStateIsUnsupported_ThrowsBeforeTransition()
+    public void Complete_WhenLifecycleStateIsUnsupported_ThrowsBeforeTransition()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -666,13 +853,13 @@ public sealed class EncounterRulesTests
         };
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory));
+                winningSideId: "side.party"));
     }
 
     [Fact]
-    public void DeclareOutcome_WhenInitiativeOrderNoLongerMatchesParticipants_ThrowsBeforeTransition()
+    public void Complete_WhenInitiativeOrderNoLongerMatchesParticipants_ThrowsBeforeTransition()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -702,12 +889,12 @@ public sealed class EncounterRulesTests
         };
 
         Assert.Throws<ArgumentException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory));
+                winningSideId: "side.party"));
     }
     [Fact]
-    public void DeclareOutcome_WhenInitiativeListIsNotOrderedByPosition_ThrowsBeforeTransition()
+    public void Complete_WhenInitiativeListIsNotOrderedByPosition_ThrowsBeforeTransition()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -737,23 +924,61 @@ public sealed class EncounterRulesTests
         };
 
         Assert.Throws<ArgumentException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory));
+                winningSideId: "side.party"));
 
         Assert.Equal(
             EncounterLifecycleState.Active,
             state.LifecycleState);
     }
     [Fact]
-    public void DeclareOutcome_WhenParticipantBecameTerminal_AcceptsEncounterState()
+    public void Complete_WhenParticipantBecameTerminal_AcceptsEncounterState()
     {
+        EncounterParticipantSetup[] participants =
+        [
+            CreateParticipant(
+                combatantId: "combatant.hero",
+                sideId: "side.party",
+                startingPosition:
+                    new GridPosition(1, 1)),
+            CreateParticipant(
+                combatantId: "combatant.ally",
+                sideId: "side.party",
+                startingPosition:
+                    new GridPosition(1, 2)),
+            CreateParticipant(
+                combatantId: "combatant.enemy",
+                sideId: "side.enemies",
+                startingPosition:
+                    new GridPosition(2, 1))
+        ];
+
+        InitiativeOrderEntry[] initiativeOrder =
+        [
+            CreateInitiativeEntry(
+                combatantId: "combatant.hero",
+                position: 1,
+                total: 15),
+            CreateInitiativeEntry(
+                combatantId: "combatant.ally",
+                position: 2,
+                total: 12),
+            CreateInitiativeEntry(
+                combatantId: "combatant.enemy",
+                position: 3,
+                total: 10)
+        ];
+
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
-            CreateParticipants(),
-            CreateInitiativeOrder());
+            participants,
+            initiativeOrder);
 
-        CombatantState defeatedEnemy =
+        GridPosition originalPosition =
+            state.Participants[1].Position;
+
+        CombatantState defeatedAlly =
             CombatantRules.ResolveDamage(
                 state.Participants[1].Combatant with
                 {
@@ -767,10 +992,11 @@ public sealed class EncounterRulesTests
         EncounterParticipantState[] updatedParticipants =
         [
             state.Participants[0],
-        state.Participants[1] with
-        {
-            Combatant = defeatedEnemy
-        }
+            state.Participants[1] with
+            {
+                Combatant = defeatedAlly
+            },
+            state.Participants[2]
         ];
 
         state = state with
@@ -780,18 +1006,25 @@ public sealed class EncounterRulesTests
         };
 
         EncounterState result =
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory);
+                winningSideId: "side.party");
 
         Assert.Equal(
-            EncounterLifecycleState.Victory,
+            EncounterLifecycleState.Completed,
             result.LifecycleState);
+        Assert.Equal(
+            "side.party",
+            result.WinningSideId);
         Assert.Equal(
             CombatantLifecycleState.Defeated,
             result.Participants[1]
                 .Combatant.LifecycleState);
+        Assert.Equal(
+            originalPosition,
+            result.Participants[1].Position);
     }
+
     [Fact]
     public void Start_WithNegativeMovementSpeed_Throws()
     {
@@ -813,7 +1046,7 @@ public sealed class EncounterRulesTests
                 CreateInitiativeOrder()));
     }
     [Fact]
-    public void DeclareOutcome_WhenParticipantTurnResourcesAreInvalid_ThrowsBeforeTransition()
+    public void Complete_WhenParticipantTurnResourcesAreInvalid_ThrowsBeforeTransition()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -840,16 +1073,16 @@ public sealed class EncounterRulesTests
         };
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory));
+                winningSideId: "side.party"));
 
         Assert.Equal(
             EncounterLifecycleState.Active,
             state.LifecycleState);
     }
     [Fact]
-    public void DeclareOutcome_WhenRevisionIsInvalid_ThrowsBeforeTransition()
+    public void Complete_WhenRevisionIsInvalid_ThrowsBeforeTransition()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -861,9 +1094,9 @@ public sealed class EncounterRulesTests
         };
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory));
+                winningSideId: "side.party"));
 
         Assert.Equal(0, state.Revision);
         Assert.Equal(
@@ -871,7 +1104,7 @@ public sealed class EncounterRulesTests
             state.LifecycleState);
     }
     [Fact]
-    public void DeclareOutcome_WhenRevisionCannotIncrement_ThrowsBeforeTransition()
+    public void Complete_WhenRevisionCannotIncrement_ThrowsBeforeTransition()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -883,9 +1116,9 @@ public sealed class EncounterRulesTests
         };
 
         Assert.Throws<OverflowException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory));
+                winningSideId: "side.party"));
 
         Assert.Equal(long.MaxValue, state.Revision);
         Assert.Equal(
@@ -1238,7 +1471,7 @@ public sealed class EncounterRulesTests
     }
 
     [Fact]
-    public void DeclareOutcome_WhenBattlefieldIsInvalid_ThrowsBeforeTransition()
+    public void Complete_WhenBattlefieldIsInvalid_ThrowsBeforeTransition()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -1254,9 +1487,9 @@ public sealed class EncounterRulesTests
         };
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory));
+                winningSideId: "side.party"));
 
         Assert.Equal(1, state.Revision);
         Assert.Equal(
@@ -1264,52 +1497,6 @@ public sealed class EncounterRulesTests
             state.LifecycleState);
     }
 
-    [Fact]
-    public void DeclareOutcome_WhenParticipantBecameTerminal_PreservesPosition()
-    {
-        EncounterState state = StartEncounter(
-            encounterId: "encounter.test",
-            CreateParticipants(),
-            CreateInitiativeOrder());
-
-        GridPosition originalPosition =
-            state.Participants[1].Position;
-
-        CombatantState defeatedEnemy =
-            CombatantRules.ResolveDamage(
-                state.Participants[1].Combatant with
-                {
-                    ZeroHitPointPolicy =
-                        CombatantZeroHitPointPolicy.Defeated
-                },
-                damageAmount: 10,
-                isCriticalHit: false)
-            .State;
-
-        EncounterParticipantState[] participants =
-        [
-            state.Participants[0],
-        state.Participants[1] with
-        {
-            Combatant = defeatedEnemy
-        }
-        ];
-
-        state = state with
-        {
-            Participants =
-                Array.AsReadOnly(participants)
-        };
-
-        EncounterState result =
-            EncounterRules.DeclareOutcome(
-                state,
-                EncounterLifecycleState.Victory);
-
-        Assert.Equal(
-            originalPosition,
-            result.Participants[1].Position);
-    }
     [Fact]
     public void Start_WithNullBlockedPositions_Throws()
     {
@@ -1345,7 +1532,7 @@ public sealed class EncounterRulesTests
     }
 
     [Fact]
-    public void DeclareOutcome_WhenParticipantsSharePosition_ThrowsBeforeTransition()
+    public void Complete_WhenParticipantsSharePosition_ThrowsBeforeTransition()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -1368,9 +1555,9 @@ public sealed class EncounterRulesTests
         };
 
         Assert.Throws<ArgumentException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory));
+                winningSideId: "side.party"));
 
         Assert.Equal(1, state.Revision);
         Assert.Equal(
@@ -1379,7 +1566,7 @@ public sealed class EncounterRulesTests
     }
 
     [Fact]
-    public void DeclareOutcome_WhenParticipantIsNull_ThrowsBeforeTransition()
+    public void Complete_WhenParticipantIsNull_ThrowsBeforeTransition()
     {
         EncounterState state = StartEncounter(
             encounterId: "encounter.test",
@@ -1400,9 +1587,9 @@ public sealed class EncounterRulesTests
         };
 
         Assert.Throws<ArgumentNullException>(() =>
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                EncounterLifecycleState.Victory));
+                winningSideId: "side.party"));
 
         Assert.Equal(1, state.Revision);
         Assert.Equal(

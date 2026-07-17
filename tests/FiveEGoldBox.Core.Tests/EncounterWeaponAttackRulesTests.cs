@@ -313,9 +313,9 @@ public sealed class EncounterWeaponAttackRulesTests
     public void Resolve_WhenEncounterIsCompleted_ThrowsBeforeTransition()
     {
         EncounterState state =
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 CreateEncounter(),
-                EncounterLifecycleState.Victory);
+                winningSideId: "side.party");
 
         Assert.Throws<InvalidOperationException>(() =>
             EncounterWeaponAttackRules.Resolve(
@@ -326,7 +326,7 @@ public sealed class EncounterWeaponAttackRulesTests
                     damageRolls: [4])));
 
         Assert.Equal(
-            EncounterLifecycleState.Victory,
+            EncounterLifecycleState.Completed,
             state.LifecycleState);
         AssertStateUnchanged(
             state,

@@ -75,16 +75,18 @@ public static class EncounterDamageRules
                 Combatant = combatantDamage.State
             };
 
-        EncounterState resolvedState = state with
-        {
-            Revision = resolvedRevision,
-            Participants =
-                Array.AsReadOnly(participants),
-            PendingDeathSavingThrowCombatantId =
-                clearedPendingDeathSavingThrow
-                ? null
-                : state.PendingDeathSavingThrowCombatantId
-        };
+        EncounterState resolvedState =
+            EncounterCompletionRules.Resolve(
+                state with
+                {
+                    Revision = resolvedRevision,
+                    Participants =
+                        Array.AsReadOnly(participants),
+                    PendingDeathSavingThrowCombatantId =
+                        clearedPendingDeathSavingThrow
+                        ? null
+                        : state.PendingDeathSavingThrowCombatantId
+                });
 
         EncounterRules.ValidateState(resolvedState);
 

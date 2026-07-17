@@ -204,9 +204,9 @@ public sealed class EncounterMovementRulesTests
     public void Resolve_WhenEncounterIsCompleted_ThrowsBeforeTransition()
     {
         EncounterState state =
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 CreateEncounter(),
-                EncounterLifecycleState.Victory);
+                winningSideId: "side.party");
 
         Assert.Throws<InvalidOperationException>(() =>
             EncounterMovementRules.Resolve(
