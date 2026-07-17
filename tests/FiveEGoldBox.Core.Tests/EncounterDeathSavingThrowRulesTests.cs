@@ -179,6 +179,17 @@ public sealed class EncounterDeathSavingThrowRulesTests
         Assert.Null(
             result.State
                 .PendingDeathSavingThrowCombatantId);
+
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            state.LifecycleState);
+        Assert.Null(state.WinningSideId);
+        Assert.Equal(
+            EncounterLifecycleState.Completed,
+            result.State.LifecycleState);
+        Assert.Equal(
+            "side.enemies",
+            result.State.WinningSideId);
     }
 
     [Fact]
@@ -411,9 +422,63 @@ public sealed class EncounterDeathSavingThrowRulesTests
     [Fact]
     public void TurnAdvancement_WhenStableCombatantBecomesActive_DoesNotMarkSavePending()
     {
-        EncounterState state = CreateEncounter(
-            enemy: CreateStableCombatant(
-                "combatant.enemy"));
+        EncounterParticipantSetup[] participants =
+        [
+            CreateParticipant(
+                CombatantRules.Create(
+                    combatantId:
+                        "combatant.hero",
+                    maximumHitPoints: 10,
+                    CombatantZeroHitPointPolicy
+                        .DeathSavingThrows),
+                sideId: "side.party",
+                movementSpeedFeet: 30,
+                position: new GridPosition(1, 1)),
+            CreateParticipant(
+                CreateStableCombatant(
+                    "combatant.enemy"),
+                sideId: "side.enemies",
+                movementSpeedFeet: 25,
+                position: new GridPosition(2, 1)),
+            CreateParticipant(
+                CombatantRules.Create(
+                    combatantId:
+                        "combatant.enemy-ally",
+                    maximumHitPoints: 10,
+                    CombatantZeroHitPointPolicy
+                        .DeathSavingThrows),
+                sideId: "side.enemies",
+                movementSpeedFeet: 25,
+                position: new GridPosition(2, 2))
+        ];
+
+        InitiativeOrderEntry[] initiativeOrder =
+        [
+            CreateInitiativeEntry(
+                combatantId: "combatant.hero",
+                position: 1,
+                total: 15),
+            CreateInitiativeEntry(
+                combatantId: "combatant.enemy",
+                position: 2,
+                total: 10),
+            CreateInitiativeEntry(
+                combatantId: "combatant.enemy-ally",
+                position: 3,
+                total: 8)
+        ];
+
+        EncounterState state =
+            EncounterRules.Start(
+                encounterId: "encounter.test",
+                CreateBattlefield(),
+                participants,
+                initiativeOrder);
+
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            state.LifecycleState);
+        Assert.Null(state.WinningSideId);
 
         EncounterTurnAdvancementResult result =
             EncounterTurnAdvancementRules.Resolve(
@@ -436,6 +501,10 @@ public sealed class EncounterDeathSavingThrowRulesTests
         Assert.Null(
             result.State
                 .PendingDeathSavingThrowCombatantId);
+        Assert.Equal(
+            EncounterLifecycleState.Active,
+            result.State.LifecycleState);
+        Assert.Null(result.State.WinningSideId);
     }
 
     [Fact]
@@ -605,18 +674,15 @@ public sealed class EncounterDeathSavingThrowRulesTests
                     firstRoll: 10)));
     }
 
-    [Theory]
-    [InlineData(EncounterLifecycleState.Victory)]
-    [InlineData(EncounterLifecycleState.Defeat)]
-    public void Resolve_WhenEncounterIsComplete_Throws(
-        EncounterLifecycleState lifecycleState)
+    [Fact]
+    public void Resolve_WhenEncounterIsComplete_Throws()
     {
         EncounterState state =
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 CreateEncounter(
                     hero: CreateDyingCombatant(
                         "combatant.hero")),
-                lifecycleState);
+                winningSideId: "side.party");
 
         Assert.Throws<InvalidOperationException>(() =>
             EncounterDeathSavingThrowRules.Resolve(
@@ -1102,22 +1168,24 @@ public sealed class EncounterDeathSavingThrowRulesTests
         };
     }
 
-    [Theory]
-    [InlineData(EncounterLifecycleState.Victory)]
-    [InlineData(EncounterLifecycleState.Defeat)]
-    public void DeclareOutcome_WithPendingDeathSavingThrow_ClearsPendingState(
-    EncounterLifecycleState outcome)
+    [Fact]
+    public void Complete_WithPendingDeathSavingThrow_ClearsPendingState()
     {
         EncounterState state = CreateEncounter(
             hero: CreateDyingCombatant(
                 "combatant.hero"));
 
         EncounterState result =
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 state,
-                outcome);
+                winningSideId: "side.party");
 
-        Assert.Equal(outcome, result.LifecycleState);
+        Assert.Equal(
+            EncounterLifecycleState.Completed,
+            result.LifecycleState);
+        Assert.Equal(
+            "side.party",
+            result.WinningSideId);
         Assert.Equal(2, result.Revision);
         Assert.Null(
             result.PendingDeathSavingThrowCombatantId);
@@ -1134,11 +1202,11 @@ public sealed class EncounterDeathSavingThrowRulesTests
     public void Resolve_WithPendingSaveOnCompletedEncounter_RejectsInvalidState()
     {
         EncounterState state =
-            EncounterRules.DeclareOutcome(
+            EncounterRules.Complete(
                 CreateEncounter(
                     hero: CreateDyingCombatant(
                         "combatant.hero")),
-                EncounterLifecycleState.Defeat)
+                winningSideId: "side.party")
             with
             {
                 PendingDeathSavingThrowCombatantId =

@@ -92,14 +92,16 @@ public static class EncounterDeathSavingThrowRules
                     combatantDeathSavingThrow.State
             };
 
-        EncounterState resolvedState = state with
-        {
-            Revision = resolvedRevision,
-            Participants =
-                Array.AsReadOnly(participants),
-            PendingDeathSavingThrowCombatantId =
-                null
-        };
+        EncounterState resolvedState =
+            EncounterCompletionRules.Resolve(
+                state with
+                {
+                    Revision = resolvedRevision,
+                    Participants =
+                        Array.AsReadOnly(participants),
+                    PendingDeathSavingThrowCombatantId =
+                        null
+                });
 
         EncounterRules.ValidateState(resolvedState);
 

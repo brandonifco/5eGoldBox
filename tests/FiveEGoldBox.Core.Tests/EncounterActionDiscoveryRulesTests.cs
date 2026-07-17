@@ -154,9 +154,9 @@ public sealed class EncounterActionDiscoveryRulesTests
     [Fact]
     public void Discover_WhenEncounterIsComplete_ReturnsEncounterCompleted()
     {
-        EncounterState state = EncounterRules.DeclareOutcome(
+        EncounterState state = EncounterRules.Complete(
             CreateEncounter(),
-            EncounterLifecycleState.Victory);
+            winningSideId: "side.party");
 
         EncounterActionCandidate[] candidates =
         [
@@ -796,9 +796,9 @@ public sealed class EncounterActionDiscoveryRulesTests
     [Fact]
     public void Discover_WhenCompletedAndActorIsNotParticipant_ReturnsEncounterCompleted()
     {
-        EncounterState state = EncounterRules.DeclareOutcome(
+        EncounterState state = EncounterRules.Complete(
             CreateEncounter(),
-            EncounterLifecycleState.Victory);
+            winningSideId: "side.party");
 
         EncounterActionDiscoveryResult result =
             EncounterActionDiscoveryRules.Discover(

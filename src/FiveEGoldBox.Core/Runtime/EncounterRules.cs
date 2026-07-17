@@ -64,7 +64,7 @@ public static class EncounterRules
                     activeCombatantId,
                     StringComparison.Ordinal));
 
-        return new EncounterState
+        EncounterState initialState = new()
         {
             EncounterId = encounterId,
             Revision = 1,
@@ -73,17 +73,26 @@ public static class EncounterRules
             TurnState = turnState,
             LifecycleState =
                 EncounterLifecycleState.Active,
+            WinningSideId = null,
             PendingDeathSavingThrowCombatantId =
                 activeParticipant.Combatant.LifecycleState
                     == CombatantLifecycleState.Dying
                 ? activeCombatantId
                 : null
         };
+
+        EncounterState resolvedState =
+            EncounterCompletionRules.Resolve(
+                initialState);
+
+        ValidateState(resolvedState);
+
+        return resolvedState;
     }
 
-    public static EncounterState DeclareOutcome(
+    public static EncounterState Complete(
         EncounterState state,
-        EncounterLifecycleState outcome)
+        string? winningSideId)
     {
         ArgumentNullException.ThrowIfNull(state);
 
@@ -93,22 +102,20 @@ public static class EncounterRules
             != EncounterLifecycleState.Active)
         {
             throw new InvalidOperationException(
-                "A completed encounter cannot declare another outcome.");
+                "A completed encounter cannot be completed again.");
         }
 
-        if (outcome is not EncounterLifecycleState.Victory
-            and not EncounterLifecycleState.Defeat)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(outcome),
-                outcome,
-                "Encounter outcome must be victory or defeat.");
-        }
+        ValidateWinningSideId(
+            state.Participants,
+            winningSideId,
+            nameof(winningSideId));
 
         EncounterState resolvedState = state with
         {
             Revision = checked(state.Revision + 1),
-            LifecycleState = outcome,
+            LifecycleState =
+                EncounterLifecycleState.Completed,
+            WinningSideId = winningSideId,
             PendingDeathSavingThrowCombatantId = null
         };
 
@@ -193,10 +200,23 @@ public static class EncounterRules
                 nameof(state));
         }
 
+        ValidateWinningSideId(
+            state.Participants,
+            state.WinningSideId,
+            nameof(state));
+
         if (state.LifecycleState
-                != EncounterLifecycleState.Active
-            && state.PendingDeathSavingThrowCombatantId
-                is not null)
+            == EncounterLifecycleState.Active)
+        {
+            if (state.WinningSideId is not null)
+            {
+                throw new ArgumentException(
+                    "An active encounter cannot have a winning side.",
+                    nameof(state));
+            }
+        }
+        else if (state.PendingDeathSavingThrowCombatantId
+            is not null)
         {
             throw new ArgumentException(
                 "A completed encounter cannot have a pending death saving throw.",
@@ -231,6 +251,35 @@ public static class EncounterRules
                     "Only a dying active combatant can have a pending death saving throw.",
                     nameof(state));
             }
+        }
+    }
+
+    private static void ValidateWinningSideId(
+        IReadOnlyList<EncounterParticipantState> participants,
+        string? winningSideId,
+        string parameterName)
+    {
+        if (winningSideId is null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(winningSideId))
+        {
+            throw new ArgumentException(
+                "Winning side ID cannot be blank.",
+                parameterName);
+        }
+
+        if (!participants.Any(participant =>
+            string.Equals(
+                participant.SideId,
+                winningSideId,
+                StringComparison.Ordinal)))
+        {
+            throw new ArgumentException(
+                $"Winning side '{winningSideId}' is not represented in the encounter.",
+                parameterName);
         }
     }
 
