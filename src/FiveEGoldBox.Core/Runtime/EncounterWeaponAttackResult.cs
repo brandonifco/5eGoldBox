@@ -12,6 +12,10 @@ public sealed record EncounterWeaponAttackResult
 
     public required int DistanceFeet { get; init; }
 
+    public required EncounterLineOfSightResult
+        LineOfSight
+    { get; init; }
+
     public required AttackResolutionResult Attack { get; init; }
 
     public CombatantDamageResult? TargetDamage { get; init; }
