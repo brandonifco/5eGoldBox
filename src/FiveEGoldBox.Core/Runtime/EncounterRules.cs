@@ -324,7 +324,7 @@ public static class EncounterRules
         };
     }
 
-    private static void ValidateBattlefield(
+    internal static void ValidateBattlefield(
         EncounterBattlefieldState battlefield)
     {
         if (string.IsNullOrWhiteSpace(
@@ -581,7 +581,7 @@ public static class EncounterRules
         }
     }
 
-    private static void ValidatePositionWithinBattlefield(
+    internal static void ValidatePositionWithinBattlefield(
         EncounterBattlefieldState battlefield,
         GridPosition position,
         string parameterName)
