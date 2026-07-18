@@ -12,5 +12,13 @@ public enum EncounterActionUnavailabilityReason
     ReactionUnavailable,
     MovementUnavailable,
     ReactionWindowRequired,
-    UnsupportedTiming
+    UnsupportedTiming,
+    TargetNotParticipant,
+    SelfTargetNotAllowed,
+    TargetNotHostile,
+    TargetCannotBeAttacked,
+    WeaponUnavailable,
+    TargetOutOfRange,
+    LineOfSightBlocked,
+    AmmunitionUnavailable
 }

@@ -27,6 +27,116 @@ public static class EncounterActionDiscoveryRules
         };
     }
 
+    public static EncounterActionDiscoveryResult DiscoverWeaponAttacks(
+        EncounterState state,
+        IReadOnlyList<EncounterWeaponAttackDiscoveryCandidate>
+            candidates)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(candidates);
+
+        EncounterRules.ValidateState(state);
+        ValidateWeaponAttackCandidates(candidates);
+
+        EncounterActionEvaluation[] evaluations =
+            candidates
+                .Select(candidate =>
+                    EvaluateWeaponAttackCandidate(
+                        state,
+                        candidate))
+                .ToArray();
+
+        return new EncounterActionDiscoveryResult
+        {
+            EncounterId = state.EncounterId,
+            EncounterRevision = state.Revision,
+            Evaluations =
+                Array.AsReadOnly(evaluations)
+        };
+    }
+
+    private static EncounterActionEvaluation
+        EvaluateWeaponAttackCandidate(
+            EncounterState state,
+            EncounterWeaponAttackDiscoveryCandidate candidate)
+    {
+        EncounterWeaponAttackPrerequisiteEvaluation
+            prerequisites =
+                EncounterWeaponAttackPrerequisiteRules
+                    .Evaluate(
+                        state,
+                        candidate.ActorCombatantId,
+                        candidate.TargetCombatantId,
+                        candidate.WeaponId);
+
+        return new EncounterActionEvaluation
+        {
+            ActionOptionId = candidate.ActionOptionId,
+            ActorCombatantId =
+                candidate.ActorCombatantId,
+            EncounterRevision = state.Revision,
+            IsCommonlyLegal =
+                prerequisites.IsLegal,
+            UnavailabilityReason =
+                prerequisites.UnavailabilityReason
+        };
+    }
+
+    private static void ValidateWeaponAttackCandidates(
+        IReadOnlyList<EncounterWeaponAttackDiscoveryCandidate>
+            candidates)
+    {
+        HashSet<string> actionOptionIds =
+            new(StringComparer.Ordinal);
+
+        foreach (
+            EncounterWeaponAttackDiscoveryCandidate candidate
+            in candidates)
+        {
+            ArgumentNullException.ThrowIfNull(candidate);
+
+            if (string.IsNullOrWhiteSpace(
+                candidate.ActionOptionId))
+            {
+                throw new ArgumentException(
+                    "Action option ID is required.",
+                    nameof(candidates));
+            }
+
+            if (string.IsNullOrWhiteSpace(
+                candidate.ActorCombatantId))
+            {
+                throw new ArgumentException(
+                    "Actor combatant ID is required.",
+                    nameof(candidates));
+            }
+
+            if (string.IsNullOrWhiteSpace(
+                candidate.TargetCombatantId))
+            {
+                throw new ArgumentException(
+                    "Target combatant ID is required.",
+                    nameof(candidates));
+            }
+
+            if (string.IsNullOrWhiteSpace(
+                candidate.WeaponId))
+            {
+                throw new ArgumentException(
+                    "Weapon ID is required.",
+                    nameof(candidates));
+            }
+
+            if (!actionOptionIds.Add(
+                candidate.ActionOptionId))
+            {
+                throw new ArgumentException(
+                    $"Duplicate action option ID '{candidate.ActionOptionId}' is not allowed.",
+                    nameof(candidates));
+            }
+        }
+    }
+
     private static EncounterActionEvaluation
         EvaluateCandidate(
             EncounterState state,

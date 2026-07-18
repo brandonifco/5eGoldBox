@@ -1,3 +1,5 @@
+using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -681,6 +683,153 @@ public sealed class EncounterActionDiscoveryRulesTests
             EncounterActionUnavailabilityReason
                 .ActorCannotAct,
             evaluation.UnavailabilityReason);
+    }
+    [Fact]
+    public void Discover_WithLegalWeaponAttackCandidate_ReturnsLegalEvaluation()
+    {
+        EncounterState state =
+            CreateWeaponAttackEncounter(
+                enemyPosition:
+                    new GridPosition(2, 1));
+
+        EncounterWeaponAttackDiscoveryCandidate[] candidates =
+        [
+            CreateWeaponAttackCandidate(
+                actionOptionId:
+                    "option.attack.enemy",
+                targetCombatantId:
+                    "combatant.enemy")
+        ];
+
+        EncounterActionDiscoveryResult result =
+            EncounterActionDiscoveryRules.DiscoverWeaponAttacks(
+                state,
+                candidates);
+
+        EncounterActionEvaluation evaluation =
+            Assert.Single(result.Evaluations);
+
+        Assert.True(evaluation.IsCommonlyLegal);
+        Assert.Equal(
+            EncounterActionUnavailabilityReason.None,
+            evaluation.UnavailabilityReason);
+    }
+
+    [Fact]
+    public void Discover_WhenWeaponAttackTargetIsBeyondReach_ReturnsTargetOutOfRange()
+    {
+        EncounterState state =
+            CreateWeaponAttackEncounter(
+                enemyPosition:
+                    new GridPosition(3, 1));
+
+        EncounterWeaponAttackDiscoveryCandidate[] candidates =
+        [
+            CreateWeaponAttackCandidate(
+                actionOptionId:
+                    "option.attack.enemy",
+                targetCombatantId:
+                    "combatant.enemy")
+        ];
+
+        EncounterActionDiscoveryResult result =
+            EncounterActionDiscoveryRules.DiscoverWeaponAttacks(
+                state,
+                candidates);
+
+        EncounterActionEvaluation evaluation =
+            Assert.Single(result.Evaluations);
+
+        Assert.False(evaluation.IsCommonlyLegal);
+        Assert.Equal(
+            EncounterActionUnavailabilityReason
+                .TargetOutOfRange,
+            evaluation.UnavailabilityReason);
+    }
+
+    private static EncounterState
+        CreateWeaponAttackEncounter(
+            GridPosition enemyPosition)
+    {
+        EncounterState state = CreateEncounter();
+
+        EncounterParticipantState[] participants =
+        [
+            state.Participants[0] with
+            {
+                CombatProfile =
+                    state.Participants[0]
+                        .CombatProfile with
+                    {
+                        WeaponAttacks =
+                        [
+                            CreateWeapon()
+                        ]
+                    }
+            },
+            state.Participants[1] with
+            {
+                Position = enemyPosition
+            }
+        ];
+
+        return state with
+        {
+            Participants =
+                Array.AsReadOnly(participants)
+        };
+    }
+
+    private static EncounterWeaponAttackDiscoveryCandidate
+        CreateWeaponAttackCandidate(
+            string actionOptionId,
+            string targetCombatantId)
+    {
+        return new EncounterWeaponAttackDiscoveryCandidate
+        {
+            ActionOptionId = actionOptionId,
+            ActorCombatantId =
+                "combatant.hero",
+            TargetCombatantId =
+                targetCombatantId,
+            WeaponId =
+                "weapon.longsword"
+        };
+    }
+
+    private static WeaponAttack CreateWeapon()
+    {
+        return new WeaponAttack
+        {
+            WeaponId = "weapon.longsword",
+            WeaponName = "Longsword",
+            Category = WeaponCategory.Martial,
+            AttackKind = WeaponAttackKind.Melee,
+            AttackAbility = Ability.Strength,
+            AbilityModifier = 3,
+            IsProficient = true,
+            ProficiencyBonus = 2,
+            AttackBonus = 5,
+            HasDisadvantage = false,
+            DisadvantageReasons =
+                Array.Empty<string>(),
+            AttackRollMode = D20RollMode.Normal,
+            Damage = new DamageDice
+            {
+                Count = 1,
+                Die = DieType.D8
+            },
+            VersatileDamage = null,
+            DamageType = "damage.slashing",
+            DamageBonus = 3,
+            Properties =
+                Array.Empty<string>(),
+            ReachFeet = null,
+            NormalRangeFeet = null,
+            LongRangeFeet = null,
+            AmmunitionItemId = null,
+            AmmunitionQuantityAvailable = null
+        };
     }
 
     private static CombatantState

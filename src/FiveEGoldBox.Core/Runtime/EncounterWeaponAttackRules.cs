@@ -31,35 +31,25 @@ public static class EncounterWeaponAttackRules
                 $"Expected encounter revision '{command.ExpectedRevision}', but the current revision is '{state.Revision}'.");
         }
 
-        if (command.ActorCombatantId
-            == command.TargetCombatantId)
-        {
-            throw new ArgumentException(
-                "An attacker cannot target itself.",
-                nameof(command));
-        }
+        EncounterWeaponAttackPrerequisiteEvaluation prerequisites =
+            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+                state,
+                command.ActorCombatantId,
+                command.TargetCombatantId,
+                command.WeaponId);
+
+        EnsurePrerequisitesAreLegal(
+            state,
+            command,
+            prerequisites);
 
         int actorIndex = FindParticipantIndex(
             state,
             command.ActorCombatantId);
 
-        if (actorIndex < 0)
-        {
-            throw new ArgumentException(
-                $"Actor '{command.ActorCombatantId}' is not an encounter participant.",
-                nameof(command));
-        }
-
         int targetIndex = FindParticipantIndex(
             state,
             command.TargetCombatantId);
-
-        if (targetIndex < 0)
-        {
-            throw new ArgumentException(
-                $"Target '{command.TargetCombatantId}' is not an encounter participant.",
-                nameof(command));
-        }
 
         EncounterParticipantState actor =
             state.Participants[actorIndex];
@@ -67,48 +57,9 @@ public static class EncounterWeaponAttackRules
         EncounterParticipantState target =
             state.Participants[targetIndex];
 
-        ValidateActor(state, actor);
-
-        if (actor.SideId == target.SideId)
-        {
-            throw new InvalidOperationException(
-                "A basic weapon attack must target an opposing participant.");
-        }
-
-        if (target.Combatant.IsTerminal)
-        {
-            throw new InvalidOperationException(
-                "A terminal combatant cannot be targeted by a basic weapon attack.");
-        }
-
         WeaponAttack weapon = FindWeaponAttack(
             actor,
             command.WeaponId);
-
-        ValidateWeaponAttack(weapon);
-
-        int distanceFeet = CalculateDistanceFeet(
-            actor.Position,
-            target.Position);
-
-        EncounterLineOfSightResult lineOfSight =
-            EncounterLineOfSightRules.Evaluate(
-                state.Battlefield,
-                actor.Position,
-                target.Position);
-
-        if (!lineOfSight.HasLineOfSight)
-        {
-            throw new InvalidOperationException(
-                $"Target does not have line of sight from the attacker because position '{lineOfSight.BlockingPosition}' blocks the path.");
-        }
-
-        D20RollMode attackRollMode =
-            ResolveAttackRollMode(
-                weapon,
-                distanceFeet);
-
-        EnsureAmmunitionAvailable(weapon);
 
         long resolvedRevision =
             checked(state.Revision + 1);
@@ -119,7 +70,7 @@ public static class EncounterWeaponAttackRules
 
         AttackRollResult attackRoll =
             AttackRollRules.ResolveResult(
-                attackRollMode,
+                prerequisites.AttackRollMode!.Value,
                 command.FirstAttackRoll,
                 command.SecondAttackRoll,
                 weapon.AttackBonus,
@@ -205,14 +156,137 @@ public static class EncounterWeaponAttackRules
             TargetCombatantId =
                 command.TargetCombatantId,
             WeaponId = command.WeaponId,
-            DistanceFeet = distanceFeet,
-            LineOfSight = lineOfSight,
+            DistanceFeet =
+                prerequisites.DistanceFeet!.Value,
+            LineOfSight =
+                prerequisites.LineOfSight!,
             Attack = attack,
             TargetDamage = targetDamage,
             State = resolvedState
         };
     }
+    private static void EnsurePrerequisitesAreLegal(
+        EncounterState state,
+        EncounterWeaponAttackCommand command,
+        EncounterWeaponAttackPrerequisiteEvaluation prerequisites)
+    {
+        if (prerequisites.IsLegal)
+        {
+            return;
+        }
 
+        switch (prerequisites.UnavailabilityReason)
+        {
+            case EncounterActionUnavailabilityReason
+                .EncounterCompleted:
+                throw new InvalidOperationException(
+                    "A completed encounter cannot resolve an attack.");
+
+            case EncounterActionUnavailabilityReason
+                .SelfTargetNotAllowed:
+                throw new ArgumentException(
+                    "An attacker cannot target itself.",
+                    nameof(command));
+
+            case EncounterActionUnavailabilityReason
+                .ActorNotParticipant:
+                throw new ArgumentException(
+                    $"Actor '{command.ActorCombatantId}' is not an encounter participant.",
+                    nameof(command));
+
+            case EncounterActionUnavailabilityReason
+                .TargetNotParticipant:
+                throw new ArgumentException(
+                    $"Target '{command.TargetCombatantId}' is not an encounter participant.",
+                    nameof(command));
+
+            case EncounterActionUnavailabilityReason
+                .ActorNotActive:
+                throw new InvalidOperationException(
+                    "Only the active combatant can make a basic weapon attack.");
+
+            case EncounterActionUnavailabilityReason
+                .ActorCannotAct:
+                throw new InvalidOperationException(
+                    "The attacking combatant must be conscious.");
+
+            case EncounterActionUnavailabilityReason
+                .ActionUnavailable:
+                throw new InvalidOperationException(
+                    "The attacking combatant has already spent its action.");
+
+            case EncounterActionUnavailabilityReason
+                .TargetNotHostile:
+                throw new InvalidOperationException(
+                    "A basic weapon attack must target an opposing participant.");
+
+            case EncounterActionUnavailabilityReason
+                .TargetCannotBeAttacked:
+                throw new InvalidOperationException(
+                    "A terminal combatant cannot be targeted by a basic weapon attack.");
+
+            case EncounterActionUnavailabilityReason
+                .WeaponUnavailable:
+                throw new ArgumentException(
+                    $"Weapon '{command.WeaponId}' is not available to actor '{command.ActorCombatantId}'.",
+                    nameof(command));
+
+            case EncounterActionUnavailabilityReason
+                .TargetOutOfRange:
+                ThrowTargetOutOfRange(
+                    state,
+                    command,
+                    prerequisites);
+                break;
+
+            case EncounterActionUnavailabilityReason
+                .LineOfSightBlocked:
+                throw new InvalidOperationException(
+                    $"Target does not have line of sight from the attacker because position '{prerequisites.LineOfSight!.BlockingPosition}' blocks the path.");
+
+            case EncounterActionUnavailabilityReason
+                .AmmunitionUnavailable:
+                throw new InvalidOperationException(
+                    $"Weapon '{command.WeaponId}' has no available ammunition.");
+
+            default:
+                throw new InvalidOperationException(
+                    $"Weapon attack prerequisites failed for unsupported reason '{prerequisites.UnavailabilityReason}'.");
+        }
+    }
+    private static void ThrowTargetOutOfRange(
+        EncounterState state,
+        EncounterWeaponAttackCommand command,
+        EncounterWeaponAttackPrerequisiteEvaluation prerequisites)
+    {
+        int actorIndex = FindParticipantIndex(
+            state,
+            command.ActorCombatantId);
+
+        EncounterParticipantState actor =
+            state.Participants[actorIndex];
+
+        WeaponAttack weapon = FindWeaponAttack(
+            actor,
+            command.WeaponId);
+
+        int distanceFeet =
+            prerequisites.DistanceFeet!.Value;
+
+        if (weapon.AttackKind
+            == WeaponAttackKind.Melee)
+        {
+            int reachFeet =
+                weapon.ReachFeet
+                ?? DefaultMeleeReachFeet;
+
+            throw new InvalidOperationException(
+                $"Target is {distanceFeet} feet away, beyond the weapon's {reachFeet}-foot reach.");
+        }
+
+        throw new InvalidOperationException(
+            $"Target is {distanceFeet} feet away, beyond the weapon's {weapon.LongRangeFeet!.Value}-foot long range.");
+    }
     private static void ValidateCommand(
         EncounterWeaponAttackCommand command)
     {
@@ -252,31 +326,6 @@ public static class EncounterWeaponAttackRules
             command.DamageRolls);
     }
 
-    private static void ValidateActor(
-        EncounterState state,
-        EncounterParticipantState actor)
-    {
-        if (actor.Combatant.CombatantId
-            != state.ActiveCombatantId)
-        {
-            throw new InvalidOperationException(
-                "Only the active combatant can make a basic weapon attack.");
-        }
-
-        if (actor.Combatant.LifecycleState
-            != CombatantLifecycleState.Conscious)
-        {
-            throw new InvalidOperationException(
-                "The attacking combatant must be conscious.");
-        }
-
-        if (!actor.TurnResources.HasActionAvailable)
-        {
-            throw new InvalidOperationException(
-                "The attacking combatant has already spent its action.");
-        }
-    }
-
     private static WeaponAttack FindWeaponAttack(
         EncounterParticipantState actor,
         string weaponId)
@@ -312,215 +361,6 @@ public static class EncounterWeaponAttackRules
         }
 
         return matches[0];
-    }
-
-    private static void ValidateWeaponAttack(
-        WeaponAttack weapon)
-    {
-        if (string.IsNullOrWhiteSpace(
-            weapon.WeaponId))
-        {
-            throw new ArgumentException(
-                "Weapon attack ID is required.",
-                nameof(weapon));
-        }
-
-        if (!Enum.IsDefined(weapon.AttackKind))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(weapon),
-                weapon.AttackKind,
-                "Unsupported weapon attack kind.");
-        }
-
-        if (!Enum.IsDefined(weapon.AttackRollMode))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(weapon),
-                weapon.AttackRollMode,
-                "Unsupported attack roll mode.");
-        }
-
-        ArgumentNullException.ThrowIfNull(
-            weapon.Damage);
-
-        if (weapon.Damage.Count < 1)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(weapon),
-                weapon.Damage.Count,
-                "Weapon damage dice count must be at least 1.");
-        }
-
-        if (!Enum.IsDefined(weapon.Damage.Die))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(weapon),
-                weapon.Damage.Die,
-                "Unsupported weapon damage die.");
-        }
-
-        if (string.IsNullOrWhiteSpace(
-            weapon.DamageType))
-        {
-            throw new ArgumentException(
-                "Weapon damage type is required.",
-                nameof(weapon));
-        }
-
-        if (weapon.ReachFeet is <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(weapon),
-                weapon.ReachFeet,
-                "Weapon reach must be greater than 0.");
-        }
-
-        if (weapon.AttackKind
-            != WeaponAttackKind.Ranged)
-        {
-            return;
-        }
-
-        if (weapon.NormalRangeFeet is null
-            or <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(weapon),
-                weapon.NormalRangeFeet,
-                "A ranged weapon's normal range must be greater than 0.");
-        }
-
-        if (weapon.LongRangeFeet is null
-            or <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(weapon),
-                weapon.LongRangeFeet,
-                "A ranged weapon's long range must be greater than 0.");
-        }
-
-        if (weapon.LongRangeFeet
-            < weapon.NormalRangeFeet)
-        {
-            throw new ArgumentException(
-                "A ranged weapon's long range cannot be shorter than its normal range.",
-                nameof(weapon));
-        }
-
-        bool hasAmmunitionItemId =
-            weapon.AmmunitionItemId is not null;
-
-        bool hasAmmunitionQuantity =
-            weapon.AmmunitionQuantityAvailable
-                is not null;
-
-        if (hasAmmunitionItemId
-            && string.IsNullOrWhiteSpace(
-                weapon.AmmunitionItemId))
-        {
-            throw new ArgumentException(
-                "Ammunition item ID cannot be blank.",
-                nameof(weapon));
-        }
-
-        if (hasAmmunitionItemId
-            != hasAmmunitionQuantity)
-        {
-            throw new ArgumentException(
-                "A ranged weapon must provide both an ammunition item ID and an available quantity, or neither.",
-                nameof(weapon));
-        }
-
-        if (weapon.AmmunitionQuantityAvailable
-            is < 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(weapon),
-                weapon.AmmunitionQuantityAvailable,
-                "Available ammunition quantity cannot be negative.");
-        }
-    }
-
-    private static D20RollMode
-        ResolveAttackRollMode(
-            WeaponAttack weapon,
-            int distanceFeet)
-    {
-        if (weapon.AttackKind
-            == WeaponAttackKind.Melee)
-        {
-            int reachFeet =
-                weapon.ReachFeet
-                ?? DefaultMeleeReachFeet;
-
-            if (distanceFeet > reachFeet)
-            {
-                throw new InvalidOperationException(
-                    $"Target is {distanceFeet} feet away, beyond the weapon's {reachFeet}-foot reach.");
-            }
-
-            return weapon.AttackRollMode;
-        }
-
-        int normalRangeFeet =
-            weapon.NormalRangeFeet!.Value;
-
-        int longRangeFeet =
-            weapon.LongRangeFeet!.Value;
-
-        if (distanceFeet > longRangeFeet)
-        {
-            throw new InvalidOperationException(
-                $"Target is {distanceFeet} feet away, beyond the weapon's {longRangeFeet}-foot long range.");
-        }
-
-        if (distanceFeet <= normalRangeFeet)
-        {
-            return weapon.AttackRollMode;
-        }
-
-        return ApplyDisadvantage(
-            weapon.AttackRollMode);
-    }
-
-    private static D20RollMode ApplyDisadvantage(
-        D20RollMode rollMode)
-    {
-        return rollMode switch
-        {
-            D20RollMode.Normal =>
-                D20RollMode.Disadvantage,
-
-            D20RollMode.Advantage =>
-                D20RollMode.Normal,
-
-            D20RollMode.Disadvantage =>
-                D20RollMode.Disadvantage,
-
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(rollMode),
-                rollMode,
-                "Unsupported attack roll mode.")
-        };
-    }
-
-    private static void EnsureAmmunitionAvailable(
-        WeaponAttack weapon)
-    {
-        if (weapon.AttackKind
-                != WeaponAttackKind.Ranged
-            || weapon.AmmunitionItemId is null)
-        {
-            return;
-        }
-
-        if (weapon.AmmunitionQuantityAvailable
-            <= 0)
-        {
-            throw new InvalidOperationException(
-                $"Weapon '{weapon.WeaponId}' has no available ammunition.");
-        }
     }
 
     private static EncounterParticipantState
@@ -641,24 +481,5 @@ public static class EncounterWeaponAttackRules
         }
 
         return -1;
-    }
-
-    private static int CalculateDistanceFeet(
-        GridPosition first,
-        GridPosition second)
-    {
-        int horizontalSquares =
-            Math.Abs(first.X - second.X);
-
-        int verticalSquares =
-            Math.Abs(first.Y - second.Y);
-
-        int distanceSquares =
-            Math.Max(
-                horizontalSquares,
-                verticalSquares);
-
-        return checked(
-            distanceSquares * FeetPerGridSquare);
     }
 }
