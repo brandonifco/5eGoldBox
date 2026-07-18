@@ -15,4 +15,13 @@ public sealed record EncounterWeaponAttackPrerequisiteEvaluation
 
     public required EncounterLineOfSightResult?
         LineOfSight { get; init; }
+
+    public EncounterCoverEvaluation Cover { get; init; } =
+        new()
+        {
+            CoverLevel = EncounterCoverLevel.None,
+            ArmorClassBonus = 0,
+            DexteritySavingThrowBonus = 0,
+            CoverPosition = null
+        };
 }

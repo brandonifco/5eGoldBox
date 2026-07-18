@@ -157,6 +157,11 @@ public static class EncounterWeaponAttackPrerequisiteRules
                 lineOfSight);
         }
 
+        EncounterCoverEvaluation cover =
+            EncounterCoverRules.Evaluate(
+                state.Battlefield,
+                lineOfSight);
+
         D20RollMode? attackRollMode =
             ResolveAttackRollMode(
                 weapon,
@@ -187,7 +192,8 @@ public static class EncounterWeaponAttackPrerequisiteRules
                 EncounterActionUnavailabilityReason.None,
             AttackRollMode = attackRollMode,
             DistanceFeet = distanceFeet,
-            LineOfSight = lineOfSight
+            LineOfSight = lineOfSight,
+            Cover = cover
         };
     }
 

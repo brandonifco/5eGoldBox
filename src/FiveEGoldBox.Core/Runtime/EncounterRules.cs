@@ -403,6 +403,8 @@ public static class EncounterRules
         ArgumentNullException.ThrowIfNull(
             battlefield.BlockedPositions);
         ArgumentNullException.ThrowIfNull(
+            battlefield.CoverPositions);
+        ArgumentNullException.ThrowIfNull(
             battlefield.DifficultTerrainPositions);
 
         HashSet<GridPosition> blockedPositions = new();
@@ -419,6 +421,53 @@ public static class EncounterRules
             {
                 throw new ArgumentException(
                     $"Duplicate blocked position '{position}' is not allowed.",
+                    nameof(battlefield));
+            }
+        }
+
+        HashSet<GridPosition> coverPositions = new();
+
+        foreach (EncounterCoverPosition coverPosition
+            in battlefield.CoverPositions)
+        {
+            ArgumentNullException.ThrowIfNull(
+                coverPosition);
+
+            ValidatePositionWithinBattlefield(
+                battlefield,
+                coverPosition.Position,
+                nameof(battlefield));
+
+            if (!Enum.IsDefined(
+                coverPosition.CoverLevel))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(battlefield),
+                    coverPosition.CoverLevel,
+                    "Unsupported encounter cover level.");
+            }
+
+            if (coverPosition.CoverLevel
+                == EncounterCoverLevel.None)
+            {
+                throw new ArgumentException(
+                    $"Cover position '{coverPosition.Position}' must provide half or three-quarters cover.",
+                    nameof(battlefield));
+            }
+
+            if (!coverPositions.Add(
+                coverPosition.Position))
+            {
+                throw new ArgumentException(
+                    $"Duplicate cover position '{coverPosition.Position}' is not allowed.",
+                    nameof(battlefield));
+            }
+
+            if (blockedPositions.Contains(
+                coverPosition.Position))
+            {
+                throw new ArgumentException(
+                    $"Position '{coverPosition.Position}' cannot be both blocked and partial cover.",
                     nameof(battlefield));
             }
         }

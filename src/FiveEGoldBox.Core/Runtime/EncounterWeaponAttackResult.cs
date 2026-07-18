@@ -16,6 +16,8 @@ public sealed record EncounterWeaponAttackResult
         LineOfSight
     { get; init; }
 
+    public required EncounterCoverEvaluation Cover { get; init; }
+
     public required AttackResolutionResult Attack { get; init; }
 
     public CombatantDamageResult? TargetDamage { get; init; }

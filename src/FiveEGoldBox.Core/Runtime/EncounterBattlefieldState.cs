@@ -11,6 +11,10 @@ public sealed record EncounterBattlefieldState
     public required IReadOnlyList<GridPosition>
         BlockedPositions { get; init; }
 
+    public IReadOnlyList<EncounterCoverPosition>
+        CoverPositions { get; init; }
+            = Array.Empty<EncounterCoverPosition>();
+
     public required IReadOnlyList<GridPosition>
         DifficultTerrainPositions { get; init; }
 }

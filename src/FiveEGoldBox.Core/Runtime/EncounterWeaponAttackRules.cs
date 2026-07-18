@@ -68,13 +68,18 @@ public static class EncounterWeaponAttackRules
             Array.AsReadOnly(
                 command.DamageRolls.ToArray());
 
+        int targetArmorClass =
+            checked(
+                target.CombatProfile.ArmorClass
+                + prerequisites.Cover.ArmorClassBonus);
+
         AttackRollResult attackRoll =
             AttackRollRules.ResolveResult(
                 prerequisites.AttackRollMode!.Value,
                 command.FirstAttackRoll,
                 command.SecondAttackRoll,
                 weapon.AttackBonus,
-                target.CombatProfile.ArmorClass);
+                targetArmorClass);
 
         IReadOnlyList<DamageResponseType>
             responseTypes =
@@ -160,6 +165,7 @@ public static class EncounterWeaponAttackRules
                 prerequisites.DistanceFeet!.Value,
             LineOfSight =
                 prerequisites.LineOfSight!,
+            Cover = prerequisites.Cover,
             Attack = attack,
             TargetDamage = targetDamage,
             State = resolvedState
