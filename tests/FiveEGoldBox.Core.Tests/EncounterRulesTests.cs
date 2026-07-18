@@ -1,3 +1,4 @@
+using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -333,6 +334,164 @@ public sealed class EncounterRulesTests
             "combatant.hero",
             state.ActiveCombatantId);
     }
+
+    [Fact]
+    public void Start_WithSavingThrowBonuses_StoresProtectedCollection()
+    {
+        SavingThrowBonus[] savingThrowBonuses =
+        [
+            CreateSavingThrowBonus(
+                Ability.Dexterity,
+                abilityModifier: 1,
+                isProficient: true,
+                proficiencyBonus: 2,
+                totalBonus: 3)
+        ];
+
+        EncounterParticipantSetup[] participants =
+            CreateParticipants();
+
+        participants[0] = participants[0] with
+        {
+            CombatProfile =
+                participants[0].CombatProfile with
+                {
+                    SavingThrowBonuses =
+                        savingThrowBonuses
+                }
+        };
+
+        EncounterState state = StartEncounter(
+            encounterId: "encounter.test",
+            participants,
+            CreateInitiativeOrder());
+
+        savingThrowBonuses[0] =
+            CreateSavingThrowBonus(
+                Ability.Wisdom,
+                abilityModifier: -2,
+                isProficient: false,
+                proficiencyBonus: 0,
+                totalBonus: -2);
+
+        SavingThrowBonus storedBonus =
+            Assert.Single(
+                state.Participants[0]
+                    .CombatProfile
+                    .SavingThrowBonuses);
+
+        Assert.Equal(
+            Ability.Dexterity,
+            storedBonus.Ability);
+        Assert.Equal(1, storedBonus.AbilityModifier);
+        Assert.True(storedBonus.IsProficient);
+        Assert.Equal(2, storedBonus.ProficiencyBonus);
+        Assert.Equal(3, storedBonus.TotalBonus);
+    }
+
+    [Fact]
+    public void Start_WithNullSavingThrowBonusCollection_Throws()
+    {
+        EncounterParticipantSetup[] participants =
+            CreateParticipants();
+
+        participants[0] = participants[0] with
+        {
+            CombatProfile =
+                participants[0].CombatProfile with
+                {
+                    SavingThrowBonuses = null!
+                }
+        };
+
+        Assert.Throws<ArgumentNullException>(() =>
+            StartEncounter(
+                encounterId: "encounter.test",
+                participants,
+                CreateInitiativeOrder()));
+    }
+
+    [Fact]
+    public void Start_WithNullSavingThrowBonusEntry_Throws()
+    {
+        EncounterParticipantSetup[] participants =
+            CreateParticipants();
+
+        participants[0] = participants[0] with
+        {
+            CombatProfile =
+                participants[0].CombatProfile with
+                {
+                    SavingThrowBonuses =
+                    [
+                        null!
+                    ]
+                }
+        };
+
+        Assert.Throws<ArgumentNullException>(() =>
+            StartEncounter(
+                encounterId: "encounter.test",
+                participants,
+                CreateInitiativeOrder()));
+    }
+
+    [Fact]
+    public void Start_WithDuplicateSavingThrowAbilities_Throws()
+    {
+        EncounterParticipantSetup[] participants =
+            CreateParticipants();
+
+        participants[0] = participants[0] with
+        {
+            CombatProfile =
+                participants[0].CombatProfile with
+                {
+                    SavingThrowBonuses =
+                    [
+                        CreateSavingThrowBonus(
+                            Ability.Dexterity,
+                            totalBonus: 3),
+                        CreateSavingThrowBonus(
+                            Ability.Dexterity,
+                            totalBonus: 5)
+                    ]
+                }
+        };
+
+        Assert.Throws<ArgumentException>(() =>
+            StartEncounter(
+                encounterId: "encounter.test",
+                participants,
+                CreateInitiativeOrder()));
+    }
+    [Fact]
+    public void Start_WithUnsupportedSavingThrowAbility_Throws()
+    {
+        EncounterParticipantSetup[] participants =
+            CreateParticipants();
+
+        participants[0] = participants[0] with
+        {
+            CombatProfile =
+                participants[0].CombatProfile with
+                {
+                    SavingThrowBonuses =
+                    [
+                        CreateSavingThrowBonus(
+                            (Ability)999,
+                            totalBonus: 3)
+                    ]
+                }
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            StartEncounter(
+                encounterId: "encounter.test",
+                participants,
+                CreateInitiativeOrder()));
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -396,6 +555,38 @@ public sealed class EncounterRulesTests
                 ?? (sideId == "side.enemies"
                     ? new GridPosition(2, 1)
                     : new GridPosition(1, 1))
+        };
+    }
+
+
+    private static SavingThrowBonus
+        CreateSavingThrowBonus(
+            Ability ability,
+            int totalBonus)
+    {
+        return CreateSavingThrowBonus(
+            ability,
+            abilityModifier: totalBonus,
+            isProficient: false,
+            proficiencyBonus: 0,
+            totalBonus);
+    }
+
+    private static SavingThrowBonus
+        CreateSavingThrowBonus(
+            Ability ability,
+            int abilityModifier,
+            bool isProficient,
+            int proficiencyBonus,
+            int totalBonus)
+    {
+        return new SavingThrowBonus
+        {
+            Ability = ability,
+            AbilityModifier = abilityModifier,
+            IsProficient = isProficient,
+            ProficiencyBonus = proficiencyBonus,
+            TotalBonus = totalBonus
         };
     }
 
@@ -1141,6 +1332,8 @@ public sealed class EncounterRulesTests
         int width = 12,
         int height = 12,
         IReadOnlyList<GridPosition>? blockedPositions = null,
+        IReadOnlyList<EncounterCoverPosition>?
+            coverPositions = null,
         IReadOnlyList<GridPosition>? difficultTerrainPositions = null)
     {
         return new EncounterBattlefieldState
@@ -1151,6 +1344,9 @@ public sealed class EncounterRulesTests
             BlockedPositions =
                 blockedPositions
                 ?? Array.Empty<GridPosition>(),
+            CoverPositions =
+                coverPositions
+                ?? Array.Empty<EncounterCoverPosition>(),
             DifficultTerrainPositions =
                 difficultTerrainPositions
                 ?? Array.Empty<GridPosition>()
@@ -1234,6 +1430,48 @@ public sealed class EncounterRulesTests
             Assert.Single(
                 state.Battlefield
                     .DifficultTerrainPositions));
+    }
+
+    [Fact]
+    public void Start_ProtectsBattlefieldCoverFromSourceCollectionMutation()
+    {
+        EncounterCoverPosition[] coverPositions =
+        [
+            new EncounterCoverPosition
+            {
+                Position = new GridPosition(4, 4),
+                CoverLevel = EncounterCoverLevel.Half
+            }
+        ];
+
+        EncounterBattlefieldState battlefield =
+            CreateBattlefield(
+                coverPositions: coverPositions);
+
+        EncounterState state = EncounterRules.Start(
+            encounterId: "encounter.test",
+            battlefield,
+            CreateParticipants(),
+            CreateInitiativeOrder());
+
+        coverPositions[0] =
+            new EncounterCoverPosition
+            {
+                Position = new GridPosition(6, 6),
+                CoverLevel =
+                    EncounterCoverLevel.ThreeQuarters
+            };
+
+        EncounterCoverPosition storedCover =
+            Assert.Single(
+                state.Battlefield.CoverPositions);
+
+        Assert.Equal(
+            new GridPosition(4, 4),
+            storedCover.Position);
+        Assert.Equal(
+            EncounterCoverLevel.Half,
+            storedCover.CoverLevel);
     }
 
     [Theory]

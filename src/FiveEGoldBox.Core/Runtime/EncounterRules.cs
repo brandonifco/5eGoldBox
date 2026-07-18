@@ -1,3 +1,4 @@
+using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
@@ -294,6 +295,9 @@ public static class EncounterRules
             BlockedPositions =
                 Array.AsReadOnly(
                     battlefield.BlockedPositions.ToArray()),
+            CoverPositions =
+                Array.AsReadOnly(
+                    battlefield.CoverPositions.ToArray()),
             DifficultTerrainPositions =
                 Array.AsReadOnly(
                     battlefield
@@ -301,35 +305,29 @@ public static class EncounterRules
                         .ToArray())
         };
     }
+
     private static EncounterCombatProfile
         ProtectCombatProfile(
             EncounterCombatProfile combatProfile)
     {
-        ArgumentNullException.ThrowIfNull(combatProfile);
-
-        if (combatProfile.ArmorClass <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(combatProfile),
-                combatProfile.ArmorClass,
-                "Armor class must be greater than 0.");
-        }
-
-        ArgumentNullException.ThrowIfNull(
-            combatProfile.WeaponAttacks);
-        ArgumentNullException.ThrowIfNull(
-            combatProfile.DamageResponses);
+        ValidateCombatProfile(combatProfile);
 
         return combatProfile with
         {
             WeaponAttacks =
                 Array.AsReadOnly(
                     combatProfile.WeaponAttacks.ToArray()),
+            SavingThrowBonuses =
+                Array.AsReadOnly(
+                    combatProfile
+                        .SavingThrowBonuses
+                        .ToArray()),
             DamageResponses =
                 Array.AsReadOnly(
                     combatProfile.DamageResponses.ToArray())
         };
     }
+
     private static void ValidateCombatProfile(
         EncounterCombatProfile combatProfile)
     {
@@ -346,7 +344,35 @@ public static class EncounterRules
         ArgumentNullException.ThrowIfNull(
             combatProfile.WeaponAttacks);
         ArgumentNullException.ThrowIfNull(
+            combatProfile.SavingThrowBonuses);
+        ArgumentNullException.ThrowIfNull(
             combatProfile.DamageResponses);
+
+        HashSet<Ability> savingThrowAbilities = new();
+
+        foreach (SavingThrowBonus savingThrowBonus
+            in combatProfile.SavingThrowBonuses)
+        {
+            ArgumentNullException.ThrowIfNull(
+                savingThrowBonus);
+
+            if (!Enum.IsDefined(
+                savingThrowBonus.Ability))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(combatProfile),
+                    savingThrowBonus.Ability,
+                    "Unsupported saving-throw ability.");
+            }
+
+            if (!savingThrowAbilities.Add(
+                savingThrowBonus.Ability))
+            {
+                throw new ArgumentException(
+                    $"Duplicate saving-throw ability '{savingThrowBonus.Ability}' is not allowed.",
+                    nameof(combatProfile));
+            }
+        }
     }
 
     private static EncounterParticipantState
