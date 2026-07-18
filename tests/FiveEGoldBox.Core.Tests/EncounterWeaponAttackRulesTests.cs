@@ -1162,6 +1162,94 @@ public sealed class EncounterWeaponAttackRulesTests
         AssertStateUnchanged(state);
     }
 
+    [Fact]
+    public void Resolve_WhenTargetHasHalfCover_AddsTwoToTargetArmorClass()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 30,
+            longRangeFeet: 120);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(5, 1),
+            coverPositions:
+            [
+                new EncounterCoverPosition
+                {
+                    Position = new GridPosition(3, 1),
+                    CoverLevel =
+                        EncounterCoverLevel.Half
+                }
+            ]);
+
+        EncounterWeaponAttackResult result =
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 11,
+                    damageRolls: []));
+
+        Assert.Equal(
+            EncounterCoverLevel.Half,
+            result.Cover.CoverLevel);
+        Assert.Equal(2, result.Cover.ArmorClassBonus);
+        Assert.Equal(
+            new GridPosition(3, 1),
+            result.Cover.CoverPosition);
+        Assert.Equal(
+            17,
+            result.Attack.AttackRoll.TargetArmorClass);
+        Assert.Equal(
+            AttackRollOutcome.Miss,
+            result.Attack.AttackRoll.Outcome);
+    }
+
+    [Fact]
+    public void Resolve_WhenTargetHasThreeQuartersCover_AddsFiveToTargetArmorClass()
+    {
+        WeaponAttack weapon = CreateWeapon(
+            attackKind: WeaponAttackKind.Ranged,
+            normalRangeFeet: 30,
+            longRangeFeet: 120);
+
+        EncounterState state = CreateEncounter(
+            heroWeapon: weapon,
+            enemyPosition:
+                new GridPosition(5, 1),
+            coverPositions:
+            [
+                new EncounterCoverPosition
+                {
+                    Position = new GridPosition(3, 1),
+                    CoverLevel =
+                        EncounterCoverLevel
+                            .ThreeQuarters
+                }
+            ]);
+
+        EncounterWeaponAttackResult result =
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 14,
+                    damageRolls: []));
+
+        Assert.Equal(
+            EncounterCoverLevel.ThreeQuarters,
+            result.Cover.CoverLevel);
+        Assert.Equal(5, result.Cover.ArmorClassBonus);
+        Assert.Equal(
+            20,
+            result.Attack.AttackRoll.TargetArmorClass);
+        Assert.Equal(
+            AttackRollOutcome.Miss,
+            result.Attack.AttackRoll.Outcome);
+    }
+
     private static EncounterState CreateEncounter(
         WeaponAttack? heroWeapon = null,
         GridPosition? enemyPosition = null,
@@ -1169,7 +1257,9 @@ public sealed class EncounterWeaponAttackRulesTests
             enemyDamageResponses = null,
         bool includeAlly = false,
         IReadOnlyList<GridPosition>?
-            blockedPositions = null)
+            blockedPositions = null,
+        IReadOnlyList<EncounterCoverPosition>?
+            coverPositions = null)
     {
         WeaponAttack defaultWeapon =
             CreateWeapon();
@@ -1227,6 +1317,9 @@ public sealed class EncounterWeaponAttackRulesTests
                 BlockedPositions =
                     blockedPositions
                     ?? Array.Empty<GridPosition>(),
+                CoverPositions =
+                    coverPositions
+                    ?? Array.Empty<EncounterCoverPosition>(),
                 DifficultTerrainPositions =
                     Array.Empty<GridPosition>()
             },
