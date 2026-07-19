@@ -1,5 +1,6 @@
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Travel;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -60,13 +61,6 @@ public static class ApplicationSessionRules
                 "Unsupported application mode.");
         }
 
-        if (state.CurrentMode != ApplicationMode.Outpost)
-        {
-            throw new ArgumentException(
-                "Only outpost sessions are supported in this application phase.",
-                nameof(state));
-        }
-
         if (string.IsNullOrWhiteSpace(
             state.CurrentLocationId))
         {
@@ -77,6 +71,7 @@ public static class ApplicationSessionRules
 
         ValidateParty(state.Party);
         ValidateScenario(state.Scenario);
+        ValidateModeState(state);
 
         if (state.RandomValuesConsumed < 0)
         {
@@ -110,6 +105,99 @@ public static class ApplicationSessionRules
         Validate(canonicalState);
 
         return canonicalState;
+    }
+
+    private static void ValidateModeState(
+        ApplicationSessionState state)
+    {
+        switch (state.CurrentMode)
+        {
+            case ApplicationMode.Outpost:
+                if (state.RegionalTravel is not null)
+                {
+                    throw new ArgumentException(
+                        "An outpost session cannot contain regional-travel state.",
+                        nameof(state));
+                }
+
+                break;
+            case ApplicationMode.RegionalTravel:
+                ValidateRegionalTravel(state);
+                break;
+            default:
+                throw new ArgumentException(
+                    "Only outpost and regional-travel sessions are supported in this application phase.",
+                    nameof(state));
+        }
+    }
+
+    private static void ValidateRegionalTravel(
+        ApplicationSessionState state)
+    {
+        RegionalTravelState travel =
+            state.RegionalTravel
+            ?? throw new ArgumentException(
+                "A regional-travel session requires regional-travel state.",
+                nameof(state));
+
+        if (state.Scenario.Progress
+            == WatchtowerScenarioProgress.MissionNotAccepted)
+        {
+            throw new ArgumentException(
+                "Regional travel cannot begin before the watchtower mission is accepted.",
+                nameof(state));
+        }
+
+        if (!string.Equals(
+            travel.RouteId,
+            WatchtowerRegionalRoute.RouteId,
+            StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                "The regional-travel route is unsupported.",
+                nameof(state));
+        }
+
+        if (!WatchtowerRegionalRoute.HasSupportedEndpoints(
+            travel.OriginLocationId,
+            travel.DestinationLocationId))
+        {
+            throw new ArgumentException(
+                "The regional-travel endpoints are inconsistent with the watchtower route.",
+                nameof(state));
+        }
+
+        if (travel.FinalStepIndex
+            != WatchtowerRegionalRoute.FinalStepIndex)
+        {
+            throw new ArgumentException(
+                "The regional-travel final step is inconsistent with the watchtower route.",
+                nameof(state));
+        }
+
+        if (travel.CurrentStepIndex < 0
+            || travel.CurrentStepIndex
+                > travel.FinalStepIndex)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(state),
+                travel.CurrentStepIndex,
+                "The regional-travel current step must be within the fixed route.");
+        }
+
+        string expectedLocationId = travel.IsComplete
+            ? travel.DestinationLocationId
+            : travel.OriginLocationId;
+
+        if (!string.Equals(
+            state.CurrentLocationId,
+            expectedLocationId,
+            StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                "The current location is inconsistent with regional-travel progress.",
+                nameof(state));
+        }
     }
 
     private static void ValidateParty(
