@@ -804,6 +804,116 @@ public sealed class ManualSaveSerializerTests
                 .InvalidSessionState);
     }
 
+    [Fact]
+    public void Serialize_WithValidEncounterSession_Rejects()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            ManualSaveSerializer.Serialize(
+                WatchtowerSignalTestData
+                    .CreateEncounterSession()));
+    }
+
+    [Fact]
+    public void Serialize_WithValidExplorationSession_RemainsSupported()
+    {
+        string serialized = ManualSaveSerializer.Serialize(
+            WatchtowerSignalTestData
+                .CreateSignalReadySession());
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(serialized);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(
+            ApplicationMode.Exploration,
+            AssertLoadedSession(result).CurrentMode);
+    }
+
+    [Fact]
+    public void Serialize_ExplorationSave_UsesFormatVersionOne()
+    {
+        JsonObject root = ParseSave(
+            ManualSaveSerializer.Serialize(
+                WatchtowerSignalTestData
+                    .CreateSignalReadySession()));
+
+        Assert.Equal(
+            1,
+            root["FormatVersion"]!.GetValue<int>());
+    }
+
+    [Fact]
+    public void Deserialize_Version1ExplorationSaveWithoutActiveEncounter_RemainsSupported()
+    {
+        JsonObject root = ParseSave(
+            ManualSaveSerializer.Serialize(
+                WatchtowerSignalTestData
+                    .CreateSignalReadySession()));
+        JsonObject session = GetObject(root, "Session");
+
+        session.Remove("ActiveEncounter");
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                root.ToJsonString());
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(
+            AssertLoadedSession(result)
+                .ActiveEncounter);
+    }
+
+    [Fact]
+    public void Deserialize_EncounterModeWithoutActiveEncounter_ReturnsInvalidStateFailure()
+    {
+        JsonObject root = ParseSave(
+            ManualSaveSerializer.Serialize(
+                WatchtowerSignalTestData
+                    .CreateSignalReadySession()));
+        JsonObject session = GetObject(root, "Session");
+        JsonObject scenario = GetObject(
+            session,
+            "Scenario");
+
+        session["CurrentMode"] = "Encounter";
+        session["Exploration"] = null;
+        session.Remove("ActiveEncounter");
+        scenario["Progress"] = "SignalActivated";
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                root.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .InvalidSessionState);
+    }
+
+    [Fact]
+    public void Deserialize_ExplorationModeWithActiveEncounter_ReturnsInvalidStateFailure()
+    {
+        JsonObject root = ParseSave(
+            ManualSaveSerializer.Serialize(
+                WatchtowerSignalTestData
+                    .CreateSignalReadySession()));
+        JsonObject session = GetObject(root, "Session");
+
+        session["ActiveEncounter"] = new JsonObject
+        {
+            ["ReturnContext"] = null,
+            ["Encounter"] = null
+        };
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                root.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .InvalidSessionState);
+    }
+
     private static JsonObject CreateTravelJson(
         RegionalTravelState travel)
     {

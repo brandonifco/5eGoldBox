@@ -1,3 +1,4 @@
+using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
@@ -24,4 +25,6 @@ public sealed record ApplicationSessionState
     public RegionalTravelState? RegionalTravel { get; init; }
 
     public ExplorationState? Exploration { get; init; }
+
+    public ActiveEncounterState? ActiveEncounter { get; init; }
 }

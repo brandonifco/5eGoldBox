@@ -1,3 +1,4 @@
+using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
@@ -128,12 +129,26 @@ public static class ApplicationSessionRules
                         nameof(state));
                 }
 
+                if (state.ActiveEncounter is not null)
+                {
+                    throw new ArgumentException(
+                        "An outpost session cannot contain an active encounter.",
+                        nameof(state));
+                }
+
                 break;
             case ApplicationMode.RegionalTravel:
                 if (state.Exploration is not null)
                 {
                     throw new ArgumentException(
                         "A regional-travel session cannot contain exploration state.",
+                        nameof(state));
+                }
+
+                if (state.ActiveEncounter is not null)
+                {
+                    throw new ArgumentException(
+                        "A regional-travel session cannot contain an active encounter.",
                         nameof(state));
                 }
 
@@ -147,12 +162,228 @@ public static class ApplicationSessionRules
                         nameof(state));
                 }
 
+                if (state.ActiveEncounter is not null)
+                {
+                    throw new ArgumentException(
+                        "An exploration session cannot contain an active encounter.",
+                        nameof(state));
+                }
+
                 ValidateExploration(state);
+                break;
+            case ApplicationMode.Encounter:
+                if (state.RegionalTravel is not null)
+                {
+                    throw new ArgumentException(
+                        "An encounter session cannot contain regional-travel state.",
+                        nameof(state));
+                }
+
+                if (state.Exploration is not null)
+                {
+                    throw new ArgumentException(
+                        "An encounter session cannot contain root exploration state.",
+                        nameof(state));
+                }
+
+                ValidateEncounter(state);
                 break;
             default:
                 throw new ArgumentException(
-                    "Only outpost, regional-travel, and exploration sessions are supported in this application phase.",
+                    "Only outpost, regional-travel, exploration, and encounter sessions are supported in this application phase.",
                     nameof(state));
+        }
+    }
+
+    private static void ValidateEncounter(
+        ApplicationSessionState state)
+    {
+        ActiveEncounterState activeEncounter =
+            state.ActiveEncounter
+            ?? throw new ArgumentException(
+                "An encounter session requires active-encounter state.",
+                nameof(state));
+
+        if (!string.Equals(
+            state.CurrentLocationId,
+            WatchtowerRegionalRoute.WatchtowerLocationId,
+            StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                "The watchtower ambush requires the ruined-watchtower location.",
+                nameof(state));
+        }
+
+        if (state.Scenario.Progress
+            != WatchtowerScenarioProgress.SignalActivated)
+        {
+            throw new ArgumentException(
+                "The watchtower ambush requires the activated signal.",
+                nameof(state));
+        }
+
+        ExplorationState returnContext =
+            activeEncounter.ReturnContext
+            ?? throw new ArgumentException(
+                "An active encounter requires an exploration return context.",
+                nameof(state));
+
+        WatchtowerExplorationMap.Validate(returnContext);
+
+        if (!WatchtowerSignalMechanism.CanActivate(
+            returnContext))
+        {
+            throw new ArgumentException(
+                "The encounter return context must be the authored signal-mechanism state.",
+                nameof(state));
+        }
+
+        EncounterState encounter =
+            activeEncounter.Encounter
+            ?? throw new ArgumentException(
+                "An active encounter requires Core encounter state.",
+                nameof(state));
+
+        if (!string.Equals(
+            encounter.EncounterId,
+            WatchtowerSignalEncounter.EncounterId,
+            StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                "The active encounter ID is unsupported.",
+                nameof(state));
+        }
+
+        if (encounter.LifecycleState
+            != EncounterLifecycleState.Active)
+        {
+            throw new ArgumentException(
+                "The active Application encounter must contain a running Core encounter.",
+                nameof(state));
+        }
+
+        if (encounter.WinningSideId is not null)
+        {
+            throw new ArgumentException(
+                "A running watchtower encounter cannot have a winning side.",
+                nameof(state));
+        }
+
+        ArgumentNullException.ThrowIfNull(
+            encounter.Battlefield);
+        ArgumentNullException.ThrowIfNull(
+            encounter.Participants);
+
+        if (!string.Equals(
+            encounter.Battlefield.BattlefieldId,
+            WatchtowerSignalEncounter.BattlefieldId,
+            StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                "The active encounter battlefield is unsupported.",
+                nameof(state));
+        }
+
+        if (encounter.Participants.Count != 5)
+        {
+            throw new ArgumentException(
+                "The watchtower ambush must contain exactly five participants.",
+                nameof(state));
+        }
+
+        HashSet<string> participantIds =
+            new(StringComparer.Ordinal);
+
+        foreach (EncounterParticipantState participant
+            in encounter.Participants)
+        {
+            ArgumentNullException.ThrowIfNull(participant);
+            ArgumentNullException.ThrowIfNull(
+                participant.Combatant);
+
+            string combatantId =
+                participant.Combatant.CombatantId;
+
+            if (!participantIds.Add(combatantId))
+            {
+                throw new ArgumentException(
+                    "The watchtower ambush contains duplicate participant identities.",
+                    nameof(state));
+            }
+
+            if (!WatchtowerSignalEncounter
+                .IsAuthoredParticipantId(
+                    combatantId,
+                    state.Party))
+            {
+                throw new ArgumentException(
+                    $"Participant '{combatantId}' is not part of the authored watchtower ambush.",
+                    nameof(state));
+            }
+        }
+
+        foreach (PartyMemberState member
+            in state.Party.Members)
+        {
+            EncounterParticipantState? participant =
+                encounter.Participants.FirstOrDefault(
+                    candidate => string.Equals(
+                        candidate.Combatant.CombatantId,
+                        member.PartyMemberId,
+                        StringComparison.Ordinal));
+
+            if (participant is null)
+            {
+                throw new ArgumentException(
+                    $"Party participant '{member.PartyMemberId}' is missing from the watchtower ambush.",
+                    nameof(state));
+            }
+
+            if (!string.Equals(
+                participant.SideId,
+                WatchtowerSignalEncounter.PartySideId,
+                StringComparison.Ordinal))
+            {
+                throw new ArgumentException(
+                    $"Party participant '{member.PartyMemberId}' is assigned to the wrong encounter side.",
+                    nameof(state));
+            }
+        }
+
+        ValidateRaiderParticipant(
+            encounter,
+            WatchtowerSignalEncounter.MeleeRaiderId);
+        ValidateRaiderParticipant(
+            encounter,
+            WatchtowerSignalEncounter.RangedRaiderId);
+    }
+
+    private static void ValidateRaiderParticipant(
+        EncounterState encounter,
+        string combatantId)
+    {
+        EncounterParticipantState? participant =
+            encounter.Participants.FirstOrDefault(
+                candidate => string.Equals(
+                    candidate.Combatant.CombatantId,
+                    combatantId,
+                    StringComparison.Ordinal));
+
+        if (participant is null)
+        {
+            throw new ArgumentException(
+                $"Raider participant '{combatantId}' is missing from the watchtower ambush.",
+                nameof(encounter));
+        }
+
+        if (!string.Equals(
+            participant.SideId,
+            WatchtowerSignalEncounter.RaiderSideId,
+            StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                $"Raider participant '{combatantId}' is assigned to the wrong encounter side.",
+                nameof(encounter));
         }
     }
 
