@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Persistence;
 using FiveEGoldBox.Application.Scenarios;
@@ -133,6 +134,89 @@ public sealed class ManualSaveSerializerTests
         Assert.Equal(
             7,
             ammunition.RemainingQuantity);
+    }
+
+    [Fact]
+    public void SerializeAndDeserialize_WithMissionNotAccepted_PreservesProgress()
+    {
+        ApplicationSessionState session =
+            CreateMissionNotAcceptedSession();
+
+        ApplicationSessionState loaded =
+            AssertLoadedSession(
+                ManualSaveSerializer.Deserialize(
+                    ManualSaveSerializer.Serialize(
+                        session)));
+
+        Assert.Equal(
+            WatchtowerScenarioProgress
+                .MissionNotAccepted,
+            loaded.Scenario.Progress);
+        Assert.Equal(
+            ApplicationMode.Outpost,
+            loaded.CurrentMode);
+    }
+
+    [Fact]
+    public void SerializeAndDeserialize_WithMissionAccepted_PreservesPersistentState()
+    {
+        ApplicationSessionState initial =
+            CreateMissionNotAcceptedSession();
+        ApplicationSessionState accepted =
+            OutpostMissionRules.Resolve(
+                initial,
+                OutpostMissionChoice.AcceptMission)
+                .State;
+
+        ApplicationSessionState loaded =
+            AssertLoadedSession(
+                ManualSaveSerializer.Deserialize(
+                    ManualSaveSerializer.Serialize(
+                        accepted)));
+
+        Assert.Equal(
+            ApplicationMode.Outpost,
+            loaded.CurrentMode);
+        Assert.Equal(
+            WatchtowerScenarioProgress.MissionAccepted,
+            loaded.Scenario.Progress);
+        Assert.Equal(
+            accepted.CurrentLocationId,
+            loaded.CurrentLocationId);
+        Assert.Equal(
+            accepted.RandomSeed,
+            loaded.RandomSeed);
+        Assert.Equal(
+            accepted.RandomValuesConsumed,
+            loaded.RandomValuesConsumed);
+        Assert.Equal(
+            accepted.Party.PartyId,
+            loaded.Party.PartyId);
+        Assert.Equal(
+            accepted.Party.Members.Select(
+                member => member.PartyMemberId),
+            loaded.Party.Members.Select(
+                member => member.PartyMemberId));
+        Assert.Equal(
+            accepted.Party.Members.Select(
+                member => member.ClassId),
+            loaded.Party.Members.Select(
+                member => member.ClassId));
+        Assert.Equal(
+            accepted.Party.Members.Select(
+                member => member.ZeroHitPointPolicy),
+            loaded.Party.Members.Select(
+                member => member.ZeroHitPointPolicy));
+        Assert.Equal(
+            accepted.Party.Members.Select(
+                member => member.Health),
+            loaded.Party.Members.Select(
+                member => member.Health));
+        Assert.Equal(
+            accepted.Party.Members.Select(
+                member => member.Ammunition),
+            loaded.Party.Members.Select(
+                member => member.Ammunition));
     }
 
     [Fact]
@@ -423,6 +507,20 @@ public sealed class ManualSaveSerializerTests
     {
         return Assert.IsType<JsonArray>(
             parent[propertyName]);
+    }
+
+    private static ApplicationSessionState
+        CreateMissionNotAcceptedSession()
+    {
+        return CreateRoundTripSession() with
+        {
+            Scenario = new WatchtowerScenarioState
+            {
+                Progress =
+                    WatchtowerScenarioProgress
+                        .MissionNotAccepted
+            }
+        };
     }
 
     private static ApplicationSessionState
