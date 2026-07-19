@@ -1,3 +1,4 @@
+using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Travel;
@@ -120,15 +121,69 @@ public static class ApplicationSessionRules
                         nameof(state));
                 }
 
+                if (state.Exploration is not null)
+                {
+                    throw new ArgumentException(
+                        "An outpost session cannot contain exploration state.",
+                        nameof(state));
+                }
+
                 break;
             case ApplicationMode.RegionalTravel:
+                if (state.Exploration is not null)
+                {
+                    throw new ArgumentException(
+                        "A regional-travel session cannot contain exploration state.",
+                        nameof(state));
+                }
+
                 ValidateRegionalTravel(state);
+                break;
+            case ApplicationMode.Exploration:
+                if (state.RegionalTravel is not null)
+                {
+                    throw new ArgumentException(
+                        "An exploration session cannot contain regional-travel state.",
+                        nameof(state));
+                }
+
+                ValidateExploration(state);
                 break;
             default:
                 throw new ArgumentException(
-                    "Only outpost and regional-travel sessions are supported in this application phase.",
+                    "Only outpost, regional-travel, and exploration sessions are supported in this application phase.",
                     nameof(state));
         }
+    }
+
+    private static void ValidateExploration(
+        ApplicationSessionState state)
+    {
+        ExplorationState exploration =
+            state.Exploration
+            ?? throw new ArgumentException(
+                "An exploration session requires exploration state.",
+                nameof(state));
+
+        if (!string.Equals(
+            state.CurrentLocationId,
+            WatchtowerRegionalRoute.WatchtowerLocationId,
+            StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                "Watchtower exploration requires the ruined-watchtower location.",
+                nameof(state));
+        }
+
+        if (state.Scenario.Progress
+            != WatchtowerScenarioProgress.MissionAccepted)
+        {
+            throw new ArgumentException(
+                "Watchtower exploration requires the accepted mission to remain active.",
+                nameof(state));
+        }
+
+        WatchtowerExplorationMap.Validate(exploration);
     }
 
     private static void ValidateRegionalTravel(

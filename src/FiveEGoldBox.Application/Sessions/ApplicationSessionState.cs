@@ -1,3 +1,4 @@
+using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Travel;
@@ -21,4 +22,6 @@ public sealed record ApplicationSessionState
     public required int RandomValuesConsumed { get; init; }
 
     public RegionalTravelState? RegionalTravel { get; init; }
+
+    public ExplorationState? Exploration { get; init; }
 }

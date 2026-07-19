@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Travel;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Parties;
@@ -409,7 +410,7 @@ public sealed class ManualSaveSerializerTests
     }
 
     [Fact]
-    public void Serialize_WithNonOutpostMode_Throws()
+    public void Serialize_WithExplorationModeAndMissingState_Throws()
     {
         ApplicationSessionState state =
             CreateRoundTripSession() with
@@ -422,7 +423,7 @@ public sealed class ManualSaveSerializerTests
     }
 
     [Fact]
-    public void Deserialize_WithNonOutpostMode_ReturnsInvalidStateFailure()
+    public void Deserialize_WithExplorationModeAndMissingState_ReturnsInvalidStateFailure()
     {
         JsonObject save = ParseSave(
             ManualSaveSerializer.Serialize(
@@ -443,7 +444,7 @@ public sealed class ManualSaveSerializerTests
     }
 
     [Fact]
-    public void Deserialize_Version1OutpostSaveWithoutTravelProperty_RemainsValid()
+    public void Deserialize_Version1OutpostSaveWithoutModeSpecificProperties_RemainsValid()
     {
         JsonObject save = ParseSave(
             ManualSaveSerializer.Serialize(
@@ -452,6 +453,7 @@ public sealed class ManualSaveSerializerTests
             save,
             "Session");
         _ = session.Remove("RegionalTravel");
+        _ = session.Remove("Exploration");
 
         ManualSaveLoadResult result =
             ManualSaveSerializer.Deserialize(
@@ -570,6 +572,238 @@ public sealed class ManualSaveSerializerTests
                     loaded.Party.Members);
     }
 
+    [Fact]
+    public void SerializeAndDeserialize_ValidGroundFloorExploration_PreservesState()
+    {
+        ApplicationSessionState original =
+            CreateExplorationSession();
+
+        ApplicationSessionState loaded =
+            AssertLoadedSession(
+                ManualSaveSerializer.Deserialize(
+                    ManualSaveSerializer.Serialize(
+                        original)));
+        ExplorationState exploration =
+            Assert.IsType<ExplorationState>(
+                loaded.Exploration);
+
+        Assert.Equal(
+            ApplicationMode.Exploration,
+            loaded.CurrentMode);
+        Assert.Equal(
+            "location.ruined-watchtower",
+            loaded.CurrentLocationId);
+        Assert.Null(loaded.RegionalTravel);
+        Assert.Equal(
+            "map.ruined-watchtower",
+            exploration.MapId);
+        Assert.Equal(
+            ExplorationFloor.GroundFloor,
+            exploration.Floor);
+        Assert.Equal(
+            new GridPosition(0, 0),
+            exploration.Position);
+        Assert.Equal(
+            ExplorationFacing.East,
+            exploration.Facing);
+        Assert.Equal(
+            WatchtowerScenarioProgress.MissionAccepted,
+            loaded.Scenario.Progress);
+        Assert.Equal(original.RandomSeed, loaded.RandomSeed);
+        Assert.Equal(
+            original.RandomValuesConsumed,
+            loaded.RandomValuesConsumed);
+        Assert.Equal(
+            original.Party.Members.Select(
+                member => member.Health),
+            loaded.Party.Members.Select(
+                member => member.Health));
+        Assert.Equal(
+            original.Party.Members.Select(
+                member => member.Ammunition),
+            loaded.Party.Members.Select(
+                member => member.Ammunition));
+    }
+
+    [Fact]
+    public void SerializeAndDeserialize_ValidUpperFloorExploration_PreservesState()
+    {
+        ApplicationSessionState original =
+            CreateUpperFloorExplorationSession();
+
+        ApplicationSessionState loaded =
+            AssertLoadedSession(
+                ManualSaveSerializer.Deserialize(
+                    ManualSaveSerializer.Serialize(
+                        original)));
+        ExplorationState exploration =
+            Assert.IsType<ExplorationState>(
+                loaded.Exploration);
+
+        Assert.Equal(
+            ApplicationMode.Exploration,
+            loaded.CurrentMode);
+        Assert.Equal(
+            ExplorationFloor.UpperFloor,
+            exploration.Floor);
+        Assert.Equal(
+            new GridPosition(2, 0),
+            exploration.Position);
+        Assert.Equal(
+            ExplorationFacing.East,
+            exploration.Facing);
+    }
+
+    [Fact]
+    public void Deserialize_ExplorationModeWithoutExplorationState_ReturnsInvalidStateFailure()
+    {
+        JsonObject save = ParseSave(
+            ManualSaveSerializer.Serialize(
+                CreateMissionNotAcceptedSession()));
+        JsonObject session = GetObject(
+            save,
+            "Session");
+        session["CurrentMode"] = "Exploration";
+        session["CurrentLocationId"] =
+            "location.ruined-watchtower";
+        GetObject(session, "Scenario")["Progress"] =
+            "MissionAccepted";
+        _ = session.Remove("Exploration");
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                save.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .InvalidSessionState);
+    }
+
+    [Fact]
+    public void Deserialize_OutpostModeWithExplorationState_ReturnsInvalidStateFailure()
+    {
+        JsonObject save = ParseSave(
+            ManualSaveSerializer.Serialize(
+                CreateExplorationSession()));
+        JsonObject session = GetObject(
+            save,
+            "Session");
+        session["CurrentMode"] = "Outpost";
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                save.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .InvalidSessionState);
+    }
+
+    [Fact]
+    public void Deserialize_ExplorationModeWithRegionalTravelState_ReturnsInvalidStateFailure()
+    {
+        ApplicationSessionState traveling =
+            CreateRegionalTravelSession();
+        RegionalTravelState travel =
+            Assert.IsType<RegionalTravelState>(
+                traveling.RegionalTravel);
+        JsonObject save = ParseSave(
+            ManualSaveSerializer.Serialize(
+                CreateExplorationSession()));
+        JsonObject session = GetObject(
+            save,
+            "Session");
+        session["RegionalTravel"] =
+            CreateTravelJson(travel);
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                save.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .InvalidSessionState);
+    }
+
+    [Fact]
+    public void Deserialize_ExplorationWithUndefinedFacing_ReturnsMalformedDataFailure()
+    {
+        JsonObject save = ParseSave(
+            ManualSaveSerializer.Serialize(
+                CreateExplorationSession()));
+        JsonObject session = GetObject(
+            save,
+            "Session");
+        JsonObject exploration = GetObject(
+            session,
+            "Exploration");
+        exploration["Facing"] = "Diagonal";
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                save.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .MalformedSerializedData);
+    }
+
+    [Fact]
+    public void Deserialize_ExplorationWithUndefinedFloor_ReturnsMalformedDataFailure()
+    {
+        JsonObject save = ParseSave(
+            ManualSaveSerializer.Serialize(
+                CreateExplorationSession()));
+        JsonObject session = GetObject(
+            save,
+            "Session");
+        JsonObject exploration = GetObject(
+            session,
+            "Exploration");
+        exploration["Floor"] = "Basement";
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                save.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .MalformedSerializedData);
+    }
+
+    [Fact]
+    public void Deserialize_ExplorationWithInvalidPosition_ReturnsInvalidStateFailure()
+    {
+        JsonObject save = ParseSave(
+            ManualSaveSerializer.Serialize(
+                CreateExplorationSession()));
+        JsonObject session = GetObject(
+            save,
+            "Session");
+        JsonObject exploration = GetObject(
+            session,
+            "Exploration");
+        JsonObject position = GetObject(
+            exploration,
+            "Position");
+        position["X"] = 1;
+        position["Y"] = 1;
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                save.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .InvalidSessionState);
+    }
+
     private static JsonObject CreateTravelJson(
         RegionalTravelState travel)
     {
@@ -585,6 +819,36 @@ public sealed class ManualSaveSerializerTests
             ["FinalStepIndex"] =
                 travel.FinalStepIndex
         };
+    }
+
+    private static ApplicationSessionState
+        CreateUpperFloorExplorationSession()
+    {
+        ApplicationSessionState current =
+            CreateExplorationSession();
+
+        current = ExplorationRules.MoveForward(current)
+            .State;
+        current = ExplorationRules.MoveForward(current)
+            .State;
+
+        return ExplorationRules.UseStairs(current);
+    }
+
+    private static ApplicationSessionState
+        CreateExplorationSession()
+    {
+        ApplicationSessionState current =
+            CreateRegionalTravelSession();
+
+        while (!Assert.IsType<RegionalTravelState>(
+            current.RegionalTravel).IsComplete)
+        {
+            current = RegionalTravelRules.Advance(current)
+                .State;
+        }
+
+        return ExplorationRules.EnterWatchtower(current);
     }
 
     private static ApplicationSessionState
