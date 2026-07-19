@@ -98,10 +98,12 @@ public static class ManualSaveSerializer
     private static void ValidateSaveableMode(
         ApplicationSessionState session)
     {
-        if (session.CurrentMode != ApplicationMode.Outpost)
+        if (session.CurrentMode is not (
+            ApplicationMode.Outpost
+            or ApplicationMode.Exploration))
         {
             throw new ArgumentException(
-                "Only outpost sessions can be stored in the manual save during this application phase.",
+                "Only outpost and exploration sessions can be stored in the manual save during this application phase.",
                 nameof(session));
         }
     }
