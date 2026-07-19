@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using FiveEGoldBox.Application.Travel;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Persistence;
@@ -442,6 +443,119 @@ public sealed class ManualSaveSerializerTests
     }
 
     [Fact]
+    public void Deserialize_Version1OutpostSaveWithoutTravelProperty_RemainsValid()
+    {
+        JsonObject save = ParseSave(
+            ManualSaveSerializer.Serialize(
+                CreateRoundTripSession()));
+        JsonObject session = GetObject(
+            save,
+            "Session");
+        _ = session.Remove("RegionalTravel");
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                save.ToJsonString());
+
+        Assert.True(result.IsSuccess);
+        ApplicationSessionState loaded =
+            AssertLoadedSession(result);
+        Assert.Equal(
+            ApplicationMode.Outpost,
+            loaded.CurrentMode);
+        Assert.Null(loaded.RegionalTravel);
+    }
+
+    [Fact]
+    public void Serialize_WithRegionalTravelMode_Throws()
+    {
+        ApplicationSessionState traveling =
+            CreateRegionalTravelSession();
+
+        Assert.Throws<ArgumentException>(() =>
+            ManualSaveSerializer.Serialize(traveling));
+    }
+
+    [Fact]
+    public void Deserialize_WithRegionalTravelModeAndMissingTravel_ReturnsInvalidStateFailure()
+    {
+        JsonObject save = ParseSave(
+            ManualSaveSerializer.Serialize(
+                CreateMissionNotAcceptedSession()));
+        JsonObject session = GetObject(
+            save,
+            "Session");
+        session["CurrentMode"] = "RegionalTravel";
+        _ = session.Remove("RegionalTravel");
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                save.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .InvalidSessionState);
+    }
+
+    [Fact]
+    public void Deserialize_WithOutpostModeAndTravelState_ReturnsInvalidStateFailure()
+    {
+        ApplicationSessionState traveling =
+            CreateRegionalTravelSession();
+        RegionalTravelState travel =
+            Assert.IsType<RegionalTravelState>(
+                traveling.RegionalTravel);
+        JsonObject save = ParseSave(
+            ManualSaveSerializer.Serialize(
+                CreateMissionNotAcceptedSession()));
+        JsonObject session = GetObject(
+            save,
+            "Session");
+        session["RegionalTravel"] =
+            CreateTravelJson(travel);
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                save.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .InvalidSessionState);
+    }
+
+    [Fact]
+    public void Deserialize_WithValidRegionalTravelState_ReturnsInvalidStateFailure()
+    {
+        ApplicationSessionState traveling =
+            CreateRegionalTravelSession();
+        RegionalTravelState travel =
+            Assert.IsType<RegionalTravelState>(
+                traveling.RegionalTravel);
+        JsonObject save = ParseSave(
+            ManualSaveSerializer.Serialize(
+                CreateMissionNotAcceptedSession()));
+        JsonObject session = GetObject(
+            save,
+            "Session");
+        session["CurrentMode"] = "RegionalTravel";
+        GetObject(session, "Scenario")["Progress"] =
+            "MissionAccepted";
+        session["RegionalTravel"] =
+            CreateTravelJson(travel);
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                save.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .InvalidSessionState);
+    }
+
+    [Fact]
     public void Deserialize_ProtectsLoadedMembersWithReadOnlyCollection()
     {
         string serialized = ManualSaveSerializer.Serialize(
@@ -454,6 +568,36 @@ public sealed class ManualSaveSerializerTests
             System.Collections.ObjectModel
                 .ReadOnlyCollection<PartyMemberState>>(
                     loaded.Party.Members);
+    }
+
+    private static JsonObject CreateTravelJson(
+        RegionalTravelState travel)
+    {
+        return new JsonObject
+        {
+            ["RouteId"] = travel.RouteId,
+            ["OriginLocationId"] =
+                travel.OriginLocationId,
+            ["DestinationLocationId"] =
+                travel.DestinationLocationId,
+            ["CurrentStepIndex"] =
+                travel.CurrentStepIndex,
+            ["FinalStepIndex"] =
+                travel.FinalStepIndex
+        };
+    }
+
+    private static ApplicationSessionState
+        CreateRegionalTravelSession()
+    {
+        ApplicationSessionState accepted =
+            OutpostMissionRules.Resolve(
+                CreateMissionNotAcceptedSession(),
+                OutpostMissionChoice.AcceptMission)
+                .State;
+
+        return RegionalTravelRules
+            .BeginWatchtowerJourney(accepted);
     }
 
     private static ManualSaveLoadResult RoundTrip()

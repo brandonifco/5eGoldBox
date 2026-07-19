@@ -17,6 +17,8 @@ public static class ManualSaveSerializer
         ApplicationSessionState canonicalSession =
             ApplicationSessionRules.CreateCanonical(session);
 
+        ValidateSaveableMode(canonicalSession);
+
         ManualSaveData saveData = new()
         {
             FormatVersion = SupportedFormatVersion,
@@ -80,6 +82,8 @@ public static class ManualSaveSerializer
                 ApplicationSessionRules.CreateCanonical(
                     saveData.Session);
 
+            ValidateSaveableMode(canonicalSession);
+
             return ManualSaveLoadResult.Success(
                 canonicalSession);
         }
@@ -88,6 +92,17 @@ public static class ManualSaveSerializer
             return ManualSaveLoadResult.Failure(
                 ManualSaveLoadFailureReason
                     .InvalidSessionState);
+        }
+    }
+
+    private static void ValidateSaveableMode(
+        ApplicationSessionState session)
+    {
+        if (session.CurrentMode != ApplicationMode.Outpost)
+        {
+            throw new ArgumentException(
+                "Only outpost sessions can be stored in the manual save during this application phase.",
+                nameof(session));
         }
     }
 
