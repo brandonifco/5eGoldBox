@@ -1,12 +1,32 @@
 using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
 
 public static class EncounterWeaponAttackRules
 {
-    private const int FeetPerGridSquare = 5;
     private const int DefaultMeleeReachFeet = 5;
+
+    public static EncounterWeaponAttackEvaluation Evaluate(
+        EncounterState state,
+        EncounterWeaponAttackEvaluationCommand command)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(command);
+
+        EncounterRules.ValidateState(state);
+        ValidateEvaluationCommand(command);
+
+        return EvaluateAttack(
+            state,
+            command.ExpectedRevision,
+            command.ActorCombatantId,
+            command.TargetCombatantId,
+            command.WeaponId,
+            command.FirstAttackRoll,
+            command.SecondAttackRoll);
+    }
 
     public static EncounterWeaponAttackResult Resolve(
         EncounterState state,
@@ -18,30 +38,15 @@ public static class EncounterWeaponAttackRules
         EncounterRules.ValidateState(state);
         ValidateCommand(command);
 
-        if (state.LifecycleState
-            != EncounterLifecycleState.Active)
-        {
-            throw new InvalidOperationException(
-                "A completed encounter cannot resolve an attack.");
-        }
-
-        if (command.ExpectedRevision != state.Revision)
-        {
-            throw new InvalidOperationException(
-                $"Expected encounter revision '{command.ExpectedRevision}', but the current revision is '{state.Revision}'.");
-        }
-
-        EncounterWeaponAttackPrerequisiteEvaluation prerequisites =
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+        EncounterWeaponAttackEvaluation evaluation =
+            EvaluateAttack(
                 state,
+                command.ExpectedRevision,
                 command.ActorCombatantId,
                 command.TargetCombatantId,
-                command.WeaponId);
-
-        EnsurePrerequisitesAreLegal(
-            state,
-            command,
-            prerequisites);
+                command.WeaponId,
+                command.FirstAttackRoll,
+                command.SecondAttackRoll);
 
         int actorIndex = FindParticipantIndex(
             state,
@@ -68,19 +73,6 @@ public static class EncounterWeaponAttackRules
             Array.AsReadOnly(
                 command.DamageRolls.ToArray());
 
-        int targetArmorClass =
-            checked(
-                target.CombatProfile.ArmorClass
-                + prerequisites.Cover.ArmorClassBonus);
-
-        AttackRollResult attackRoll =
-            AttackRollRules.ResolveResult(
-                prerequisites.AttackRollMode!.Value,
-                command.FirstAttackRoll,
-                command.SecondAttackRoll,
-                weapon.AttackBonus,
-                targetArmorClass);
-
         IReadOnlyList<DamageResponseType>
             responseTypes =
                 GetDamageResponseTypes(
@@ -90,14 +82,14 @@ public static class EncounterWeaponAttackRules
         AttackDamageResolutionResult attackDamage =
             DamageRules.ResolveAttackDamage(
                 weapon.Damage,
-                attackRoll.Outcome,
+                evaluation.AttackRoll.Outcome,
                 protectedDamageRolls,
                 weapon.DamageBonus,
                 responseTypes);
 
         AttackResolutionResult attack = new()
         {
-            AttackRoll = attackRoll,
+            AttackRoll = evaluation.AttackRoll,
             Damage = attackDamage
         };
 
@@ -119,7 +111,7 @@ public static class EncounterWeaponAttackRules
 
         EncounterState resolvedState;
 
-        if (attackRoll.Outcome
+        if (evaluation.AttackRoll.Outcome
             == AttackRollOutcome.Miss)
         {
             resolvedState = actionSpentState with
@@ -141,7 +133,7 @@ public static class EncounterWeaponAttackRules
                         DamageAmount =
                             attackDamage.FinalDamage,
                         IsCriticalHit =
-                            attackRoll.Outcome
+                            evaluation.AttackRoll.Outcome
                                 == AttackRollOutcome.CriticalHit
                     });
 
@@ -162,18 +154,107 @@ public static class EncounterWeaponAttackRules
                 command.TargetCombatantId,
             WeaponId = command.WeaponId,
             DistanceFeet =
-                prerequisites.DistanceFeet!.Value,
+                evaluation.Prerequisites
+                    .DistanceFeet!.Value,
             LineOfSight =
-                prerequisites.LineOfSight!,
-            Cover = prerequisites.Cover,
+                evaluation.Prerequisites.LineOfSight!,
+            Cover = evaluation.Prerequisites.Cover,
             Attack = attack,
             TargetDamage = targetDamage,
             State = resolvedState
         };
     }
+
+    private static EncounterWeaponAttackEvaluation
+        EvaluateAttack(
+            EncounterState state,
+            long expectedRevision,
+            string actorCombatantId,
+            string targetCombatantId,
+            string weaponId,
+            int firstAttackRoll,
+            int? secondAttackRoll)
+    {
+        if (state.LifecycleState
+            != EncounterLifecycleState.Active)
+        {
+            throw new InvalidOperationException(
+                "A completed encounter cannot evaluate an attack.");
+        }
+
+        if (expectedRevision != state.Revision)
+        {
+            throw new InvalidOperationException(
+                $"Expected encounter revision '{expectedRevision}', but the current revision is '{state.Revision}'.");
+        }
+
+        EncounterWeaponAttackPrerequisiteEvaluation prerequisites =
+            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+                state,
+                actorCombatantId,
+                targetCombatantId,
+                weaponId);
+
+        EnsurePrerequisitesAreLegal(
+            state,
+            actorCombatantId,
+            targetCombatantId,
+            weaponId,
+            prerequisites);
+
+        int actorIndex = FindParticipantIndex(
+            state,
+            actorCombatantId);
+
+        int targetIndex = FindParticipantIndex(
+            state,
+            targetCombatantId);
+
+        EncounterParticipantState actor =
+            state.Participants[actorIndex];
+
+        EncounterParticipantState target =
+            state.Participants[targetIndex];
+
+        WeaponAttack weapon = FindWeaponAttack(
+            actor,
+            weaponId);
+
+        int targetArmorClass =
+            checked(
+                target.CombatProfile.ArmorClass
+                + prerequisites.Cover.ArmorClassBonus);
+
+        AttackRollResult attackRoll =
+            AttackRollRules.ResolveResult(
+                prerequisites.AttackRollMode!.Value,
+                firstAttackRoll,
+                secondAttackRoll,
+                weapon.AttackBonus,
+                targetArmorClass);
+
+        DamageDice? requiredDamageDice =
+            DamageRules.GetDamageDiceForAttackOutcome(
+                weapon.Damage,
+                attackRoll.Outcome);
+
+        return new EncounterWeaponAttackEvaluation
+        {
+            EncounterRevision = state.Revision,
+            ActorCombatantId = actorCombatantId,
+            TargetCombatantId = targetCombatantId,
+            WeaponId = weaponId,
+            Prerequisites = prerequisites,
+            AttackRoll = attackRoll,
+            RequiredDamageDice = requiredDamageDice
+        };
+    }
+
     private static void EnsurePrerequisitesAreLegal(
         EncounterState state,
-        EncounterWeaponAttackCommand command,
+        string actorCombatantId,
+        string targetCombatantId,
+        string weaponId,
         EncounterWeaponAttackPrerequisiteEvaluation prerequisites)
     {
         if (prerequisites.IsLegal)
@@ -192,19 +273,19 @@ public static class EncounterWeaponAttackRules
                 .SelfTargetNotAllowed:
                 throw new ArgumentException(
                     "An attacker cannot target itself.",
-                    nameof(command));
+                    nameof(targetCombatantId));
 
             case EncounterActionUnavailabilityReason
                 .ActorNotParticipant:
                 throw new ArgumentException(
-                    $"Actor '{command.ActorCombatantId}' is not an encounter participant.",
-                    nameof(command));
+                    $"Actor '{actorCombatantId}' is not an encounter participant.",
+                    nameof(actorCombatantId));
 
             case EncounterActionUnavailabilityReason
                 .TargetNotParticipant:
                 throw new ArgumentException(
-                    $"Target '{command.TargetCombatantId}' is not an encounter participant.",
-                    nameof(command));
+                    $"Target '{targetCombatantId}' is not an encounter participant.",
+                    nameof(targetCombatantId));
 
             case EncounterActionUnavailabilityReason
                 .ActorNotActive:
@@ -234,14 +315,15 @@ public static class EncounterWeaponAttackRules
             case EncounterActionUnavailabilityReason
                 .WeaponUnavailable:
                 throw new ArgumentException(
-                    $"Weapon '{command.WeaponId}' is not available to actor '{command.ActorCombatantId}'.",
-                    nameof(command));
+                    $"Weapon '{weaponId}' is not available to actor '{actorCombatantId}'.",
+                    nameof(weaponId));
 
             case EncounterActionUnavailabilityReason
                 .TargetOutOfRange:
                 ThrowTargetOutOfRange(
                     state,
-                    command,
+                    actorCombatantId,
+                    weaponId,
                     prerequisites);
                 break;
 
@@ -253,28 +335,30 @@ public static class EncounterWeaponAttackRules
             case EncounterActionUnavailabilityReason
                 .AmmunitionUnavailable:
                 throw new InvalidOperationException(
-                    $"Weapon '{command.WeaponId}' has no available ammunition.");
+                    $"Weapon '{weaponId}' has no available ammunition.");
 
             default:
                 throw new InvalidOperationException(
                     $"Weapon attack prerequisites failed for unsupported reason '{prerequisites.UnavailabilityReason}'.");
         }
     }
+
     private static void ThrowTargetOutOfRange(
         EncounterState state,
-        EncounterWeaponAttackCommand command,
+        string actorCombatantId,
+        string weaponId,
         EncounterWeaponAttackPrerequisiteEvaluation prerequisites)
     {
         int actorIndex = FindParticipantIndex(
             state,
-            command.ActorCombatantId);
+            actorCombatantId);
 
         EncounterParticipantState actor =
             state.Participants[actorIndex];
 
         WeaponAttack weapon = FindWeaponAttack(
             actor,
-            command.WeaponId);
+            weaponId);
 
         int distanceFeet =
             prerequisites.DistanceFeet!.Value;
@@ -293,43 +377,67 @@ public static class EncounterWeaponAttackRules
         throw new InvalidOperationException(
             $"Target is {distanceFeet} feet away, beyond the weapon's {weapon.LongRangeFeet!.Value}-foot long range.");
     }
+
+    private static void ValidateEvaluationCommand(
+        EncounterWeaponAttackEvaluationCommand command)
+    {
+        ValidateCommonCommand(
+            command.ExpectedRevision,
+            command.ActorCombatantId,
+            command.TargetCombatantId,
+            command.WeaponId);
+    }
+
     private static void ValidateCommand(
         EncounterWeaponAttackCommand command)
     {
-        if (command.ExpectedRevision < 1)
+        ValidateCommonCommand(
+            command.ExpectedRevision,
+            command.ActorCombatantId,
+            command.TargetCombatantId,
+            command.WeaponId);
+
+        ArgumentNullException.ThrowIfNull(
+            command.DamageRolls);
+    }
+
+    private static void ValidateCommonCommand(
+        long expectedRevision,
+        string actorCombatantId,
+        string targetCombatantId,
+        string weaponId)
+    {
+        if (expectedRevision < 1)
         {
             throw new ArgumentOutOfRangeException(
-                nameof(command),
-                command.ExpectedRevision,
+                nameof(expectedRevision),
+                expectedRevision,
                 "Expected encounter revision must be at least 1.");
         }
 
         if (string.IsNullOrWhiteSpace(
-            command.ActorCombatantId))
+            actorCombatantId))
         {
             throw new ArgumentException(
                 "Actor combatant ID is required.",
-                nameof(command));
+                nameof(actorCombatantId));
         }
 
         if (string.IsNullOrWhiteSpace(
-            command.TargetCombatantId))
+            targetCombatantId))
         {
             throw new ArgumentException(
                 "Target combatant ID is required.",
-                nameof(command));
+                nameof(targetCombatantId));
         }
 
         if (string.IsNullOrWhiteSpace(
-            command.WeaponId))
+            weaponId))
         {
             throw new ArgumentException(
                 "Weapon ID is required.",
-                nameof(command));
+                nameof(weaponId));
         }
-
-        ArgumentNullException.ThrowIfNull(
-            command.DamageRolls);
     }
 
     private static WeaponAttack FindWeaponAttack(

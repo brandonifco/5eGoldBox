@@ -164,6 +164,8 @@ public static class EncounterWeaponAttackPrerequisiteRules
 
         D20RollMode? attackRollMode =
             ResolveAttackRollMode(
+                state,
+                actor,
                 weapon,
                 distanceFeet);
 
@@ -370,9 +372,13 @@ public static class EncounterWeaponAttackPrerequisiteRules
     }
 
     private static D20RollMode? ResolveAttackRollMode(
+        EncounterState state,
+        EncounterParticipantState actor,
         WeaponAttack weapon,
         int distanceFeet)
     {
+        bool isLongRange = false;
+
         if (weapon.AttackKind
             == WeaponAttackKind.Melee)
         {
@@ -380,50 +386,86 @@ public static class EncounterWeaponAttackPrerequisiteRules
                 weapon.ReachFeet
                 ?? DefaultMeleeReachFeet;
 
-            return distanceFeet <= reachFeet
-                ? weapon.AttackRollMode
-                : null;
+            if (distanceFeet > reachFeet)
+            {
+                return null;
+            }
         }
-
-        int normalRangeFeet =
-            weapon.NormalRangeFeet!.Value;
-
-        int longRangeFeet =
-            weapon.LongRangeFeet!.Value;
-
-        if (distanceFeet > longRangeFeet)
+        else
         {
-            return null;
+            int normalRangeFeet =
+                weapon.NormalRangeFeet!.Value;
+
+            int longRangeFeet =
+                weapon.LongRangeFeet!.Value;
+
+            if (distanceFeet > longRangeFeet)
+            {
+                return null;
+            }
+
+            isLongRange =
+                distanceFeet > normalRangeFeet;
         }
 
-        if (distanceFeet <= normalRangeFeet)
-        {
-            return weapon.AttackRollMode;
-        }
+        bool hasAdvantage =
+            weapon.AttackRollMode
+            == D20RollMode.Advantage;
 
-        return ApplyDisadvantage(
-            weapon.AttackRollMode);
+        bool hasDisadvantage =
+            weapon.AttackRollMode
+                == D20RollMode.Disadvantage
+            || isLongRange
+            || HasAdjacentConsciousHostile(
+                state,
+                actor,
+                weapon);
+
+        return D20Rules.ResolveRollMode(
+            hasAdvantage,
+            hasDisadvantage);
     }
 
-    private static D20RollMode ApplyDisadvantage(
-        D20RollMode rollMode)
+    private static bool HasAdjacentConsciousHostile(
+        EncounterState state,
+        EncounterParticipantState actor,
+        WeaponAttack weapon)
     {
-        return rollMode switch
+        if (weapon.AttackKind
+            != WeaponAttackKind.Ranged)
         {
-            D20RollMode.Normal =>
-                D20RollMode.Disadvantage,
+            return false;
+        }
 
-            D20RollMode.Advantage =>
-                D20RollMode.Normal,
+        foreach (EncounterParticipantState participant
+            in state.Participants)
+        {
+            if (string.Equals(
+                participant.SideId,
+                actor.SideId,
+                StringComparison.Ordinal)
+                || participant.Combatant.LifecycleState
+                    != CombatantLifecycleState.Conscious
+                || CalculateDistanceFeet(
+                    participant.Position,
+                    actor.Position) > 5)
+            {
+                continue;
+            }
 
-            D20RollMode.Disadvantage =>
-                D20RollMode.Disadvantage,
+            EncounterLineOfSightResult lineOfSight =
+                EncounterLineOfSightRules.Evaluate(
+                    state.Battlefield,
+                    participant.Position,
+                    actor.Position);
 
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(rollMode),
-                rollMode,
-                "Unsupported attack roll mode.")
-        };
+            if (lineOfSight.HasLineOfSight)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool HasAmmunitionAvailable(
