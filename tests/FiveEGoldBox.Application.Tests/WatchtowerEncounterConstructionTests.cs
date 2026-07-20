@@ -1,3 +1,5 @@
+using System.Buffers.Binary;
+using System.Security.Cryptography;
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Parties;
@@ -511,17 +513,11 @@ public sealed class WatchtowerEncounterConstructionTests
                 source,
                 ruleset);
         EncounterState encounter = GetEncounter(result);
-        Random random = new(source.RandomSeed);
-
-        for (int index = 0;
-            index < randomValuesConsumed;
-            index++)
-        {
-            _ = random.Next(1, 21);
-        }
-
         int[] expectedRolls = Enumerable.Range(0, 5)
-            .Select(_ => random.Next(1, 21))
+            .Select(index => GenerateExpectedDie(
+                source.RandomSeed,
+                randomValuesConsumed + index,
+                sides: 20))
             .ToArray();
         CharacterResolver resolver = new(ruleset);
         int[] expectedBonuses = source.Party.Members
@@ -544,19 +540,19 @@ public sealed class WatchtowerEncounterConstructionTests
             {
                 0 =>
                 [
-                    source.Party.Members[1].PartyMemberId,
-                    "combatant.watchtower-raider.melee",
-                    source.Party.Members[0].PartyMemberId,
+                    "combatant.watchtower-raider.ranged",
                     source.Party.Members[2].PartyMemberId,
-                    "combatant.watchtower-raider.ranged"
+                    source.Party.Members[0].PartyMemberId,
+                    source.Party.Members[1].PartyMemberId,
+                    "combatant.watchtower-raider.melee"
                 ],
                 12 =>
                 [
                     source.Party.Members[0].PartyMemberId,
-                    "combatant.watchtower-raider.melee",
                     source.Party.Members[1].PartyMemberId,
-                    "combatant.watchtower-raider.ranged",
-                    source.Party.Members[2].PartyMemberId
+                    "combatant.watchtower-raider.melee",
+                    source.Party.Members[2].PartyMemberId,
+                    "combatant.watchtower-raider.ranged"
                 ],
                 _ => throw new InvalidOperationException(
                     "The test random-sequence position is unsupported.")
@@ -593,11 +589,11 @@ public sealed class WatchtowerEncounterConstructionTests
 
         if (randomValuesConsumed == 12)
         {
-            InitiativeOrderEntry barbarian =
+            InitiativeOrderEntry ranger =
                 encounter.InitiativeOrder.Single(
                     entry => string.Equals(
                         entry.CombatantId,
-                        source.Party.Members[1]
+                        source.Party.Members[2]
                             .PartyMemberId,
                         StringComparison.Ordinal));
             InitiativeOrderEntry rangedRaider =
@@ -607,14 +603,14 @@ public sealed class WatchtowerEncounterConstructionTests
                         "combatant.watchtower-raider.ranged",
                         StringComparison.Ordinal));
 
-            Assert.Equal(16, barbarian.Initiative.Total);
+            Assert.Equal(7, ranger.Initiative.Total);
             Assert.Equal(
-                barbarian.Initiative.Total,
+                ranger.Initiative.Total,
                 rangedRaider.Initiative.Total);
-            Assert.True(barbarian.HasTiedInitiative);
+            Assert.True(ranger.HasTiedInitiative);
             Assert.True(rangedRaider.HasTiedInitiative);
             Assert.True(
-                barbarian.Position
+                ranger.Position
                     < rangedRaider.Position);
         }
     }
@@ -799,4 +795,40 @@ public sealed class WatchtowerEncounterConstructionTests
         FailedDeathSaves,
         InstantDeath
     }
+    private static int GenerateExpectedDie(
+        int seed,
+        int cursor,
+        int sides)
+    {
+        ulong modulus = (ulong)sides;
+        ulong threshold =
+            unchecked(0UL - modulus) % modulus;
+
+        for (int attempt = 0; ; attempt++)
+        {
+            byte[] input = new byte[16];
+            BinaryPrimitives.WriteInt32LittleEndian(
+                input.AsSpan(0, 4),
+                seed);
+            BinaryPrimitives.WriteInt32LittleEndian(
+                input.AsSpan(4, 4),
+                cursor);
+            BinaryPrimitives.WriteInt32LittleEndian(
+                input.AsSpan(8, 4),
+                sides);
+            BinaryPrimitives.WriteInt32LittleEndian(
+                input.AsSpan(12, 4),
+                attempt);
+
+            byte[] hash = SHA256.HashData(input);
+            ulong sample =
+                BinaryPrimitives.ReadUInt64LittleEndian(hash);
+
+            if (sample >= threshold)
+            {
+                return checked((int)(sample % modulus) + 1);
+            }
+        }
+    }
+
 }

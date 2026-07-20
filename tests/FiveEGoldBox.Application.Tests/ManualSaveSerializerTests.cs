@@ -1,3 +1,4 @@
+using FiveEGoldBox.Application.Encounters;
 using System.Text.Json.Nodes;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Travel;
@@ -811,6 +812,24 @@ public sealed class ManualSaveSerializerTests
             ManualSaveSerializer.Serialize(
                 WatchtowerSignalTestData
                     .CreateEncounterSession()));
+    }
+
+    [Fact]
+    public void Serialize_WithCompletedEncounterSession_Rejects()
+    {
+        ApplicationSessionState state =
+            WatchtowerSignalTestData.CreateEncounterSession();
+        ActiveEncounterState active =
+            Assert.IsType<ActiveEncounterState>(
+                state.ActiveEncounter);
+        state = WatchtowerCombatTestData.ReplaceEncounter(
+            state,
+            EncounterRules.Complete(
+                active.Encounter,
+                "side.party"));
+
+        Assert.Throws<ArgumentException>(() =>
+            ManualSaveSerializer.Serialize(state));
     }
 
     [Fact]

@@ -504,6 +504,92 @@ public sealed class EncounterMovementRulesTests
     }
 
     [Fact]
+    public void Resolve_WhenPathEndsInDefeatedParticipantPosition_ThrowsBeforeTransition()
+    {
+        EncounterState state = CreateEncounter(
+            enemyPosition: new GridPosition(2, 1));
+        EncounterParticipantState enemy = FindParticipant(
+            state,
+            "combatant.enemy");
+        enemy = enemy with
+        {
+            Combatant = enemy.Combatant with
+            {
+                ZeroHitPointPolicy =
+                    CombatantZeroHitPointPolicy.Defeated,
+                Health = new CombatantHealthState
+                {
+                    HitPoints = new HitPointState
+                    {
+                        MaximumHitPoints = 10,
+                        CurrentHitPoints = 0,
+                        TemporaryHitPoints = 0
+                    },
+                    DeathSavingThrows = new DeathSavingThrowState
+                    {
+                        SuccessCount = 0,
+                        FailureCount = 0,
+                        IsStable = false
+                    },
+                    IsInstantlyDead = false
+                }
+            }
+        };
+        state = ReplaceParticipant(state, enemy);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            EncounterMovementRules.Resolve(
+                state,
+                CreateCommand(state, [new GridPosition(2, 1)])));
+
+        AssertStateUnchanged(state);
+    }
+
+    [Fact]
+    public void Resolve_WhenPathPassesThroughDefeatedParticipantPosition_ThrowsBeforeTransition()
+    {
+        EncounterState state = CreateEncounter(
+            enemyPosition: new GridPosition(2, 1));
+        EncounterParticipantState enemy = FindParticipant(
+            state,
+            "combatant.enemy");
+        enemy = enemy with
+        {
+            Combatant = enemy.Combatant with
+            {
+                ZeroHitPointPolicy =
+                    CombatantZeroHitPointPolicy.Defeated,
+                Health = new CombatantHealthState
+                {
+                    HitPoints = new HitPointState
+                    {
+                        MaximumHitPoints = 10,
+                        CurrentHitPoints = 0,
+                        TemporaryHitPoints = 0
+                    },
+                    DeathSavingThrows = new DeathSavingThrowState
+                    {
+                        SuccessCount = 0,
+                        FailureCount = 0,
+                        IsStable = false
+                    },
+                    IsInstantlyDead = false
+                }
+            }
+        };
+        state = ReplaceParticipant(state, enemy);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            EncounterMovementRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    [new GridPosition(2, 1), new GridPosition(3, 1)])));
+
+        AssertStateUnchanged(state);
+    }
+
+    [Fact]
     public void Resolve_WhenPathLeavesBattlefield_ThrowsBeforeTransition()
     {
         EncounterState state = CreateEncounter();

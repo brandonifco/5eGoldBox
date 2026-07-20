@@ -228,8 +228,11 @@ public sealed class ActiveEncounterStateTests
             ApplicationSessionRules.Validate(state));
     }
 
-    [Fact]
-    public void Validate_EncounterWithCompletedCoreEncounter_Throws()
+    [Theory]
+    [InlineData("side.party")]
+    [InlineData("side.watchtower-raiders")]
+    public void Validate_EncounterWithCompletedCoreEncounter_Succeeds(
+        string winningSideId)
     {
         ApplicationSessionState state =
             WatchtowerSignalTestData.CreateEncounterSession();
@@ -238,7 +241,58 @@ public sealed class ActiveEncounterStateTests
                 state.ActiveEncounter);
         EncounterState completed = EncounterRules.Complete(
             active.Encounter,
-            winningSideId: "side.party");
+            winningSideId);
+
+        state = state with
+        {
+            ActiveEncounter = active with
+            {
+                Encounter = completed
+            }
+        };
+
+        ApplicationSessionRules.Validate(state);
+    }
+
+    [Fact]
+    public void Validate_CompletedEncounterWithoutWinner_Throws()
+    {
+        ApplicationSessionState state =
+            WatchtowerSignalTestData.CreateEncounterSession();
+        ActiveEncounterState active =
+            Assert.IsType<ActiveEncounterState>(
+                state.ActiveEncounter);
+        EncounterState completedWithoutWinner = active.Encounter with
+        {
+            LifecycleState = EncounterLifecycleState.Completed,
+            WinningSideId = null
+        };
+
+        state = state with
+        {
+            ActiveEncounter = active with
+            {
+                Encounter = completedWithoutWinner
+            }
+        };
+
+        Assert.Throws<ArgumentException>(() =>
+            ApplicationSessionRules.Validate(state));
+    }
+
+    [Fact]
+    public void Validate_CompletedEncounterWithUnsupportedWinner_Throws()
+    {
+        ApplicationSessionState state =
+            WatchtowerSignalTestData.CreateEncounterSession();
+        ActiveEncounterState active =
+            Assert.IsType<ActiveEncounterState>(
+                state.ActiveEncounter);
+        EncounterState completed = active.Encounter with
+        {
+            LifecycleState = EncounterLifecycleState.Completed,
+            WinningSideId = "side.other"
+        };
 
         state = state with
         {
