@@ -67,6 +67,7 @@ internal static class WatchtowerEncounterSessionValidator
         ValidateParticipants(
             state,
             encounter);
+        ValidateCompletedParticipantState(encounter);
     }
 
     private static void ValidateEncounterIdentity(
@@ -213,6 +214,25 @@ internal static class WatchtowerEncounterSessionValidator
         ValidateRaiderParticipant(
             encounter,
             WatchtowerSignalEncounter.RangedRaiderId);
+    }
+
+    private static void ValidateCompletedParticipantState(
+        EncounterState encounter)
+    {
+        if (encounter.LifecycleState
+            != EncounterLifecycleState.Completed)
+        {
+            return;
+        }
+
+        if (encounter.Participants.Any(participant =>
+            participant.Combatant.LifecycleState
+                == CombatantLifecycleState.Dying))
+        {
+            throw new ArgumentException(
+                "A completed watchtower encounter cannot contain a dying participant.",
+                nameof(encounter));
+        }
     }
 
     private static void ValidateRaiderParticipant(

@@ -100,10 +100,11 @@ public static class ManualSaveSerializer
     {
         if (session.CurrentMode is not (
             ApplicationMode.Outpost
-            or ApplicationMode.Exploration))
+            or ApplicationMode.Exploration
+            or ApplicationMode.ScenarioConclusion))
         {
             throw new ArgumentException(
-                "Only outpost and exploration sessions can be stored in the manual save during this application phase.",
+                "Only outpost, exploration, and scenario-conclusion sessions can be stored in the manual save during this application phase.",
                 nameof(session));
         }
     }

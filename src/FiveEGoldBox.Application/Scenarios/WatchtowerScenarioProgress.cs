@@ -6,6 +6,7 @@ public enum WatchtowerScenarioProgress
     MissionAccepted,
     SignalActivated,
     RaidersDefeated,
+    PartyDefeated,
     SuccessReported,
     ScenarioCompleted
 }

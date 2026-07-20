@@ -112,6 +112,16 @@ public static class ApplicationSessionRules
     private static void ValidateModeState(
         ApplicationSessionState state)
     {
+        if (state.Scenario.Progress
+            == WatchtowerScenarioProgress.PartyDefeated
+            && state.CurrentMode
+                != ApplicationMode.ScenarioConclusion)
+        {
+            throw new ArgumentException(
+                "Party-defeated progress is valid only in the watchtower scenario conclusion.",
+                nameof(state));
+        }
+
         switch (state.CurrentMode)
         {
             case ApplicationMode.Outpost:
@@ -188,9 +198,12 @@ public static class ApplicationSessionRules
 
                 WatchtowerEncounterSessionValidator.Validate(state);
                 break;
+            case ApplicationMode.ScenarioConclusion:
+                WatchtowerScenarioConclusionValidator.Validate(state);
+                break;
             default:
                 throw new ArgumentException(
-                    "Only outpost, regional-travel, exploration, and encounter sessions are supported in this application phase.",
+                    "The application mode is not supported in this application phase.",
                     nameof(state));
         }
     }
@@ -214,11 +227,12 @@ public static class ApplicationSessionRules
                 nameof(state));
         }
 
-        if (state.Scenario.Progress
-            != WatchtowerScenarioProgress.MissionAccepted)
+        if (state.Scenario.Progress is not (
+            WatchtowerScenarioProgress.MissionAccepted
+            or WatchtowerScenarioProgress.RaidersDefeated))
         {
             throw new ArgumentException(
-                "Watchtower exploration requires the accepted mission to remain active.",
+                "Watchtower exploration requires accepted-mission or raiders-defeated progress.",
                 nameof(state));
         }
 

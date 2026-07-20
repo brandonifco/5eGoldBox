@@ -19,6 +19,22 @@ public sealed class ExplorationStateTests
     }
 
     [Fact]
+    public void Validate_WithRaidersDefeatedProgress_Accepts()
+    {
+        ApplicationSessionState state =
+            CreateExplorationSession() with
+            {
+                Scenario = new WatchtowerScenarioState
+                {
+                    Progress =
+                        WatchtowerScenarioProgress.RaidersDefeated
+                }
+            };
+
+        ApplicationSessionRules.Validate(state);
+    }
+
+    [Fact]
     public void Validate_WithValidUpperFloorState_Accepts()
     {
         ApplicationSessionState upper =
@@ -173,12 +189,12 @@ public sealed class ExplorationStateTests
     [InlineData(
         WatchtowerScenarioProgress.SignalActivated)]
     [InlineData(
-        WatchtowerScenarioProgress.RaidersDefeated)]
+        WatchtowerScenarioProgress.PartyDefeated)]
     [InlineData(
         WatchtowerScenarioProgress.SuccessReported)]
     [InlineData(
         WatchtowerScenarioProgress.ScenarioCompleted)]
-    public void Validate_OutsideMissionAcceptedProgress_Throws(
+    public void Validate_OutsideSupportedExplorationProgress_Throws(
         WatchtowerScenarioProgress progress)
     {
         ApplicationSessionState invalid =
