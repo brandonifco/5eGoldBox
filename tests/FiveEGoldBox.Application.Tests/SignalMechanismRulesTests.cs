@@ -53,7 +53,6 @@ public sealed class SignalMechanismRulesTests
     [Theory]
     [InlineData(WatchtowerScenarioProgress.MissionNotAccepted)]
     [InlineData(WatchtowerScenarioProgress.SignalActivated)]
-    [InlineData(WatchtowerScenarioProgress.RaidersDefeated)]
     [InlineData(WatchtowerScenarioProgress.SuccessReported)]
     [InlineData(WatchtowerScenarioProgress.ScenarioCompleted)]
     public void CanActivate_WithWrongProgress_ReturnsFalse(
@@ -240,7 +239,6 @@ public sealed class SignalMechanismRulesTests
     [Theory]
     [InlineData(WatchtowerScenarioProgress.MissionNotAccepted)]
     [InlineData(WatchtowerScenarioProgress.SignalActivated)]
-    [InlineData(WatchtowerScenarioProgress.RaidersDefeated)]
     [InlineData(WatchtowerScenarioProgress.SuccessReported)]
     [InlineData(WatchtowerScenarioProgress.ScenarioCompleted)]
     public void Activate_WithWrongScenarioProgress_Throws(
@@ -256,6 +254,25 @@ public sealed class SignalMechanismRulesTests
             };
 
         Assert.Throws<ArgumentException>(() =>
+            SignalMechanismRules.Activate(
+                state,
+                WatchtowerSignalTestData.CreateRuleset()));
+    }
+
+    [Fact]
+    public void Activate_WithRaidersDefeatedProgress_ThrowsAsUnavailable()
+    {
+        ApplicationSessionState state =
+            WatchtowerSignalTestData.CreateSignalReadySession() with
+            {
+                Scenario = new WatchtowerScenarioState
+                {
+                    Progress =
+                        WatchtowerScenarioProgress.RaidersDefeated
+                }
+            };
+
+        Assert.Throws<InvalidOperationException>(() =>
             SignalMechanismRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));

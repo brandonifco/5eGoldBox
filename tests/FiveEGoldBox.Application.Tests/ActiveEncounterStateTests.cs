@@ -1,5 +1,6 @@
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
+using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
@@ -252,6 +253,29 @@ public sealed class ActiveEncounterStateTests
         };
 
         ApplicationSessionRules.Validate(state);
+    }
+
+    [Fact]
+    public void Validate_CompletedEncounterWithDyingParticipant_Throws()
+    {
+        ApplicationSessionState state =
+            WatchtowerCombatOutcomeTestData
+                .CreatePartyVictorySession();
+        PartyMemberState barbarian =
+            WatchtowerCombatOutcomeTestData.GetPartyMember(
+                state,
+                "class.barbarian");
+        state = WatchtowerCombatOutcomeTestData
+            .ReplaceParticipantHealth(
+                state,
+                barbarian.PartyMemberId,
+                WatchtowerCombatOutcomeTestData
+                    .CreateDyingHealth(
+                        barbarian.Health.HitPoints
+                            .MaximumHitPoints));
+
+        Assert.Throws<ArgumentException>(() =>
+            ApplicationSessionRules.Validate(state));
     }
 
     [Fact]
