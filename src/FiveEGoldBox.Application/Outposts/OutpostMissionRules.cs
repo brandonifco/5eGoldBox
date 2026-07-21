@@ -5,6 +5,37 @@ namespace FiveEGoldBox.Application.Outposts;
 
 public static class OutpostMissionRules
 {
+    private static readonly IReadOnlyList<OutpostMissionChoice>
+        AvailableChoices = Array.AsReadOnly(
+            new[]
+            {
+                OutpostMissionChoice.AcceptMission,
+                OutpostMissionChoice.NotYet
+            });
+
+    private static readonly IReadOnlyList<OutpostMissionChoice>
+        NoAvailableChoices = Array.AsReadOnly(
+            Array.Empty<OutpostMissionChoice>());
+
+    public static IReadOnlyList<OutpostMissionChoice>
+        GetAvailableChoices(
+            ApplicationSessionState session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        if (session.CurrentMode != ApplicationMode.Outpost)
+        {
+            return NoAvailableChoices;
+        }
+
+        ApplicationSessionState canonicalSession =
+            ApplicationSessionRules.CreateCanonical(session);
+
+        return IsMissionDecisionAvailable(canonicalSession)
+            ? AvailableChoices
+            : NoAvailableChoices;
+    }
+
     public static OutpostMissionResult Resolve(
         ApplicationSessionState session,
         OutpostMissionChoice choice)
@@ -22,8 +53,7 @@ public static class OutpostMissionRules
         ApplicationSessionState canonicalSession =
             ApplicationSessionRules.CreateCanonical(session);
 
-        if (canonicalSession.Scenario.Progress
-            != WatchtowerScenarioProgress.MissionNotAccepted)
+        if (!IsMissionDecisionAvailable(canonicalSession))
         {
             throw new InvalidOperationException(
                 "The outpost mission decision is available only before the mission is accepted.");
@@ -43,6 +73,15 @@ public static class OutpostMissionRules
             _ => throw new InvalidOperationException(
                 "The validated outpost mission choice could not be resolved.")
         };
+    }
+
+    private static bool IsMissionDecisionAvailable(
+        ApplicationSessionState session)
+    {
+        return session.CurrentMode == ApplicationMode.Outpost
+            && session.Scenario.Progress
+                == WatchtowerScenarioProgress
+                    .MissionNotAccepted;
     }
 
     private static OutpostMissionResult ResolveAcceptance(

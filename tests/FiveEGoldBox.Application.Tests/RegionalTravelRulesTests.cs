@@ -3,13 +3,208 @@ using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
-using FiveEGoldBox.Core.Rules;
-using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Tests;
 
 public sealed class RegionalTravelRulesTests
 {
+    [Fact]
+    public void CanBeginWatchtowerJourney_InCanonicalAcceptedState_ReturnsTrue()
+    {
+        Assert.True(
+            RegionalTravelRules.CanBeginWatchtowerJourney(
+                CreateAcceptedSession()));
+    }
+
+    [Fact]
+    public void CanBeginWatchtowerJourney_InOrdinarilyUnavailableStates_ReturnsFalse()
+    {
+        ApplicationSessionState beforeAcceptance =
+            CreateMissionNotAcceptedSession();
+        ApplicationSessionState traveling =
+            CreateTravelingSession();
+        ApplicationSessionState wrongLocation =
+            CreateAcceptedSession() with
+            {
+                CurrentLocationId = "location.other"
+            };
+        ApplicationSessionState incompatibleProgress =
+            CreateAcceptedSession() with
+            {
+                Scenario = new WatchtowerScenarioState
+                {
+                    Progress =
+                        WatchtowerScenarioProgress
+                            .SignalActivated
+                }
+            };
+
+        Assert.False(
+            RegionalTravelRules.CanBeginWatchtowerJourney(
+                beforeAcceptance));
+        Assert.False(
+            RegionalTravelRules.CanBeginWatchtowerJourney(
+                traveling));
+        Assert.False(
+            RegionalTravelRules.CanBeginWatchtowerJourney(
+                wrongLocation));
+        Assert.False(
+            RegionalTravelRules.CanBeginWatchtowerJourney(
+                incompatibleProgress));
+    }
+
+    [Fact]
+    public void CanBeginWatchtowerJourney_DoesNotMutateOrConsumeRandomness()
+    {
+        ApplicationSessionState session =
+            CreateAcceptedSession();
+
+        _ = RegionalTravelRules.CanBeginWatchtowerJourney(
+            session);
+
+        Assert.Equal(ApplicationMode.Outpost, session.CurrentMode);
+        Assert.Null(session.RegionalTravel);
+        Assert.Equal(8675309, session.RandomSeed);
+        Assert.Equal(12, session.RandomValuesConsumed);
+    }
+
+    [Fact]
+    public void CanBeginWatchtowerJourney_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            RegionalTravelRules.CanBeginWatchtowerJourney(
+                null!));
+    }
+
+    [Fact]
+    public void CanBeginWatchtowerJourney_WithMalformedOutpostState_Throws()
+    {
+        ApplicationSessionState traveling =
+            CreateTravelingSession();
+        ApplicationSessionState malformed =
+            CreateAcceptedSession() with
+            {
+                RegionalTravel = traveling.RegionalTravel
+            };
+
+        Assert.ThrowsAny<ArgumentException>(() =>
+            RegionalTravelRules.CanBeginWatchtowerJourney(
+                malformed));
+    }
+
+    [Fact]
+    public void BeginWatchtowerJourney_WithWrongLocation_StillRejectsAuthoritatively()
+    {
+        ApplicationSessionState session =
+            CreateAcceptedSession() with
+            {
+                CurrentLocationId = "location.other"
+            };
+
+        Assert.False(
+            RegionalTravelRules.CanBeginWatchtowerJourney(
+                session));
+        Assert.Throws<InvalidOperationException>(() =>
+            RegionalTravelRules.BeginWatchtowerJourney(
+                session));
+    }
+
+    [Fact]
+    public void CanAdvance_ReturnsTrueAtEveryIncompleteStepAndFalseAfterArrival()
+    {
+        ApplicationSessionState current =
+            CreateTravelingSession();
+
+        while (!Assert.IsType<RegionalTravelState>(
+            current.RegionalTravel).IsComplete)
+        {
+            Assert.True(RegionalTravelRules.CanAdvance(current));
+            current = RegionalTravelRules.Advance(current)
+                .State;
+        }
+
+        Assert.False(RegionalTravelRules.CanAdvance(current));
+    }
+
+    [Fact]
+    public void CanAdvance_InOrdinarilyUnavailableStates_ReturnsFalse()
+    {
+        ApplicationSessionState beforeStart =
+            CreateAcceptedSession();
+        ApplicationSessionState incompatibleProgress =
+            CreateTravelingSession() with
+            {
+                Scenario = new WatchtowerScenarioState
+                {
+                    Progress =
+                        WatchtowerScenarioProgress
+                            .SignalActivated
+                }
+            };
+
+        Assert.False(
+            RegionalTravelRules.CanAdvance(beforeStart));
+        Assert.False(
+            RegionalTravelRules.CanAdvance(
+                incompatibleProgress));
+    }
+
+    [Fact]
+    public void CanAdvance_DoesNotMutateOrConsumeRandomness()
+    {
+        ApplicationSessionState traveling =
+            CreateTravelingSession();
+        RegionalTravelState travel =
+            Assert.IsType<RegionalTravelState>(
+                traveling.RegionalTravel);
+
+        _ = RegionalTravelRules.CanAdvance(traveling);
+
+        Assert.Equal(0, travel.CurrentStepIndex);
+        Assert.Equal(8675309, traveling.RandomSeed);
+        Assert.Equal(12, traveling.RandomValuesConsumed);
+    }
+
+    [Fact]
+    public void CanAdvance_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            RegionalTravelRules.CanAdvance(null!));
+    }
+
+    [Fact]
+    public void CanAdvance_WithMalformedRegionalTravelState_Throws()
+    {
+        ApplicationSessionState malformed =
+            CreateAcceptedSession() with
+            {
+                CurrentMode = ApplicationMode.RegionalTravel,
+                RegionalTravel = null
+            };
+
+        Assert.ThrowsAny<ArgumentException>(() =>
+            RegionalTravelRules.CanAdvance(malformed));
+    }
+
+    [Fact]
+    public void Advance_WithIncompatibleProgress_StillRejectsAuthoritatively()
+    {
+        ApplicationSessionState traveling =
+            CreateTravelingSession() with
+            {
+                Scenario = new WatchtowerScenarioState
+                {
+                    Progress =
+                        WatchtowerScenarioProgress
+                            .SignalActivated
+                }
+            };
+
+        Assert.False(RegionalTravelRules.CanAdvance(traveling));
+        Assert.Throws<InvalidOperationException>(() =>
+            RegionalTravelRules.Advance(traveling));
+    }
+
     [Fact]
     public void BeginWatchtowerJourney_WithAcceptedMission_CreatesFixedRouteState()
     {
@@ -544,86 +739,8 @@ public sealed class RegionalTravelRulesTests
     private static ApplicationSessionState
         CreateMissionNotAcceptedSession()
     {
-        PartyMemberState[] members =
-        [
-            CreateMember(
-                partyMemberId:
-                    "party-member.fighter",
-                characterDefinitionId:
-                    "character.fighter",
-                displayName: "Fighter",
-                classId: "class.fighter",
-                maximumHitPoints: 12) with
-            {
-                Health = CombatantHealthRules.Create(
-                    maximumHitPoints: 12) with
-                {
-                    HitPoints = new HitPointState
-                    {
-                        MaximumHitPoints = 12,
-                        CurrentHitPoints = 8,
-                        TemporaryHitPoints = 2
-                    }
-                }
-            },
-            CreateMember(
-                partyMemberId:
-                    "party-member.barbarian",
-                characterDefinitionId:
-                    "character.barbarian",
-                displayName: "Barbarian",
-                classId: "class.barbarian",
-                maximumHitPoints: 14),
-            CreateMember(
-                partyMemberId:
-                    "party-member.ranger",
-                characterDefinitionId:
-                    "character.ranger",
-                displayName: "Ranger",
-                classId: "class.ranger",
-                maximumHitPoints: 11) with
-            {
-                Ammunition = new AmmunitionState
-                {
-                    WeaponId = "weapon.longbow",
-                    AmmunitionItemId = "item.arrow",
-                    RemainingQuantity = 7
-                }
-            }
-        ];
-
-        return ApplicationSessionRules.CreateNew(
-            scenarioId: "scenario.watchtower",
-            currentLocationId: "location.outpost",
-            party: new PartyState
-            {
-                PartyId = "party.player",
-                Members = members
-            },
-            randomSeed: 8675309);
-    }
-
-    private static PartyMemberState CreateMember(
-        string partyMemberId,
-        string characterDefinitionId,
-        string displayName,
-        string classId,
-        int maximumHitPoints)
-    {
-        return new PartyMemberState
-        {
-            PartyMemberId = partyMemberId,
-            CharacterDefinitionId =
-                characterDefinitionId,
-            DisplayName = displayName,
-            ClassId = classId,
-            ZeroHitPointPolicy =
-                CombatantZeroHitPointPolicy
-                    .DeathSavingThrows,
-            Health = CombatantHealthRules.Create(
-                maximumHitPoints),
-            Ammunition = null
-        };
+        return WatchtowerScenarioSessionFactory
+            .CreateNew(8675309);
     }
 
     private static void AssertPartyEquivalent(

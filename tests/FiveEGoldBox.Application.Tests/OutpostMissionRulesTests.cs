@@ -1,14 +1,156 @@
+using FiveEGoldBox.Application.Combat;
+using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
-using FiveEGoldBox.Core.Rules;
-using FiveEGoldBox.Core.Runtime;
+using FiveEGoldBox.Application.Travel;
 
 namespace FiveEGoldBox.Application.Tests;
 
 public sealed class OutpostMissionRulesTests
 {
+    [Fact]
+    public void GetAvailableChoices_InCanonicalDecisionState_ReturnsStableOrderedChoices()
+    {
+        ApplicationSessionState session =
+            CreateValidSession();
+
+        IReadOnlyList<OutpostMissionChoice> choices =
+            OutpostMissionRules.GetAvailableChoices(
+                session);
+
+        OutpostMissionChoice[] expected =
+        [
+            OutpostMissionChoice.AcceptMission,
+            OutpostMissionChoice.NotYet
+        ];
+
+        Assert.Equal(expected, choices);
+        Assert.Equal(choices.Count, choices.Distinct().Count());
+    }
+
+    [Fact]
+    public void GetAvailableChoices_ReturnsReadOnlyCollection()
+    {
+        IReadOnlyList<OutpostMissionChoice> choices =
+            OutpostMissionRules.GetAvailableChoices(
+                CreateValidSession());
+        IList<OutpostMissionChoice> mutableView =
+            Assert.IsAssignableFrom<IList<OutpostMissionChoice>>(
+                choices);
+
+        Assert.True(mutableView.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() =>
+            mutableView.Add(
+                OutpostMissionChoice.AcceptMission));
+    }
+
+    [Fact]
+    public void GetAvailableChoices_RepeatedDiscoveryIsValueEquivalent()
+    {
+        ApplicationSessionState session =
+            CreateValidSession();
+
+        IReadOnlyList<OutpostMissionChoice> first =
+            OutpostMissionRules.GetAvailableChoices(
+                session);
+        IReadOnlyList<OutpostMissionChoice> second =
+            OutpostMissionRules.GetAvailableChoices(
+                session);
+
+        Assert.Equal(first.ToArray(), second.ToArray());
+    }
+
+    [Fact]
+    public void GetAvailableChoices_DoesNotMutateOrConsumeRandomness()
+    {
+        ApplicationSessionState session =
+            CreateValidSession();
+
+        _ = OutpostMissionRules.GetAvailableChoices(
+            session);
+
+        Assert.Equal(ApplicationMode.Outpost, session.CurrentMode);
+        Assert.Equal(
+            WatchtowerScenarioProgress.MissionNotAccepted,
+            session.Scenario.Progress);
+        Assert.Null(session.RegionalTravel);
+        Assert.Null(session.Exploration);
+        Assert.Null(session.ActiveEncounter);
+        Assert.Equal(8675309, session.RandomSeed);
+        Assert.Equal(12, session.RandomValuesConsumed);
+    }
+
+    [Fact]
+    public void GetAvailableChoices_WhenDecisionIsUnavailable_ReturnsEmpty()
+    {
+        ApplicationSessionState accepted =
+            OutpostMissionRules.Resolve(
+                CreateValidSession(),
+                OutpostMissionChoice.AcceptMission)
+                .State;
+        ApplicationSessionState traveling =
+            RegionalTravelRules.BeginWatchtowerJourney(
+                accepted);
+        ApplicationSessionState exploring =
+            CreateExplorationSession();
+        ApplicationSessionState encounter =
+            SignalMechanismRules.Activate(
+                WatchtowerSignalTestData
+                    .CreateSignalReadySession());
+        ApplicationSessionState conclusion =
+            WatchtowerCombatOutcomeRules.Finalize(
+                WatchtowerCombatOutcomeTestData
+                    .CreateRaiderVictorySession())
+                .State;
+
+        ApplicationSessionState[] unavailableStates =
+        [
+            accepted,
+            traveling,
+            exploring,
+            encounter,
+            conclusion
+        ];
+
+        foreach (ApplicationSessionState state
+            in unavailableStates)
+        {
+            Assert.Empty(
+                OutpostMissionRules
+                    .GetAvailableChoices(state));
+        }
+    }
+
+    [Fact]
+    public void GetAvailableChoices_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            OutpostMissionRules.GetAvailableChoices(
+                null!));
+    }
+
+    [Fact]
+    public void GetAvailableChoices_WithMalformedOutpostState_Throws()
+    {
+        ApplicationSessionState traveling =
+            RegionalTravelRules.BeginWatchtowerJourney(
+                OutpostMissionRules.Resolve(
+                    CreateValidSession(),
+                    OutpostMissionChoice.AcceptMission)
+                    .State);
+        ApplicationSessionState malformed =
+            CreateValidSession() with
+            {
+                RegionalTravel = traveling.RegionalTravel
+            };
+
+        Assert.ThrowsAny<ArgumentException>(() =>
+            OutpostMissionRules.GetAvailableChoices(
+                malformed));
+    }
+
     [Fact]
     public void Resolve_WithAcceptMission_AdvancesProgressAndReportsResult()
     {
@@ -303,91 +445,30 @@ public sealed class OutpostMissionRulesTests
     private static ApplicationSessionState
         CreateValidSession()
     {
-        PartyMemberState[] members =
-        [
-            CreateMember(
-                partyMemberId:
-                    "party-member.fighter",
-                characterDefinitionId:
-                    "character.fighter",
-                displayName: "Fighter",
-                classId: "class.fighter",
-                maximumHitPoints: 12) with
-            {
-                Health = CombatantHealthRules.Create(
-                    maximumHitPoints: 12) with
-                {
-                    HitPoints = new HitPointState
-                    {
-                        MaximumHitPoints = 12,
-                        CurrentHitPoints = 8,
-                        TemporaryHitPoints = 2
-                    }
-                }
-            },
-            CreateMember(
-                partyMemberId:
-                    "party-member.barbarian",
-                characterDefinitionId:
-                    "character.barbarian",
-                displayName: "Barbarian",
-                classId: "class.barbarian",
-                maximumHitPoints: 14),
-            CreateMember(
-                partyMemberId:
-                    "party-member.ranger",
-                characterDefinitionId:
-                    "character.ranger",
-                displayName: "Ranger",
-                classId: "class.ranger",
-                maximumHitPoints: 11) with
-            {
-                Ammunition = new AmmunitionState
-                {
-                    WeaponId = "weapon.longbow",
-                    AmmunitionItemId = "item.arrow",
-                    RemainingQuantity = 7
-                }
-            }
-        ];
-
-        ApplicationSessionState session =
-            ApplicationSessionRules.CreateNew(
-                scenarioId: "scenario.watchtower",
-                currentLocationId: "location.outpost",
-                party: new PartyState
-                {
-                    PartyId = "party.player",
-                    Members = members
-                },
-                randomSeed: 8675309);
-
-        return session with
+        return WatchtowerScenarioSessionFactory
+            .CreateNew(8675309) with
         {
             RandomValuesConsumed = 12
         };
     }
 
-    private static PartyMemberState CreateMember(
-        string partyMemberId,
-        string characterDefinitionId,
-        string displayName,
-        string classId,
-        int maximumHitPoints)
+    private static ApplicationSessionState
+        CreateExplorationSession()
     {
-        return new PartyMemberState
+        ApplicationSessionState current =
+            RegionalTravelRules.BeginWatchtowerJourney(
+                OutpostMissionRules.Resolve(
+                    CreateValidSession(),
+                    OutpostMissionChoice.AcceptMission)
+                    .State);
+
+        while (!Assert.IsType<RegionalTravelState>(
+            current.RegionalTravel).IsComplete)
         {
-            PartyMemberId = partyMemberId,
-            CharacterDefinitionId =
-                characterDefinitionId,
-            DisplayName = displayName,
-            ClassId = classId,
-            ZeroHitPointPolicy =
-                CombatantZeroHitPointPolicy
-                    .DeathSavingThrows,
-            Health = CombatantHealthRules.Create(
-                maximumHitPoints),
-            Ammunition = null
-        };
+            current = RegionalTravelRules.Advance(current)
+                .State;
+        }
+
+        return ExplorationRules.EnterWatchtower(current);
     }
 }
