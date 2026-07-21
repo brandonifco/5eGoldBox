@@ -41,6 +41,283 @@ public sealed class WatchtowerCombatDecisionTests
     }
 
     [Fact]
+    public void AdvanceToDecision_ExposesOrderedCoreValidatedMovementDestinations()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatTestData.CreatePlayerDecisionSession();
+        EncounterState encounter =
+            WatchtowerCombatTestData.GetEncounter(source);
+        EncounterParticipantState actor =
+            WatchtowerCombatTestData.GetParticipant(
+                source,
+                encounter.ActiveCombatantId);
+        WatchtowerCombatDecision decision =
+            WatchtowerCombatRules.AdvanceToDecision(source)
+                .ResultingDecision;
+        WatchtowerCombatMovementOption movement =
+            Assert.IsType<WatchtowerCombatMovementOption>(
+                decision.Movement);
+        IReadOnlyList<WatchtowerCombatMovementDestinationOption> options =
+            movement.DestinationOptions;
+        HashSet<GridPosition> blocked =
+            encounter.Battlefield.BlockedPositions.ToHashSet();
+        HashSet<GridPosition> occupied = encounter.Participants
+            .Where(participant => !string.Equals(
+                participant.Combatant.CombatantId,
+                actor.Combatant.CombatantId,
+                StringComparison.Ordinal))
+            .Select(participant => participant.Position)
+            .ToHashSet();
+
+        Assert.True(movement.IsAvailable);
+        Assert.NotEmpty(options);
+        Assert.Equal(
+            options.Count,
+            options.Select(option => option.Destination).Distinct().Count());
+        Assert.Equal(
+            options.Count,
+            options.Select(option => string.Join(
+                ";",
+                option.Path.Select(position =>
+                    $"{position.X},{position.Y}")))
+                .Distinct(StringComparer.Ordinal)
+                .Count());
+
+        for (int index = 0; index < options.Count; index++)
+        {
+            WatchtowerCombatMovementDestinationOption option =
+                options[index];
+
+            Assert.NotEmpty(option.Path);
+            Assert.DoesNotContain(actor.Position, option.Path);
+            Assert.Equal(option.Destination, option.Path[^1]);
+            Assert.True(option.MovementSpentFeet > 0);
+            Assert.True(
+                option.MovementSpentFeet
+                    <= movement.MovementRemainingFeet);
+
+            GridPosition previous = actor.Position;
+
+            foreach (GridPosition position in option.Path)
+            {
+                Assert.InRange(
+                    position.X,
+                    0,
+                    encounter.Battlefield.Width - 1);
+                Assert.InRange(
+                    position.Y,
+                    0,
+                    encounter.Battlefield.Height - 1);
+                Assert.DoesNotContain(position, blocked);
+                Assert.DoesNotContain(position, occupied);
+                Assert.InRange(
+                    Math.Abs(position.X - previous.X),
+                    0,
+                    1);
+                Assert.InRange(
+                    Math.Abs(position.Y - previous.Y),
+                    0,
+                    1);
+                Assert.NotEqual(previous, position);
+                previous = position;
+            }
+
+            EncounterMovementResult resolved =
+                EncounterMovementRules.Resolve(
+                    encounter,
+                    new EncounterMovementCommand
+                    {
+                        ExpectedRevision = decision.EncounterRevision,
+                        ActorCombatantId = decision.ActiveCombatantId!,
+                        Path = option.Path
+                    });
+
+            Assert.Equal(option.Destination, resolved.EndingPosition);
+            Assert.Equal(
+                option.MovementSpentFeet,
+                resolved.MovementSpentFeet);
+
+            if (index > 0)
+            {
+                Assert.True(
+                    CompareMovementOptions(
+                        options[index - 1],
+                        option) <= 0);
+            }
+        }
+
+        Assert.NotNull(decision.WeaponAttack);
+        Assert.NotNull(decision.EndTurn);
+        Assert.True(decision.EndTurn.IsAvailable);
+    }
+
+    [Fact]
+    public void AdvanceToDecision_MovementCollectionsAreReadOnlyIndependentAndDeterministic()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatTestData.CreatePlayerDecisionSession();
+        WatchtowerCombatMovementOption first =
+            Assert.IsType<WatchtowerCombatMovementOption>(
+                WatchtowerCombatRules.AdvanceToDecision(source)
+                    .ResultingDecision.Movement);
+        WatchtowerCombatMovementOption second =
+            Assert.IsType<WatchtowerCombatMovementOption>(
+                WatchtowerCombatRules.AdvanceToDecision(source)
+                    .ResultingDecision.Movement);
+        IList<WatchtowerCombatMovementDestinationOption> mutableOptions =
+            Assert.IsAssignableFrom<
+                IList<WatchtowerCombatMovementDestinationOption>>(
+                    first.DestinationOptions);
+
+        Assert.True(mutableOptions.IsReadOnly);
+        Assert.Throws<NotSupportedException>(() =>
+            mutableOptions.Add(first.DestinationOptions[0]));
+        Assert.NotSame(
+            first.DestinationOptions,
+            second.DestinationOptions);
+        Assert.Equal(
+            first.DestinationOptions.Count,
+            second.DestinationOptions.Count);
+
+        for (int index = 0;
+            index < first.DestinationOptions.Count;
+            index++)
+        {
+            WatchtowerCombatMovementDestinationOption firstOption =
+                first.DestinationOptions[index];
+            WatchtowerCombatMovementDestinationOption secondOption =
+                second.DestinationOptions[index];
+            IList<GridPosition> mutablePath =
+                Assert.IsAssignableFrom<IList<GridPosition>>(
+                    firstOption.Path);
+
+            Assert.True(mutablePath.IsReadOnly);
+            Assert.Throws<NotSupportedException>(() =>
+                mutablePath.Add(firstOption.Destination));
+            Assert.NotSame(firstOption.Path, secondOption.Path);
+            Assert.Equal(
+                firstOption.Destination,
+                secondOption.Destination);
+            Assert.Equal(
+                firstOption.MovementSpentFeet,
+                secondOption.MovementSpentFeet);
+            Assert.Equal(
+                firstOption.Path.ToArray(),
+                secondOption.Path.ToArray());
+        }
+
+        GridPosition[] copiedPath =
+            first.DestinationOptions[0].Path.ToArray();
+        copiedPath[0] = new GridPosition(-1, -1);
+
+        Assert.NotEqual(
+            copiedPath[0],
+            second.DestinationOptions[0].Path[0]);
+    }
+
+    [Fact]
+    public void AdvanceToDecision_WithNoRemainingMovement_ReturnsNoDestinations()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatTestData.CreatePlayerDecisionSession();
+        EncounterState encounter =
+            WatchtowerCombatTestData.GetEncounter(source);
+        EncounterParticipantState actor =
+            WatchtowerCombatTestData.GetParticipant(
+                source,
+                encounter.ActiveCombatantId);
+        source = WatchtowerCombatTestData.ReplaceParticipant(
+            source,
+            actor with
+            {
+                TurnResources = actor.TurnResources with
+                {
+                    MovementSpentFeet =
+                        actor.TurnResources.MovementSpeedFeet
+                }
+            });
+
+        WatchtowerCombatMovementOption movement =
+            Assert.IsType<WatchtowerCombatMovementOption>(
+                WatchtowerCombatRules.AdvanceToDecision(source)
+                    .ResultingDecision.Movement);
+
+        Assert.False(movement.IsAvailable);
+        Assert.Equal(0, movement.MovementRemainingFeet);
+        Assert.Equal(
+            EncounterActionUnavailabilityReason.MovementUnavailable,
+            movement.UnavailabilityReason);
+        Assert.Empty(movement.DestinationOptions);
+    }
+
+    [Fact]
+    public void AdvanceToDecision_WithNoReachableSquare_ReturnsNoDestinations()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatTestData.CreatePlayerDecisionSession();
+        EncounterState encounter =
+            WatchtowerCombatTestData.GetEncounter(source);
+        EncounterParticipantState actor =
+            WatchtowerCombatTestData.GetParticipant(
+                source,
+                encounter.ActiveCombatantId);
+        HashSet<GridPosition> occupied = encounter.Participants
+            .Where(participant => !string.Equals(
+                participant.Combatant.CombatantId,
+                actor.Combatant.CombatantId,
+                StringComparison.Ordinal))
+            .Select(participant => participant.Position)
+            .ToHashSet();
+        List<GridPosition> blocked = [];
+
+        for (int y = actor.Position.Y - 1;
+            y <= actor.Position.Y + 1;
+            y++)
+        {
+            for (int x = actor.Position.X - 1;
+                x <= actor.Position.X + 1;
+                x++)
+            {
+                GridPosition position = new(x, y);
+
+                if (position == actor.Position
+                    || position.X < 0
+                    || position.X >= encounter.Battlefield.Width
+                    || position.Y < 0
+                    || position.Y >= encounter.Battlefield.Height
+                    || occupied.Contains(position))
+                {
+                    continue;
+                }
+
+                blocked.Add(position);
+            }
+        }
+
+        source = WatchtowerCombatTestData.ReplaceEncounter(
+            source,
+            encounter with
+            {
+                Battlefield = encounter.Battlefield with
+                {
+                    BlockedPositions = Array.AsReadOnly(
+                        blocked.ToArray())
+                }
+            });
+
+        WatchtowerCombatMovementOption movement =
+            Assert.IsType<WatchtowerCombatMovementOption>(
+                WatchtowerCombatRules.AdvanceToDecision(source)
+                    .ResultingDecision.Movement);
+
+        Assert.False(movement.IsAvailable);
+        Assert.Equal(
+            EncounterActionUnavailabilityReason.MovementUnavailable,
+            movement.UnavailabilityReason);
+        Assert.Empty(movement.DestinationOptions);
+    }
+
+    [Fact]
     public void AdvanceToDecision_ExposesFixedWeaponAndAuthoritativeTargets()
     {
         ApplicationSessionState state =
@@ -126,6 +403,7 @@ public sealed class WatchtowerCombatDecisionTests
             WatchtowerCombatDecisionState.CombatCompleted,
             result.ResultingDecision.State);
         Assert.Equal("side.party", result.ResultingDecision.WinningSideId);
+        Assert.Null(result.ResultingDecision.Movement);
         Assert.Empty(result.AutomaticSteps);
         Assert.Equal(source.RandomValuesConsumed, result.RandomValuesConsumedAfter);
     }
@@ -310,6 +588,59 @@ public sealed class WatchtowerCombatDecisionTests
                         .AmmunitionQuantityAvailable);
             }
         }
+    }
+
+
+    private static int CompareMovementOptions(
+        WatchtowerCombatMovementDestinationOption left,
+        WatchtowerCombatMovementDestinationOption right)
+    {
+        int comparison = left.Destination.Y.CompareTo(
+            right.Destination.Y);
+
+        if (comparison != 0)
+        {
+            return comparison;
+        }
+
+        comparison = left.Destination.X.CompareTo(
+            right.Destination.X);
+
+        if (comparison != 0)
+        {
+            return comparison;
+        }
+
+        comparison = left.MovementSpentFeet.CompareTo(
+            right.MovementSpentFeet);
+
+        if (comparison != 0)
+        {
+            return comparison;
+        }
+
+        int sharedCount = Math.Min(left.Path.Count, right.Path.Count);
+
+        for (int index = 0; index < sharedCount; index++)
+        {
+            comparison = left.Path[index].Y.CompareTo(
+                right.Path[index].Y);
+
+            if (comparison != 0)
+            {
+                return comparison;
+            }
+
+            comparison = left.Path[index].X.CompareTo(
+                right.Path[index].X);
+
+            if (comparison != 0)
+            {
+                return comparison;
+            }
+        }
+
+        return left.Path.Count.CompareTo(right.Path.Count);
     }
 
     public enum CompletedIntentKind

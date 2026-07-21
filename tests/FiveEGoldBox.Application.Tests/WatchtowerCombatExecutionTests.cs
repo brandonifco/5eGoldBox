@@ -54,6 +54,118 @@ public sealed class WatchtowerCombatExecutionTests
     }
 
     [Fact]
+    public void Execute_EveryReturnedMovementOption_IsAcceptedIndependently()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatTestData.CreatePlayerDecisionSession();
+        WatchtowerCombatDecision decision = GetDecision(source);
+        WatchtowerCombatMovementOption movement =
+            Assert.IsType<WatchtowerCombatMovementOption>(
+                decision.Movement);
+        EncounterParticipantState originalActor =
+            WatchtowerCombatTestData.GetParticipant(
+                source,
+                decision.ActiveCombatantId!);
+
+        Assert.NotEmpty(movement.DestinationOptions);
+
+        foreach (WatchtowerCombatMovementDestinationOption option
+            in movement.DestinationOptions)
+        {
+            WatchtowerCombatResolutionResult result =
+                WatchtowerCombatRules.Execute(
+                    source,
+                    new WatchtowerCombatMoveIntent
+                    {
+                        ExpectedEncounterRevision =
+                            decision.EncounterRevision,
+                        ActorCombatantId =
+                            decision.ActiveCombatantId!,
+                        Path = option.Path
+                    });
+            WatchtowerCombatIntentReceipt receipt =
+                Assert.IsType<WatchtowerCombatIntentReceipt>(
+                    result.SubmittedIntent);
+            WatchtowerCombatStepResult step =
+                Assert.IsType<WatchtowerCombatStepResult>(
+                    result.PrimaryStep);
+            EncounterMovementResult authoritativeMovement =
+                Assert.IsType<EncounterMovementResult>(
+                    step.Movement);
+            EncounterParticipantState movedActor =
+                WatchtowerCombatTestData.GetParticipant(
+                    result.State,
+                    decision.ActiveCombatantId!);
+
+            Assert.Equal(
+                WatchtowerCombatIntentKind.Move,
+                receipt.Kind);
+            Assert.Equal(
+                decision.ActiveCombatantId,
+                receipt.ActorCombatantId);
+            Assert.Equal(
+                decision.EncounterRevision,
+                receipt.ExpectedEncounterRevision);
+            Assert.Equal(
+                option.Path.ToArray(),
+                receipt.Path.ToArray());
+            Assert.Equal(
+                WatchtowerCombatStepKind.Movement,
+                step.Kind);
+            Assert.Equal(
+                option.Path.ToArray(),
+                authoritativeMovement.Path.ToArray());
+            Assert.Equal(
+                option.Destination,
+                authoritativeMovement.EndingPosition);
+            Assert.Equal(
+                option.MovementSpentFeet,
+                authoritativeMovement.MovementSpentFeet);
+            Assert.Equal(
+                option.Destination,
+                movedActor.Position);
+            Assert.Equal(
+                originalActor.TurnResources.MovementRemainingFeet
+                    - option.MovementSpentFeet,
+                movedActor.TurnResources.MovementRemainingFeet);
+            ApplicationSessionRules.Validate(result.State);
+        }
+    }
+
+    [Fact]
+    public void Execute_ModifiedReturnedPath_IsRevalidatedAndRejected()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatTestData.CreatePlayerDecisionSession();
+        WatchtowerCombatDecision decision = GetDecision(source);
+        WatchtowerCombatMovementDestinationOption option =
+            decision.Movement!.DestinationOptions.First(
+                candidate => candidate.Path.Count == 1);
+        GridPosition[] modifiedPath =
+            [.. option.Path, new GridPosition(-1, -1)];
+        EncounterState encounterBefore =
+            WatchtowerCombatTestData.GetEncounter(source);
+        int cursorBefore = source.RandomValuesConsumed;
+
+        Assert.ThrowsAny<ArgumentException>(() =>
+            WatchtowerCombatRules.Execute(
+                source,
+                new WatchtowerCombatMoveIntent
+                {
+                    ExpectedEncounterRevision =
+                        decision.EncounterRevision,
+                    ActorCombatantId =
+                        decision.ActiveCombatantId!,
+                    Path = modifiedPath
+                }));
+
+        Assert.Equal(
+            encounterBefore,
+            WatchtowerCombatTestData.GetEncounter(source));
+        Assert.Equal(cursorBefore, source.RandomValuesConsumed);
+    }
+
+    [Fact]
     public void Execute_Move_SupportsMultipleMovementIncrements()
     {
         ApplicationSessionState source =

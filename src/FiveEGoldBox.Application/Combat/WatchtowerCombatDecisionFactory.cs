@@ -82,6 +82,12 @@ internal static class WatchtowerCombatDecisionFactory
 
         int movementRemaining =
             activeParticipant.TurnResources.MovementRemainingFeet;
+        IReadOnlyList<WatchtowerCombatMovementDestinationOption>
+            movementDestinations = CreateMovementDestinationOptions(
+                encounter,
+                activeParticipant.Combatant.CombatantId);
+        bool hasMovementDestination =
+            movementDestinations.Count > 0;
 
         return new WatchtowerCombatDecision
         {
@@ -91,11 +97,12 @@ internal static class WatchtowerCombatDecisionFactory
             PendingDeathSavingThrowCombatantId = null,
             Movement = new WatchtowerCombatMovementOption
             {
-                IsAvailable = movementRemaining > 0,
+                IsAvailable = hasMovementDestination,
                 MovementRemainingFeet = movementRemaining,
-                UnavailabilityReason = movementRemaining > 0
+                UnavailabilityReason = hasMovementDestination
                     ? EncounterActionUnavailabilityReason.None
-                    : EncounterActionUnavailabilityReason.MovementUnavailable
+                    : EncounterActionUnavailabilityReason.MovementUnavailable,
+                DestinationOptions = movementDestinations
             },
             WeaponAttack = new WatchtowerCombatWeaponAttackOption
             {
@@ -111,6 +118,35 @@ internal static class WatchtowerCombatDecisionFactory
             },
             WinningSideId = null
         };
+    }
+
+    private static IReadOnlyList<WatchtowerCombatMovementDestinationOption>
+        CreateMovementDestinationOptions(
+            EncounterState encounter,
+            string actorCombatantId)
+    {
+        IReadOnlyList<EncounterMovementResult> movements =
+            WatchtowerCombatPathSearch.EnumerateReachableMovements(
+                encounter,
+                actorCombatantId);
+        WatchtowerCombatMovementDestinationOption[] options =
+            new WatchtowerCombatMovementDestinationOption[movements.Count];
+
+        for (int index = 0; index < movements.Count; index++)
+        {
+            EncounterMovementResult movement = movements[index];
+            GridPosition[] path = movement.Path.ToArray();
+
+            options[index] =
+                new WatchtowerCombatMovementDestinationOption
+                {
+                    Destination = movement.EndingPosition,
+                    Path = Array.AsReadOnly(path),
+                    MovementSpentFeet = movement.MovementSpentFeet
+                };
+        }
+
+        return Array.AsReadOnly(options);
     }
 
     private static WatchtowerCombatTargetOption CreateTargetOption(
