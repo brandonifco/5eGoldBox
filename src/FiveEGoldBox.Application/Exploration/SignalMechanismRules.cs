@@ -43,12 +43,29 @@ public static class SignalMechanismRules
     }
 
     public static ApplicationSessionState Activate(
+        ApplicationSessionState session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        return ActivateCanonical(
+            session,
+            WatchtowerScenarioContent.CreateRuleset());
+    }
+
+    public static ApplicationSessionState Activate(
         ApplicationSessionState session,
         ValidatedRuleset ruleset)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(ruleset);
 
+        return ActivateCanonical(session, ruleset);
+    }
+
+    private static ApplicationSessionState ActivateCanonical(
+        ApplicationSessionState session,
+        ValidatedRuleset ruleset)
+    {
         ApplicationSessionState canonicalSession =
             ApplicationSessionRules.CreateCanonical(session);
 

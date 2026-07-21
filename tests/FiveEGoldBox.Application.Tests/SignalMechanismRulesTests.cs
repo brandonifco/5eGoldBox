@@ -1,5 +1,7 @@
+using System.Text.Json;
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
+using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
@@ -472,6 +474,213 @@ public sealed class SignalMechanismRulesTests
             SignalMechanismRules.Activate(
                 WatchtowerSignalTestData.CreateSignalReadySession(),
                 WatchtowerSignalTestData.CreateRuleset(includeLongbow: false)));
+    }
+
+    [Fact]
+    public void Activate_WithoutRuleset_EntersCanonicalEncounterAndPreservesPersistentState()
+    {
+        ApplicationSessionState source =
+            CreateCanonicalSignalReadySession();
+
+        ApplicationSessionState result =
+            SignalMechanismRules.Activate(source);
+
+        Assert.Equal(
+            ApplicationMode.Encounter,
+            result.CurrentMode);
+        Assert.Equal(
+            WatchtowerScenarioProgress.SignalActivated,
+            result.Scenario.Progress);
+        Assert.Equal(
+            source.CurrentLocationId,
+            result.CurrentLocationId);
+        Assert.Null(result.Exploration);
+        Assert.Null(result.RegionalTravel);
+        Assert.Equal(source.RandomSeed, result.RandomSeed);
+        Assert.Equal(
+            source.RandomValuesConsumed + 5,
+            result.RandomValuesConsumed);
+        AssertPartyEquivalent(source.Party, result.Party);
+
+        ActiveEncounterState active =
+            Assert.IsType<ActiveEncounterState>(
+                result.ActiveEncounter);
+
+        Assert.Equal(
+            source.Exploration,
+            active.ReturnContext);
+    }
+
+    [Fact]
+    public void Activate_WithoutRuleset_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            SignalMechanismRules.Activate(null!));
+    }
+
+    [Fact]
+    public void Activate_WithoutRuleset_IsBehaviorallyEquivalentToExplicitCanonicalRuleset()
+    {
+        ApplicationSessionState source =
+            CreateCanonicalSignalReadySession();
+
+        ApplicationSessionState clientSafeResult =
+            SignalMechanismRules.Activate(source);
+        ApplicationSessionState explicitResult =
+            SignalMechanismRules.Activate(
+                source,
+                WatchtowerSignalTestData.CreateRuleset());
+
+        AssertActivatedStateEquivalent(
+            explicitResult,
+            clientSafeResult);
+    }
+
+    [Fact]
+    public void Activate_WithoutRuleset_RepeatedIndependentActivationsAreDeterministicAndIndependent()
+    {
+        ApplicationSessionState first =
+            SignalMechanismRules.Activate(
+                CreateCanonicalSignalReadySession());
+        ApplicationSessionState second =
+            SignalMechanismRules.Activate(
+                CreateCanonicalSignalReadySession());
+
+        AssertActivatedStateEquivalent(first, second);
+
+        EncounterState firstEncounter =
+            Assert.IsType<ActiveEncounterState>(
+                first.ActiveEncounter).Encounter;
+        EncounterState secondEncounter =
+            Assert.IsType<ActiveEncounterState>(
+                second.ActiveEncounter).Encounter;
+
+        Assert.NotSame(firstEncounter, secondEncounter);
+        Assert.NotSame(
+            firstEncounter.Participants,
+            secondEncounter.Participants);
+        Assert.NotSame(
+            firstEncounter.Battlefield,
+            secondEncounter.Battlefield);
+        Assert.NotSame(
+            firstEncounter.Participants[0]
+                .CombatProfile.WeaponAttacks,
+            secondEncounter.Participants[0]
+                .CombatProfile.WeaponAttacks);
+
+        EncounterParticipantState[] changedParticipants =
+            firstEncounter.Participants.ToArray();
+        changedParticipants[0] =
+            changedParticipants[0] with
+            {
+                Position = new GridPosition(4, 3)
+            };
+
+        EncounterState changedFirstEncounter =
+            firstEncounter with
+            {
+                Participants = changedParticipants
+            };
+
+        Assert.Equal(
+            new GridPosition(4, 3),
+            changedFirstEncounter.Participants[0]
+                .Position);
+        Assert.Equal(
+            firstEncounter.Participants[0].Position,
+            secondEncounter.Participants[0].Position);
+    }
+
+    private static ApplicationSessionState
+        CreateCanonicalSignalReadySession()
+    {
+        ApplicationSessionState current =
+            WatchtowerScenarioSessionFactory.CreateNew(
+                randomSeed: 8675309);
+
+        current = OutpostMissionRules.Resolve(
+            current,
+            OutpostMissionChoice.AcceptMission)
+                .State;
+        current =
+            RegionalTravelRules.BeginWatchtowerJourney(
+                current);
+
+        while (!current.RegionalTravel!.IsComplete)
+        {
+            current = RegionalTravelRules.Advance(
+                current).State;
+        }
+
+        current = ExplorationRules.EnterWatchtower(
+            current);
+        current = ExplorationRules.MoveForward(
+            current).State;
+        current = ExplorationRules.MoveForward(
+            current).State;
+        current = ExplorationRules.UseStairs(current);
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Right);
+        current = ExplorationRules.MoveForward(
+            current).State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Right);
+        current = ExplorationRules.MoveForward(
+            current).State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Left);
+
+        return ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Left);
+    }
+
+    private static void AssertActivatedStateEquivalent(
+        ApplicationSessionState expected,
+        ApplicationSessionState actual)
+    {
+        Assert.Equal(expected.ScenarioId, actual.ScenarioId);
+        Assert.Equal(
+            expected.CurrentMode,
+            actual.CurrentMode);
+        Assert.Equal(
+            expected.CurrentLocationId,
+            actual.CurrentLocationId);
+        Assert.Equal(expected.Scenario, actual.Scenario);
+        Assert.Equal(
+            expected.RandomSeed,
+            actual.RandomSeed);
+        Assert.Equal(
+            expected.RandomValuesConsumed,
+            actual.RandomValuesConsumed);
+        Assert.Equal(
+            expected.RegionalTravel,
+            actual.RegionalTravel);
+        Assert.Equal(
+            expected.Exploration,
+            actual.Exploration);
+        AssertPartyEquivalent(
+            expected.Party,
+            actual.Party);
+
+        ActiveEncounterState expectedActive =
+            Assert.IsType<ActiveEncounterState>(
+                expected.ActiveEncounter);
+        ActiveEncounterState actualActive =
+            Assert.IsType<ActiveEncounterState>(
+                actual.ActiveEncounter);
+
+        Assert.Equal(
+            expectedActive.ReturnContext,
+            actualActive.ReturnContext);
+        Assert.Equal(
+            JsonSerializer.Serialize(
+                expectedActive.Encounter),
+            JsonSerializer.Serialize(
+                actualActive.Encounter));
     }
 
     private static void AssertPartyEquivalent(
