@@ -6,7 +6,6 @@ using FiveEGoldBox.Application.Persistence;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
-using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -14,8 +13,6 @@ namespace FiveEGoldBox.Application.Tests;
 
 public sealed class WatchtowerOutcomeLifecycleTests
 {
-    private const string ScenarioId = "scenario.watchtower";
-
     private const string OutpostLocationId = "location.outpost";
 
     private const string WatchtowerLocationId =
@@ -48,16 +45,9 @@ public sealed class WatchtowerOutcomeLifecycleTests
     [Fact]
     public void WatchtowerScenario_PublicOperations_PartyVictoryProjectsPersistsAndContinuesExploration()
     {
-        PartyState startingParty = CreateCanonicalParty();
-        ValidatedRuleset ruleset =
-            WatchtowerSignalTestData.CreateRuleset();
-
         ApplicationSessionState current =
-            ApplicationSessionRules.CreateNew(
-                ScenarioId,
-                OutpostLocationId,
-                startingParty,
-                RandomSeed);
+            WatchtowerScenarioSessionFactory.CreateNew(RandomSeed);
+        PartyState startingParty = current.Party;
 
         Assert.Equal(ApplicationMode.Outpost, current.CurrentMode);
         Assert.Equal(
@@ -66,10 +56,29 @@ public sealed class WatchtowerOutcomeLifecycleTests
         Assert.Equal(OutpostLocationId, current.CurrentLocationId);
         AssertPartyEquals(startingParty, current.Party);
 
+        ApplicationSessionState beforeMissionDiscovery = current;
+        int cursorBeforeMissionDiscovery =
+            current.RandomValuesConsumed;
+        IReadOnlyList<OutpostMissionChoice> availableChoices =
+            OutpostMissionRules.GetAvailableChoices(current);
+        OutpostMissionChoice selectedMissionChoice = Assert.Single(
+            availableChoices,
+            choice => choice == OutpostMissionChoice.AcceptMission);
+
+        Assert.Same(beforeMissionDiscovery, current);
+        Assert.Equal(
+            cursorBeforeMissionDiscovery,
+            current.RandomValuesConsumed);
+        Assert.Equal(ApplicationMode.Outpost, current.CurrentMode);
+        Assert.Equal(
+            WatchtowerScenarioProgress.MissionNotAccepted,
+            current.Scenario.Progress);
+        AssertPartyEquals(startingParty, current.Party);
+
         OutpostMissionResult missionResult =
             OutpostMissionRules.Resolve(
                 current,
-                OutpostMissionChoice.AcceptMission);
+                selectedMissionChoice);
         current = missionResult.State;
 
         Assert.Equal(
@@ -80,6 +89,10 @@ public sealed class WatchtowerOutcomeLifecycleTests
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
             current.Scenario.Progress);
+
+        Assert.True(
+            RegionalTravelRules.CanBeginWatchtowerJourney(
+                current));
 
         current = RegionalTravelRules.BeginWatchtowerJourney(
             current);
@@ -93,6 +106,8 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
         while (!current.RegionalTravel!.IsComplete)
         {
+            Assert.True(RegionalTravelRules.CanAdvance(current));
+
             RegionalTravelAdvanceResult travelResult =
                 RegionalTravelRules.Advance(current);
             current = travelResult.State;
@@ -104,9 +119,11 @@ public sealed class WatchtowerOutcomeLifecycleTests
         }
 
         Assert.True(travelAdvances > 0);
+        Assert.False(RegionalTravelRules.CanAdvance(current));
         Assert.Equal(
             WatchtowerLocationId,
             current.CurrentLocationId);
+        Assert.True(ExplorationRules.CanEnterWatchtower(current));
 
         current = ExplorationRules.EnterWatchtower(current);
 
@@ -129,6 +146,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
             x: 2,
             y: 0,
             ExplorationFacing.East);
+        Assert.True(ExplorationRules.CanUseStairs(current));
         current = ExplorationRules.UseStairs(current);
 
         AssertExploration(
@@ -186,9 +204,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         int cursorBeforeSignalActivation =
             current.RandomValuesConsumed;
 
-        current = SignalMechanismRules.Activate(
-            current,
-            ruleset);
+        current = SignalMechanismRules.Activate(current);
 
         Assert.Equal(ApplicationMode.Encounter, current.CurrentMode);
         Assert.Equal(
@@ -454,10 +470,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         current = ExecuteMove(
             current,
             FighterId,
-            [
-                new GridPosition(2, 0),
-                new GridPosition(3, 1)
-            ]);
+            new GridPosition(3, 1));
         current = ExecuteAttack(
             current,
             FighterId,
@@ -494,7 +507,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
     private static ApplicationSessionState ExecuteMove(
         ApplicationSessionState source,
         string expectedActorId,
-        IReadOnlyList<GridPosition> path)
+        GridPosition expectedDestination)
     {
         WatchtowerCombatResolutionResult advanced =
             WatchtowerCombatRules.AdvanceToDecision(source);
@@ -504,6 +517,20 @@ public sealed class WatchtowerOutcomeLifecycleTests
         AssertPlayerDecision(decision, expectedActorId);
         Assert.True(decision.Movement!.IsAvailable);
 
+        WatchtowerCombatMovementDestinationOption selectedOption =
+            Assert.Single(
+                decision.Movement.DestinationOptions,
+                option => option.Destination
+                    == expectedDestination);
+
+        Assert.NotEmpty(selectedOption.Path);
+        Assert.Equal(
+            selectedOption.Destination,
+            selectedOption.Path[^1]);
+
+        string actorCombatantId = Assert.IsType<string>(
+            decision.ActiveCombatantId);
+
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 advanced.State,
@@ -511,8 +538,8 @@ public sealed class WatchtowerOutcomeLifecycleTests
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
-                    ActorCombatantId = expectedActorId,
-                    Path = path
+                    ActorCombatantId = actorCombatantId,
+                    Path = selectedOption.Path
                 });
 
         Assert.NotNull(result.SubmittedIntent);
@@ -520,17 +547,27 @@ public sealed class WatchtowerOutcomeLifecycleTests
             WatchtowerCombatIntentKind.Move,
             result.SubmittedIntent!.Kind);
         Assert.Equal(
-            expectedActorId,
+            actorCombatantId,
             result.SubmittedIntent.ActorCombatantId);
         Assert.Equal(
-            path.ToArray(),
+            decision.EncounterRevision,
+            result.SubmittedIntent.ExpectedEncounterRevision);
+        Assert.Equal(
+            selectedOption.Path.ToArray(),
             result.SubmittedIntent.Path.ToArray());
         Assert.Equal(
             WatchtowerCombatStepKind.Movement,
             result.PrimaryStep!.Kind);
         Assert.Equal(
-            expectedActorId,
+            actorCombatantId,
             result.PrimaryStep.ActorCombatantId);
+        Assert.NotNull(result.PrimaryStep.Movement);
+        Assert.Equal(
+            selectedOption.Destination,
+            result.PrimaryStep.Movement!.EndingPosition);
+        Assert.Equal(
+            selectedOption.MovementSpentFeet,
+            result.PrimaryStep.Movement.MovementSpentFeet);
 
         return result.State;
     }
@@ -568,9 +605,9 @@ public sealed class WatchtowerOutcomeLifecycleTests
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
-                    ActorCombatantId = expectedActorId,
-                    WeaponId = expectedWeaponId,
-                    TargetCombatantId = expectedTargetId
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    WeaponId = decision.WeaponAttack.WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
                 });
 
         Assert.NotNull(result.SubmittedIntent);
@@ -578,13 +615,13 @@ public sealed class WatchtowerOutcomeLifecycleTests
             WatchtowerCombatIntentKind.WeaponAttack,
             result.SubmittedIntent!.Kind);
         Assert.Equal(
-            expectedActorId,
+            decision.ActiveCombatantId,
             result.SubmittedIntent.ActorCombatantId);
         Assert.Equal(
-            expectedWeaponId,
+            decision.WeaponAttack.WeaponId,
             result.SubmittedIntent.WeaponId);
         Assert.Equal(
-            expectedTargetId,
+            target.TargetCombatantId,
             result.SubmittedIntent.TargetCombatantId);
         Assert.Equal(
             WatchtowerCombatStepKind.WeaponAttack,
@@ -618,7 +655,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
-                    ActorCombatantId = expectedActorId
+                    ActorCombatantId = decision.ActiveCombatantId!
                 });
 
         Assert.NotNull(result.SubmittedIntent);
@@ -626,7 +663,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
             WatchtowerCombatIntentKind.EndTurn,
             result.SubmittedIntent!.Kind);
         Assert.Equal(
-            expectedActorId,
+            decision.ActiveCombatantId,
             result.SubmittedIntent.ActorCombatantId);
         Assert.NotNull(result.PrimaryStep);
         Assert.Equal(
@@ -832,84 +869,4 @@ public sealed class WatchtowerOutcomeLifecycleTests
                 StringComparison.Ordinal));
     }
 
-    private static PartyState CreateCanonicalParty()
-    {
-        return new PartyState
-        {
-            PartyId = "party.player",
-            Members =
-            [
-                CreatePartyMember(
-                    FighterId,
-                    "character.fighter",
-                    "Fighter",
-                    "class.fighter",
-                    maximumHitPoints: 12,
-                    currentHitPoints: 8,
-                    temporaryHitPoints: 2,
-                    ammunition: null),
-                CreatePartyMember(
-                    BarbarianId,
-                    "character.barbarian",
-                    "Barbarian",
-                    "class.barbarian",
-                    maximumHitPoints: 14,
-                    currentHitPoints: 14,
-                    temporaryHitPoints: 0,
-                    ammunition: null),
-                CreatePartyMember(
-                    RangerId,
-                    "character.ranger",
-                    "Ranger",
-                    "class.ranger",
-                    maximumHitPoints: 11,
-                    currentHitPoints: 11,
-                    temporaryHitPoints: 0,
-                    ammunition: new AmmunitionState
-                    {
-                        WeaponId = LongbowId,
-                        AmmunitionItemId = ArrowId,
-                        RemainingQuantity = 7
-                    })
-            ]
-        };
-    }
-
-    private static PartyMemberState CreatePartyMember(
-        string partyMemberId,
-        string characterDefinitionId,
-        string displayName,
-        string classId,
-        int maximumHitPoints,
-        int currentHitPoints,
-        int temporaryHitPoints,
-        AmmunitionState? ammunition)
-    {
-        return new PartyMemberState
-        {
-            PartyMemberId = partyMemberId,
-            CharacterDefinitionId = characterDefinitionId,
-            DisplayName = displayName,
-            ClassId = classId,
-            ZeroHitPointPolicy =
-                CombatantZeroHitPointPolicy.DeathSavingThrows,
-            Health = new CombatantHealthState
-            {
-                HitPoints = new HitPointState
-                {
-                    MaximumHitPoints = maximumHitPoints,
-                    CurrentHitPoints = currentHitPoints,
-                    TemporaryHitPoints = temporaryHitPoints
-                },
-                DeathSavingThrows = new DeathSavingThrowState
-                {
-                    SuccessCount = 0,
-                    FailureCount = 0,
-                    IsStable = false
-                },
-                IsInstantlyDead = false
-            },
-            Ammunition = ammunition
-        };
-    }
 }
