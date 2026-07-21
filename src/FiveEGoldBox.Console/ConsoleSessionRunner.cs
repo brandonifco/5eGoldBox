@@ -5,7 +5,7 @@ using FiveEGoldBox.Application.Scenarios;
 
 namespace FiveEGoldBox.Console;
 
-internal sealed class ConsoleSessionRunner
+internal sealed partial class ConsoleSessionRunner
 {
     internal int Run(
         TextReader input,
@@ -157,43 +157,11 @@ internal sealed class ConsoleSessionRunner
         string savePath,
         ApplicationSessionState session)
     {
-        while (true)
-        {
-            RenderSessionSummary(output, session);
-
-            bool canSerialize =
-                ManualSaveSerializer.CanSerialize(session);
-
-            WriteSessionMenu(output, canSerialize);
-
-            string? selection = input.ReadLine();
-
-            if (selection is null)
-            {
-                return 0;
-            }
-
-            int maximumSelection = canSerialize ? 3 : 2;
-
-            switch (ParseSelection(
-                selection,
-                maximumSelection))
-            {
-                case 1:
-                    RenderParty(output, session);
-                    break;
-                case 2 when canSerialize:
-                    SaveSession(output, savePath, session);
-                    break;
-                case 2:
-                    return 0;
-                case 3 when canSerialize:
-                    return 0;
-                default:
-                    output.WriteLine("Invalid selection.");
-                    break;
-            }
-        }
+        return RunNoncombatSession(
+            input,
+            output,
+            savePath,
+            session);
     }
 
     private static void WriteStartMenu(TextWriter output)
@@ -202,27 +170,6 @@ internal sealed class ConsoleSessionRunner
         output.WriteLine("1. New Game");
         output.WriteLine("2. Load Game");
         output.WriteLine("3. Exit");
-        output.Write("Selection: ");
-    }
-
-    private static void WriteSessionMenu(
-        TextWriter output,
-        bool canSerialize)
-    {
-        output.WriteLine();
-        output.WriteLine("Session Menu");
-        output.WriteLine("1. Inspect Party");
-
-        if (canSerialize)
-        {
-            output.WriteLine("2. Save");
-            output.WriteLine("3. Exit");
-        }
-        else
-        {
-            output.WriteLine("2. Exit");
-        }
-
         output.Write("Selection: ");
     }
 

@@ -107,7 +107,7 @@ public sealed class ConsoleSessionRunnerTests
         ConsoleSessionRunner runner = new();
 
         int exitCode = runner.Run(
-            new StringReader("1\n3\n"),
+            new StringReader("1\n5\n"),
             new StringWriter(),
             temporary.SavePath,
             RandomSeed);
@@ -122,7 +122,7 @@ public sealed class ConsoleSessionRunnerTests
         ConsoleSessionRunner runner = new();
 
         _ = runner.Run(
-            new StringReader("1\n3\n"),
+            new StringReader("1\n5\n"),
             new StringWriter(),
             temporary.SavePath,
             RandomSeed);
@@ -136,7 +136,7 @@ public sealed class ConsoleSessionRunnerTests
         using TemporaryDirectory temporary = new();
 
         string output = Run(
-            "1\n3\n",
+            "1\n5\n",
             temporary.SavePath,
             RandomSeed);
 
@@ -155,7 +155,7 @@ public sealed class ConsoleSessionRunnerTests
         using TemporaryDirectory temporary = new();
 
         string output = Run(
-            "1\n3\n",
+            "1\n5\n",
             temporary.SavePath,
             RandomSeed);
 
@@ -169,11 +169,11 @@ public sealed class ConsoleSessionRunnerTests
         using TemporaryDirectory secondTemporary = new();
 
         string firstOutput = Run(
-            "1\n3\n",
+            "1\n5\n",
             firstTemporary.SavePath,
             RandomSeed);
         string secondOutput = Run(
-            "1\n3\n",
+            "1\n5\n",
             secondTemporary.SavePath,
             RandomSeed);
 
@@ -209,7 +209,7 @@ public sealed class ConsoleSessionRunnerTests
             CreateOutpostSession());
 
         string output = Run(
-            "2\n3\n",
+            "2\n5\n",
             temporary.SavePath,
             RandomSeed);
 
@@ -226,7 +226,7 @@ public sealed class ConsoleSessionRunnerTests
         WriteSave(temporary.SavePath, session);
 
         string output = Run(
-            "2\n3\n",
+            "2\n6\n",
             temporary.SavePath,
             RandomSeed);
 
@@ -379,8 +379,8 @@ public sealed class ConsoleSessionRunnerTests
             temporary.SavePath,
             CreateOutpostSession());
 
-        Assert.Contains("2. Save", output);
-        Assert.Contains("3. Exit", output);
+        Assert.Contains("4. Save", output);
+        Assert.Contains("5. Exit", output);
     }
 
     [Fact]
@@ -393,8 +393,8 @@ public sealed class ConsoleSessionRunnerTests
             temporary.SavePath,
             CreateExplorationSession());
 
-        Assert.Contains("2. Save", output);
-        Assert.Contains("3. Exit", output);
+        Assert.Contains("5. Save", output);
+        Assert.Contains("6. Exit", output);
     }
 
     [Fact]
@@ -421,8 +421,10 @@ public sealed class ConsoleSessionRunnerTests
             temporary.SavePath,
             CreateRegionalTravelSession());
 
-        Assert.DoesNotContain("2. Save", output);
-        Assert.Contains("2. Exit", output);
+        Assert.DoesNotContain("Save", GetSessionMenu(output));
+        Assert.Contains("1. Advance Travel", output);
+        Assert.Contains("2. Inspect Party", output);
+        Assert.Contains("3. Exit", output);
     }
 
     [Fact]
@@ -447,7 +449,7 @@ public sealed class ConsoleSessionRunnerTests
             CreateOutpostSession();
 
         _ = RunSession(
-            "2\n3\n",
+            "4\n5\n",
             temporary.SavePath,
             session);
 
@@ -465,7 +467,7 @@ public sealed class ConsoleSessionRunnerTests
         File.WriteAllText(temporary.SavePath, "old data");
 
         _ = RunSession(
-            "2\n3\n",
+            "5\n6\n",
             temporary.SavePath,
             session);
 
@@ -482,7 +484,7 @@ public sealed class ConsoleSessionRunnerTests
             CreateOutpostSession();
 
         string output = RunSession(
-            "2\n3\n",
+            "4\n5\n",
             temporary.DirectoryPath,
             session);
 
@@ -506,7 +508,7 @@ public sealed class ConsoleSessionRunnerTests
             session.RandomValuesConsumed;
 
         _ = RunSession(
-            "2\n3\n",
+            "5\n6\n",
             temporary.SavePath,
             session);
 
@@ -527,14 +529,14 @@ public sealed class ConsoleSessionRunnerTests
         ConsoleSessionRunner secondRunner = new();
 
         _ = firstRunner.RunSession(
-            new StringReader("2\n3\n"),
+            new StringReader("5\n6\n"),
             new StringWriter(),
             temporary.SavePath,
             CreateExplorationSession());
         StringWriter secondOutput = new();
 
         int exitCode = secondRunner.Run(
-            new StringReader("2\n3\n"),
+            new StringReader("2\n6\n"),
             secondOutput,
             temporary.SavePath,
             RandomSeed);
@@ -771,7 +773,7 @@ public sealed class ConsoleSessionRunnerTests
         var party = session.Party;
 
         string output = RunSession(
-            "9\n3\n",
+            "9\n5\n",
             temporary.SavePath,
             session);
 
@@ -793,9 +795,11 @@ public sealed class ConsoleSessionRunnerTests
             temporary.SavePath,
             CreateOutpostSession());
 
-        Assert.Contains("1. Inspect Party", output);
-        Assert.Contains("2. Save", output);
-        Assert.Contains("3. Exit", output);
+        Assert.Contains("1. Accept Mission", output);
+        Assert.Contains("2. Not Yet", output);
+        Assert.Contains("3. Inspect Party", output);
+        Assert.Contains("4. Save", output);
+        Assert.Contains("5. Exit", output);
     }
 
     [Fact]
@@ -808,9 +812,10 @@ public sealed class ConsoleSessionRunnerTests
             temporary.SavePath,
             CreateRegionalTravelSession());
 
-        Assert.Contains("1. Inspect Party", output);
-        Assert.Contains("2. Exit", output);
-        Assert.DoesNotContain("3. Exit", output);
+        Assert.Contains("1. Advance Travel", output);
+        Assert.Contains("2. Inspect Party", output);
+        Assert.Contains("3. Exit", output);
+        Assert.DoesNotContain("4. Exit", output);
     }
 
     [Fact]
