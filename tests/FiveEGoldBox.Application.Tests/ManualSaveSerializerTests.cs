@@ -1,12 +1,13 @@
-using FiveEGoldBox.Application.Encounters;
 using System.Text.Json.Nodes;
+using FiveEGoldBox.Application.Combat;
+using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
-using FiveEGoldBox.Application.Travel;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Persistence;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
+using FiveEGoldBox.Application.Travel;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -14,6 +15,156 @@ namespace FiveEGoldBox.Application.Tests;
 
 public sealed class ManualSaveSerializerTests
 {
+    [Fact]
+    public void CanSerialize_ValidOutpostSession_ReturnsTrue()
+    {
+        ApplicationSessionState session =
+            CreateMissionNotAcceptedSession();
+
+        Assert.True(
+            ManualSaveSerializer.CanSerialize(session));
+    }
+
+    [Fact]
+    public void CanSerialize_ValidExplorationSession_ReturnsTrue()
+    {
+        ApplicationSessionState session =
+            CreateExplorationSession();
+
+        Assert.True(
+            ManualSaveSerializer.CanSerialize(session));
+    }
+
+    [Fact]
+    public void CanSerialize_ValidScenarioConclusionSession_ReturnsTrue()
+    {
+        ApplicationSessionState session =
+            WatchtowerCombatOutcomeRules.Finalize(
+                WatchtowerCombatOutcomeTestData
+                    .CreateRaiderVictorySession())
+                .State;
+
+        Assert.True(
+            ManualSaveSerializer.CanSerialize(session));
+    }
+
+    [Fact]
+    public void CanSerialize_ValidRegionalTravelSession_ReturnsFalse()
+    {
+        ApplicationSessionState session =
+            CreateRegionalTravelSession();
+
+        Assert.False(
+            ManualSaveSerializer.CanSerialize(session));
+    }
+
+    [Fact]
+    public void CanSerialize_ValidActiveEncounterSession_ReturnsFalse()
+    {
+        ApplicationSessionState session =
+            WatchtowerCombatOutcomeTestData
+                .CreateActiveSession();
+
+        Assert.False(
+            ManualSaveSerializer.CanSerialize(session));
+    }
+
+    [Fact]
+    public void CanSerialize_ValidCompletedUnreconciledEncounterSession_ReturnsFalse()
+    {
+        ApplicationSessionState session =
+            WatchtowerCombatOutcomeTestData
+                .CreatePartyVictorySession();
+
+        Assert.False(
+            ManualSaveSerializer.CanSerialize(session));
+    }
+
+    [Fact]
+    public void CanSerialize_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            ManualSaveSerializer.CanSerialize(null!));
+    }
+
+    [Fact]
+    public void CanSerialize_WithMalformedOutpostSession_Throws()
+    {
+        ApplicationSessionState session =
+            CreateMissionNotAcceptedSession() with
+            {
+                RegionalTravel = CreateRegionalTravelSession()
+                    .RegionalTravel
+            };
+
+        Assert.Throws<ArgumentException>(() =>
+            ManualSaveSerializer.CanSerialize(session));
+    }
+
+    [Fact]
+    public void CanSerialize_WithMalformedExplorationSession_Throws()
+    {
+        ApplicationSessionState session =
+            CreateExplorationSession() with
+            {
+                Exploration = null
+            };
+
+        Assert.Throws<ArgumentException>(() =>
+            ManualSaveSerializer.CanSerialize(session));
+    }
+
+    [Fact]
+    public void CanSerialize_DoesNotMutateStateOrConsumeRandomness()
+    {
+        ApplicationSessionState session =
+            CreateExplorationSession();
+        PartyState party = session.Party;
+        PartyMemberState[] members =
+            session.Party.Members.ToArray();
+        WatchtowerScenarioState scenario =
+            session.Scenario;
+        ExplorationState? exploration =
+            session.Exploration;
+        int randomSeed = session.RandomSeed;
+        int randomValuesConsumed =
+            session.RandomValuesConsumed;
+        WatchtowerScenarioProgress progress =
+            session.Scenario.Progress;
+        ApplicationMode mode = session.CurrentMode;
+
+        bool canSerialize =
+            ManualSaveSerializer.CanSerialize(session);
+
+        Assert.True(canSerialize);
+        Assert.Same(party, session.Party);
+        Assert.Equal(members, session.Party.Members);
+        Assert.Same(scenario, session.Scenario);
+        Assert.Same(exploration, session.Exploration);
+        Assert.Equal(randomSeed, session.RandomSeed);
+        Assert.Equal(
+            randomValuesConsumed,
+            session.RandomValuesConsumed);
+        Assert.Equal(progress, session.Scenario.Progress);
+        Assert.Equal(mode, session.CurrentMode);
+    }
+
+    [Fact]
+    public void CanSerialize_RepeatedDiscoveryFromValueEquivalentState_IsValueEquivalent()
+    {
+        ApplicationSessionState firstSession =
+            CreateExplorationSession();
+        ApplicationSessionState secondSession =
+            CreateExplorationSession();
+
+        bool first =
+            ManualSaveSerializer.CanSerialize(firstSession);
+        bool second =
+            ManualSaveSerializer.CanSerialize(secondSession);
+
+        Assert.Equal(first, second);
+    }
+
     [Fact]
     public void SerializeAndDeserialize_ValidOutpostSession_PreservesMode()
     {

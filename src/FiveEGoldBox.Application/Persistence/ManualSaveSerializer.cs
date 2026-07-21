@@ -11,6 +11,16 @@ public static class ManualSaveSerializer
     private static readonly JsonSerializerOptions
         SerializerOptions = CreateSerializerOptions();
 
+    public static bool CanSerialize(
+        ApplicationSessionState session)
+    {
+        ApplicationSessionState canonicalSession =
+            ApplicationSessionRules.CreateCanonical(session);
+
+        return IsSaveableMode(
+            canonicalSession.CurrentMode);
+    }
+
     public static string Serialize(
         ApplicationSessionState session)
     {
@@ -98,15 +108,21 @@ public static class ManualSaveSerializer
     private static void ValidateSaveableMode(
         ApplicationSessionState session)
     {
-        if (session.CurrentMode is not (
-            ApplicationMode.Outpost
-            or ApplicationMode.Exploration
-            or ApplicationMode.ScenarioConclusion))
+        if (!IsSaveableMode(session.CurrentMode))
         {
             throw new ArgumentException(
                 "Only outpost, exploration, and scenario-conclusion sessions can be stored in the manual save during this application phase.",
                 nameof(session));
         }
+    }
+
+    private static bool IsSaveableMode(
+        ApplicationMode mode)
+    {
+        return mode is
+            ApplicationMode.Outpost
+            or ApplicationMode.Exploration
+            or ApplicationMode.ScenarioConclusion;
     }
 
     private static JsonSerializerOptions
