@@ -9,4 +9,8 @@ public sealed record WatchtowerCombatMovementOption
     public required int MovementRemainingFeet { get; init; }
 
     public required EncounterActionUnavailabilityReason UnavailabilityReason { get; init; }
+
+    public IReadOnlyList<WatchtowerCombatMovementDestinationOption>
+        DestinationOptions { get; init; }
+            = Array.Empty<WatchtowerCombatMovementDestinationOption>();
 }

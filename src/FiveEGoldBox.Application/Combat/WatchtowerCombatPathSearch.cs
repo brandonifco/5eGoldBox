@@ -19,6 +19,52 @@ internal static class WatchtowerCombatPathSearch
         new(1, 1)
     ];
 
+    internal static IReadOnlyList<EncounterMovementResult>
+        EnumerateReachableMovements(
+            EncounterState state,
+            string actorCombatantId)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+
+        EncounterParticipantState actor =
+            WatchtowerCombatDecisionFactory.FindParticipant(
+                state,
+                actorCombatantId);
+
+        int maximumSteps =
+            actor.TurnResources.MovementRemainingFeet
+            / FeetPerStep;
+
+        if (maximumSteps <= 0)
+        {
+            return Array.Empty<EncounterMovementResult>();
+        }
+
+        List<EncounterMovementResult> results = [];
+
+        foreach (IReadOnlyList<GridPosition> path
+            in EnumerateShortestPaths(
+                state,
+                actorCombatantId,
+                actor.Position,
+                maximumSteps))
+        {
+            results.Add(
+                EncounterMovementRules.Resolve(
+                    state,
+                    new EncounterMovementCommand
+                    {
+                        ExpectedRevision = state.Revision,
+                        ActorCombatantId = actorCombatantId,
+                        Path = path
+                    }));
+        }
+
+        results.Sort(CompareMovementResults);
+
+        return Array.AsReadOnly(results.ToArray());
+    }
+
     internal static EncounterMovementResult? FindMovement(
         EncounterState state,
         string actorCombatantId,
@@ -48,38 +94,17 @@ internal static class WatchtowerCombatPathSearch
                 nameof(weaponId));
         }
 
-        int maximumSteps =
-            actor.TurnResources.MovementRemainingFeet
-            / FeetPerStep;
-
-        if (maximumSteps <= 0)
-        {
-            return null;
-        }
-
         List<EncounterMovementResult> attackEnabled = [];
         List<EncounterMovementResult> progress = [];
         int startingTargetDistance = DistanceFeet(
             actor.Position,
             target.Position);
 
-        foreach (IReadOnlyList<GridPosition> path
-            in EnumerateShortestPaths(
+        foreach (EncounterMovementResult movement
+            in EnumerateReachableMovements(
                 state,
-                actorCombatantId,
-                actor.Position,
-                maximumSteps))
+                actorCombatantId))
         {
-            EncounterMovementResult movement =
-                EncounterMovementRules.Resolve(
-                    state,
-                    new EncounterMovementCommand
-                    {
-                        ExpectedRevision = state.Revision,
-                        ActorCombatantId = actorCombatantId,
-                        Path = path
-                    });
-
             EncounterWeaponAttackPrerequisiteEvaluation prerequisites =
                 EncounterWeaponAttackPrerequisiteRules.Evaluate(
                     movement.State,
@@ -196,6 +221,63 @@ internal static class WatchtowerCombatPathSearch
             && position.X < battlefield.Width
             && position.Y >= 0
             && position.Y < battlefield.Height;
+    }
+
+    private static int CompareMovementResults(
+        EncounterMovementResult left,
+        EncounterMovementResult right)
+    {
+        int comparison = left.EndingPosition.Y.CompareTo(
+            right.EndingPosition.Y);
+
+        if (comparison != 0)
+        {
+            return comparison;
+        }
+
+        comparison = left.EndingPosition.X.CompareTo(
+            right.EndingPosition.X);
+
+        if (comparison != 0)
+        {
+            return comparison;
+        }
+
+        comparison = left.MovementSpentFeet.CompareTo(
+            right.MovementSpentFeet);
+
+        if (comparison != 0)
+        {
+            return comparison;
+        }
+
+        return ComparePaths(left.Path, right.Path);
+    }
+
+    private static int ComparePaths(
+        IReadOnlyList<GridPosition> left,
+        IReadOnlyList<GridPosition> right)
+    {
+        int sharedCount = Math.Min(left.Count, right.Count);
+
+        for (int index = 0; index < sharedCount; index++)
+        {
+            int comparison = left[index].Y.CompareTo(right[index].Y);
+
+            if (comparison != 0)
+            {
+                return comparison;
+            }
+
+            comparison = left[index].X.CompareTo(right[index].X);
+
+            if (comparison != 0)
+            {
+                return comparison;
+            }
+        }
+
+        return left.Count.CompareTo(right.Count);
     }
 
     private static int DistanceFeet(
