@@ -8,7 +8,7 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Sessions;
 
-public static class ApplicationSessionRules
+internal static class ApplicationSessionRules
 {
     private const string FighterClassId = "class.fighter";
 

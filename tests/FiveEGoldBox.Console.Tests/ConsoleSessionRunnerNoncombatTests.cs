@@ -995,7 +995,8 @@ public sealed class ConsoleSessionRunnerNoncombatTests
                 Exploration = null
             };
 
-        ApplicationSessionRules.Validate(conclusion);
+        Assert.True(
+            ManualSaveSerializer.CanSerialize(conclusion));
         return conclusion;
     }
 
