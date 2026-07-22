@@ -78,14 +78,18 @@ public sealed class RulesetIndexTests
 
         RulesetIndex index = new(ruleset);
 
-        Assert.Same(ruleset, index.Ruleset);
-        Assert.Same(race, index.RacesById["race.test"]);
-        Assert.Same(characterClass, index.ClassesById["class.test"]);
-        Assert.Same(background, index.BackgroundsById["background.test"]);
-        Assert.Same(skill, index.SkillsById["skill.test"]);
-        Assert.Same(armor, index.ArmorsById["armor.test"]);
-        Assert.Same(weapon, index.WeaponsById["weapon.test"]);
-        Assert.Same(equipmentItem, index.EquipmentItemsById["item.test"]);
+        Assert.NotSame(ruleset, index.Ruleset);
+        Assert.Same(index.Ruleset.Races.Single(), index.RacesById["race.test"]);
+        Assert.Same(index.Ruleset.Classes.Single(), index.ClassesById["class.test"]);
+        Assert.Same(
+            index.Ruleset.Backgrounds.Single(),
+            index.BackgroundsById["background.test"]);
+        Assert.Same(index.Ruleset.Skills.Single(), index.SkillsById["skill.test"]);
+        Assert.Same(index.Ruleset.Armors.Single(), index.ArmorsById["armor.test"]);
+        Assert.Same(index.Ruleset.Weapons.Single(), index.WeaponsById["weapon.test"]);
+        Assert.Same(
+            index.Ruleset.EquipmentItems.Single(),
+            index.EquipmentItemsById["item.test"]);
     }
 
     [Fact]

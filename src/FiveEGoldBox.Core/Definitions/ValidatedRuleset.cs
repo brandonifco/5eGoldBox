@@ -27,6 +27,6 @@ public sealed class ValidatedRuleset
 
         RulesetIndex index = new(definition);
 
-        return RulesetLoadResult.Success(new ValidatedRuleset(definition, index));
+        return RulesetLoadResult.Success(new ValidatedRuleset(index.Ruleset, index));
     }
 }

@@ -17,8 +17,8 @@ public sealed partial class CharacterResolver
     {
         ArgumentNullException.ThrowIfNull(ruleset);
 
-        _ruleset = ruleset;
         _rulesetIndex = new RulesetIndex(ruleset);
+        _ruleset = _rulesetIndex.Ruleset;
     }
 
     public CharacterResolver(ValidatedRuleset ruleset)

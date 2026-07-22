@@ -15,8 +15,8 @@ public sealed class ValidatedRulesetTests
         Assert.True(result.IsValid);
         Assert.True(result.Validation.IsValid);
         Assert.NotNull(result.Ruleset);
-        Assert.Same(definition, result.Ruleset.Definition);
-        Assert.Same(definition, result.Ruleset.Index.Ruleset);
+        Assert.NotSame(definition, result.Ruleset.Definition);
+        Assert.Same(result.Ruleset.Definition, result.Ruleset.Index.Ruleset);
         Assert.True(result.Ruleset.Index.RacesById.ContainsKey("race.human"));
         Assert.True(result.Ruleset.Index.ClassesById.ContainsKey("class.fighter"));
     }

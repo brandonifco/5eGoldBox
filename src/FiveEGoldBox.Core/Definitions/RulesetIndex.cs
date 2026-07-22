@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace FiveEGoldBox.Core.Definitions;
 
 public sealed class RulesetIndex
@@ -6,14 +8,14 @@ public sealed class RulesetIndex
     {
         ArgumentNullException.ThrowIfNull(ruleset);
 
-        Ruleset = ruleset;
-        RacesById = ruleset.Races.ToDictionary(race => race.Id);
-        ClassesById = ruleset.Classes.ToDictionary(characterClass => characterClass.Id);
-        BackgroundsById = ruleset.Backgrounds.ToDictionary(background => background.Id);
-        SkillsById = ruleset.Skills.ToDictionary(skill => skill.Id);
-        ArmorsById = ruleset.Armors.ToDictionary(armor => armor.Id);
-        WeaponsById = ruleset.Weapons.ToDictionary(weapon => weapon.Id);
-        EquipmentItemsById = ruleset.EquipmentItems.ToDictionary(item => item.Id);
+        Ruleset = RulesetDefinitionCanonicalizer.Create(ruleset);
+        RacesById = CreateIndex(Ruleset.Races, race => race.Id);
+        ClassesById = CreateIndex(Ruleset.Classes, characterClass => characterClass.Id);
+        BackgroundsById = CreateIndex(Ruleset.Backgrounds, background => background.Id);
+        SkillsById = CreateIndex(Ruleset.Skills, skill => skill.Id);
+        ArmorsById = CreateIndex(Ruleset.Armors, armor => armor.Id);
+        WeaponsById = CreateIndex(Ruleset.Weapons, weapon => weapon.Id);
+        EquipmentItemsById = CreateIndex(Ruleset.EquipmentItems, item => item.Id);
     }
 
     public RulesetDefinition Ruleset { get; }
@@ -31,4 +33,13 @@ public sealed class RulesetIndex
     public IReadOnlyDictionary<string, WeaponDefinition> WeaponsById { get; }
 
     public IReadOnlyDictionary<string, EquipmentItemDefinition> EquipmentItemsById { get; }
+
+    private static IReadOnlyDictionary<string, TDefinition> CreateIndex<TDefinition>(
+        IEnumerable<TDefinition> definitions,
+        Func<TDefinition, string> idSelector)
+    {
+        Dictionary<string, TDefinition> index = definitions.ToDictionary(idSelector);
+
+        return new ReadOnlyDictionary<string, TDefinition>(index);
+    }
 }
