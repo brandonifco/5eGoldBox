@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Internal;
 
 namespace FiveEGoldBox.Core.Characters;
 
@@ -31,10 +32,11 @@ public sealed partial class CharacterResolver
     {
         if (_rulesetIndex is null || _rulesetIndex.EquipmentItemsById.Count == 0)
         {
-            return Array.Empty<InventoryItemSnapshot>();
+            return CoreCollectionProtection.ProtectList(
+                Array.Empty<InventoryItemSnapshot>());
         }
 
-        return draft.InventoryItems
+        IEnumerable<InventoryItemSnapshot> items = draft.InventoryItems
             .Select(inventoryItem =>
             {
                 EquipmentItemDefinition? definition = _rulesetIndex.EquipmentItemsById
@@ -56,12 +58,13 @@ public sealed partial class CharacterResolver
                     TotalValueInCopperPieces = definition.CostInCopperPieces is null
                         ? null
                         : definition.CostInCopperPieces * inventoryItem.Quantity,
-                    Tags = definition.Tags
+                    Tags = CoreCollectionProtection.ProtectList(definition.Tags)
                 };
             })
             .Where(item => item is not null)
-            .Cast<InventoryItemSnapshot>()
-            .ToArray();
+            .Cast<InventoryItemSnapshot>();
+
+        return CoreCollectionProtection.ProtectList(items);
     }
 
     private decimal CalculateInventoryWeight(CharacterDraft draft)

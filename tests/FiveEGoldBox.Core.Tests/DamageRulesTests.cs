@@ -610,4 +610,163 @@ public sealed class DamageRulesTests
         Assert.Equal([DamageResponseType.Resistance], result.ResponseTypes);
         Assert.Equal(4, result.FinalDamage);
     }
+
+    [Fact]
+    public void ResolveDamageRoll_ProtectsRollsAndCalculatedValues()
+    {
+        DamageDice damage = new()
+        {
+            Count = 2,
+            Die = DieType.D6
+        };
+        List<int> rolls = [2, 5];
+
+        DamageRollResult result = DamageRules.ResolveDamageRoll(
+            damage,
+            rolls,
+            damageBonus: 3);
+
+        rolls[0] = 6;
+        rolls.Add(6);
+
+        Assert.Equal([2, 5], result.Rolls);
+        Assert.Equal(7, result.DiceTotal);
+        Assert.Equal(3, result.DamageBonus);
+        Assert.Equal(10, result.Total);
+        Assert.False(result.Rolls is int[]);
+        Assert.False(result.Rolls is List<int>);
+
+        IList<int> mutableRolls = Assert.IsAssignableFrom<IList<int>>(result.Rolls);
+
+        Assert.Throws<NotSupportedException>(() => mutableRolls[0] = 6);
+        Assert.Equal([2, 5], result.Rolls);
+        Assert.Equal(7, result.DiceTotal);
+        Assert.Equal(10, result.Total);
+    }
+
+    [Fact]
+    public void ResolveDamage_ProtectsResponseTypesAndFinalDamage()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D6
+        };
+        List<int> rolls = [5];
+        List<DamageResponseType> responseTypes =
+        [
+            DamageResponseType.Resistance,
+            DamageResponseType.Vulnerability,
+            DamageResponseType.Resistance
+        ];
+
+        DamageResolutionResult result = DamageRules.ResolveDamage(
+            damage,
+            rolls,
+            damageBonus: 1,
+            responseTypes);
+
+        responseTypes.Clear();
+
+        Assert.Empty(responseTypes);
+        Assert.Equal(
+            [
+                DamageResponseType.Resistance,
+                DamageResponseType.Vulnerability,
+                DamageResponseType.Resistance
+            ],
+            result.ResponseTypes);
+        Assert.Equal(6, result.DamageRoll.Total);
+        Assert.Equal(6, result.FinalDamage);
+        Assert.False(result.ResponseTypes is DamageResponseType[]);
+        Assert.False(result.ResponseTypes is List<DamageResponseType>);
+
+        IList<DamageResponseType> mutableResponses =
+            Assert.IsAssignableFrom<IList<DamageResponseType>>(result.ResponseTypes);
+
+        Assert.Throws<NotSupportedException>(() => mutableResponses.Clear());
+        Assert.Equal(6, result.FinalDamage);
+    }
+
+    [Fact]
+    public void ResolveAttackDamage_WithHit_UsesProtectedDamageAndResponseCollections()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+        List<int> rolls = [7];
+        List<DamageResponseType> responseTypes =
+        [
+            DamageResponseType.Resistance,
+            DamageResponseType.Vulnerability
+        ];
+
+        AttackDamageResolutionResult result = DamageRules.ResolveAttackDamage(
+            damage,
+            AttackRollOutcome.Hit,
+            rolls,
+            damageBonus: 2,
+            responseTypes);
+
+        rolls[0] = 1;
+        responseTypes.Clear();
+
+        Assert.NotNull(result.DamageRoll);
+        Assert.Equal([7], result.DamageRoll.Rolls);
+        Assert.Equal(
+            [DamageResponseType.Resistance, DamageResponseType.Vulnerability],
+            result.ResponseTypes);
+        Assert.Equal(9, result.DamageRoll.Total);
+        Assert.Equal(8, result.FinalDamage);
+        Assert.False(result.ResponseTypes is DamageResponseType[]);
+        Assert.False(result.ResponseTypes is List<DamageResponseType>);
+
+        IList<DamageResponseType> mutableResponses =
+            Assert.IsAssignableFrom<IList<DamageResponseType>>(result.ResponseTypes);
+
+        Assert.Throws<NotSupportedException>(() => mutableResponses[0] = DamageResponseType.Immunity);
+        Assert.Equal(8, result.FinalDamage);
+    }
+
+    [Fact]
+    public void ResolveAttackDamage_WithMiss_ProtectsResponsesWithoutDamageRoll()
+    {
+        DamageDice damage = new()
+        {
+            Count = 1,
+            Die = DieType.D8
+        };
+        List<DamageResponseType> responseTypes =
+        [
+            DamageResponseType.Vulnerability,
+            DamageResponseType.Resistance
+        ];
+
+        AttackDamageResolutionResult result = DamageRules.ResolveAttackDamage(
+            damage,
+            AttackRollOutcome.Miss,
+            rolls: [],
+            damageBonus: 2,
+            responseTypes);
+
+        responseTypes.Clear();
+
+        Assert.Empty(responseTypes);
+        Assert.Null(result.DamageDice);
+        Assert.Null(result.DamageRoll);
+        Assert.Equal(
+            [DamageResponseType.Vulnerability, DamageResponseType.Resistance],
+            result.ResponseTypes);
+        Assert.Equal(0, result.FinalDamage);
+        Assert.False(result.ResponseTypes is DamageResponseType[]);
+        Assert.False(result.ResponseTypes is List<DamageResponseType>);
+
+        IList<DamageResponseType> mutableResponses =
+            Assert.IsAssignableFrom<IList<DamageResponseType>>(result.ResponseTypes);
+
+        Assert.Throws<NotSupportedException>(() => mutableResponses.RemoveAt(0));
+        Assert.Equal(0, result.FinalDamage);
+    }
 }

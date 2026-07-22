@@ -5,6 +5,23 @@ namespace FiveEGoldBox.Core.Tests;
 public sealed class StandardArrayRulesTests
 {
     [Fact]
+    public void Scores_RejectsDirectMutationAndPreservesStandardValues()
+    {
+        IReadOnlyList<int> scores = StandardArrayRules.Scores;
+
+        Assert.Equal([15, 14, 13, 12, 10, 8], scores);
+        Assert.False(scores is int[]);
+        Assert.False(scores is List<int>);
+
+        IList<int> mutableScores = Assert.IsAssignableFrom<IList<int>>(scores);
+
+        Assert.Throws<NotSupportedException>(() => mutableScores[0] = 1);
+
+        Assert.Equal([15, 14, 13, 12, 10, 8], StandardArrayRules.Scores);
+        Assert.Same(scores, StandardArrayRules.Scores);
+    }
+
+    [Fact]
     public void IsValid_WithExactStandardArray_ReturnsTrue()
     {
         Dictionary<Ability, int> scores = new()

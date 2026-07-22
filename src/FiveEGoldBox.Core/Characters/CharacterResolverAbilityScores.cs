@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Internal;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Characters;
@@ -22,7 +23,7 @@ public sealed partial class CharacterResolver
             abilityScores,
             selectedSubrace?.AbilityScoreIncreases);
 
-        return abilityScores;
+        return CoreCollectionProtection.ProtectDictionary(abilityScores);
     }
 
     private static void AddAbilityScoreIncreases(
@@ -43,8 +44,10 @@ public sealed partial class CharacterResolver
     private static IReadOnlyDictionary<Ability, int> CalculateAbilityModifiers(
         IReadOnlyDictionary<Ability, int> abilityScores)
     {
-        return abilityScores.ToDictionary(
-            pair => pair.Key,
-            pair => AbilityRules.GetModifier(pair.Value));
+        return CoreCollectionProtection.ProtectDictionary(
+            abilityScores.Select(pair =>
+                new KeyValuePair<Ability, int>(
+                    pair.Key,
+                    AbilityRules.GetModifier(pair.Value))));
     }
 }

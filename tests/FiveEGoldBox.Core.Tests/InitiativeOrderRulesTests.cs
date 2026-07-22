@@ -61,6 +61,38 @@ public sealed class InitiativeOrderRulesTests
     }
 
     [Fact]
+    public void ResolveOrder_ProtectsReturnedOrderFromSourceAndDirectMutation()
+    {
+        List<InitiativeOrderCombatant> combatants =
+        [
+            CreateCombatant("combatant.slow", total: 8),
+            CreateCombatant("combatant.fast", total: 18)
+        ];
+
+        IReadOnlyList<InitiativeOrderEntry> result =
+            InitiativeOrderRules.ResolveOrder(combatants);
+
+        combatants.Clear();
+
+        Assert.Empty(combatants);
+        Assert.Equal(
+            ["combatant.fast", "combatant.slow"],
+            result.Select(entry => entry.CombatantId));
+        Assert.False(result is InitiativeOrderEntry[]);
+        Assert.False(result is List<InitiativeOrderEntry>);
+
+        IList<InitiativeOrderEntry> mutableResult =
+            Assert.IsAssignableFrom<IList<InitiativeOrderEntry>>(result);
+
+        Assert.Throws<NotSupportedException>(() =>
+            mutableResult.RemoveAt(0));
+
+        Assert.Equal(
+            ["combatant.fast", "combatant.slow"],
+            result.Select(entry => entry.CombatantId));
+    }
+
+    [Fact]
     public void ResolveOrder_WithNoCombatants_ReturnsEmptyOrder()
     {
         IReadOnlyList<InitiativeOrderEntry> result = InitiativeOrderRules.ResolveOrder([]);

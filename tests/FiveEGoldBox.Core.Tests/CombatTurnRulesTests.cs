@@ -5,9 +5,9 @@ namespace FiveEGoldBox.Core.Tests;
 public sealed class CombatTurnRulesTests
 {
     [Fact]
-    public void StartCombat_WithInitiativeOrder_StartsAtRoundOneAndPositionOne()
+    public void StartCombat_WithInitiativeOrder_ProtectsOrderAndStartsAtRoundOneAndPositionOne()
     {
-        IReadOnlyList<InitiativeOrderEntry> initiativeOrder =
+        List<InitiativeOrderEntry> initiativeOrder =
         [
             CreateEntry("combatant.first", position: 1),
             CreateEntry("combatant.second", position: 2)
@@ -15,9 +15,31 @@ public sealed class CombatTurnRulesTests
 
         CombatTurnState result = CombatTurnRules.StartCombat(initiativeOrder);
 
-        Assert.Same(initiativeOrder, result.InitiativeOrder);
+        Assert.NotSame(initiativeOrder, result.InitiativeOrder);
+        Assert.Equal(
+            ["combatant.first", "combatant.second"],
+            result.InitiativeOrder.Select(entry => entry.CombatantId));
         Assert.Equal(1, result.RoundNumber);
         Assert.Equal(1, result.ActivePosition);
+
+        initiativeOrder.Clear();
+        Assert.Empty(initiativeOrder);
+        Assert.Equal(2, result.InitiativeOrder.Count);
+        Assert.Equal("combatant.first", CombatTurnRules.GetActiveCombatant(result).CombatantId);
+
+        Assert.False(result.InitiativeOrder is InitiativeOrderEntry[]);
+        Assert.False(result.InitiativeOrder is List<InitiativeOrderEntry>);
+
+        IList<InitiativeOrderEntry> mutableOrder =
+            Assert.IsAssignableFrom<IList<InitiativeOrderEntry>>(result.InitiativeOrder);
+
+        Assert.Throws<NotSupportedException>(() =>
+            mutableOrder[0] = CreateEntry("combatant.changed", position: 1));
+
+        CombatTurnState advanced = CombatTurnRules.AdvanceTurn(result);
+
+        Assert.Same(result.InitiativeOrder, advanced.InitiativeOrder);
+        Assert.Equal("combatant.second", CombatTurnRules.GetActiveCombatant(advanced).CombatantId);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Internal;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Validation;
 
@@ -176,10 +177,10 @@ public sealed partial class CharacterResolver
             SubraceId = selectedSubrace?.Id,
             SubraceName = selectedSubrace?.Name,
             SpeedFeet = speedFeet,
-            MovementSpeeds = movementSpeeds,
-            Senses = senses,
-            DamageResponses = damageResponses,
-            ConditionImmunities = conditionImmunities,
+            MovementSpeeds = CoreCollectionProtection.ProtectList(movementSpeeds),
+            Senses = CoreCollectionProtection.ProtectList(senses),
+            DamageResponses = CoreCollectionProtection.ProtectList(damageResponses),
+            ConditionImmunities = CoreCollectionProtection.ProtectList(conditionImmunities),
             CarryingCapacityPounds = abilityScores[Ability.Strength] * 15,
             PushDragLiftPounds = abilityScores[Ability.Strength] * 30,
             EquippedWeightPounds = equippedWeightPounds,
@@ -199,36 +200,37 @@ public sealed partial class CharacterResolver
             ArmorClass = armorClass,
             PassivePerception = passivePerception,
             InitiativeBonus = abilityModifiers[Ability.Dexterity],
-            EquippedWeaponIds = equippedWeapons
-                .Select(weapon => weapon.Id)
-                .ToArray(),
-            EquippedWeaponNames = equippedWeapons
-                .Select(weapon => weapon.Name)
-                .ToArray(),
-            WeaponAttacks = weaponAttacks,
+            EquippedWeaponIds = CoreCollectionProtection.ProtectList(
+                equippedWeapons.Select(weapon => weapon.Id)),
+            EquippedWeaponNames = CoreCollectionProtection.ProtectList(
+                equippedWeapons.Select(weapon => weapon.Name)),
+            WeaponAttacks = CoreCollectionProtection.ProtectList(weaponAttacks),
             ProficiencyBonus = proficiencyBonus,
             AbilityScores = abilityScores,
             AbilityModifiers = abilityModifiers,
-            SavingThrowBonuses = savingThrowBonuses,
-            SavingThrowProficiencies = selectedClass?.SavingThrowProficiencies ?? Array.Empty<Ability>(),
-            ArmorProficiencies = selectedClass?.ArmorProficiencies ?? Array.Empty<string>(),
-            WeaponProficiencies = selectedClass?.WeaponProficiencies ?? Array.Empty<string>(),
-            ToolProficiencies = (selectedClass?.ToolProficiencies ?? Array.Empty<string>())
-                .Concat(selectedBackground?.ToolProficiencies ?? Array.Empty<string>())
-                .Distinct()
-                .ToArray(),
-            SkillProficiencies = skillProficiencies,
-            SkillBonuses = skillBonuses,
-            Languages = languages,
-            Traits = traits,
-            ClassFeatures = selectedClass is null
-                ? Array.Empty<string>()
-                : selectedClass.FeaturesByLevel
-                    .Where(pair => pair.Key <= draft.Level)
-                    .OrderBy(pair => pair.Key)
-                    .SelectMany(pair => pair.Value)
-                    .Distinct()
-                    .ToArray()
+            SavingThrowBonuses = CoreCollectionProtection.ProtectList(savingThrowBonuses),
+            SavingThrowProficiencies = CoreCollectionProtection.ProtectList(
+                selectedClass?.SavingThrowProficiencies ?? Array.Empty<Ability>()),
+            ArmorProficiencies = CoreCollectionProtection.ProtectList(
+                selectedClass?.ArmorProficiencies ?? Array.Empty<string>()),
+            WeaponProficiencies = CoreCollectionProtection.ProtectList(
+                selectedClass?.WeaponProficiencies ?? Array.Empty<string>()),
+            ToolProficiencies = CoreCollectionProtection.ProtectList(
+                (selectedClass?.ToolProficiencies ?? Array.Empty<string>())
+                    .Concat(selectedBackground?.ToolProficiencies ?? Array.Empty<string>())
+                    .Distinct()),
+            SkillProficiencies = CoreCollectionProtection.ProtectList(skillProficiencies),
+            SkillBonuses = CoreCollectionProtection.ProtectList(skillBonuses),
+            Languages = CoreCollectionProtection.ProtectList(languages),
+            Traits = CoreCollectionProtection.ProtectList(traits),
+            ClassFeatures = CoreCollectionProtection.ProtectList(
+                selectedClass is null
+                    ? Array.Empty<string>()
+                    : selectedClass.FeaturesByLevel
+                        .Where(pair => pair.Key <= draft.Level)
+                        .OrderBy(pair => pair.Key)
+                        .SelectMany(pair => pair.Value)
+                        .Distinct())
         };
     }
 
