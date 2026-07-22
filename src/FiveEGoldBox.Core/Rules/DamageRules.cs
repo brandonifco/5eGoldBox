@@ -9,21 +9,23 @@ public static class DamageRules
         int damageAmount,
         DamageResponseType? responseType)
     {
-        if (damageAmount < 0)
+        if (responseType is not null)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(damageAmount),
-                damageAmount,
-                "Damage amount cannot be negative.");
+            ValidateDamageResponseType(
+                responseType.Value,
+                nameof(responseType));
         }
+
+        ValidateDamageAmount(damageAmount);
 
         return responseType switch
         {
             DamageResponseType.Immunity => 0,
             DamageResponseType.Resistance => damageAmount / 2,
-            DamageResponseType.Vulnerability => damageAmount * 2,
+            DamageResponseType.Vulnerability => checked(damageAmount * 2),
             null => damageAmount,
-            _ => damageAmount
+            _ => throw new InvalidOperationException(
+                "Validated damage response was not handled.")
         };
     }
 
@@ -31,84 +33,56 @@ public static class DamageRules
         int damageAmount,
         IReadOnlyList<DamageResponseType> responseTypes)
     {
-        if (damageAmount < 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(damageAmount),
-                damageAmount,
-                "Damage amount cannot be negative.");
-        }
+        ArgumentNullException.ThrowIfNull(responseTypes);
 
-        if (responseTypes.Contains(DamageResponseType.Immunity))
-        {
-            return 0;
-        }
+        ValidateDamageResponseTypes(responseTypes);
+        ValidateDamageAmount(damageAmount);
 
-        int result = damageAmount;
-
-        if (responseTypes.Contains(DamageResponseType.Resistance))
-        {
-            result /= 2;
-        }
-
-        if (responseTypes.Contains(DamageResponseType.Vulnerability))
-        {
-            result *= 2;
-        }
-
-        return result;
+        return ApplyDamageResponsesCore(
+            damageAmount,
+            responseTypes);
     }
 
     public static DamageDice GetCriticalHitDamageDice(DamageDice damage)
     {
-        if (damage.Count < 1)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(damage),
-                damage.Count,
-                "Damage dice count must be at least 1.");
-        }
+        ArgumentNullException.ThrowIfNull(damage);
+        ValidateDamageDice(damage);
 
         return damage with
         {
-            Count = damage.Count * 2
+            Count = checked(damage.Count * 2)
         };
     }
+
     public static DamageDice? GetDamageDiceForAttackOutcome(
         DamageDice damage,
         AttackRollOutcome outcome)
     {
-        if (outcome == AttackRollOutcome.Miss)
-        {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(damage);
+        ValidateAttackOutcome(
+            outcome,
+            nameof(outcome));
+        ValidateDamageDice(damage);
 
-        if (damage.Count < 1)
+        return outcome switch
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(damage),
-                damage.Count,
-                "Damage dice count must be at least 1.");
-        }
-
-        if (outcome == AttackRollOutcome.CriticalHit)
-        {
-            return GetCriticalHitDamageDice(damage);
-        }
-
-        return damage;
+            AttackRollOutcome.Miss => null,
+            AttackRollOutcome.Hit => damage,
+            AttackRollOutcome.CriticalHit =>
+                GetCriticalHitDamageDice(damage),
+            _ => throw new InvalidOperationException(
+                "Validated attack outcome was not handled.")
+        };
     }
+
     public static int GetDamageDiceTotal(
         DamageDice damage,
         IReadOnlyList<int> rolls)
     {
-        if (damage.Count < 1)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(damage),
-                damage.Count,
-                "Damage dice count must be at least 1.");
-        }
+        ArgumentNullException.ThrowIfNull(damage);
+        ArgumentNullException.ThrowIfNull(rolls);
+
+        ValidateDamageDice(damage);
 
         if (rolls.Count != damage.Count)
         {
@@ -132,11 +106,15 @@ public static class DamageRules
 
         return rolls.Sum();
     }
+
     public static DamageRollResult ResolveDamageRoll(
         DamageDice damage,
         IReadOnlyList<int> rolls,
         int damageBonus)
     {
+        ArgumentNullException.ThrowIfNull(damage);
+        ArgumentNullException.ThrowIfNull(rolls);
+
         IReadOnlyList<int> protectedRolls =
             CoreCollectionProtection.ProtectList(rolls);
 
@@ -144,13 +122,15 @@ public static class DamageRules
             damage,
             protectedRolls);
 
+        int total = checked(diceTotal + damageBonus);
+
         return new DamageRollResult
         {
             DamageDice = damage,
             Rolls = protectedRolls,
             DiceTotal = diceTotal,
             DamageBonus = damageBonus,
-            Total = Math.Max(0, diceTotal + damageBonus),
+            Total = Math.Max(0, total),
         };
     }
 
@@ -160,6 +140,10 @@ public static class DamageRules
         int damageBonus,
         IReadOnlyList<DamageResponseType> responseTypes)
     {
+        ArgumentNullException.ThrowIfNull(damage);
+        ArgumentNullException.ThrowIfNull(rolls);
+        ArgumentNullException.ThrowIfNull(responseTypes);
+
         IReadOnlyList<DamageResponseType> protectedResponseTypes =
             CoreCollectionProtection.ProtectList(responseTypes);
 
@@ -177,6 +161,14 @@ public static class DamageRules
         int damageBonus,
         IReadOnlyList<DamageResponseType> responseTypes)
     {
+        ArgumentNullException.ThrowIfNull(damage);
+        ArgumentNullException.ThrowIfNull(rolls);
+        ArgumentNullException.ThrowIfNull(responseTypes);
+
+        ValidateAttackOutcome(
+            attackOutcome,
+            nameof(attackOutcome));
+
         IReadOnlyList<DamageResponseType> protectedResponseTypes =
             CoreCollectionProtection.ProtectList(responseTypes);
 
@@ -186,6 +178,8 @@ public static class DamageRules
 
         if (damageDice is null)
         {
+            ValidateDamageResponseTypes(protectedResponseTypes);
+
             if (rolls.Count > 0)
             {
                 throw new ArgumentException(
@@ -225,12 +219,14 @@ public static class DamageRules
         int damageBonus,
         IReadOnlyList<DamageResponseType> protectedResponseTypes)
     {
+        ValidateDamageResponseTypes(protectedResponseTypes);
+
         DamageRollResult damageRoll = ResolveDamageRoll(
             damage,
             rolls,
             damageBonus);
 
-        int finalDamage = ApplyDamageResponses(
+        int finalDamage = ApplyDamageResponsesCore(
             damageRoll.Total,
             protectedResponseTypes);
 
@@ -240,5 +236,96 @@ public static class DamageRules
             ResponseTypes = protectedResponseTypes,
             FinalDamage = finalDamage
         };
+    }
+
+    private static int ApplyDamageResponsesCore(
+        int damageAmount,
+        IReadOnlyList<DamageResponseType> responseTypes)
+    {
+        if (responseTypes.Contains(DamageResponseType.Immunity))
+        {
+            return 0;
+        }
+
+        int result = damageAmount;
+
+        if (responseTypes.Contains(DamageResponseType.Resistance))
+        {
+            result /= 2;
+        }
+
+        if (responseTypes.Contains(DamageResponseType.Vulnerability))
+        {
+            result = checked(result * 2);
+        }
+
+        return result;
+    }
+
+    private static void ValidateDamageAmount(int damageAmount)
+    {
+        if (damageAmount < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(damageAmount),
+                damageAmount,
+                "Damage amount cannot be negative.");
+        }
+    }
+
+    private static void ValidateDamageDice(DamageDice damage)
+    {
+        if (!Enum.IsDefined(damage.Die))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(damage),
+                damage.Die,
+                "Damage die is not supported.");
+        }
+
+        if (damage.Count < 1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(damage),
+                damage.Count,
+                "Damage dice count must be at least 1.");
+        }
+    }
+
+    private static void ValidateAttackOutcome(
+        AttackRollOutcome outcome,
+        string parameterName)
+    {
+        if (!Enum.IsDefined(outcome))
+        {
+            throw new ArgumentOutOfRangeException(
+                parameterName,
+                outcome,
+                "Attack outcome is not supported.");
+        }
+    }
+
+    private static void ValidateDamageResponseTypes(
+        IReadOnlyList<DamageResponseType> responseTypes)
+    {
+        foreach (DamageResponseType responseType in responseTypes)
+        {
+            ValidateDamageResponseType(
+                responseType,
+                nameof(responseTypes));
+        }
+    }
+
+    private static void ValidateDamageResponseType(
+        DamageResponseType responseType,
+        string parameterName)
+    {
+        if (!Enum.IsDefined(responseType))
+        {
+            throw new ArgumentOutOfRangeException(
+                parameterName,
+                responseType,
+                "Damage response type is not supported.");
+        }
     }
 }

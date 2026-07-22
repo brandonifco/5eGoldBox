@@ -7,19 +7,15 @@ public static class D20TestRules
         int bonus,
         int difficultyClass)
     {
-        if (naturalRoll is < 1 or > 20)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(naturalRoll),
-                naturalRoll,
-                "Natural d20 roll must be between 1 and 20.");
-        }
+        ValidateNaturalRoll(naturalRoll);
 
-        int total = naturalRoll + bonus;
+        int total = D20Rules.ResolveTotal(
+            naturalRoll,
+            bonus);
 
-        return total >= difficultyClass
-            ? D20TestOutcome.Success
-            : D20TestOutcome.Failure;
+        return ResolveOutcomeFromTotal(
+            total,
+            difficultyClass);
     }
 
     public static D20TestOutcome ResolveOutcome(
@@ -52,9 +48,12 @@ public static class D20TestRules
             firstRoll,
             secondRoll);
 
-        D20TestOutcome outcome = ResolveOutcome(
+        int total = D20Rules.ResolveTotal(
             naturalRoll,
-            bonus,
+            bonus);
+
+        D20TestOutcome outcome = ResolveOutcomeFromTotal(
+            total,
             difficultyClass);
 
         return new D20TestResult
@@ -64,9 +63,29 @@ public static class D20TestRules
             SecondRoll = secondRoll,
             NaturalRoll = naturalRoll,
             Bonus = bonus,
-            Total = naturalRoll + bonus,
+            Total = total,
             DifficultyClass = difficultyClass,
             Outcome = outcome
         };
+    }
+
+    private static D20TestOutcome ResolveOutcomeFromTotal(
+        int total,
+        int difficultyClass)
+    {
+        return total >= difficultyClass
+            ? D20TestOutcome.Success
+            : D20TestOutcome.Failure;
+    }
+
+    private static void ValidateNaturalRoll(int naturalRoll)
+    {
+        if (naturalRoll is < 1 or > 20)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(naturalRoll),
+                naturalRoll,
+                "Natural d20 roll must be between 1 and 20.");
+        }
     }
 }

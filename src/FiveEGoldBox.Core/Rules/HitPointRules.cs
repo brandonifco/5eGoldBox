@@ -119,11 +119,14 @@ public static class HitPointRules
             return state;
         }
 
+        long healedHitPoints =
+            (long)state.CurrentHitPoints + healingAmount;
+
         return state with
         {
-            CurrentHitPoints = Math.Min(
+            CurrentHitPoints = (int)Math.Min(
                 state.MaximumHitPoints,
-                state.CurrentHitPoints + healingAmount)
+                healedHitPoints)
         };
     }
 

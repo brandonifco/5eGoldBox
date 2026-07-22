@@ -46,7 +46,9 @@ public static class DeathSavingThrowRules
             firstRoll,
             secondRoll);
 
-        int total = naturalRoll + savingThrowBonus;
+        int total = D20Rules.ResolveTotal(
+            naturalRoll,
+            savingThrowBonus);
 
         DeathSavingThrowOutcome outcome;
         DeathSavingThrowState resolvedState;

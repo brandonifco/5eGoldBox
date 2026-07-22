@@ -17,4 +17,17 @@ public static class AbilityRules
 
         return (int)Math.Floor((score - 10) / 2.0);
     }
+
+    internal static void ValidateAbility(
+        Ability ability,
+        string parameterName)
+    {
+        if (!Enum.IsDefined(ability))
+        {
+            throw new ArgumentOutOfRangeException(
+                parameterName,
+                ability,
+                "Ability is not supported.");
+        }
+    }
 }

@@ -29,6 +29,14 @@ public static class D20ContestRules
         int? secondSecondRoll,
         int secondBonus)
     {
+        D20Rules.ValidateRollMode(
+            firstRollMode,
+            nameof(firstRollMode));
+
+        D20Rules.ValidateRollMode(
+            secondRollMode,
+            nameof(secondRollMode));
+
         D20ContestantResult firstContestant = ResolveContestant(
             firstRollMode,
             firstRoll,
@@ -62,6 +70,10 @@ public static class D20ContestRules
             firstRoll,
             secondRoll);
 
+        int total = D20Rules.ResolveTotal(
+            naturalRoll,
+            bonus);
+
         return new D20ContestantResult
         {
             RollMode = rollMode,
@@ -69,7 +81,7 @@ public static class D20ContestRules
             SecondRoll = secondRoll,
             NaturalRoll = naturalRoll,
             Bonus = bonus,
-            Total = naturalRoll + bonus
+            Total = total
         };
     }
 }

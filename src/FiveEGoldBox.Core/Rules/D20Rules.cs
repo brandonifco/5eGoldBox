@@ -21,6 +21,10 @@ public static class D20Rules
         int firstRoll,
         int? secondRoll = null)
     {
+        ValidateRollMode(
+            rollMode,
+            nameof(rollMode));
+
         ValidateD20Roll(firstRoll);
 
         if (rollMode == D20RollMode.Normal)
@@ -37,12 +41,29 @@ public static class D20Rules
 
         ValidateD20Roll(secondRoll.Value);
 
-        return rollMode switch
+        return rollMode == D20RollMode.Advantage
+            ? Math.Max(firstRoll, secondRoll.Value)
+            : Math.Min(firstRoll, secondRoll.Value);
+    }
+
+    internal static void ValidateRollMode(
+        D20RollMode rollMode,
+        string parameterName)
+    {
+        if (!Enum.IsDefined(rollMode))
         {
-            D20RollMode.Advantage => Math.Max(firstRoll, secondRoll.Value),
-            D20RollMode.Disadvantage => Math.Min(firstRoll, secondRoll.Value),
-            _ => firstRoll
-        };
+            throw new ArgumentOutOfRangeException(
+                parameterName,
+                rollMode,
+                "D20 roll mode is not supported.");
+        }
+    }
+
+    internal static int ResolveTotal(
+        int naturalRoll,
+        int bonus)
+    {
+        return checked(naturalRoll + bonus);
     }
 
     private static void ValidateD20Roll(int roll)
@@ -55,5 +76,4 @@ public static class D20Rules
                 "D20 roll must be between 1 and 20.");
         }
     }
-
 }

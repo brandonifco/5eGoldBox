@@ -10,6 +10,10 @@ public static class AbilityCheckRules
         int abilityCheckBonus,
         int difficultyClass)
     {
+        AbilityRules.ValidateAbility(
+            ability,
+            nameof(ability));
+
         D20TestResult test = D20TestRules.ResolveResult(
             rollMode,
             firstRoll,

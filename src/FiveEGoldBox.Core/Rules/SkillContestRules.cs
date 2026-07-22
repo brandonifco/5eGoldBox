@@ -30,6 +30,14 @@ public static class SkillContestRules
                 nameof(secondSkillId));
         }
 
+        AbilityRules.ValidateAbility(
+            firstAbility,
+            nameof(firstAbility));
+
+        AbilityRules.ValidateAbility(
+            secondAbility,
+            nameof(secondAbility));
+
         D20ContestResult contest = D20ContestRules.ResolveContest(
             firstRollMode,
             firstRoll,

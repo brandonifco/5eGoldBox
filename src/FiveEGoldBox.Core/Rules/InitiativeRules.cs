@@ -13,6 +13,10 @@ public static class InitiativeRules
             firstRoll,
             secondRoll);
 
+        int total = D20Rules.ResolveTotal(
+            naturalRoll,
+            initiativeBonus);
+
         return new InitiativeRollResult
         {
             RollMode = rollMode,
@@ -20,7 +24,7 @@ public static class InitiativeRules
             SecondRoll = secondRoll,
             NaturalRoll = naturalRoll,
             InitiativeBonus = initiativeBonus,
-            Total = naturalRoll + initiativeBonus
+            Total = total
         };
     }
 }

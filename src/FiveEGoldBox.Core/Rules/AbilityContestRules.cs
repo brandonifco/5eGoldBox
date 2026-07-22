@@ -14,6 +14,14 @@ public static class AbilityContestRules
         int? secondSecondRoll,
         int secondBonus)
     {
+        AbilityRules.ValidateAbility(
+            firstAbility,
+            nameof(firstAbility));
+
+        AbilityRules.ValidateAbility(
+            secondAbility,
+            nameof(secondAbility));
+
         D20ContestResult contest = D20ContestRules.ResolveContest(
             firstRollMode,
             firstRoll,
