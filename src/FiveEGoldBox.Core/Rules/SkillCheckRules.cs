@@ -18,6 +18,10 @@ public static class SkillCheckRules
                 nameof(skillId));
         }
 
+        AbilityRules.ValidateAbility(
+            ability,
+            nameof(ability));
+
         D20TestResult test = D20TestRules.ResolveResult(
             rollMode,
             firstRoll,

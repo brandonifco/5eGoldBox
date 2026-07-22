@@ -15,6 +15,10 @@ public static class CombatRules
         int damageBonus,
         IReadOnlyList<DamageResponseType> responseTypes)
     {
+        ArgumentNullException.ThrowIfNull(damage);
+        ArgumentNullException.ThrowIfNull(damageRolls);
+        ArgumentNullException.ThrowIfNull(responseTypes);
+
         AttackRollResult attackRoll = AttackRollRules.ResolveResult(
             rollMode,
             firstRoll,

@@ -35,6 +35,7 @@ public static class PointBuyRules
     public static int GetTotalCost(IReadOnlyDictionary<Ability, int> scores)
     {
         ArgumentNullException.ThrowIfNull(scores);
+        ValidateAbilityKeys(scores);
 
         int total = 0;
 
@@ -56,7 +57,19 @@ public static class PointBuyRules
     public static bool IsValid(IReadOnlyDictionary<Ability, int> scores)
     {
         ArgumentNullException.ThrowIfNull(scores);
+        ValidateAbilityKeys(scores);
 
         return GetTotalCost(scores) <= MaximumTotalCost;
+    }
+
+    private static void ValidateAbilityKeys(
+        IReadOnlyDictionary<Ability, int> scores)
+    {
+        foreach (Ability ability in scores.Keys)
+        {
+            AbilityRules.ValidateAbility(
+                ability,
+                nameof(scores));
+        }
     }
 }

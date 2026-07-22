@@ -43,7 +43,7 @@ public static class CombatTurnRules
 
         return state with
         {
-            RoundNumber = state.RoundNumber + 1,
+            RoundNumber = checked(state.RoundNumber + 1),
             ActivePosition = 1
         };
     }

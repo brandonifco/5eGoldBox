@@ -12,6 +12,13 @@ public static class StandardArrayRules
     {
         ArgumentNullException.ThrowIfNull(scores);
 
+        foreach (Ability ability in scores.Keys)
+        {
+            AbilityRules.ValidateAbility(
+                ability,
+                nameof(scores));
+        }
+
         if (scores.Count != Scores.Count)
         {
             return false;

@@ -7,13 +7,7 @@ public static class AttackRollRules
         int attackBonus,
         int targetArmorClass)
     {
-        if (naturalRoll is < 1 or > 20)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(naturalRoll),
-                naturalRoll,
-                "Natural attack roll must be between 1 and 20.");
-        }
+        ValidateNaturalRoll(naturalRoll);
 
         if (naturalRoll == 1)
         {
@@ -25,11 +19,14 @@ public static class AttackRollRules
             return AttackRollOutcome.CriticalHit;
         }
 
-        int total = naturalRoll + attackBonus;
+        int total = D20Rules.ResolveTotal(
+            naturalRoll,
+            attackBonus);
 
-        return total >= targetArmorClass
-            ? AttackRollOutcome.Hit
-            : AttackRollOutcome.Miss;
+        return ResolveOutcomeFromTotal(
+            naturalRoll,
+            total,
+            targetArmorClass);
     }
 
     public static AttackRollOutcome ResolveOutcome(
@@ -62,9 +59,13 @@ public static class AttackRollRules
             firstRoll,
             secondRoll);
 
-        AttackRollOutcome outcome = ResolveOutcome(
+        int total = D20Rules.ResolveTotal(
             naturalRoll,
-            attackBonus,
+            attackBonus);
+
+        AttackRollOutcome outcome = ResolveOutcomeFromTotal(
+            naturalRoll,
+            total,
             targetArmorClass);
 
         return new AttackRollResult
@@ -74,9 +75,40 @@ public static class AttackRollRules
             SecondRoll = secondRoll,
             NaturalRoll = naturalRoll,
             AttackBonus = attackBonus,
-            Total = naturalRoll + attackBonus,
+            Total = total,
             TargetArmorClass = targetArmorClass,
             Outcome = outcome
         };
+    }
+
+    private static AttackRollOutcome ResolveOutcomeFromTotal(
+        int naturalRoll,
+        int total,
+        int targetArmorClass)
+    {
+        if (naturalRoll == 1)
+        {
+            return AttackRollOutcome.Miss;
+        }
+
+        if (naturalRoll == 20)
+        {
+            return AttackRollOutcome.CriticalHit;
+        }
+
+        return total >= targetArmorClass
+            ? AttackRollOutcome.Hit
+            : AttackRollOutcome.Miss;
+    }
+
+    private static void ValidateNaturalRoll(int naturalRoll)
+    {
+        if (naturalRoll is < 1 or > 20)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(naturalRoll),
+                naturalRoll,
+                "Natural attack roll must be between 1 and 20.");
+        }
     }
 }
