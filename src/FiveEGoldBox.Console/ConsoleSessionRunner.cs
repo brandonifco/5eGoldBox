@@ -7,6 +7,21 @@ namespace FiveEGoldBox.Console;
 
 internal sealed partial class ConsoleSessionRunner
 {
+    private readonly AtomicManualSaveFileWriter manualSaveFileWriter;
+
+    internal ConsoleSessionRunner()
+        : this(new AtomicManualSaveFileWriter())
+    {
+    }
+
+    internal ConsoleSessionRunner(
+        AtomicManualSaveFileWriter manualSaveFileWriter)
+    {
+        ArgumentNullException.ThrowIfNull(manualSaveFileWriter);
+
+        this.manualSaveFileWriter = manualSaveFileWriter;
+    }
+
     internal int Run(
         TextReader input,
         TextWriter output,
@@ -233,7 +248,7 @@ internal sealed partial class ConsoleSessionRunner
         return null;
     }
 
-    private static void SaveSession(
+    internal void SaveSession(
         TextWriter output,
         string savePath,
         ApplicationSessionState session)
@@ -250,7 +265,9 @@ internal sealed partial class ConsoleSessionRunner
 
         try
         {
-            File.WriteAllText(savePath, serializedData);
+            manualSaveFileWriter.WriteAllText(
+                savePath,
+                serializedData);
         }
         catch (UnauthorizedAccessException)
         {
