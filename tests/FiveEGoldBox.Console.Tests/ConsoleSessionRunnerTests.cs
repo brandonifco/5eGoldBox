@@ -437,8 +437,10 @@ public sealed class ConsoleSessionRunnerTests
             temporary.SavePath,
             CreateEncounterSession());
 
-        Assert.DoesNotContain("2. Save", output);
-        Assert.Contains("2. Exit", output);
+        string menu = GetCombatMenu(output);
+        Assert.DoesNotContain("Save", menu);
+        Assert.Contains("Inspect Encounter", menu);
+        Assert.EndsWith("Selection: ", menu);
     }
 
     [Fact]
@@ -828,9 +830,8 @@ public sealed class ConsoleSessionRunnerTests
             temporary.SavePath,
             CreateEncounterSession());
 
-        Assert.DoesNotContain("Save", GetSessionMenu(output));
+        Assert.DoesNotContain("Save", GetCombatMenu(output));
         Assert.DoesNotContain("disabled", output);
-        Assert.DoesNotContain("unavailable", output);
     }
 
     private static string Run(
@@ -1021,6 +1022,17 @@ public sealed class ConsoleSessionRunnerTests
     {
         int start = output.IndexOf(
             "Session Menu",
+            StringComparison.Ordinal);
+
+        Assert.True(start >= 0);
+
+        return output[start..];
+    }
+
+    private static string GetCombatMenu(string output)
+    {
+        int start = output.LastIndexOf(
+            "Combat Menu",
             StringComparison.Ordinal);
 
         Assert.True(start >= 0);

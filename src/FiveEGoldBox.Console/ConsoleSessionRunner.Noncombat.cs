@@ -16,6 +16,23 @@ internal sealed partial class ConsoleSessionRunner
     {
         while (true)
         {
+            if (session.CurrentMode == ApplicationMode.Encounter)
+            {
+                CombatSessionRunResult combatResult =
+                    RunCombatSession(
+                        input,
+                        output,
+                        session);
+
+                if (combatResult.ExitRequested)
+                {
+                    return 0;
+                }
+
+                session = combatResult.Session;
+                continue;
+            }
+
             RenderSessionSummary(output, session);
 
             IReadOnlyList<SessionMenuOption> options =
