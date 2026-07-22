@@ -1,9 +1,12 @@
+using FiveEGoldBox.Core.Internal;
+
 namespace FiveEGoldBox.Core.Rules;
 
 public static class StandardArrayRules
 {
     public static IReadOnlyList<int> Scores { get; } =
-        new[] { 15, 14, 13, 12, 10, 8 };
+        CoreCollectionProtection.ProtectList(
+            new[] { 15, 14, 13, 12, 10, 8 });
 
     public static bool IsValid(IReadOnlyDictionary<Ability, int> scores)
     {

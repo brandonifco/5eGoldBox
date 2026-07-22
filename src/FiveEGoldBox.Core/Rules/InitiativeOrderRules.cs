@@ -1,3 +1,5 @@
+using FiveEGoldBox.Core.Internal;
+
 namespace FiveEGoldBox.Core.Rules;
 
 public static class InitiativeOrderRules
@@ -15,7 +17,7 @@ public static class InitiativeOrderRules
                 group => group.Key,
                 group => group.Count());
 
-        return combatants
+        IEnumerable<InitiativeOrderEntry> orderedEntries = combatants
             .Select((combatant, originalIndex) => new
             {
                 Combatant = combatant,
@@ -29,8 +31,9 @@ public static class InitiativeOrderRules
                 Initiative = entry.Combatant.Initiative,
                 Position = index + 1,
                 HasTiedInitiative = initiativeTotalCounts[entry.Combatant.Initiative.Total] > 1
-            })
-            .ToArray();
+            });
+
+        return CoreCollectionProtection.ProtectList(orderedEntries);
     }
 
     private static void ValidateCombatants(

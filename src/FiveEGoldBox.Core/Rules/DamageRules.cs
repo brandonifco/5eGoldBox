@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Internal;
 
 namespace FiveEGoldBox.Core.Rules;
 
@@ -136,48 +137,49 @@ public static class DamageRules
         IReadOnlyList<int> rolls,
         int damageBonus)
     {
+        IReadOnlyList<int> protectedRolls =
+            CoreCollectionProtection.ProtectList(rolls);
+
         int diceTotal = GetDamageDiceTotal(
             damage,
-            rolls);
+            protectedRolls);
 
         return new DamageRollResult
         {
             DamageDice = damage,
-            Rolls = rolls,
+            Rolls = protectedRolls,
             DiceTotal = diceTotal,
             DamageBonus = damageBonus,
             Total = Math.Max(0, diceTotal + damageBonus),
         };
     }
+
     public static DamageResolutionResult ResolveDamage(
-    DamageDice damage,
-    IReadOnlyList<int> rolls,
-    int damageBonus,
-    IReadOnlyList<DamageResponseType> responseTypes)
+        DamageDice damage,
+        IReadOnlyList<int> rolls,
+        int damageBonus,
+        IReadOnlyList<DamageResponseType> responseTypes)
     {
-        DamageRollResult damageRoll = ResolveDamageRoll(
+        IReadOnlyList<DamageResponseType> protectedResponseTypes =
+            CoreCollectionProtection.ProtectList(responseTypes);
+
+        return ResolveDamageCore(
             damage,
             rolls,
-            damageBonus);
-
-        int finalDamage = ApplyDamageResponses(
-            damageRoll.Total,
-            responseTypes);
-
-        return new DamageResolutionResult
-        {
-            DamageRoll = damageRoll,
-            ResponseTypes = responseTypes,
-            FinalDamage = finalDamage
-        };
+            damageBonus,
+            protectedResponseTypes);
     }
+
     public static AttackDamageResolutionResult ResolveAttackDamage(
-    DamageDice damage,
-    AttackRollOutcome attackOutcome,
-    IReadOnlyList<int> rolls,
-    int damageBonus,
-    IReadOnlyList<DamageResponseType> responseTypes)
+        DamageDice damage,
+        AttackRollOutcome attackOutcome,
+        IReadOnlyList<int> rolls,
+        int damageBonus,
+        IReadOnlyList<DamageResponseType> responseTypes)
     {
+        IReadOnlyList<DamageResponseType> protectedResponseTypes =
+            CoreCollectionProtection.ProtectList(responseTypes);
+
         DamageDice? damageDice = GetDamageDiceForAttackOutcome(
             damage,
             attackOutcome);
@@ -196,24 +198,47 @@ public static class DamageRules
                 AttackOutcome = attackOutcome,
                 DamageDice = null,
                 DamageRoll = null,
-                ResponseTypes = responseTypes,
+                ResponseTypes = protectedResponseTypes,
                 FinalDamage = 0
             };
         }
 
-        DamageResolutionResult damageResolution = ResolveDamage(
+        DamageResolutionResult damageResolution = ResolveDamageCore(
             damageDice,
             rolls,
             damageBonus,
-            responseTypes);
+            protectedResponseTypes);
 
         return new AttackDamageResolutionResult
         {
             AttackOutcome = attackOutcome,
             DamageDice = damageDice,
             DamageRoll = damageResolution.DamageRoll,
-            ResponseTypes = responseTypes,
+            ResponseTypes = damageResolution.ResponseTypes,
             FinalDamage = damageResolution.FinalDamage
+        };
+    }
+
+    private static DamageResolutionResult ResolveDamageCore(
+        DamageDice damage,
+        IReadOnlyList<int> rolls,
+        int damageBonus,
+        IReadOnlyList<DamageResponseType> protectedResponseTypes)
+    {
+        DamageRollResult damageRoll = ResolveDamageRoll(
+            damage,
+            rolls,
+            damageBonus);
+
+        int finalDamage = ApplyDamageResponses(
+            damageRoll.Total,
+            protectedResponseTypes);
+
+        return new DamageResolutionResult
+        {
+            DamageRoll = damageRoll,
+            ResponseTypes = protectedResponseTypes,
+            FinalDamage = finalDamage
         };
     }
 }

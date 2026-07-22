@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Internal;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Characters;
@@ -50,13 +51,13 @@ public sealed partial class CharacterResolver
             ProficiencyBonus = appliedProficiencyBonus,
             AttackBonus = attackBonus,
             HasDisadvantage = hasDisadvantage,
-            DisadvantageReasons = disadvantageReasons,
+            DisadvantageReasons = CoreCollectionProtection.ProtectList(disadvantageReasons),
             AttackRollMode = attackRollMode,
             Damage = weapon.Damage,
             VersatileDamage = weapon.VersatileDamage,
             DamageType = weapon.DamageType,
             DamageBonus = damageBonus,
-            Properties = weapon.Properties,
+            Properties = CoreCollectionProtection.ProtectList(weapon.Properties),
             ReachFeet = weapon.ReachFeet,
             NormalRangeFeet = weapon.NormalRangeFeet,
             LongRangeFeet = weapon.LongRangeFeet,

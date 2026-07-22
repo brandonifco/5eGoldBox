@@ -1,3 +1,5 @@
+using FiveEGoldBox.Core.Internal;
+
 namespace FiveEGoldBox.Core.Rules;
 
 public static class CombatTurnRules
@@ -18,7 +20,7 @@ public static class CombatTurnRules
 
         return new CombatTurnState
         {
-            InitiativeOrder = initiativeOrder,
+            InitiativeOrder = CoreCollectionProtection.ProtectList(initiativeOrder),
             RoundNumber = 1,
             ActivePosition = 1
         };
