@@ -567,7 +567,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             SignalMechanismRules.Activate(session);
 
         string output = RunSession(
-            "4\n2\n",
+            "4\n",
             temporary.SavePath,
             session);
 
@@ -577,7 +577,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
         Assert.Contains("Mode: Encounter", output);
         Assert.Contains("Progress: SignalActivated", output);
         Assert.Contains(
-            $"Random Values Consumed: {expected.RandomValuesConsumed}",
+            $"Random Values Consumed Before: {expected.RandomValuesConsumed}",
             output);
         Assert.Contains(
             $"Encounter ID: {expected.ActiveEncounter!.Encounter.EncounterId}",
@@ -585,7 +585,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
     }
 
     [Fact]
-    public void RunSession_EncounterRemainsInspectAndExitOnly()
+    public void RunSession_EncounterTransfersToCombatLoop()
     {
         using TemporaryDirectory temporary = new();
 
@@ -594,13 +594,12 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             temporary.SavePath,
             CreateEncounterSession());
 
-        AssertMenuOrder(
-            GetLastSessionMenu(output),
-            "1. Inspect Party",
-            "2. Exit");
-        Assert.DoesNotContain("Advance", GetLastSessionMenu(output));
-        Assert.DoesNotContain("Combat", GetLastSessionMenu(output));
-        Assert.DoesNotContain("Save", GetLastSessionMenu(output));
+        Assert.Contains("Combat Resolution", output);
+        Assert.Contains("Combat Decision", output);
+        Assert.Contains("Combat Menu", output);
+        Assert.Contains("Inspect Encounter", output);
+        Assert.DoesNotContain("Inspect Party", GetLastCombatMenu(output));
+        Assert.DoesNotContain("Save", GetLastCombatMenu(output));
     }
 
     [Fact]
@@ -692,7 +691,6 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             "2",
             "2",
             "4",
-            "2",
             string.Empty);
 
         ApplicationSessionState expectedEncounter =
@@ -718,7 +716,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             $"Encounter Revision: {expectedEncounter.ActiveEncounter!.Encounter.Revision}",
             output);
         Assert.Contains(
-            $"Random Values Consumed: {expectedEncounter.RandomValuesConsumed}",
+            $"Random Values Consumed Before: {expectedEncounter.RandomValuesConsumed}",
             output);
         Assert.DoesNotContain("Game saved", output);
         Assert.False(File.Exists(temporary.SavePath));
@@ -730,7 +728,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
         using TemporaryDirectory firstTemporary = new();
         using TemporaryDirectory secondTemporary = new();
         const string Input =
-            "1\n1\n1\n1\n1\n1\n1\n1\n1\n4\n3\n1\n3\n1\n2\n2\n4\n2\n";
+            "1\n1\n1\n1\n1\n1\n1\n1\n1\n4\n3\n1\n3\n1\n2\n2\n4\n";
 
         (int firstExitCode, string firstOutput) = Run(
             Input,
@@ -1037,6 +1035,17 @@ public sealed class ConsoleSessionRunnerNoncombatTests
     {
         int start = output.LastIndexOf(
             "Session Menu",
+            StringComparison.Ordinal);
+
+        Assert.True(start >= 0);
+        return output[start..];
+    }
+
+    private static string GetLastCombatMenu(
+        string output)
+    {
+        int start = output.LastIndexOf(
+            "Combat Menu",
             StringComparison.Ordinal);
 
         Assert.True(start >= 0);
