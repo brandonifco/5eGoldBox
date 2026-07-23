@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 
 namespace FiveEGoldBox.Core.Definitions;
 
-public sealed class RulesetIndex
+internal sealed class RulesetIndex
 {
     public RulesetIndex(RulesetDefinition ruleset)
     {

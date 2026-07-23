@@ -211,13 +211,14 @@ internal static class WatchtowerPartyDefinitions
     private static string? ResolveBackgroundId(
         ValidatedRuleset ruleset)
     {
-        if (ruleset.Index.BackgroundsById.Count == 0)
+        if (ruleset.Definition.Backgrounds.Count == 0)
         {
             return null;
         }
 
-        if (!ruleset.Index.BackgroundsById.ContainsKey(
-            SoldierBackgroundId))
+        if (!ruleset.TryGetBackground(
+            SoldierBackgroundId,
+            out _))
         {
             throw new InvalidOperationException(
                 $"The bounded party requires background '{SoldierBackgroundId}' when the supplied ruleset defines backgrounds.");
