@@ -3,7 +3,7 @@ using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
 
-public static class EncounterWeaponAttackPrerequisiteRules
+internal static class EncounterWeaponAttackPrerequisiteRules
 {
     private const int FeetPerGridSquare = 5;
     private const int DefaultMeleeReachFeet = 5;

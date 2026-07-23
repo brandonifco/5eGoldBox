@@ -776,8 +776,8 @@ public sealed class WatchtowerCombatExecutionTests
         EncounterState encounter =
             WatchtowerCombatTestData.GetEncounter(source);
 
-        EncounterWeaponAttackPrerequisiteEvaluation prerequisites =
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+        WatchtowerCombatAttackAvailability prerequisites =
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 decision.ActiveCombatantId!,
                 target.TargetCombatantId,
@@ -790,23 +790,16 @@ public sealed class WatchtowerCombatExecutionTests
                 source.RandomValuesConsumed,
                 sides: 20);
         Assert.Equal(20, attackRoll.Value);
-        EncounterWeaponAttackEvaluation evaluation =
-            EncounterWeaponAttackRules.Evaluate(
-                encounter,
-                new EncounterWeaponAttackEvaluationCommand
-                {
-                    ExpectedRevision = encounter.Revision,
-                    ActorCombatantId = decision.ActiveCombatantId!,
-                    TargetCombatantId = target.TargetCombatantId,
-                    WeaponId = decision.WeaponAttack.WeaponId,
-                    FirstAttackRoll = attackRoll.Value,
-                    SecondAttackRoll = null
-                });
+
+        WeaponAttack weapon = Assert.Single(
+            WatchtowerCombatTestData.GetParticipant(
+                source,
+                decision.ActiveCombatantId!)
+            .CombatProfile.WeaponAttacks);
         DamageDice requiredDamage = Assert.IsType<DamageDice>(
-            evaluation.RequiredDamageDice);
-        Assert.Equal(
-            AttackRollOutcome.CriticalHit,
-            evaluation.AttackRoll.Outcome);
+            DamageRules.GetDamageDiceForAttackOutcome(
+                weapon.Damage,
+                AttackRollOutcome.CriticalHit));
 
         List<int> proposedDamageValues = [];
         int proposedCursor = attackRoll.UpdatedValuesConsumed;

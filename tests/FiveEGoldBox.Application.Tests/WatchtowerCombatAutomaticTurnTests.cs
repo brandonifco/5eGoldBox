@@ -558,8 +558,8 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         source = WatchtowerCombatTestData.ReplaceEncounter(source, encounter);
         encounter = WatchtowerCombatTestData.GetEncounter(source);
 
-        EncounterWeaponAttackPrerequisiteEvaluation nearestPrerequisites =
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+        WatchtowerCombatAttackAvailability nearestPrerequisites =
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 "combatant.watchtower-raider.melee",
                 "party-member.fighter",
@@ -581,7 +581,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         Assert.Null(nearestMovement);
         Assert.NotNull(fartherMovement);
         Assert.True(
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 fartherMovement.State,
                 "combatant.watchtower-raider.melee",
                 "party-member.ranger",
@@ -619,7 +619,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
                     == "combatant.watchtower-raider.melee");
         Assert.Equal("party-member.ranger", attack.TargetCombatantId);
         Assert.True(
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 movement.Movement!.State,
                 "combatant.watchtower-raider.melee",
                 "party-member.ranger",

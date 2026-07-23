@@ -2,7 +2,6 @@ using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Randomness;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Characters;
-using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -113,8 +112,8 @@ internal static class WatchtowerCombatOrchestrator
         ValidateRequiredId(intent.TargetCombatantId, nameof(intent.TargetCombatantId));
 
         EncounterState encounter = GetEncounter(state);
-        EncounterWeaponAttackPrerequisiteEvaluation prerequisites =
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+        WatchtowerCombatAttackAvailability prerequisites =
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 intent.ActorCombatantId,
                 intent.TargetCombatantId,
@@ -123,14 +122,14 @@ internal static class WatchtowerCombatOrchestrator
         EnsureLegalPlayerAttack(prerequisites);
 
         int cursorBefore = state.RandomValuesConsumed;
-        AttackExecution attack = ResolveAttack(
-            encounter,
-            state.RandomSeed,
-            cursorBefore,
-            intent.ActorCombatantId,
-            intent.TargetCombatantId,
-            intent.WeaponId,
-            prerequisites);
+        WatchtowerCombatAttackExecution attack =
+            WatchtowerCombatAttackStaging.Resolve(
+                encounter,
+                state.RandomSeed,
+                cursorBefore,
+                intent.ActorCombatantId,
+                intent.TargetCombatantId,
+                intent.WeaponId);
 
         state = ReplaceEncounter(
             state,
@@ -422,8 +421,8 @@ internal static class WatchtowerCombatOrchestrator
         string actorId = raider.Combatant.CombatantId;
         string targetId = target.Combatant.CombatantId;
 
-        EncounterWeaponAttackPrerequisiteEvaluation prerequisites =
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+        WatchtowerCombatAttackAvailability prerequisites =
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 actorId,
                 targetId,
@@ -455,7 +454,7 @@ internal static class WatchtowerCombatOrchestrator
                 encounter = movement.State;
 
                 prerequisites =
-                    EncounterWeaponAttackPrerequisiteRules.Evaluate(
+                    WatchtowerCombatAttackStaging.EvaluateAvailability(
                         encounter,
                         actorId,
                         targetId,
@@ -465,14 +464,14 @@ internal static class WatchtowerCombatOrchestrator
 
         if (prerequisites.IsLegal)
         {
-            AttackExecution attack = ResolveAttack(
-                encounter,
-                state.RandomSeed,
-                state.RandomValuesConsumed,
-                actorId,
-                targetId,
-                weapon.WeaponId,
-                prerequisites);
+            WatchtowerCombatAttackExecution attack =
+                WatchtowerCombatAttackStaging.Resolve(
+                    encounter,
+                    state.RandomSeed,
+                    state.RandomValuesConsumed,
+                    actorId,
+                    targetId,
+                    weapon.WeaponId);
 
             steps.Add(CreateWeaponAttackStep(
                 encounter,
@@ -530,100 +529,6 @@ internal static class WatchtowerCombatOrchestrator
             state.RandomValuesConsumed);
     }
 
-    private static AttackExecution ResolveAttack(
-        EncounterState encounter,
-        int seed,
-        int cursor,
-        string actorId,
-        string targetId,
-        string weaponId,
-        EncounterWeaponAttackPrerequisiteEvaluation prerequisites)
-    {
-        if (!prerequisites.IsLegal
-            || prerequisites.AttackRollMode is null)
-        {
-            throw new InvalidOperationException(
-                $"The weapon attack is unavailable for reason '{prerequisites.UnavailabilityReason}'.");
-        }
-
-        List<WatchtowerCombatDieRoll> dice = [];
-        int nextCursor = cursor;
-
-        ApplicationRandomRoll first =
-            ApplicationRandomSequence.GenerateDie(seed, nextCursor, 20);
-        nextCursor = first.UpdatedValuesConsumed;
-        dice.Add(CreateDie(first, WatchtowerCombatDiePurpose.AttackRoll));
-
-        int? secondValue = null;
-
-        if (prerequisites.AttackRollMode
-            != D20RollMode.Normal)
-        {
-            ApplicationRandomRoll second =
-                ApplicationRandomSequence.GenerateDie(seed, nextCursor, 20);
-            nextCursor = second.UpdatedValuesConsumed;
-            secondValue = second.Value;
-            dice.Add(CreateDie(second, WatchtowerCombatDiePurpose.AttackRoll));
-        }
-
-        EncounterWeaponAttackEvaluation evaluation =
-            EncounterWeaponAttackRules.Evaluate(
-                encounter,
-                new EncounterWeaponAttackEvaluationCommand
-                {
-                    ExpectedRevision = encounter.Revision,
-                    ActorCombatantId = actorId,
-                    TargetCombatantId = targetId,
-                    WeaponId = weaponId,
-                    FirstAttackRoll = first.Value,
-                    SecondAttackRoll = secondValue
-                });
-
-        List<int> damageValues = [];
-        DamageDice? requiredDamage = evaluation.RequiredDamageDice;
-
-        if (requiredDamage is not null)
-        {
-            int sides = (int)requiredDamage.Die;
-
-            for (int index = 0;
-                index < requiredDamage.Count;
-                index++)
-            {
-                ApplicationRandomRoll damage =
-                    ApplicationRandomSequence.GenerateDie(
-                        seed,
-                        nextCursor,
-                        sides);
-
-                nextCursor = damage.UpdatedValuesConsumed;
-                damageValues.Add(damage.Value);
-                dice.Add(CreateDie(
-                    damage,
-                    WatchtowerCombatDiePurpose.DamageRoll));
-            }
-        }
-
-        EncounterWeaponAttackResult result =
-            EncounterWeaponAttackRules.Resolve(
-                encounter,
-                new EncounterWeaponAttackCommand
-                {
-                    ExpectedRevision = encounter.Revision,
-                    ActorCombatantId = actorId,
-                    TargetCombatantId = targetId,
-                    WeaponId = weaponId,
-                    FirstAttackRoll = first.Value,
-                    SecondAttackRoll = secondValue,
-                    DamageRolls = Array.AsReadOnly(damageValues.ToArray())
-                });
-
-        return new AttackExecution(
-            result,
-            nextCursor,
-            Array.AsReadOnly(dice.ToArray()));
-    }
-
     private static WatchtowerCombatDecision RequirePlayerDecision(
         ApplicationSessionState state,
         long expectedRevision,
@@ -659,7 +564,7 @@ internal static class WatchtowerCombatOrchestrator
     }
 
     private static void EnsureLegalPlayerAttack(
-        EncounterWeaponAttackPrerequisiteEvaluation prerequisites)
+        WatchtowerCombatAttackAvailability prerequisites)
     {
         if (!prerequisites.IsLegal)
         {
@@ -931,9 +836,4 @@ internal static class WatchtowerCombatOrchestrator
                 parameterName);
         }
     }
-
-    private sealed record AttackExecution(
-        EncounterWeaponAttackResult Result,
-        int CursorAfter,
-        IReadOnlyList<WatchtowerCombatDieRoll> Dice);
 }

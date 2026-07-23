@@ -192,13 +192,13 @@ public sealed class WatchtowerCombatRaiderPolicyTests
             expectedMovement.EndingPosition,
             actualMovement.EndingPosition);
         Assert.True(
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 expectedMovement.State,
                 raider.Combatant.CombatantId,
                 expectedTarget.Combatant.CombatantId,
                 weaponId).IsLegal);
         Assert.True(
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 actualMovement.State,
                 reorderedRaider.Combatant.CombatantId,
                 actualTarget.Combatant.CombatantId,
