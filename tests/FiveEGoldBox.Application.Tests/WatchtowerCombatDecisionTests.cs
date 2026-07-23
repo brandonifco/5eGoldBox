@@ -320,43 +320,66 @@ public sealed class WatchtowerCombatDecisionTests
     [Fact]
     public void AdvanceToDecision_ExposesFixedWeaponAndAuthoritativeTargets()
     {
-        ApplicationSessionState state =
-            WatchtowerCombatTestData.CreatePlayerDecisionSession();
-        EncounterState encounter =
-            WatchtowerCombatTestData.GetEncounter(state);
-        EncounterParticipantState actor =
+        ApplicationSessionState source =
+            WatchtowerCombatTestData.AdvanceToCombatant(
+                WatchtowerCombatTestData.CreatePlayerDecisionSession(),
+                "party-member.ranger");
+        EncounterParticipantState ranger =
             WatchtowerCombatTestData.GetParticipant(
-                state,
-                encounter.ActiveCombatantId);
+                source,
+                "party-member.ranger") with
+            {
+                Position = new GridPosition(2, 2)
+            };
+        source = WatchtowerCombatTestData.ReplaceParticipant(
+            source,
+            ranger);
         WeaponAttack expectedWeapon = Assert.Single(
-            actor.CombatProfile.WeaponAttacks);
+            ranger.CombatProfile.WeaponAttacks);
 
         WatchtowerCombatDecision decision =
-            WatchtowerCombatRules.AdvanceToDecision(state)
+            WatchtowerCombatRules.AdvanceToDecision(source)
                 .ResultingDecision;
+        WatchtowerCombatWeaponAttackOption attack =
+            Assert.IsType<WatchtowerCombatWeaponAttackOption>(
+                decision.WeaponAttack);
 
-        Assert.Equal(
-            expectedWeapon.WeaponId,
-            decision.WeaponAttack!.WeaponId);
-        Assert.Equal(2, decision.WeaponAttack.Targets.Count);
+        Assert.Equal(expectedWeapon.WeaponId, attack.WeaponId);
+        Assert.Equal(2, attack.Targets.Count);
 
-        foreach (WatchtowerCombatTargetOption target
-            in decision.WeaponAttack.Targets)
-        {
-            EncounterWeaponAttackPrerequisiteEvaluation expected =
-                EncounterWeaponAttackPrerequisiteRules.Evaluate(
-                    encounter,
-                    actor.Combatant.CombatantId,
+        WatchtowerCombatTargetOption meleeTarget =
+            Assert.Single(
+                attack.Targets,
+                target => string.Equals(
                     target.TargetCombatantId,
-                    expectedWeapon.WeaponId);
+                    WatchtowerSignalEncounter.MeleeRaiderId,
+                    StringComparison.Ordinal));
 
-            Assert.Equal(expected.IsLegal, target.IsAvailable);
-            Assert.Equal(
-                expected.UnavailabilityReason,
-                target.UnavailabilityReason);
-            Assert.Equal(expected.AttackRollMode, target.AttackRollMode);
-            Assert.Equal(expected.DistanceFeet, target.DistanceFeet);
-        }
+        Assert.True(meleeTarget.IsAvailable);
+        Assert.Equal(
+            EncounterActionUnavailabilityReason.None,
+            meleeTarget.UnavailabilityReason);
+        Assert.Equal(
+            D20RollMode.Disadvantage,
+            meleeTarget.AttackRollMode);
+        Assert.Equal(5, meleeTarget.DistanceFeet);
+
+        WatchtowerCombatTargetOption rangedTarget =
+            Assert.Single(
+                attack.Targets,
+                target => string.Equals(
+                    target.TargetCombatantId,
+                    WatchtowerSignalEncounter.RangedRaiderId,
+                    StringComparison.Ordinal));
+
+        Assert.True(rangedTarget.IsAvailable);
+        Assert.Equal(
+            EncounterActionUnavailabilityReason.None,
+            rangedTarget.UnavailabilityReason);
+        Assert.Equal(
+            D20RollMode.Disadvantage,
+            rangedTarget.AttackRollMode);
+        Assert.Equal(10, rangedTarget.DistanceFeet);
     }
 
     [Fact]

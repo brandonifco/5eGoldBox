@@ -105,8 +105,8 @@ internal static class WatchtowerCombatPathSearch
                 state,
                 actorCombatantId))
         {
-            EncounterWeaponAttackPrerequisiteEvaluation prerequisites =
-                EncounterWeaponAttackPrerequisiteRules.Evaluate(
+            WatchtowerCombatAttackAvailability prerequisites =
+                WatchtowerCombatAttackStaging.EvaluateAvailability(
                     movement.State,
                     actorCombatantId,
                     targetCombatantId,

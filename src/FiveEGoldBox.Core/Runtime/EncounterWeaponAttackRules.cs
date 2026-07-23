@@ -8,7 +8,7 @@ public static class EncounterWeaponAttackRules
 {
     private const int DefaultMeleeReachFeet = 5;
 
-    public static EncounterWeaponAttackEvaluation Evaluate(
+    internal static EncounterWeaponAttackEvaluation Evaluate(
         EncounterState state,
         EncounterWeaponAttackEvaluationCommand command)
     {

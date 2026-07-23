@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Security.Cryptography;
+using FiveEGoldBox.Application.Combat;
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Parties;
@@ -440,8 +441,8 @@ public sealed class WatchtowerEncounterConstructionTests
             GetEncounter(state),
             "combatant.watchtower-raider.melee");
 
-        EncounterWeaponAttackPrerequisiteEvaluation evaluation =
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+        WatchtowerCombatAttackAvailability evaluation =
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 "combatant.watchtower-raider.melee",
                 state.Party.Members[0].PartyMemberId,
@@ -459,8 +460,8 @@ public sealed class WatchtowerEncounterConstructionTests
             GetEncounter(state),
             "combatant.watchtower-raider.ranged");
 
-        EncounterWeaponAttackPrerequisiteEvaluation evaluation =
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+        WatchtowerCombatAttackAvailability evaluation =
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 "combatant.watchtower-raider.ranged",
                 state.Party.Members[1].PartyMemberId,

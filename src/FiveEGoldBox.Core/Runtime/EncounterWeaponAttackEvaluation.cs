@@ -3,7 +3,7 @@ using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
 
-public sealed record EncounterWeaponAttackEvaluation
+internal sealed record EncounterWeaponAttackEvaluation
 {
     public required long EncounterRevision { get; init; }
 

@@ -2,7 +2,7 @@ using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
 
-public sealed record EncounterWeaponAttackPrerequisiteEvaluation
+internal sealed record EncounterWeaponAttackPrerequisiteEvaluation
 {
     public required bool IsLegal { get; init; }
 

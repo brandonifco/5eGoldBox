@@ -155,8 +155,8 @@ internal static class WatchtowerCombatDecisionFactory
         EncounterParticipantState target,
         WeaponAttack weapon)
     {
-        EncounterWeaponAttackPrerequisiteEvaluation evaluation =
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+        WatchtowerCombatAttackAvailability evaluation =
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 actor.Combatant.CombatantId,
                 target.Combatant.CombatantId,

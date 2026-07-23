@@ -82,8 +82,8 @@ internal static class WatchtowerRaiderPolicy
         string targetId =
             target.Combatant.CombatantId;
 
-        EncounterWeaponAttackPrerequisiteEvaluation prerequisites =
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+        WatchtowerCombatAttackAvailability prerequisites =
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 actorId,
                 targetId,
@@ -114,7 +114,7 @@ internal static class WatchtowerRaiderPolicy
             return false;
         }
 
-        return EncounterWeaponAttackPrerequisiteRules.Evaluate(
+        return WatchtowerCombatAttackStaging.EvaluateAvailability(
             movement.State,
             actorId,
             targetId,

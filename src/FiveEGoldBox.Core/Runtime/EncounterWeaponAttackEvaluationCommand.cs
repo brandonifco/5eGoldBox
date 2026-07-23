@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Core.Runtime;
 
-public sealed record EncounterWeaponAttackEvaluationCommand
+internal sealed record EncounterWeaponAttackEvaluationCommand
 {
     public required long ExpectedRevision { get; init; }
 
