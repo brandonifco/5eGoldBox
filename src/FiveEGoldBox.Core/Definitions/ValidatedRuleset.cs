@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FiveEGoldBox.Core.Validation;
 
 namespace FiveEGoldBox.Core.Definitions;
@@ -12,7 +13,18 @@ public sealed class ValidatedRuleset
 
     public RulesetDefinition Definition { get; }
 
-    public RulesetIndex Index { get; }
+    internal RulesetIndex Index { get; }
+
+    public bool TryGetBackground(
+        string backgroundId,
+        [NotNullWhen(true)] out BackgroundDefinition? background)
+    {
+        ArgumentNullException.ThrowIfNull(backgroundId);
+
+        return Index.BackgroundsById.TryGetValue(
+            backgroundId,
+            out background);
+    }
 
     public static RulesetLoadResult Load(RulesetDefinition definition)
     {
