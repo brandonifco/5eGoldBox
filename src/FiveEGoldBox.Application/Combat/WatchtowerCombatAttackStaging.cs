@@ -13,8 +13,8 @@ internal static class WatchtowerCombatAttackStaging
         string targetCombatantId,
         string weaponId)
     {
-        EncounterWeaponAttackPrerequisiteEvaluation evaluation =
-            EncounterWeaponAttackPrerequisiteRules.Evaluate(
+        CombatAttackAvailability evaluation =
+            CombatAttackStaging.EvaluateAvailability(
                 encounter,
                 actorCombatantId,
                 targetCombatantId,
@@ -81,18 +81,15 @@ internal static class WatchtowerCombatAttackStaging
                 WatchtowerCombatDiePurpose.AttackRoll));
         }
 
-        EncounterWeaponAttackEvaluation evaluation =
-            EncounterWeaponAttackRules.Evaluate(
+        CombatAttackEvaluation evaluation =
+            CombatAttackStaging.Evaluate(
                 encounter,
-                new EncounterWeaponAttackEvaluationCommand
-                {
-                    ExpectedRevision = encounter.Revision,
-                    ActorCombatantId = actorCombatantId,
-                    TargetCombatantId = targetCombatantId,
-                    WeaponId = weaponId,
-                    FirstAttackRoll = first.Value,
-                    SecondAttackRoll = secondValue
-                });
+                encounter.Revision,
+                actorCombatantId,
+                targetCombatantId,
+                weaponId,
+                first.Value,
+                secondValue);
 
         List<int> damageValues = [];
         DamageDice? requiredDamage =
