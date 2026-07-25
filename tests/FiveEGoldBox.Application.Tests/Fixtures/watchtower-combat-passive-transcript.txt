@@ -1,0 +1,101 @@
+== AdvanceToDecision rev 1->1 cursor 17->17 next=PlayerDecisionRequired
+== EndTurn rev 1->2 cursor 17->17 next=PlayerDecisionRequired
+   primary   TurnAdvanced|actor=party-member.fighter|target=-|reason=PlayerEndTurn|dice=-|rev=1->2|winner=-
+== EndTurn rev 2->5 cursor 17->18 next=PlayerDecisionRequired
+   primary   TurnAdvanced|actor=party-member.barbarian|target=-|reason=PlayerEndTurn|dice=-|rev=2->3|winner=-
+   automatic WeaponAttack|actor=combatant.watchtower-raider.melee|target=party-member.fighter|reason=-|dice=#18d20=4:AttackRoll|rev=3->4|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=RaiderTurnCompleted|dice=-|rev=4->5|winner=-
+== EndTurn rev 5->10 cursor 18->21 next=PlayerDecisionRequired
+   primary   TurnAdvanced|actor=party-member.ranger|target=-|reason=PlayerEndTurn|dice=-|rev=5->6|winner=-
+   automatic WeaponAttack|actor=combatant.watchtower-raider.ranged|target=party-member.fighter|reason=-|dice=#19d20=9:AttackRoll;#20d6=6:DamageRoll|rev=6->7|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=RaiderTurnCompleted|dice=-|rev=7->8|winner=-
+   automatic DeathSavingThrow|actor=party-member.fighter|target=-|reason=-|dice=#21d20=17:DeathSavingThrow|rev=8->9|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=DyingParticipantAfterSave|dice=-|rev=9->10|winner=-
+== EndTurn rev 10->13 cursor 21->22 next=PlayerDecisionRequired
+   primary   TurnAdvanced|actor=party-member.barbarian|target=-|reason=PlayerEndTurn|dice=-|rev=10->11|winner=-
+   automatic WeaponAttack|actor=combatant.watchtower-raider.melee|target=party-member.barbarian|reason=-|dice=#22d20=1:AttackRoll|rev=11->12|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=RaiderTurnCompleted|dice=-|rev=12->13|winner=-
+== EndTurn rev 13->46 cursor 22->36 next=PlayerDecisionRequired
+   primary   TurnAdvanced|actor=party-member.ranger|target=-|reason=PlayerEndTurn|dice=-|rev=13->14|winner=-
+   automatic WeaponAttack|actor=combatant.watchtower-raider.ranged|target=party-member.barbarian|reason=-|dice=#23d20=11:AttackRoll;#24d6=5:DamageRoll|rev=14->15|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=RaiderTurnCompleted|dice=-|rev=15->16|winner=-
+   automatic DeathSavingThrow|actor=party-member.fighter|target=-|reason=-|dice=#25d20=16:DeathSavingThrow|rev=16->17|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=DyingParticipantAfterSave|dice=-|rev=17->18|winner=-
+   automatic DeathSavingThrow|actor=party-member.barbarian|target=-|reason=-|dice=#26d20=8:DeathSavingThrow|rev=18->19|winner=-
+   automatic TurnAdvanced|actor=party-member.barbarian|target=-|reason=DyingParticipantAfterSave|dice=-|rev=19->20|winner=-
+   automatic Movement|actor=combatant.watchtower-raider.melee|target=-|reason=-|dice=-|rev=20->21|winner=-
+   automatic WeaponAttack|actor=combatant.watchtower-raider.melee|target=party-member.ranger|reason=-|dice=#27d20=11:AttackRoll;#28d6=5:DamageRoll|rev=21->22|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=RaiderTurnCompleted|dice=-|rev=22->23|winner=-
+   automatic DeathSavingThrow|actor=party-member.ranger|target=-|reason=-|dice=#29d20=9:DeathSavingThrow|rev=23->24|winner=-
+   automatic TurnAdvanced|actor=party-member.ranger|target=-|reason=DyingParticipantAfterSave|dice=-|rev=24->25|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=NoProductiveEnemyAction|dice=-|rev=25->26|winner=-
+   automatic DeathSavingThrow|actor=party-member.fighter|target=-|reason=-|dice=#30d20=18:DeathSavingThrow|rev=26->27|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=DyingParticipantAfterSave|dice=-|rev=27->28|winner=-
+   automatic DeathSavingThrow|actor=party-member.barbarian|target=-|reason=-|dice=#31d20=11:DeathSavingThrow|rev=28->29|winner=-
+   automatic TurnAdvanced|actor=party-member.barbarian|target=-|reason=DyingParticipantAfterSave|dice=-|rev=29->30|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=NoProductiveEnemyAction|dice=-|rev=30->31|winner=-
+   automatic DeathSavingThrow|actor=party-member.ranger|target=-|reason=-|dice=#32d20=18:DeathSavingThrow|rev=31->32|winner=-
+   automatic TurnAdvanced|actor=party-member.ranger|target=-|reason=DyingParticipantAfterSave|dice=-|rev=32->33|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=NoProductiveEnemyAction|dice=-|rev=33->34|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=StableParticipant|dice=-|rev=34->35|winner=-
+   automatic DeathSavingThrow|actor=party-member.barbarian|target=-|reason=-|dice=#33d20=14:DeathSavingThrow|rev=35->36|winner=-
+   automatic TurnAdvanced|actor=party-member.barbarian|target=-|reason=DyingParticipantAfterSave|dice=-|rev=36->37|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=NoProductiveEnemyAction|dice=-|rev=37->38|winner=-
+   automatic DeathSavingThrow|actor=party-member.ranger|target=-|reason=-|dice=#34d20=6:DeathSavingThrow|rev=38->39|winner=-
+   automatic TurnAdvanced|actor=party-member.ranger|target=-|reason=DyingParticipantAfterSave|dice=-|rev=39->40|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=NoProductiveEnemyAction|dice=-|rev=40->41|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=StableParticipant|dice=-|rev=41->42|winner=-
+   automatic DeathSavingThrow|actor=party-member.barbarian|target=-|reason=-|dice=#35d20=11:DeathSavingThrow|rev=42->43|winner=-
+   automatic TurnAdvanced|actor=party-member.barbarian|target=-|reason=DyingParticipantAfterSave|dice=-|rev=43->44|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=NoProductiveEnemyAction|dice=-|rev=44->45|winner=-
+   automatic DeathSavingThrow|actor=party-member.ranger|target=-|reason=-|dice=#36d20=20:DeathSavingThrow|rev=45->46|winner=-
+== EndTurn rev 46->60 cursor 36->41 next=PlayerDecisionRequired
+   primary   TurnAdvanced|actor=party-member.ranger|target=-|reason=PlayerEndTurn|dice=-|rev=46->47|winner=-
+   automatic WeaponAttack|actor=combatant.watchtower-raider.ranged|target=party-member.ranger|reason=-|dice=#37d20=6:AttackRoll|rev=47->48|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=RaiderTurnCompleted|dice=-|rev=48->49|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=StableParticipant|dice=-|rev=49->50|winner=-
+   automatic TurnAdvanced|actor=party-member.barbarian|target=-|reason=StableParticipant|dice=-|rev=50->51|winner=-
+   automatic WeaponAttack|actor=combatant.watchtower-raider.melee|target=party-member.ranger|reason=-|dice=#38d20=18:AttackRoll;#39d6=1:DamageRoll|rev=51->52|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=RaiderTurnCompleted|dice=-|rev=52->53|winner=-
+   automatic DeathSavingThrow|actor=party-member.ranger|target=-|reason=-|dice=#40d20=6:DeathSavingThrow|rev=53->54|winner=-
+   automatic TurnAdvanced|actor=party-member.ranger|target=-|reason=DyingParticipantAfterSave|dice=-|rev=54->55|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=NoProductiveEnemyAction|dice=-|rev=55->56|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=StableParticipant|dice=-|rev=56->57|winner=-
+   automatic TurnAdvanced|actor=party-member.barbarian|target=-|reason=StableParticipant|dice=-|rev=57->58|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=NoProductiveEnemyAction|dice=-|rev=58->59|winner=-
+   automatic DeathSavingThrow|actor=party-member.ranger|target=-|reason=-|dice=#41d20=20:DeathSavingThrow|rev=59->60|winner=-
+== EndTurn rev 60->67 cursor 41->43 next=PlayerDecisionRequired
+   primary   TurnAdvanced|actor=party-member.ranger|target=-|reason=PlayerEndTurn|dice=-|rev=60->61|winner=-
+   automatic WeaponAttack|actor=combatant.watchtower-raider.ranged|target=party-member.ranger|reason=-|dice=#42d20=5:AttackRoll|rev=61->62|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=RaiderTurnCompleted|dice=-|rev=62->63|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=StableParticipant|dice=-|rev=63->64|winner=-
+   automatic TurnAdvanced|actor=party-member.barbarian|target=-|reason=StableParticipant|dice=-|rev=64->65|winner=-
+   automatic WeaponAttack|actor=combatant.watchtower-raider.melee|target=party-member.ranger|reason=-|dice=#43d20=2:AttackRoll|rev=65->66|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=RaiderTurnCompleted|dice=-|rev=66->67|winner=-
+== EndTurn rev 67->92 cursor 43->49 next=CombatCompleted
+   primary   TurnAdvanced|actor=party-member.ranger|target=-|reason=PlayerEndTurn|dice=-|rev=67->68|winner=-
+   automatic WeaponAttack|actor=combatant.watchtower-raider.ranged|target=party-member.ranger|reason=-|dice=#44d20=14:AttackRoll;#45d6=5:DamageRoll|rev=68->69|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=RaiderTurnCompleted|dice=-|rev=69->70|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=StableParticipant|dice=-|rev=70->71|winner=-
+   automatic TurnAdvanced|actor=party-member.barbarian|target=-|reason=StableParticipant|dice=-|rev=71->72|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=NoProductiveEnemyAction|dice=-|rev=72->73|winner=-
+   automatic DeathSavingThrow|actor=party-member.ranger|target=-|reason=-|dice=#46d20=14:DeathSavingThrow|rev=73->74|winner=-
+   automatic TurnAdvanced|actor=party-member.ranger|target=-|reason=DyingParticipantAfterSave|dice=-|rev=74->75|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=NoProductiveEnemyAction|dice=-|rev=75->76|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=StableParticipant|dice=-|rev=76->77|winner=-
+   automatic TurnAdvanced|actor=party-member.barbarian|target=-|reason=StableParticipant|dice=-|rev=77->78|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=NoProductiveEnemyAction|dice=-|rev=78->79|winner=-
+   automatic DeathSavingThrow|actor=party-member.ranger|target=-|reason=-|dice=#47d20=5:DeathSavingThrow|rev=79->80|winner=-
+   automatic TurnAdvanced|actor=party-member.ranger|target=-|reason=DyingParticipantAfterSave|dice=-|rev=80->81|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=NoProductiveEnemyAction|dice=-|rev=81->82|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=StableParticipant|dice=-|rev=82->83|winner=-
+   automatic TurnAdvanced|actor=party-member.barbarian|target=-|reason=StableParticipant|dice=-|rev=83->84|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=NoProductiveEnemyAction|dice=-|rev=84->85|winner=-
+   automatic DeathSavingThrow|actor=party-member.ranger|target=-|reason=-|dice=#48d20=13:DeathSavingThrow|rev=85->86|winner=-
+   automatic TurnAdvanced|actor=party-member.ranger|target=-|reason=DyingParticipantAfterSave|dice=-|rev=86->87|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=NoProductiveEnemyAction|dice=-|rev=87->88|winner=-
+   automatic TurnAdvanced|actor=party-member.fighter|target=-|reason=StableParticipant|dice=-|rev=88->89|winner=-
+   automatic TurnAdvanced|actor=party-member.barbarian|target=-|reason=StableParticipant|dice=-|rev=89->90|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.melee|target=-|reason=NoProductiveEnemyAction|dice=-|rev=90->91|winner=-
+   automatic DeathSavingThrow|actor=party-member.ranger|target=-|reason=-|dice=#49d20=19:DeathSavingThrow|rev=91->92|winner=side.watchtower-raiders
+   automatic CombatCompleted|actor=-|target=-|reason=-|dice=-|rev=92->92|winner=side.watchtower-raiders
