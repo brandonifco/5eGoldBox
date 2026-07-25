@@ -1,3 +1,5 @@
+using FiveEGoldBox.Core.Runtime;
+
 namespace FiveEGoldBox.Application.Combat;
 
 public sealed record CombatWeaponAttackOption
@@ -5,6 +7,7 @@ public sealed record CombatWeaponAttackOption
     internal CombatWeaponAttackOption(
         string weaponId,
         bool isAvailable,
+        EncounterActionUnavailabilityReason unavailabilityReason,
         IReadOnlyList<CombatTargetOption> targets)
     {
         if (string.IsNullOrWhiteSpace(weaponId))
@@ -27,12 +30,16 @@ public sealed record CombatWeaponAttackOption
 
         WeaponId = weaponId;
         IsAvailable = isAvailable;
+        UnavailabilityReason = unavailabilityReason;
         Targets = Array.AsReadOnly(protectedTargets);
     }
 
     public string WeaponId { get; }
 
     public bool IsAvailable { get; }
+
+    /// Why this weapon cannot be used. None when it is available.
+    public EncounterActionUnavailabilityReason UnavailabilityReason { get; }
 
     public IReadOnlyList<CombatTargetOption> Targets { get; }
 }
