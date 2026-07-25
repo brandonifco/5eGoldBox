@@ -71,9 +71,9 @@ public sealed class ScenarioDefinitionModelTests
         Assert.Null(outpost.ExplorationMap);
         ExplorationMapDefinition map = Assert.IsType<ExplorationMapDefinition>(
             watchtower.ExplorationMap);
-        Assert.Equal(WatchtowerExplorationMap.MapId, map.MapId);
-        Assert.Equal(WatchtowerExplorationMap.StartingFloor, map.StartingFloor);
-        Assert.Equal(WatchtowerExplorationMap.StartingFacing, map.StartingFacing);
+        Assert.Equal("map.ruined-watchtower", map.MapId);
+        Assert.Equal(ExplorationFloor.GroundFloor, map.StartingFloor);
+        Assert.Equal(ExplorationFacing.East, map.StartingFacing);
 
         TravelRouteDefinition route = Assert.Single(definition.Routes);
         Assert.Equal(WatchtowerRegionalRoute.RouteId, route.RouteId);
@@ -290,12 +290,12 @@ public sealed class ScenarioDefinitionModelTests
     {
         return new ExplorationMapDefinition
         {
-            MapId = WatchtowerExplorationMap.MapId,
+            MapId = "map.ruined-watchtower",
             Width = 5,
             Height = 5,
-            StartingFloor = WatchtowerExplorationMap.StartingFloor,
+            StartingFloor = ExplorationFloor.GroundFloor,
             StartingPosition = new GridPosition(0, 0),
-            StartingFacing = WatchtowerExplorationMap.StartingFacing,
+            StartingFacing = ExplorationFacing.East,
             Floors =
             [
                 new ExplorationFloorDefinition
