@@ -1,4 +1,5 @@
 using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 
 namespace FiveEGoldBox.Application.Travel;
@@ -49,17 +50,19 @@ public static class RegionalTravelRules
                     "The watchtower journey availability could not be resolved.");
         }
 
+        TravelRouteDefinition route = ScenarioDefinitionRegistry
+            .Resolve(canonicalSession)
+            .Routes
+            .Single();
+
         RegionalTravelState travel = new()
         {
-            RouteId = WatchtowerRegionalRoute.RouteId,
+            RouteId = route.RouteId,
             OriginLocationId =
                 canonicalSession.CurrentLocationId,
-            DestinationLocationId =
-                WatchtowerRegionalRoute
-                    .WatchtowerLocationId,
+            DestinationLocationId = route.DestinationLocationId,
             CurrentStepIndex = 0,
-            FinalStepIndex =
-                WatchtowerRegionalRoute.FinalStepIndex
+            FinalStepIndex = route.FinalStepIndex
         };
 
         return ApplicationSessionRules.CreateCanonical(
