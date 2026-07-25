@@ -1,0 +1,88 @@
+{
+  "FormatVersion": 1,
+  "Session": {
+    "ScenarioId": "scenario.watchtower",
+    "CurrentMode": "Outpost",
+    "CurrentLocationId": "location.outpost",
+    "Party": {
+      "PartyId": "party.player",
+      "Members": [
+        {
+          "PartyMemberId": "party-member.fighter",
+          "CharacterDefinitionId": "character.fighter",
+          "DisplayName": "Fighter",
+          "ClassId": "class.fighter",
+          "ZeroHitPointPolicy": "DeathSavingThrows",
+          "Health": {
+            "HitPoints": {
+              "MaximumHitPoints": 12,
+              "CurrentHitPoints": -1,
+              "TemporaryHitPoints": 2
+            },
+            "DeathSavingThrows": {
+              "SuccessCount": 0,
+              "FailureCount": 0,
+              "IsStable": false
+            },
+            "IsInstantlyDead": false
+          },
+          "Ammunition": null
+        },
+        {
+          "PartyMemberId": "party-member.barbarian",
+          "CharacterDefinitionId": "character.barbarian",
+          "DisplayName": "Barbarian",
+          "ClassId": "class.barbarian",
+          "ZeroHitPointPolicy": "DeathSavingThrows",
+          "Health": {
+            "HitPoints": {
+              "MaximumHitPoints": 14,
+              "CurrentHitPoints": 14,
+              "TemporaryHitPoints": 0
+            },
+            "DeathSavingThrows": {
+              "SuccessCount": 0,
+              "FailureCount": 0,
+              "IsStable": false
+            },
+            "IsInstantlyDead": false
+          },
+          "Ammunition": null
+        },
+        {
+          "PartyMemberId": "party-member.ranger",
+          "CharacterDefinitionId": "character.ranger",
+          "DisplayName": "Ranger",
+          "ClassId": "class.ranger",
+          "ZeroHitPointPolicy": "DeathSavingThrows",
+          "Health": {
+            "HitPoints": {
+              "MaximumHitPoints": 11,
+              "CurrentHitPoints": 11,
+              "TemporaryHitPoints": 0
+            },
+            "DeathSavingThrows": {
+              "SuccessCount": 0,
+              "FailureCount": 0,
+              "IsStable": false
+            },
+            "IsInstantlyDead": false
+          },
+          "Ammunition": {
+            "WeaponId": "weapon.longbow",
+            "AmmunitionItemId": "item.arrow",
+            "RemainingQuantity": 7
+          }
+        }
+      ]
+    },
+    "Scenario": {
+      "Progress": "MissionNotAccepted"
+    },
+    "RandomSeed": 424242,
+    "RandomValuesConsumed": 0,
+    "RegionalTravel": null,
+    "Exploration": null,
+    "ActiveEncounter": null
+  }
+}
