@@ -1,7 +1,6 @@
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Randomness;
 using FiveEGoldBox.Application.Sessions;
-using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -360,109 +359,26 @@ internal static class WatchtowerCombatOrchestrator
         List<WatchtowerCombatStepResult> steps)
     {
         EncounterState encounter = GetEncounter(state);
-        EncounterParticipantState raider =
-            WatchtowerCombatDecisionFactory.FindParticipant(
+        string actorId = encounter.ActiveCombatantId;
+        WatchtowerRaiderTurnPlan plan =
+            WatchtowerRaiderTurnPlanner.Plan(
                 encounter,
-                encounter.ActiveCombatantId);
-        WeaponAttack weapon =
-            WatchtowerCombatDecisionFactory.GetFixedWeapon(raider);
+                state.Party);
 
-        if (weapon.AmmunitionItemId is not null
-            && weapon.AmmunitionQuantityAvailable <= 0)
+        if (plan.Movement is not null)
         {
-            return EndNonproductiveRaiderTurn(state, steps);
+            steps.Add(CreateMovementStep(
+                encounter,
+                plan.Movement));
+
+            state = ReplaceEncounter(
+                state,
+                plan.Movement.State,
+                state.RandomValuesConsumed);
+            encounter = plan.Movement.State;
         }
 
-        EncounterParticipantState? target =
-            WatchtowerRaiderPolicy.SelectTarget(
-                encounter,
-                state.Party,
-                raider);
-
-        if (target is null)
-        {
-            if (string.Equals(
-                raider.Combatant.CombatantId,
-                WatchtowerSignalEncounter.MeleeRaiderId,
-                StringComparison.Ordinal))
-            {
-                EncounterParticipantState? progressTarget =
-                    WatchtowerRaiderPolicy.SelectProgressTarget(
-                        encounter,
-                        state.Party,
-                        raider);
-
-                if (progressTarget is not null)
-                {
-                    EncounterMovementResult? movement =
-                        WatchtowerCombatPathSearch.FindMovement(
-                            encounter,
-                            raider.Combatant.CombatantId,
-                            progressTarget.Combatant.CombatantId,
-                            weapon.WeaponId);
-
-                    if (movement is not null)
-                    {
-                        steps.Add(CreateMovementStep(
-                            encounter,
-                            movement));
-
-                        state = ReplaceEncounter(
-                            state,
-                            movement.State,
-                            state.RandomValuesConsumed);
-                    }
-                }
-            }
-
-            return EndNonproductiveRaiderTurn(state, steps);
-        }
-
-        string actorId = raider.Combatant.CombatantId;
-        string targetId = target.Combatant.CombatantId;
-
-        WatchtowerCombatAttackAvailability prerequisites =
-            WatchtowerCombatAttackStaging.EvaluateAvailability(
-                encounter,
-                actorId,
-                targetId,
-                weapon.WeaponId);
-
-        if (!prerequisites.IsLegal
-            && string.Equals(
-                actorId,
-                WatchtowerSignalEncounter.MeleeRaiderId,
-                StringComparison.Ordinal))
-        {
-            EncounterMovementResult? movement =
-                WatchtowerCombatPathSearch.FindMovement(
-                    encounter,
-                    actorId,
-                    targetId,
-                    weapon.WeaponId);
-
-            if (movement is not null)
-            {
-                steps.Add(CreateMovementStep(
-                    encounter,
-                    movement));
-
-                state = ReplaceEncounter(
-                    state,
-                    movement.State,
-                    state.RandomValuesConsumed);
-                encounter = movement.State;
-
-                prerequisites =
-                    WatchtowerCombatAttackStaging.EvaluateAvailability(
-                        encounter,
-                        actorId,
-                        targetId,
-                        weapon.WeaponId);
-            }
-        }
-
-        if (prerequisites.IsLegal)
+        if (plan.Attack is { } attackPlan)
         {
             WatchtowerCombatAttackExecution attack =
                 WatchtowerCombatAttackStaging.Resolve(
@@ -470,8 +386,8 @@ internal static class WatchtowerCombatOrchestrator
                     state.RandomSeed,
                     state.RandomValuesConsumed,
                     actorId,
-                    targetId,
-                    weapon.WeaponId);
+                    attackPlan.TargetCombatantId,
+                    attackPlan.WeaponId);
 
             steps.Add(CreateWeaponAttackStep(
                 encounter,
@@ -499,29 +415,7 @@ internal static class WatchtowerCombatOrchestrator
         steps.Add(CreateTurnStep(
             encounter,
             turn,
-            prerequisites.IsLegal
-                ? WatchtowerCombatTurnAdvanceReason.RaiderTurnCompleted
-                : WatchtowerCombatTurnAdvanceReason.NoProductiveEnemyAction));
-
-        return ReplaceEncounter(
-            state,
-            turn.State,
-            state.RandomValuesConsumed);
-    }
-
-    private static ApplicationSessionState EndNonproductiveRaiderTurn(
-        ApplicationSessionState state,
-        List<WatchtowerCombatStepResult> steps)
-    {
-        EncounterState encounter = GetEncounter(state);
-        EncounterTurnAdvancementResult turn = AdvanceTurn(
-            encounter,
-            encounter.ActiveCombatantId);
-
-        steps.Add(CreateTurnStep(
-            encounter,
-            turn,
-            WatchtowerCombatTurnAdvanceReason.NoProductiveEnemyAction));
+            plan.TurnAdvanceReason));
 
         return ReplaceEncounter(
             state,
