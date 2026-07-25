@@ -21,6 +21,17 @@ The full plan lives at [docs/priority-1-development-plan.md](docs/priority-1-dev
 
 Once Phase 8 wraps, work continues under [docs/priority-2-development-plan.md](docs/priority-2-development-plan.md) — Phases 9–12, de-centering Watchtower into a genuinely scenario-agnostic engine (any scenario should be "loadable," not just Watchtower) and then building out toward an actual shippable game (5e mechanical completeness, the Godot client, production readiness). Read it now for the full picture of where Priority 1 is headed — it also refines the Phase 5–6 branch sequences from the Priority 1 plan above; treat its versions as authoritative going forward for those two phases specifically.
 
+**Priority 0 housekeeping sweep — done (2026-07-25).** All eight items closed:
+
+- All 33 merged-but-undeleted branches deleted (11 local, 22 remote); repo is now `main`-only.
+- 11 superseded Phase 6 review artifacts moved out of `docs/` to `~/5eGoldBox-docs-archive-2026-07-25/`. `Current Game Development Goals.txt` and the Scope Matrix `.docx` were **kept** — they're durable planning assets slated for markdown conversion in Phase 9, not scratch.
+- `README.md` and a proprietary/all-rights-reserved `LICENSE` added (PR #80).
+- CI now runs a Debug **and** Release matrix, collects coverage + `.trx` artifacts, and fails on any NuGet advisory; Dependabot configured for NuGet and Actions (PR #76).
+- That vulnerability scan immediately found two real high-severity transitive advisories, fixed by bumping the test stack (`Microsoft.NET.Test.Sdk` 17.8.0→18.8.1, `xunit` 2.5.3→2.9.3, `xunit.runner.visualstudio` 2.5.3→3.1.5, `coverlet.collector` 6.0.0→10.0.1).
+- A `dotnet format` CI gate was **evaluated and rejected** (PR #75) — it fights this codebase's hand-wrapped declaration style in every mode. Rationale is recorded in the plan doc; don't re-propose it without reading that first.
+
+**Next up: Phase 5** — Watchtower combat orchestrator decomposition, branch sequence in the Priority 2 plan.
+
 ## Workflow authorization for Priority 1 branches
 
 For each Priority 1 branch, proceed autonomously through the full loop without stopping to ask permission at each step:
@@ -39,7 +50,8 @@ Still pause and flag rather than pushing through: gate failures, merge conflicts
 
 ## Repo hygiene — leave these alone unless asked
 
-- **Untracked files may appear/disappear at repo root** (`Priority_1_Phase_*.md`, `priority-1-*.md`, `*.patch`, `*.csv`, `*.log`) — scratch output from an earlier multi-role review workflow that the user periodically clears by hand outside of git (as of 2026-07-25 the root is clean of it again). Regardless of what's currently present, **always** stage specific paths — never `git add -A`/`git add .` — since this clutter can reappear and must never be swept into a commit.
+- **Untracked files may appear/disappear at repo root and in `docs/`** (`Priority_1_Phase_*.md`, `priority-1-*.md`, `phase-6-*.md`, `*.patch`, `*.csv`, `*.log`) — scratch output from an earlier multi-role review workflow. The 2026-07-25 sweep archived the last batch to `~/5eGoldBox-docs-archive-2026-07-25/`, so `docs/` currently holds only the two tracked plan docs, the two rulebook references, and two durable planning assets. Regardless of what's currently present, **always** stage specific paths — never `git add -A`/`git add .` — since this clutter can reappear and must never be swept into a commit.
+- **`docs/Current Game Development Goals.txt` and `docs/5e Gold Box Supported Scope Matrix.docx` are untracked but deliberately kept** — real planning content (long-term roadmap; committed/deferred/excluded scope decisions), slated for conversion to tracked markdown in Phase 9. Don't archive or delete them with the scratch.
 - **`src/FiveEGoldBox.Godot/` is untracked** — user's in-progress Godot UI work, deliberately kept out of git until Priority 1 housekeeping is done. Don't add it to git, don't modify it, don't wire it to Application/Core unless asked.
 - **`docs/` contains two full copyrighted D&D 5e rulebook HTML files** (~1.3–1.4MB each), untracked. User is aware and wants them kept as local reference — don't delete, don't commit, don't quote from them at length.
 
