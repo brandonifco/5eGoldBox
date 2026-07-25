@@ -1,6 +1,7 @@
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Runtime;
@@ -51,28 +52,52 @@ public static class WatchtowerCombatOutcomeRules
             participantsById,
             rangerAmmunition);
 
+        ScenarioDefinition scenario =
+            ScenarioDefinitionRegistry.Resolve(session);
+        EncounterDefinition encounterDefinition = scenario.Encounters
+            .FirstOrDefault(candidate => string.Equals(
+                candidate.EncounterId,
+                encounter.EncounterId,
+                StringComparison.Ordinal))
+            ?? throw new ArgumentException(
+                "The completed encounter is not part of this scenario.",
+                nameof(session));
+
         bool isPartyVictory = string.Equals(
             encounter.WinningSideId,
-            WatchtowerSignalEncounter.PartySideId,
+            encounterDefinition.PartySideId,
             StringComparison.Ordinal);
-        bool isRaiderVictory = string.Equals(
-            encounter.WinningSideId,
-            WatchtowerSignalEncounter.RaiderSideId,
-            StringComparison.Ordinal);
+        bool isOpposingVictory = encounterDefinition.Combatants.Any(
+            combatant => string.Equals(
+                combatant.SideId,
+                encounter.WinningSideId,
+                StringComparison.Ordinal));
 
-        if (!isPartyVictory && !isRaiderVictory)
+        if (!isPartyVictory && !isOpposingVictory)
         {
             throw new ArgumentException(
                 "The completed watchtower encounter has an unsupported winner.",
                 nameof(session));
         }
 
-        ApplicationMode resultingMode = isPartyVictory
-            ? ApplicationMode.Exploration
-            : ApplicationMode.ScenarioConclusion;
-        WatchtowerScenarioProgress resultingProgress = isPartyVictory
-            ? WatchtowerScenarioProgress.RaidersDefeated
-            : WatchtowerScenarioProgress.PartyDefeated;
+        string resultingProgressId = isPartyVictory
+            ? encounterDefinition.Outcome.VictoryProgressId
+            : encounterDefinition.Outcome.DefeatProgressId;
+
+        // Whether the scenario ends here is decided by its declared
+        // conclusions, not by which side happened to win.
+        bool concludesScenario = scenario.Progress.Conclusions.Any(
+            conclusion => string.Equals(
+                conclusion.ProgressId,
+                resultingProgressId,
+                StringComparison.Ordinal));
+
+        ApplicationMode resultingMode = concludesScenario
+            ? ApplicationMode.ScenarioConclusion
+            : ApplicationMode.Exploration;
+        WatchtowerScenarioProgress resultingProgress =
+            WatchtowerScenario.ProgressOf(
+                new ScenarioState { ProgressId = resultingProgressId });
         WatchtowerCombatOutcome outcome = isPartyVictory
             ? WatchtowerCombatOutcome.PartyVictory
             : WatchtowerCombatOutcome.ScenarioDefeat;
@@ -83,12 +108,16 @@ public static class WatchtowerCombatOutcomeRules
                 {
                     CurrentMode = resultingMode,
                     Party = projectedParty,
-                    Scenario = WatchtowerScenario.CreateState(
-                        resultingProgress),
+                    Scenario = new ScenarioState
+                    {
+                        ProgressId = resultingProgressId
+                    },
                     RegionalTravel = null,
-                    Exploration = isPartyVictory
-                        ? activeEncounter.ReturnContext
-                        : null,
+                    // The party goes back to where it was exploring unless the
+                    // scenario is over.
+                    Exploration = concludesScenario
+                        ? null
+                        : activeEncounter.ReturnContext,
                     ActiveEncounter = null
                 });
 
