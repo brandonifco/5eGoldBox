@@ -99,12 +99,12 @@ public sealed class ScenarioDefinitionModelTests
         Assert.Equal(
             WatchtowerRegionalRoute.WatchtowerLocationId,
             signal.LocationId);
-        Assert.Equal(WatchtowerSignalMechanism.Floor, signal.Floor);
+        Assert.Equal(ExplorationFloor.UpperFloor, signal.Floor);
         Assert.Equal(
-            WatchtowerSignalMechanism.InteractionPosition,
+            new GridPosition(1, 1),
             signal.Position);
         Assert.Equal(
-            WatchtowerSignalMechanism.RequiredFacing,
+            ExplorationFacing.East,
             signal.RequiredFacing);
         Assert.Equal(
             WatchtowerSignalEncounter.EncounterId,
@@ -248,9 +248,9 @@ public sealed class ScenarioDefinitionModelTests
                     TriggerId = "trigger.watchtower-signal",
                     DisplayName = "Signal Mechanism",
                     LocationId = WatchtowerRegionalRoute.WatchtowerLocationId,
-                    Floor = WatchtowerSignalMechanism.Floor,
-                    Position = WatchtowerSignalMechanism.InteractionPosition,
-                    RequiredFacing = WatchtowerSignalMechanism.RequiredFacing,
+                    Floor = ExplorationFloor.UpperFloor,
+                    Position = new GridPosition(1, 1),
+                    RequiredFacing = ExplorationFacing.East,
                     RequiredProgressIds =
                     [
                         WatchtowerScenarioProgress.MissionAccepted.ToString()

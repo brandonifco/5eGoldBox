@@ -1,6 +1,7 @@
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
 using FiveEGoldBox.Core.Runtime;
@@ -60,19 +61,28 @@ internal static class WatchtowerEncounterSessionValidator
 
         WatchtowerExplorationMap.Validate(returnContext);
 
-        if (!WatchtowerSignalMechanism.CanActivate(
-            returnContext))
-        {
-            throw new ArgumentException(
-                "The encounter return context must be the authored signal-mechanism state.",
-                nameof(state));
-        }
-
         EncounterState encounter =
             activeEncounter.Encounter
             ?? throw new ArgumentException(
                 "An active encounter requires Core encounter state.",
                 nameof(state));
+
+        // The party must have got here through the trigger that starts this
+        // encounter, standing where that trigger fires.
+        ScenarioTriggerDefinition? trigger =
+            ScenarioTriggerMatcher.FindForEncounter(
+                state,
+                encounter.EncounterId);
+
+        if (trigger is null
+            || !ScenarioTriggerMatcher.MatchesPosition(
+                trigger,
+                returnContext))
+        {
+            throw new ArgumentException(
+                "The encounter return context must be the authored signal-mechanism state.",
+                nameof(state));
+        }
 
         ValidateEncounterIdentity(
             state,
