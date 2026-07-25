@@ -17,6 +17,10 @@ The full plan lives at [docs/priority-1-development-plan.md](docs/priority-1-dev
 - [ ] Phase 7 — Cross-layer die capability alignment
 - [ ] Phase 8 — Test infrastructure improvement (ongoing, not a separate gate)
 
+## Priority 2 Development Plan
+
+Once Phase 8 wraps, work continues under [docs/priority-2-development-plan.md](docs/priority-2-development-plan.md) — Phases 9–12, de-centering Watchtower into a genuinely scenario-agnostic engine (any scenario should be "loadable," not just Watchtower) and then building out toward an actual shippable game (5e mechanical completeness, the Godot client, production readiness). Read it now for the full picture of where Priority 1 is headed — it also refines the Phase 5–6 branch sequences from the Priority 1 plan above; treat its versions as authoritative going forward for those two phases specifically.
+
 ## Workflow authorization for Priority 1 branches
 
 For each Priority 1 branch, proceed autonomously through the full loop without stopping to ask permission at each step:
