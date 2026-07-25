@@ -11,14 +11,6 @@ namespace FiveEGoldBox.Application.Sessions;
 
 internal static class ApplicationSessionRules
 {
-    private const string FighterClassId = "class.fighter";
-
-    private const string BarbarianClassId = "class.barbarian";
-
-    private const string RangerClassId = "class.ranger";
-
-    private const int RequiredPartyMemberCount = 3;
-
     public static ApplicationSessionState CreateNew(
         string scenarioId,
         string currentLocationId,
@@ -122,6 +114,8 @@ internal static class ApplicationSessionRules
                 nameof(state));
         }
 
+        WatchtowerPartyCompositionValidator.Validate(state.Party);
+
         if (WatchtowerScenario.ProgressOf(state)
             == WatchtowerScenarioProgress.PartyDefeated
             && state.CurrentMode
@@ -170,11 +164,10 @@ internal static class ApplicationSessionRules
 
         ArgumentNullException.ThrowIfNull(party.Members);
 
-        if (party.Members.Count
-            != RequiredPartyMemberCount)
+        if (party.Members.Count == 0)
         {
             throw new ArgumentException(
-                $"The bounded party must contain exactly {RequiredPartyMemberCount} members.",
+                "A party must contain at least one member.",
                 nameof(party));
         }
 
@@ -182,10 +175,6 @@ internal static class ApplicationSessionRules
             new(StringComparer.Ordinal);
         HashSet<string> characterDefinitionIds =
             new(StringComparer.Ordinal);
-
-        int fighterCount = 0;
-        int barbarianCount = 0;
-        int rangerCount = 0;
 
         foreach (PartyMemberState member in party.Members)
         {
@@ -208,32 +197,6 @@ internal static class ApplicationSessionRules
                     "Character-definition IDs must be unique.",
                     nameof(party));
             }
-
-            switch (member.ClassId)
-            {
-                case FighterClassId:
-                    fighterCount++;
-                    break;
-                case BarbarianClassId:
-                    barbarianCount++;
-                    break;
-                case RangerClassId:
-                    rangerCount++;
-                    break;
-                default:
-                    throw new ArgumentException(
-                        "The bounded party supports only Fighter, Barbarian, and Ranger class IDs.",
-                        nameof(party));
-            }
-        }
-
-        if (fighterCount != 1
-            || barbarianCount != 1
-            || rangerCount != 1)
-        {
-            throw new ArgumentException(
-                "The bounded party must contain one Fighter, one Barbarian, and one Ranger.",
-                nameof(party));
         }
     }
 
@@ -284,22 +247,9 @@ internal static class ApplicationSessionRules
             member.Health,
             member.ZeroHitPointPolicy);
 
-        if (member.ClassId == RangerClassId)
+        if (member.Ammunition is not null)
         {
-            if (member.Ammunition is null)
-            {
-                throw new ArgumentException(
-                    "The Ranger must have ammunition state.",
-                    nameof(member));
-            }
-
             ValidateAmmunition(member.Ammunition);
-        }
-        else if (member.Ammunition is not null)
-        {
-            throw new ArgumentException(
-                "Only the Ranger may have ammunition state in the bounded party.",
-                nameof(member));
         }
     }
 
