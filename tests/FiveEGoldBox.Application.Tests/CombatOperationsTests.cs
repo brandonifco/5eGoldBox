@@ -543,7 +543,23 @@ public sealed class CombatOperationsTests
             typeof(CombatMovementDestinationOption),
             typeof(CombatWeaponAttackOption),
             typeof(CombatTargetOption),
-            typeof(CombatEndTurnOption)
+            typeof(CombatEndTurnOption),
+            typeof(CombatMoveIntent),
+            typeof(CombatWeaponAttackIntent),
+            typeof(CombatEndTurnIntent),
+            typeof(CombatIntentKind),
+            typeof(CombatIntentReceipt),
+            typeof(CombatResolutionResult),
+            typeof(CombatStepResult),
+            typeof(CombatStepKind),
+            typeof(CombatDieRoll),
+            typeof(CombatDiePurpose),
+            typeof(CombatTurnAdvanceReason),
+            typeof(CombatMovementStepDetail),
+            typeof(CombatWeaponAttackStepDetail),
+            typeof(CombatDamagedTargetDetail),
+            typeof(CombatDeathSavingThrowStepDetail),
+            typeof(CombatTurnAdvancementStepDetail)
         ];
 
         Assembly assembly = typeof(CombatOperations).Assembly;
@@ -554,9 +570,19 @@ public sealed class CombatOperationsTests
             Assert.Contains(type, assembly.GetExportedTypes());
         });
 
+        // Intents are inputs, so callers must be able to build them. Everything
+        // else the facade hands back is construct-only-from-inside and readonly.
+        Type[] intentTypes =
+        [
+            typeof(CombatMoveIntent),
+            typeof(CombatWeaponAttackIntent),
+            typeof(CombatEndTurnIntent)
+        ];
+
         Type[] outputRecords = expectedTypes
             .Where(type => type != typeof(CombatOperations)
-                && type != typeof(CombatDecisionState))
+                && !type.IsEnum
+                && !intentTypes.Contains(type))
             .ToArray();
 
         Assert.All(outputRecords, type =>
@@ -567,14 +593,46 @@ public sealed class CombatOperationsTests
                 property => Assert.False(property.SetMethod?.IsPublic ?? false));
         });
 
+        MethodInfo[] operations = typeof(CombatOperations).GetMethods(
+            BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
+
         MethodInfo query = Assert.Single(
-            typeof(CombatOperations).GetMethods(
-                BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly));
-        Assert.Equal("Query", query.Name);
+            operations,
+            operation => operation.Name == "Query");
         Assert.Equal(typeof(CombatView), query.ReturnType);
         Assert.Equal(
             new[] { typeof(ApplicationSessionState) },
             query.GetParameters().Select(parameter => parameter.ParameterType));
+
+        MethodInfo advance = Assert.Single(
+            operations,
+            operation => operation.Name == "AdvanceToDecision");
+        Assert.Equal(typeof(CombatResolutionResult), advance.ReturnType);
+        Assert.Equal(
+            new[] { typeof(ApplicationSessionState) },
+            advance.GetParameters().Select(parameter => parameter.ParameterType));
+
+        // One Execute per intent kind, each taking a session plus that intent.
+        Assert.Equal(
+            intentTypes.OrderBy(type => type.Name).ToArray(),
+            operations
+                .Where(operation => operation.Name == "Execute")
+                .Select(operation =>
+                {
+                    Assert.Equal(
+                        typeof(CombatResolutionResult),
+                        operation.ReturnType);
+                    Assert.Equal(
+                        typeof(ApplicationSessionState),
+                        operation.GetParameters()[0].ParameterType);
+                    return operation.GetParameters()[1].ParameterType;
+                })
+                .OrderBy(type => type.Name)
+                .ToArray());
+
+        Assert.Equal(
+            operations.Length,
+            2 + intentTypes.Length);
 
         HashSet<Type> prohibited =
         [

@@ -69,8 +69,8 @@ public sealed class ConsoleSessionRunnerCombatTests
     [Fact]
     public void RenderCombatDecision_DisplaysAuthoritativeAvailability()
     {
-        WatchtowerCombatDecision decision =
-            WatchtowerCombatRules.AdvanceToDecision(
+        CombatDecision decision =
+            CombatOperations.AdvanceToDecision(
                 CreateEncounterSession())
             .ResultingDecision;
         ConsoleSessionRunner runner = new();
@@ -89,10 +89,10 @@ public sealed class ConsoleSessionRunnerCombatTests
             $"Movement Unavailability Reason: {decision.Movement.UnavailabilityReason}",
             text);
         Assert.Contains(
-            $"Weapon ID: {decision.WeaponAttack!.WeaponId}",
+            $"Weapon ID: {decision.WeaponAttacks[0].WeaponId}",
             text);
         Assert.Contains(
-            $"Weapon Attack Unavailability Reason: {decision.WeaponAttack.UnavailabilityReason}",
+            $"Weapon Attack Unavailability Reason: {decision.WeaponAttacks[0].UnavailabilityReason}",
             text);
         Assert.Contains(
             $"End Turn Unavailability Reason: {decision.EndTurn!.UnavailabilityReason}",
@@ -102,11 +102,15 @@ public sealed class ConsoleSessionRunnerCombatTests
     [Fact]
     public void RenderCombatDecision_AutomaticProcessingRequiredIsNotExposedAsMenu()
     {
-        WatchtowerCombatDecision decision = new()
-        {
-            State = WatchtowerCombatDecisionState.AutomaticProcessingRequired,
-            EncounterRevision = 7
-        };
+        CombatDecision decision = new(
+            CombatDecisionState.AutomaticProcessingRequired,
+            encounterRevision: 7,
+            activeCombatantId: "combatant.watchtower-raider.melee",
+            pendingDeathSavingThrowCombatantId: null,
+            movement: null,
+            weaponAttacks: [],
+            endTurn: null,
+            winningSideId: null);
         ConsoleSessionRunner runner = new();
         StringWriter output = new();
 

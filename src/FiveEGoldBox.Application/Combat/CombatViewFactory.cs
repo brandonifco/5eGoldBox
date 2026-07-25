@@ -206,10 +206,17 @@ internal static class CombatViewFactory
                     evaluation.DistanceFeet);
             }
 
+            bool hasLegalTarget = targets.Any(target => target.IsAvailable);
+
             weaponOptions.Add(
                 new CombatWeaponAttackOption(
                     weapon.WeaponId,
-                    targets.Any(target => target.IsAvailable),
+                    hasLegalTarget,
+                    hasLegalTarget
+                        ? EncounterActionUnavailabilityReason.None
+                        : targets.FirstOrDefault()?.UnavailabilityReason
+                            ?? EncounterActionUnavailabilityReason
+                                .TargetNotParticipant,
                     targets));
         }
 

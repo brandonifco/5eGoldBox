@@ -10,19 +10,19 @@ internal sealed partial class ConsoleSessionRunner
         TextWriter output,
         ApplicationSessionState session)
     {
-        WatchtowerCombatResolutionResult normalization =
-            WatchtowerCombatRules.AdvanceToDecision(session);
+        CombatResolutionResult normalization =
+            CombatOperations.AdvanceToDecision(session);
 
         RenderCombatResolution(output, normalization);
 
         session = normalization.State;
-        WatchtowerCombatDecision decision =
+        CombatDecision decision =
             normalization.ResultingDecision;
 
         while (true)
         {
             if (decision.State
-                == WatchtowerCombatDecisionState.CombatCompleted)
+                == CombatDecisionState.CombatCompleted)
             {
                 WatchtowerCombatOutcomeResult outcome =
                     WatchtowerCombatOutcomeRules.Finalize(session);
@@ -68,16 +68,16 @@ internal sealed partial class ConsoleSessionRunner
             switch (selectedOption.Action)
             {
                 case CombatMenuAction.Move:
-                    WatchtowerCombatMovementDestinationOption
+                    CombatMovementDestinationOption
                         movementDestination =
                             selectedOption.MovementDestination
                             ?? throw new InvalidOperationException(
                                 "A movement menu option did not contain a movement destination.");
 
-                    WatchtowerCombatResolutionResult moveResult =
-                        WatchtowerCombatRules.Execute(
+                    CombatResolutionResult moveResult =
+                        CombatOperations.Execute(
                             session,
-                            new WatchtowerCombatMoveIntent
+                            new CombatMoveIntent
                             {
                                 ExpectedEncounterRevision =
                                     decision.EncounterRevision,
@@ -91,19 +91,19 @@ internal sealed partial class ConsoleSessionRunner
                     decision = moveResult.ResultingDecision;
                     break;
                 case CombatMenuAction.WeaponAttack:
-                    WatchtowerCombatWeaponAttackOption weaponAttack =
+                    CombatWeaponAttackOption weaponAttack =
                         selectedOption.WeaponAttack
                         ?? throw new InvalidOperationException(
                             "A weapon-attack menu option did not contain a weapon option.");
-                    WatchtowerCombatTargetOption target =
+                    CombatTargetOption target =
                         selectedOption.Target
                         ?? throw new InvalidOperationException(
                             "A weapon-attack menu option did not contain a target option.");
 
-                    WatchtowerCombatResolutionResult attackResult =
-                        WatchtowerCombatRules.Execute(
+                    CombatResolutionResult attackResult =
+                        CombatOperations.Execute(
                             session,
-                            new WatchtowerCombatWeaponAttackIntent
+                            new CombatWeaponAttackIntent
                             {
                                 ExpectedEncounterRevision =
                                     decision.EncounterRevision,
@@ -119,10 +119,10 @@ internal sealed partial class ConsoleSessionRunner
                     decision = attackResult.ResultingDecision;
                     break;
                 case CombatMenuAction.EndTurn:
-                    WatchtowerCombatResolutionResult endTurnResult =
-                        WatchtowerCombatRules.Execute(
+                    CombatResolutionResult endTurnResult =
+                        CombatOperations.Execute(
                             session,
-                            new WatchtowerCombatEndTurnIntent
+                            new CombatEndTurnIntent
                             {
                                 ExpectedEncounterRevision =
                                     decision.EncounterRevision,
@@ -150,18 +150,18 @@ internal sealed partial class ConsoleSessionRunner
 
     internal void RenderCombatDecision(
         TextWriter output,
-        WatchtowerCombatDecision decision)
+        CombatDecision decision)
     {
         ArgumentNullException.ThrowIfNull(output);
         ArgumentNullException.ThrowIfNull(decision);
 
         ValidatePlayerDecision(decision);
 
-        WatchtowerCombatMovementOption movement =
+        CombatMovementOption movement =
             decision.Movement!;
-        WatchtowerCombatWeaponAttackOption weaponAttack =
-            decision.WeaponAttack!;
-        WatchtowerCombatEndTurnOption endTurn =
+        CombatWeaponAttackOption weaponAttack =
+            decision.WeaponAttacks[0];
+        CombatEndTurnOption endTurn =
             decision.EndTurn!;
 
         output.WriteLine();
@@ -263,33 +263,33 @@ internal sealed partial class ConsoleSessionRunner
 
     private static IReadOnlyList<CombatMenuOption>
         CreateCombatMenuOptions(
-            WatchtowerCombatDecision decision)
+            CombatDecision decision)
     {
         ValidatePlayerDecision(decision);
 
         List<CombatMenuOption> options = new();
-        WatchtowerCombatMovementOption movement =
+        CombatMovementOption movement =
             decision.Movement!;
 
         if (movement.IsAvailable)
         {
-            foreach (WatchtowerCombatMovementDestinationOption destination
+            foreach (CombatMovementDestinationOption destination
                 in movement.DestinationOptions)
             {
                 options.Add(
                     new CombatMenuOption(
-                        $"Move to ({destination.Destination.X}, {destination.Destination.Y}) - {destination.MovementSpentFeet} ft",
+                        $"Move to ({destination.Destination.X}, {destination.Destination.Y}) - {destination.MovementCostFeet} ft",
                         CombatMenuAction.Move,
                         MovementDestination: destination));
             }
         }
 
-        WatchtowerCombatWeaponAttackOption weaponAttack =
-            decision.WeaponAttack!;
+        CombatWeaponAttackOption weaponAttack =
+            decision.WeaponAttacks[0];
 
         if (weaponAttack.IsAvailable)
         {
-            foreach (WatchtowerCombatTargetOption target
+            foreach (CombatTargetOption target
                 in weaponAttack.Targets.Where(target =>
                     target.IsAvailable))
             {
@@ -325,8 +325,8 @@ internal sealed partial class ConsoleSessionRunner
     }
 
     private static string CreateWeaponAttackLabel(
-        WatchtowerCombatWeaponAttackOption weaponAttack,
-        WatchtowerCombatTargetOption target)
+        CombatWeaponAttackOption weaponAttack,
+        CombatTargetOption target)
     {
         string label =
             $"Attack {target.TargetCombatantId} with {weaponAttack.WeaponId}";
@@ -368,7 +368,7 @@ internal sealed partial class ConsoleSessionRunner
 
     private static void RenderCombatResolution(
         TextWriter output,
-        WatchtowerCombatResolutionResult result)
+        CombatResolutionResult result)
     {
         output.WriteLine();
         output.WriteLine("Combat Resolution");
@@ -411,7 +411,7 @@ internal sealed partial class ConsoleSessionRunner
     private static void RenderCombatStep(
         TextWriter output,
         string label,
-        WatchtowerCombatStepResult step)
+        CombatStepResult step)
     {
         output.WriteLine();
         output.WriteLine(label);
@@ -439,7 +439,7 @@ internal sealed partial class ConsoleSessionRunner
                 $"Winning Side ID: {step.WinningSideId}");
         }
 
-        foreach (WatchtowerCombatDieRoll die in step.Dice)
+        foreach (CombatDieRoll die in step.Dice)
         {
             output.WriteLine(
                 $"Die {die.Ordinal}: Purpose={die.Purpose}, Sides={die.Sides}, Value={die.Value}");
@@ -447,19 +447,19 @@ internal sealed partial class ConsoleSessionRunner
 
         switch (step.Kind)
         {
-            case WatchtowerCombatStepKind.Movement:
+            case CombatStepKind.Movement:
                 RenderMovementStep(output, step);
                 break;
-            case WatchtowerCombatStepKind.WeaponAttack:
+            case CombatStepKind.WeaponAttack:
                 RenderWeaponAttackStep(output, step);
                 break;
-            case WatchtowerCombatStepKind.DeathSavingThrow:
+            case CombatStepKind.DeathSavingThrow:
                 RenderDeathSavingThrowStep(output, step);
                 break;
-            case WatchtowerCombatStepKind.TurnAdvanced:
+            case CombatStepKind.TurnAdvanced:
                 RenderTurnAdvanceStep(output, step);
                 break;
-            case WatchtowerCombatStepKind.CombatCompleted:
+            case CombatStepKind.CombatCompleted:
                 if (step.WinningSideId is null)
                 {
                     throw new InvalidOperationException(
@@ -475,7 +475,7 @@ internal sealed partial class ConsoleSessionRunner
 
     private static void RenderMovementStep(
         TextWriter output,
-        WatchtowerCombatStepResult step)
+        CombatStepResult step)
     {
         var movement = step.Movement
             ?? throw new InvalidOperationException(
@@ -498,98 +498,92 @@ internal sealed partial class ConsoleSessionRunner
 
     private static void RenderWeaponAttackStep(
         TextWriter output,
-        WatchtowerCombatStepResult step)
+        CombatStepResult step)
     {
         var weaponAttack = step.WeaponAttack
             ?? throw new InvalidOperationException(
                 "A weapon-attack step did not contain a weapon-attack result.");
-        var attackRoll = weaponAttack.Attack.AttackRoll;
-
         output.WriteLine($"Weapon ID: {weaponAttack.WeaponId}");
         output.WriteLine(
             $"Distance Feet: {weaponAttack.DistanceFeet}");
         output.WriteLine(
-            $"Line of Sight: {FormatBoolean(weaponAttack.LineOfSight.HasLineOfSight)}");
+            $"Line of Sight: {FormatBoolean(weaponAttack.HasLineOfSight)}");
         output.WriteLine(
-            $"Cover Level: {weaponAttack.Cover.CoverLevel}");
+            $"Cover Level: {weaponAttack.CoverLevel}");
         output.WriteLine(
-            $"Cover Armor Class Bonus: {weaponAttack.Cover.ArmorClassBonus}");
+            $"Cover Armor Class Bonus: {weaponAttack.CoverArmorClassBonus}");
         output.WriteLine(
-            $"Attack Roll Mode: {attackRoll.RollMode}");
-        output.WriteLine($"First Roll: {attackRoll.FirstRoll}");
+            $"Attack Roll Mode: {weaponAttack.AttackRollMode}");
+        output.WriteLine($"First Roll: {weaponAttack.FirstRoll}");
 
-        if (attackRoll.SecondRoll is not null)
+        if (weaponAttack.SecondRoll is not null)
         {
             output.WriteLine(
-                $"Second Roll: {attackRoll.SecondRoll}");
+                $"Second Roll: {weaponAttack.SecondRoll}");
         }
 
-        output.WriteLine($"Natural Roll: {attackRoll.NaturalRoll}");
-        output.WriteLine($"Attack Bonus: {attackRoll.AttackBonus}");
-        output.WriteLine($"Attack Total: {attackRoll.Total}");
+        output.WriteLine($"Natural Roll: {weaponAttack.NaturalRoll}");
+        output.WriteLine($"Attack Bonus: {weaponAttack.AttackBonus}");
+        output.WriteLine($"Attack Total: {weaponAttack.AttackTotal}");
         output.WriteLine(
-            $"Target Armor Class: {attackRoll.TargetArmorClass}");
-        output.WriteLine($"Attack Outcome: {attackRoll.Outcome}");
+            $"Target Armor Class: {weaponAttack.TargetArmorClass}");
+        output.WriteLine($"Attack Outcome: {weaponAttack.Outcome}");
         output.WriteLine(
-            $"Final Damage: {weaponAttack.Attack.Damage.FinalDamage}");
+            $"Final Damage: {weaponAttack.FinalDamage}");
 
-        if (weaponAttack.TargetDamage is null)
+        if (weaponAttack.DamagedTarget is null)
         {
             return;
         }
 
-        var targetState = weaponAttack.TargetDamage.State;
-        var hitPoints = targetState.Health.HitPoints;
+        var damagedTarget = weaponAttack.DamagedTarget;
 
         output.WriteLine(
-            $"Resulting Target Hit Points: {hitPoints.CurrentHitPoints} / {hitPoints.MaximumHitPoints}");
+            $"Resulting Target Hit Points: {damagedTarget.CurrentHitPoints} / {damagedTarget.MaximumHitPoints}");
         output.WriteLine(
-            $"Resulting Target Temporary Hit Points: {hitPoints.TemporaryHitPoints}");
+            $"Resulting Target Temporary Hit Points: {damagedTarget.TemporaryHitPoints}");
         output.WriteLine(
-            $"Resulting Target Lifecycle: {targetState.LifecycleState}");
+            $"Resulting Target Lifecycle: {damagedTarget.LifecycleState}");
     }
 
     private static void RenderDeathSavingThrowStep(
         TextWriter output,
-        WatchtowerCombatStepResult step)
+        CombatStepResult step)
     {
         var deathSavingThrow = step.DeathSavingThrow
             ?? throw new InvalidOperationException(
                 "A death-saving-throw step did not contain a death-saving-throw result.");
-        var result = deathSavingThrow.CombatantDeathSavingThrow
-            .HealthDeathSavingThrow.DeathSavingThrow;
-
         output.WriteLine(
             $"Previous Lifecycle: {deathSavingThrow.PreviousLifecycleState}");
         output.WriteLine(
             $"Resulting Lifecycle: {deathSavingThrow.LifecycleState}");
-        output.WriteLine($"First Roll: {result.FirstRoll}");
+        output.WriteLine($"First Roll: {deathSavingThrow.FirstRoll}");
 
-        if (result.SecondRoll is not null)
+        if (deathSavingThrow.SecondRoll is not null)
         {
             output.WriteLine(
-                $"Second Roll: {result.SecondRoll}");
+                $"Second Roll: {deathSavingThrow.SecondRoll}");
         }
 
-        output.WriteLine($"Natural Roll: {result.NaturalRoll}");
+        output.WriteLine($"Natural Roll: {deathSavingThrow.NaturalRoll}");
         output.WriteLine(
-            $"Saving Throw Bonus: {result.SavingThrowBonus}");
-        output.WriteLine($"Saving Throw Total: {result.Total}");
+            $"Saving Throw Bonus: {deathSavingThrow.SavingThrowBonus}");
+        output.WriteLine($"Saving Throw Total: {deathSavingThrow.Total}");
         output.WriteLine(
-            $"Difficulty Class: {result.DifficultyClass}");
+            $"Difficulty Class: {deathSavingThrow.DifficultyClass}");
         output.WriteLine(
-            $"Death Saving Throw Outcome: {result.Outcome}");
+            $"Death Saving Throw Outcome: {deathSavingThrow.Outcome}");
         output.WriteLine(
-            $"Resulting Death Save Successes: {result.State.SuccessCount}");
+            $"Resulting Death Save Successes: {deathSavingThrow.SuccessCount}");
         output.WriteLine(
-            $"Resulting Death Save Failures: {result.State.FailureCount}");
+            $"Resulting Death Save Failures: {deathSavingThrow.FailureCount}");
         output.WriteLine(
-            $"Resulting Stable: {FormatBoolean(result.State.IsStable)}");
+            $"Resulting Stable: {FormatBoolean(deathSavingThrow.IsStable)}");
     }
 
     private static void RenderTurnAdvanceStep(
         TextWriter output,
-        WatchtowerCombatStepResult step)
+        CombatStepResult step)
     {
         var turnAdvance = step.TurnAdvancement
             ?? throw new InvalidOperationException(
@@ -635,17 +629,17 @@ internal sealed partial class ConsoleSessionRunner
     }
 
     private static void ValidatePlayerDecision(
-        WatchtowerCombatDecision decision)
+        CombatDecision decision)
     {
         if (decision.State
-            == WatchtowerCombatDecisionState.AutomaticProcessingRequired)
+            == CombatDecisionState.AutomaticProcessingRequired)
         {
             throw new InvalidOperationException(
                 "Automatic combat processing remained after Application normalization.");
         }
 
         if (decision.State
-            != WatchtowerCombatDecisionState.PlayerDecisionRequired)
+            != CombatDecisionState.PlayerDecisionRequired)
         {
             throw new InvalidOperationException(
                 "A selectable combat menu requires a player decision.");
@@ -658,7 +652,7 @@ internal sealed partial class ConsoleSessionRunner
         }
 
         if (decision.Movement is null
-            || decision.WeaponAttack is null
+            || decision.WeaponAttacks.FirstOrDefault() is null
             || decision.EndTurn is null)
         {
             throw new InvalidOperationException(
@@ -669,10 +663,10 @@ internal sealed partial class ConsoleSessionRunner
     private sealed record CombatMenuOption(
         string Label,
         CombatMenuAction Action,
-        WatchtowerCombatMovementDestinationOption?
+        CombatMovementDestinationOption?
             MovementDestination = null,
-        WatchtowerCombatWeaponAttackOption? WeaponAttack = null,
-        WatchtowerCombatTargetOption? Target = null);
+        CombatWeaponAttackOption? WeaponAttack = null,
+        CombatTargetOption? Target = null);
 
     private sealed record CombatSessionRunResult(
         bool ExitRequested,
