@@ -33,7 +33,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
         Assert.Equal(ApplicationMode.Encounter, source.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.SignalActivated,
-            source.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(source));
         Assert.Same(active, source.ActiveEncounter);
         Assert.Equal(37, source.RandomValuesConsumed);
     }
@@ -601,7 +601,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
         Assert.Equal(ApplicationMode.Encounter, source.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.SignalActivated,
-            source.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(source));
         Assert.Equal(37, source.RandomValuesConsumed);
     }
 
@@ -621,7 +621,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
 
         Assert.Equal(result.State.CurrentMode, result.ResultingMode);
         Assert.Equal(
-            result.State.Scenario.Progress,
+            WatchtowerScenario.ProgressOf(result.State),
             result.ResultingProgress);
         Assert.Equal(
             partyVictory

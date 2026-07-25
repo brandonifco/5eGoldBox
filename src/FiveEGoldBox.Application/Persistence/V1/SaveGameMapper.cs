@@ -219,22 +219,25 @@ internal static class SaveGameMapper
         };
     }
 
+    // V1 only ever stored Watchtower progress, so the saved enum stays the
+    // schema and the runtime marker is translated through this scenario's
+    // vocabulary. A future scenario needs its own format version, not a wider
+    // V1 enum.
     private static SaveScenarioStateV1 ToSaveScenario(
-        WatchtowerScenarioState scenario)
+        ScenarioState scenario)
     {
         return new SaveScenarioStateV1
         {
-            Progress = ToSaveScenarioProgress(scenario.Progress)
+            Progress = ToSaveScenarioProgress(
+                WatchtowerScenario.ProgressOf(scenario))
         };
     }
 
-    private static WatchtowerScenarioState ToRuntimeScenario(
+    private static ScenarioState ToRuntimeScenario(
         SaveScenarioStateV1 scenario)
     {
-        return new WatchtowerScenarioState
-        {
-            Progress = ToRuntimeScenarioProgress(scenario.Progress)
-        };
+        return WatchtowerScenario.CreateState(
+            ToRuntimeScenarioProgress(scenario.Progress));
     }
 
     private static SaveRegionalTravelV1 ToSaveRegionalTravel(

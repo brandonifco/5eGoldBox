@@ -30,7 +30,7 @@ internal static class WatchtowerTravelSessionValidator
                 "A regional-travel session requires regional-travel state.",
                 nameof(state));
 
-        if (state.Scenario.Progress
+        if (WatchtowerScenario.ProgressOf(state)
             == WatchtowerScenarioProgress.MissionNotAccepted)
         {
             throw new ArgumentException(

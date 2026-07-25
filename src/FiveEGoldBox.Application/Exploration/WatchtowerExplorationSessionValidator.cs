@@ -41,7 +41,7 @@ internal static class WatchtowerExplorationSessionValidator
                 nameof(state));
         }
 
-        if (state.Scenario.Progress is not (
+        if (WatchtowerScenario.ProgressOf(state) is not (
             WatchtowerScenarioProgress.MissionAccepted
             or WatchtowerScenarioProgress.RaidersDefeated))
         {

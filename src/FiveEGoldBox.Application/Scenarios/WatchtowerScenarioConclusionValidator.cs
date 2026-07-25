@@ -20,7 +20,7 @@ internal static class WatchtowerScenarioConclusionValidator
                 nameof(state));
         }
 
-        if (state.Scenario.Progress
+        if (WatchtowerScenario.ProgressOf(state)
             != WatchtowerScenarioProgress.PartyDefeated)
         {
             throw new ArgumentException(

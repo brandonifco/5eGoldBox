@@ -153,7 +153,7 @@ public sealed class ConsoleProcessRestartTests
             beforeRestart.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.RaidersDefeated,
-            beforeRestart.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(beforeRestart));
         Assert.Equal(
             plan.ExpectedLoadedAndTurnedState.Exploration,
             afterRestart.Exploration);
@@ -171,7 +171,7 @@ public sealed class ConsoleProcessRestartTests
             afterRestart.RandomValuesConsumed);
         Assert.Equal(
             WatchtowerScenarioProgress.RaidersDefeated,
-            afterRestart.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(afterRestart));
         Assert.Equal(
             beforeRestart.CurrentLocationId,
             afterRestart.CurrentLocationId);
@@ -218,7 +218,7 @@ public sealed class ConsoleProcessRestartTests
             reloadedDefeat.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.PartyDefeated,
-            reloadedDefeat.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(reloadedDefeat));
         Assert.Null(reloadedDefeat.Exploration);
         Assert.Null(reloadedDefeat.RegionalTravel);
         Assert.Null(reloadedDefeat.ActiveEncounter);
@@ -282,7 +282,7 @@ public sealed class ConsoleProcessRestartTests
             secondDefeatState.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.PartyDefeated,
-            secondDefeatState.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(secondDefeatState));
     }
 
     [Fact]
@@ -687,7 +687,7 @@ public sealed class ConsoleProcessRestartTests
         if (index < 0)
         {
             throw new InvalidOperationException(
-                $"The session action '{action}' is not available in mode '{state.CurrentMode}' with progress '{state.Scenario.Progress}'.");
+                $"The session action '{action}' is not available in mode '{state.CurrentMode}' with progress '{WatchtowerScenario.ProgressOf(state)}'.");
         }
 
         return ToSelection(index + 1);
@@ -1037,8 +1037,8 @@ public sealed class ConsoleProcessRestartTests
             expected.CurrentLocationId,
             actual.CurrentLocationId);
         Assert.Equal(
-            expected.Scenario.Progress,
-            actual.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(expected),
+            WatchtowerScenario.ProgressOf(actual));
         Assert.Equal(expected.RandomSeed, actual.RandomSeed);
         Assert.Equal(
             expected.RandomValuesConsumed,

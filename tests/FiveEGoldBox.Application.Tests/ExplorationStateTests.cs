@@ -24,11 +24,8 @@ public sealed class ExplorationStateTests
         ApplicationSessionState state =
             CreateExplorationSession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress =
-                        WatchtowerScenarioProgress.RaidersDefeated
-                }
+                Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress.RaidersDefeated)
             };
 
         ApplicationSessionRules.Validate(state);
@@ -200,10 +197,8 @@ public sealed class ExplorationStateTests
         ApplicationSessionState invalid =
             CreateExplorationSession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress = progress
-                }
+                Scenario = WatchtowerScenario.CreateState(
+progress)
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>

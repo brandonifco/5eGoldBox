@@ -151,7 +151,7 @@ public static class RegionalTravelRules
             return BeginAvailability.WrongMode;
         }
 
-        if (session.Scenario.Progress
+        if (WatchtowerScenario.ProgressOf(session)
             != WatchtowerScenarioProgress.MissionAccepted)
         {
             return BeginAvailability.WrongProgress;
@@ -177,7 +177,7 @@ public static class RegionalTravelRules
             return AdvanceAvailability.WrongMode;
         }
 
-        if (session.Scenario.Progress
+        if (WatchtowerScenario.ProgressOf(session)
             != WatchtowerScenarioProgress.MissionAccepted)
         {
             return AdvanceAvailability.WrongProgress;

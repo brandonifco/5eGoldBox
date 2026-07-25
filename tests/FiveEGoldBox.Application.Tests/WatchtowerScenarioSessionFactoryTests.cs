@@ -29,7 +29,7 @@ public sealed class WatchtowerScenarioSessionFactoryTests
         Assert.Equal(
             WatchtowerScenarioProgress
                 .MissionNotAccepted,
-            state.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(state));
         Assert.Equal(RandomSeed, state.RandomSeed);
         Assert.Equal(0, state.RandomValuesConsumed);
         Assert.Null(state.RegionalTravel);

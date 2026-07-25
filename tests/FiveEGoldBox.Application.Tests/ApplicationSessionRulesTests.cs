@@ -141,7 +141,7 @@ public sealed class ApplicationSessionRulesTests
         Assert.Equal(
             WatchtowerScenarioProgress
                 .MissionNotAccepted,
-            state.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(state));
     }
 
     [Fact]
@@ -759,21 +759,46 @@ public sealed class ApplicationSessionRulesTests
             ApplicationSessionRules.Validate(state));
     }
 
-    [Fact]
-    public void Validate_WithUndefinedScenarioProgress_Throws()
+    /// The engine only requires that some progress marker is present; it does
+    /// not know what any given marker means.
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Validate_WithBlankScenarioProgressId_Throws(string blank)
     {
         ApplicationSessionState state =
             CreateValidSession() with
             {
-                Scenario = new WatchtowerScenarioState
+                Scenario = new ScenarioState { ProgressId = blank }
+            };
+
+        Assert.Throws<ArgumentException>(() =>
+            ApplicationSessionRules.Validate(state));
+    }
+
+    /// A well-formed marker from some other scenario is still rejected, because
+    /// the running scenario does not recognise it.
+    [Fact]
+    public void Validate_WithProgressFromAnotherScenario_Throws()
+    {
+        ApplicationSessionState state =
+            CreateValidSession() with
+            {
+                Scenario = new ScenarioState
                 {
-                    Progress =
-                        (WatchtowerScenarioProgress)999
+                    ProgressId = "SomeOtherScenarioProgress"
                 }
             };
 
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
+        Assert.Throws<ArgumentException>(() =>
             ApplicationSessionRules.Validate(state));
+    }
+
+    [Fact]
+    public void WatchtowerScenario_RejectsAnUndefinedProgressValue()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            WatchtowerScenario.CreateState((WatchtowerScenarioProgress)999));
     }
 
     [Fact]

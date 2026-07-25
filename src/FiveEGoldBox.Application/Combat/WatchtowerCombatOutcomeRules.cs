@@ -83,10 +83,8 @@ public static class WatchtowerCombatOutcomeRules
                 {
                     CurrentMode = resultingMode,
                     Party = projectedParty,
-                    Scenario = session.Scenario with
-                    {
-                        Progress = resultingProgress
-                    },
+                    Scenario = WatchtowerScenario.CreateState(
+                        resultingProgress),
                     RegionalTravel = null,
                     Exploration = isPartyVictory
                         ? activeEncounter.ReturnContext

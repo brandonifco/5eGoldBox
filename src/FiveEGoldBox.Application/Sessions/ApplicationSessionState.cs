@@ -16,7 +16,7 @@ public sealed record ApplicationSessionState
 
     public required PartyState Party { get; init; }
 
-    public required WatchtowerScenarioState Scenario { get; init; }
+    public required ScenarioState Scenario { get; init; }
 
     public required int RandomSeed { get; init; }
 

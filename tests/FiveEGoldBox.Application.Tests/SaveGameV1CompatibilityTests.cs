@@ -33,7 +33,7 @@ public sealed class SaveGameV1CompatibilityTests
             loaded.CurrentLocationId);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionNotAccepted,
-            loaded.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(loaded));
         Assert.Equal(424242, loaded.RandomSeed);
         Assert.Equal(3, loaded.Party.Members.Count);
         Assert.Null(loaded.Exploration);
@@ -55,7 +55,7 @@ public sealed class SaveGameV1CompatibilityTests
             loaded.CurrentLocationId);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            loaded.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(loaded));
 
         ExplorationState exploration =
             Assert.IsType<ExplorationState>(
@@ -83,7 +83,7 @@ public sealed class SaveGameV1CompatibilityTests
             loaded.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.PartyDefeated,
-            loaded.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(loaded));
         Assert.All(
             loaded.Party.Members,
             member => Assert.Equal(
@@ -112,7 +112,7 @@ public sealed class SaveGameV1CompatibilityTests
         Assert.Equal(second.ScenarioId, first.ScenarioId);
         Assert.Equal(second.CurrentMode, first.CurrentMode);
         Assert.Equal(second.CurrentLocationId, first.CurrentLocationId);
-        Assert.Equal(second.Scenario.Progress, first.Scenario.Progress);
+        Assert.Equal(WatchtowerScenario.ProgressOf(second), WatchtowerScenario.ProgressOf(first));
         Assert.Equal(second.RandomSeed, first.RandomSeed);
         Assert.Equal(
             second.RandomValuesConsumed,

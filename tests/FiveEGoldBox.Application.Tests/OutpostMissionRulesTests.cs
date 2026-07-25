@@ -74,7 +74,7 @@ public sealed class OutpostMissionRulesTests
         Assert.Equal(ApplicationMode.Outpost, session.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionNotAccepted,
-            session.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(session));
         Assert.Null(session.RegionalTravel);
         Assert.Null(session.Exploration);
         Assert.Null(session.ActiveEncounter);
@@ -168,7 +168,7 @@ public sealed class OutpostMissionRulesTests
         Assert.True(result.DidProgressChange);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            result.State.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(result.State));
         Assert.Equal(
             ApplicationMode.Outpost,
             result.State.CurrentMode);
@@ -214,7 +214,7 @@ public sealed class OutpostMissionRulesTests
         Assert.Equal(
             WatchtowerScenarioProgress
                 .MissionNotAccepted,
-            session.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(session));
         Assert.Equal(
             ApplicationMode.Outpost,
             session.CurrentMode);
@@ -259,7 +259,7 @@ public sealed class OutpostMissionRulesTests
 
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            accepted.State.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(accepted.State));
         Assert.True(accepted.DidProgressChange);
     }
 
@@ -367,10 +367,8 @@ public sealed class OutpostMissionRulesTests
         ApplicationSessionState session =
             CreateValidSession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress = progress
-                }
+                Scenario = WatchtowerScenario.CreateState(
+progress)
             };
 
         Assert.Throws<InvalidOperationException>(() =>
@@ -389,8 +387,8 @@ public sealed class OutpostMissionRulesTests
             expected.CurrentLocationId,
             actual.CurrentLocationId);
         Assert.Equal(
-            expected.Scenario.Progress,
-            actual.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(expected),
+            WatchtowerScenario.ProgressOf(actual));
         Assert.Equal(expected.RandomSeed, actual.RandomSeed);
         Assert.Equal(
             expected.RandomValuesConsumed,

@@ -79,7 +79,7 @@ public static class OutpostMissionRules
         ApplicationSessionState session)
     {
         return session.CurrentMode == ApplicationMode.Outpost
-            && session.Scenario.Progress
+            && WatchtowerScenario.ProgressOf(session)
                 == WatchtowerScenarioProgress
                     .MissionNotAccepted;
     }
@@ -91,12 +91,8 @@ public static class OutpostMissionRules
             ApplicationSessionRules.CreateCanonical(
                 session with
                 {
-                    Scenario = session.Scenario with
-                    {
-                        Progress =
-                            WatchtowerScenarioProgress
-                                .MissionAccepted
-                    }
+                    Scenario = WatchtowerScenario.CreateState(
+                        WatchtowerScenarioProgress.MissionAccepted)
                 });
 
         return new OutpostMissionResult

@@ -63,10 +63,8 @@ public sealed class SignalMechanismRulesTests
         ApplicationSessionState state =
             WatchtowerSignalTestData.CreateSignalReadySession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress = progress
-                }
+                Scenario = WatchtowerScenario.CreateState(
+progress)
             };
 
         Assert.False(
@@ -133,7 +131,7 @@ public sealed class SignalMechanismRulesTests
             result.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.SignalActivated,
-            result.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(result));
         Assert.Null(result.Exploration);
         Assert.Null(result.RegionalTravel);
         Assert.Equal(
@@ -178,7 +176,7 @@ public sealed class SignalMechanismRulesTests
             source.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            source.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(source));
         Assert.Equal(
             originalExploration,
             source.Exploration);
@@ -249,10 +247,8 @@ public sealed class SignalMechanismRulesTests
         ApplicationSessionState state =
             WatchtowerSignalTestData.CreateSignalReadySession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress = progress
-                }
+                Scenario = WatchtowerScenario.CreateState(
+progress)
             };
 
         Assert.Throws<ArgumentException>(() =>
@@ -267,11 +263,8 @@ public sealed class SignalMechanismRulesTests
         ApplicationSessionState state =
             WatchtowerSignalTestData.CreateSignalReadySession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress =
-                        WatchtowerScenarioProgress.RaidersDefeated
-                }
+                Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress.RaidersDefeated)
             };
 
         Assert.Throws<InvalidOperationException>(() =>
@@ -490,7 +483,7 @@ public sealed class SignalMechanismRulesTests
             result.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.SignalActivated,
-            result.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(result));
         Assert.Equal(
             source.CurrentLocationId,
             result.CurrentLocationId);

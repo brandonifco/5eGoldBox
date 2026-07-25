@@ -44,7 +44,7 @@ internal static class WatchtowerEncounterSessionValidator
                 nameof(state));
         }
 
-        if (state.Scenario.Progress
+        if (WatchtowerScenario.ProgressOf(state)
             != WatchtowerScenarioProgress.SignalActivated)
         {
             throw new ArgumentException(

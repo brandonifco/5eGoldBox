@@ -52,7 +52,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         Assert.Equal(ApplicationMode.Outpost, current.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionNotAccepted,
-            current.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(current));
         Assert.Equal(OutpostLocationId, current.CurrentLocationId);
         AssertPartyEquals(startingParty, current.Party);
 
@@ -72,7 +72,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         Assert.Equal(ApplicationMode.Outpost, current.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionNotAccepted,
-            current.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(current));
         AssertPartyEquals(startingParty, current.Party);
 
         OutpostMissionResult missionResult =
@@ -88,7 +88,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         Assert.Equal(ApplicationMode.Outpost, current.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            current.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(current));
 
         Assert.True(
             RegionalTravelRules.CanBeginWatchtowerJourney(
@@ -209,7 +209,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         Assert.Equal(ApplicationMode.Encounter, current.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.SignalActivated,
-            current.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(current));
         Assert.Null(current.Exploration);
         Assert.Null(current.RegionalTravel);
         Assert.NotNull(current.ActiveEncounter);
@@ -241,7 +241,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         Assert.Equal(ApplicationMode.Encounter, current.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.SignalActivated,
-            current.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(current));
         Assert.Null(current.Exploration);
         Assert.NotNull(current.ActiveEncounter);
         Assert.Equal(
@@ -327,7 +327,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
             finalized.CurrentMode);
         Assert.Equal(
             outcome.ResultingProgress,
-            finalized.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(finalized));
         Assert.Equal(
             WatchtowerLocationId,
             finalized.CurrentLocationId);
@@ -383,7 +383,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
             loaded.CurrentLocationId);
         Assert.Equal(
             WatchtowerScenarioProgress.RaidersDefeated,
-            loaded.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(loaded));
         Assert.Equal(returnContext, loaded.Exploration);
         Assert.Null(loaded.RegionalTravel);
         Assert.Null(loaded.ActiveEncounter);
@@ -406,7 +406,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
             ExplorationFacing.North);
         Assert.Equal(
             WatchtowerScenarioProgress.RaidersDefeated,
-            continued.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(continued));
         Assert.Equal(
             WatchtowerLocationId,
             continued.CurrentLocationId);

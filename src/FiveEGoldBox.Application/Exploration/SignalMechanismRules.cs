@@ -29,7 +29,7 @@ public static class SignalMechanismRules
                 "The malformed exploration session could not be canonicalized.");
         }
 
-        if (session.Scenario.Progress
+        if (WatchtowerScenario.ProgressOf(session)
             != WatchtowerScenarioProgress.MissionAccepted)
         {
             return false;
@@ -86,7 +86,7 @@ public static class SignalMechanismRules
                 "The party is not in the authored position and facing required to activate the signal mechanism.");
         }
 
-        if (canonicalSession.Scenario.Progress
+        if (WatchtowerScenario.ProgressOf(canonicalSession)
             != WatchtowerScenarioProgress.MissionAccepted)
         {
             throw new InvalidOperationException(
@@ -105,12 +105,8 @@ public static class SignalMechanismRules
             canonicalSession with
             {
                 CurrentMode = ApplicationMode.Encounter,
-                Scenario = canonicalSession.Scenario with
-                {
-                    Progress =
-                        WatchtowerScenarioProgress
-                            .SignalActivated
-                },
+                Scenario = WatchtowerScenario.CreateState(
+                    WatchtowerScenarioProgress.SignalActivated),
                 Exploration = null,
                 ActiveEncounter = new ActiveEncounterState
                 {
