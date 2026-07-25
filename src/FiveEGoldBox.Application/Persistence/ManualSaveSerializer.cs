@@ -48,6 +48,31 @@ public static class ManualSaveSerializer
                     .MalformedSerializedData);
         }
 
+        if (!TryReadFormatVersion(
+            serializedData,
+            out int formatVersion))
+        {
+            return ManualSaveLoadResult.Failure(
+                ManualSaveLoadFailureReason
+                    .MalformedSerializedData);
+        }
+
+        // Every future format version is added as another arm here that
+        // deserializes into its own version-specific DTO and maps forward
+        // to the current runtime state; JSON is never deserialized into a
+        // versioned DTO before its declared FormatVersion is known.
+        return formatVersion switch
+        {
+            SaveGameMapper.FormatVersion => DeserializeV1(serializedData),
+            _ => ManualSaveLoadResult.Failure(
+                ManualSaveLoadFailureReason
+                    .UnsupportedFormatVersion)
+        };
+    }
+
+    private static ManualSaveLoadResult DeserializeV1(
+        string serializedData)
+    {
         SaveGameV1? saveData;
 
         try
@@ -76,14 +101,6 @@ public static class ManualSaveSerializer
                     .MalformedSerializedData);
         }
 
-        if (saveData.FormatVersion
-            != SupportedFormatVersion)
-        {
-            return ManualSaveLoadResult.Failure(
-                ManualSaveLoadFailureReason
-                    .UnsupportedFormatVersion);
-        }
-
         try
         {
             ApplicationSessionState runtimeSession =
@@ -103,6 +120,38 @@ public static class ManualSaveSerializer
             return ManualSaveLoadResult.Failure(
                 ManualSaveLoadFailureReason
                     .InvalidSessionState);
+        }
+    }
+
+    private static bool TryReadFormatVersion(
+        string serializedData,
+        out int formatVersion)
+    {
+        formatVersion = default;
+
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(
+                serializedData);
+
+            if (document.RootElement.ValueKind
+                    != JsonValueKind.Object
+                || !document.RootElement.TryGetProperty(
+                    "FormatVersion",
+                    out JsonElement versionElement)
+                || versionElement.ValueKind
+                    != JsonValueKind.Number
+                || !versionElement.TryGetInt32(
+                    out formatVersion))
+            {
+                return false;
+            }
+
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
         }
     }
 
