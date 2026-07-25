@@ -33,13 +33,17 @@ internal static class WatchtowerSignalEncounter
     internal const string RangedRaiderWeaponId =
         "weapon.watchtower-raider.shortbow";
 
+    internal const string RangedRaiderAmmunitionItemId = "item.arrow";
+
+    internal const int RangedRaiderAmmunitionQuantity = 12;
+
     internal const int BattlefieldWidth = 5;
 
     internal const int BattlefieldHeight = 4;
 
     internal const int InitiativeRollCount = 5;
 
-    private static readonly IReadOnlyList<GridPosition>
+    internal static readonly IReadOnlyList<GridPosition>
         PartyStartingPositions =
         [
             new GridPosition(1, 1),
@@ -283,8 +287,8 @@ internal static class WatchtowerSignalEncounter
             ReachFeet = null,
             NormalRangeFeet = 80,
             LongRangeFeet = 320,
-            AmmunitionItemId = "item.arrow",
-            AmmunitionQuantityAvailable = 12
+            AmmunitionItemId = RangedRaiderAmmunitionItemId,
+            AmmunitionQuantityAvailable = RangedRaiderAmmunitionQuantity
         };
     }
 

@@ -23,4 +23,7 @@ internal sealed record EncounterDefinition
 
     /// Everyone the scenario itself places on the battlefield.
     internal required IReadOnlyList<CombatantDefinition> Combatants { get; init; }
+
+    /// Where winning and losing leave the scenario.
+    internal required EncounterOutcomeDefinition Outcome { get; init; }
 }

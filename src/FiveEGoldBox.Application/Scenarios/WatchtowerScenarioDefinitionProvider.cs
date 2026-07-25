@@ -1,0 +1,282 @@
+using FiveEGoldBox.Application.Encounters;
+using FiveEGoldBox.Application.Exploration;
+using FiveEGoldBox.Application.Outposts;
+using FiveEGoldBox.Application.Scenarios.Definitions;
+using FiveEGoldBox.Application.Travel;
+using FiveEGoldBox.Core.Runtime;
+
+namespace FiveEGoldBox.Application.Scenarios;
+
+/// The Watchtower scenario expressed as authored data.
+///
+/// Every value here is taken from the constants the running implementation
+/// already uses, so this describes the scenario that exists rather than a
+/// parallel one. Execution does not read from it yet — rewiring the rules to
+/// consume definitions instead of constants is the next step, and this is the
+/// content it will consume.
+internal static class WatchtowerScenarioDefinitionProvider
+{
+    private const string RulesetId = "ruleset.watchtower";
+
+    internal static ScenarioDefinition Create()
+    {
+        return new ScenarioDefinition
+        {
+            ScenarioId = WatchtowerScenarioContent.ScenarioId,
+            DisplayName = "The Ruined Watchtower",
+            RulesetId = RulesetId,
+            StartingLocationId = WatchtowerScenarioContent.OutpostLocationId,
+            Progress = CreateProgress(),
+            PartyRequirement = new PartyRequirementDefinition
+            {
+                MinimumMembers = 3,
+                MaximumMembers = 3,
+                MinimumConsciousMembers = 1
+            },
+            Locations =
+            [
+                new ScenarioLocationDefinition
+                {
+                    LocationId = WatchtowerScenarioContent.OutpostLocationId,
+                    DisplayName = "Frontier Outpost",
+                    ExplorationMap = null
+                },
+                new ScenarioLocationDefinition
+                {
+                    LocationId = WatchtowerRegionalRoute.WatchtowerLocationId,
+                    DisplayName = "Ruined Watchtower",
+                    ExplorationMap = CreateMap()
+                }
+            ],
+            Routes = [CreateRoute()],
+            Encounters = [CreateSignalAmbush()],
+            Triggers = [CreateSignalTrigger()],
+            Decisions = [CreateMissionDecision()]
+        };
+    }
+
+    private static ScenarioProgressDefinition CreateProgress()
+    {
+        return new ScenarioProgressDefinition
+        {
+            InitialProgressId = Progress(
+                WatchtowerScenarioProgress.MissionNotAccepted),
+            // The full vocabulary the save format records. Two markers are
+            // declared but unproduced today; validation reports them.
+            ProgressIds = Enum.GetNames<WatchtowerScenarioProgress>(),
+            Conclusions =
+            [
+                new ScenarioConclusionDefinition
+                {
+                    ProgressId = Progress(
+                        WatchtowerScenarioProgress.PartyDefeated),
+                    IsSuccess = false,
+                    LocationId = WatchtowerRegionalRoute.WatchtowerLocationId
+                }
+            ]
+        };
+    }
+
+    private static TravelRouteDefinition CreateRoute()
+    {
+        return new TravelRouteDefinition
+        {
+            RouteId = WatchtowerRegionalRoute.RouteId,
+            OriginLocationId = WatchtowerScenarioContent.OutpostLocationId,
+            DestinationLocationId =
+                WatchtowerRegionalRoute.WatchtowerLocationId,
+            FinalStepIndex = WatchtowerRegionalRoute.FinalStepIndex,
+            RequiredProgressIds =
+            [
+                Progress(WatchtowerScenarioProgress.MissionAccepted)
+            ]
+        };
+    }
+
+    private static ScenarioDecisionDefinition CreateMissionDecision()
+    {
+        return new ScenarioDecisionDefinition
+        {
+            DecisionId = "decision.watchtower-mission",
+            DisplayName = "Investigate the ruined watchtower",
+            LocationId = WatchtowerScenarioContent.OutpostLocationId,
+            RequiredProgressIds =
+            [
+                Progress(WatchtowerScenarioProgress.MissionNotAccepted)
+            ],
+            Options =
+            [
+                new ScenarioDecisionOptionDefinition
+                {
+                    OptionId = OutpostMissionChoice.AcceptMission.ToString(),
+                    DisplayName = "Accept the commission",
+                    ResultingProgressId = Progress(
+                        WatchtowerScenarioProgress.MissionAccepted)
+                },
+                new ScenarioDecisionOptionDefinition
+                {
+                    OptionId = OutpostMissionChoice.NotYet.ToString(),
+                    DisplayName = "Not yet",
+                    ResultingProgressId = null
+                }
+            ]
+        };
+    }
+
+    private static ScenarioTriggerDefinition CreateSignalTrigger()
+    {
+        return new ScenarioTriggerDefinition
+        {
+            TriggerId = "trigger.watchtower-signal",
+            DisplayName = "Signal mechanism",
+            LocationId = WatchtowerRegionalRoute.WatchtowerLocationId,
+            Floor = WatchtowerSignalMechanism.Floor,
+            Position = WatchtowerSignalMechanism.InteractionPosition,
+            RequiredFacing = WatchtowerSignalMechanism.RequiredFacing,
+            RequiredProgressIds =
+            [
+                Progress(WatchtowerScenarioProgress.MissionAccepted)
+            ],
+            ResultingProgressId = Progress(
+                WatchtowerScenarioProgress.SignalActivated),
+            EncounterId = WatchtowerSignalEncounter.EncounterId
+        };
+    }
+
+    private static EncounterDefinition CreateSignalAmbush()
+    {
+        return new EncounterDefinition
+        {
+            EncounterId = WatchtowerSignalEncounter.EncounterId,
+            BattlefieldId = WatchtowerSignalEncounter.BattlefieldId,
+            Width = WatchtowerSignalEncounter.BattlefieldWidth,
+            Height = WatchtowerSignalEncounter.BattlefieldHeight,
+            PartySideId = WatchtowerSignalEncounter.PartySideId,
+            BlockedPositions = [],
+            PartyStartingPositions =
+                WatchtowerSignalEncounter.PartyStartingPositions,
+            Combatants =
+            [
+                new CombatantDefinition
+                {
+                    CombatantId = WatchtowerSignalEncounter.MeleeRaiderId,
+                    DisplayName = "Raider marauder",
+                    SideId = WatchtowerSignalEncounter.RaiderSideId,
+                    MaximumHitPoints = 9,
+                    ArmorClass = 13,
+                    MovementSpeedFeet = 30,
+                    StartingPosition =
+                        WatchtowerSignalEncounter.MeleeRaiderStartingPosition,
+                    ZeroHitPointPolicy =
+                        CombatantZeroHitPointPolicy.Defeated,
+                    Weapons =
+                    [
+                        new CombatantWeaponDefinition
+                        {
+                            WeaponId = WatchtowerSignalEncounter.MeleeRaiderWeaponId
+                        }
+                    ]
+                },
+                new CombatantDefinition
+                {
+                    CombatantId = WatchtowerSignalEncounter.RangedRaiderId,
+                    DisplayName = "Raider archer",
+                    SideId = WatchtowerSignalEncounter.RaiderSideId,
+                    MaximumHitPoints = 8,
+                    ArmorClass = 13,
+                    MovementSpeedFeet = 30,
+                    StartingPosition =
+                        WatchtowerSignalEncounter.RangedRaiderStartingPosition,
+                    ZeroHitPointPolicy =
+                        CombatantZeroHitPointPolicy.Defeated,
+                    Weapons =
+                    [
+                        new CombatantWeaponDefinition
+                        {
+                            WeaponId =
+                                WatchtowerSignalEncounter.RangedRaiderWeaponId,
+                            AmmunitionItemId =
+                                WatchtowerSignalEncounter.RangedRaiderAmmunitionItemId,
+                            AmmunitionQuantity =
+                                WatchtowerSignalEncounter.RangedRaiderAmmunitionQuantity
+                        }
+                    ]
+                }
+            ],
+            Outcome = new EncounterOutcomeDefinition
+            {
+                VictoryProgressId = Progress(
+                    WatchtowerScenarioProgress.RaidersDefeated),
+                DefeatProgressId = Progress(
+                    WatchtowerScenarioProgress.PartyDefeated)
+            }
+        };
+    }
+
+    private static ExplorationMapDefinition CreateMap()
+    {
+        return new ExplorationMapDefinition
+        {
+            MapId = WatchtowerExplorationMap.MapId,
+            Width = WatchtowerExplorationMap.Width,
+            Height = WatchtowerExplorationMap.Height,
+            StartingFloor = WatchtowerExplorationMap.StartingFloor,
+            StartingPosition = WatchtowerExplorationMap.StartingPosition,
+            StartingFacing = WatchtowerExplorationMap.StartingFacing,
+            Floors =
+            [
+                CreateFloor(ExplorationFloor.GroundFloor),
+                CreateFloor(ExplorationFloor.UpperFloor)
+            ]
+        };
+    }
+
+    private static ExplorationFloorDefinition CreateFloor(
+        ExplorationFloor floor)
+    {
+        List<GridPosition> traversable = [];
+        List<StairDefinition> stairs = [];
+
+        for (int y = 0; y < WatchtowerExplorationMap.Height; y++)
+        {
+            for (int x = 0; x < WatchtowerExplorationMap.Width; x++)
+            {
+                GridPosition position = new(x, y);
+
+                if (!WatchtowerExplorationMap.IsTraversable(floor, position))
+                {
+                    continue;
+                }
+
+                traversable.Add(position);
+
+                if (WatchtowerExplorationMap.TryGetStairDestination(
+                    floor,
+                    position,
+                    out ExplorationFloor destinationFloor,
+                    out GridPosition destinationPosition))
+                {
+                    stairs.Add(new StairDefinition
+                    {
+                        Position = position,
+                        DestinationFloor = destinationFloor,
+                        DestinationPosition = destinationPosition
+                    });
+                }
+            }
+        }
+
+        return new ExplorationFloorDefinition
+        {
+            Floor = floor,
+            TraversablePositions = traversable,
+            Stairs = stairs
+        };
+    }
+
+    private static string Progress(
+        WatchtowerScenarioProgress progress)
+    {
+        return WatchtowerScenario.ToProgressId(progress);
+    }
+}

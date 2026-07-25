@@ -13,6 +13,11 @@ internal static class WatchtowerExplorationMap
     internal const ExplorationFacing StartingFacing =
         ExplorationFacing.East;
 
+    /// The authored extent of the tower. Both floors are laid out inside it.
+    internal const int Width = 3;
+
+    internal const int Height = 3;
+
     internal static readonly GridPosition
         StartingPosition = new(0, 0);
 
