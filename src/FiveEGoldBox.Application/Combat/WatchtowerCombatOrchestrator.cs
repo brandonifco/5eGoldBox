@@ -50,52 +50,16 @@ internal static class WatchtowerCombatOrchestrator
     {
         ArgumentNullException.ThrowIfNull(intent);
 
-        ApplicationSessionState state = Canonicalize(source);
-        WatchtowerCombatDecision startingDecision =
-            RequirePlayerDecision(state, intent.ExpectedEncounterRevision, intent.ActorCombatantId);
-
-        ArgumentNullException.ThrowIfNull(intent.Path);
-        GridPosition[] path = intent.Path.ToArray();
-
-        if (path.Length == 0)
-        {
-            throw new ArgumentException(
-                "A watchtower combat movement path must contain at least one position.",
-                nameof(intent));
-        }
-
-        EncounterState encounter = GetEncounter(state);
-        int cursorBefore = state.RandomValuesConsumed;
-
-        EncounterMovementResult movement =
-            EncounterMovementRules.Resolve(
-                encounter,
-                new EncounterMovementCommand
-                {
-                    ExpectedRevision = intent.ExpectedEncounterRevision,
-                    ActorCombatantId = intent.ActorCombatantId,
-                    Path = Array.AsReadOnly(path)
-                });
-
-        state = ReplaceEncounter(
-            state,
-            movement.State,
-            cursorBefore);
-
-        WatchtowerCombatStepResult primaryStep =
-            CreateMovementStep(encounter, movement);
-
-        List<WatchtowerCombatStepResult> automaticSteps = [];
-        state = Normalize(state, automaticSteps);
-
-        return CreateResult(
-            startingDecision,
-            CreateReceipt(intent, path),
-            encounter.Revision,
-            cursorBefore,
-            primaryStep,
-            automaticSteps,
-            state);
+        return ExecutePlayerCommand(
+            source,
+            intent.ExpectedEncounterRevision,
+            intent.ActorCombatantId,
+            (encounter, randomSeed, cursorBefore) =>
+                WatchtowerPlayerCommandResolver.Resolve(
+                    encounter,
+                    randomSeed,
+                    cursorBefore,
+                    intent));
     }
 
     internal static WatchtowerCombatResolutionResult Execute(
@@ -104,54 +68,16 @@ internal static class WatchtowerCombatOrchestrator
     {
         ArgumentNullException.ThrowIfNull(intent);
 
-        ApplicationSessionState state = Canonicalize(source);
-        WatchtowerCombatDecision startingDecision =
-            RequirePlayerDecision(state, intent.ExpectedEncounterRevision, intent.ActorCombatantId);
-        ValidateRequiredId(intent.WeaponId, nameof(intent.WeaponId));
-        ValidateRequiredId(intent.TargetCombatantId, nameof(intent.TargetCombatantId));
-
-        EncounterState encounter = GetEncounter(state);
-        WatchtowerCombatAttackAvailability prerequisites =
-            WatchtowerCombatAttackStaging.EvaluateAvailability(
-                encounter,
-                intent.ActorCombatantId,
-                intent.TargetCombatantId,
-                intent.WeaponId);
-
-        EnsureLegalPlayerAttack(prerequisites);
-
-        int cursorBefore = state.RandomValuesConsumed;
-        WatchtowerCombatAttackExecution attack =
-            WatchtowerCombatAttackStaging.Resolve(
-                encounter,
-                state.RandomSeed,
-                cursorBefore,
-                intent.ActorCombatantId,
-                intent.TargetCombatantId,
-                intent.WeaponId);
-
-        state = ReplaceEncounter(
-            state,
-            attack.Result.State,
-            attack.CursorAfter);
-
-        WatchtowerCombatStepResult primaryStep =
-            CreateWeaponAttackStep(
-                encounter,
-                attack.Result,
-                attack.Dice);
-
-        List<WatchtowerCombatStepResult> automaticSteps = [];
-        state = Normalize(state, automaticSteps);
-
-        return CreateResult(
-            startingDecision,
-            CreateReceipt(intent),
-            encounter.Revision,
-            cursorBefore,
-            primaryStep,
-            automaticSteps,
-            state);
+        return ExecutePlayerCommand(
+            source,
+            intent.ExpectedEncounterRevision,
+            intent.ActorCombatantId,
+            (encounter, randomSeed, cursorBefore) =>
+                WatchtowerPlayerCommandResolver.Resolve(
+                    encounter,
+                    randomSeed,
+                    cursorBefore,
+                    intent));
     }
 
     internal static WatchtowerCombatResolutionResult Execute(
@@ -160,33 +86,53 @@ internal static class WatchtowerCombatOrchestrator
     {
         ArgumentNullException.ThrowIfNull(intent);
 
+        return ExecutePlayerCommand(
+            source,
+            intent.ExpectedEncounterRevision,
+            intent.ActorCombatantId,
+            (encounter, randomSeed, cursorBefore) =>
+                WatchtowerPlayerCommandResolver.Resolve(
+                    encounter,
+                    randomSeed,
+                    cursorBefore,
+                    intent));
+    }
+
+    /// Shared envelope for every player command: validate that the submitted
+    /// command owns the current decision, resolve it, fold the result into the
+    /// session, then run automatic processing up to the next decision point.
+    private static WatchtowerCombatResolutionResult ExecutePlayerCommand(
+        ApplicationSessionState source,
+        long expectedEncounterRevision,
+        string actorCombatantId,
+        Func<EncounterState, int, int, WatchtowerPlayerCommandResolution> resolve)
+    {
         ApplicationSessionState state = Canonicalize(source);
         WatchtowerCombatDecision startingDecision =
-            RequirePlayerDecision(state, intent.ExpectedEncounterRevision, intent.ActorCombatantId);
+            RequirePlayerDecision(state, expectedEncounterRevision, actorCombatantId);
+
         EncounterState encounter = GetEncounter(state);
         int cursorBefore = state.RandomValuesConsumed;
 
-        EncounterTurnAdvancementResult turn = AdvanceTurn(
+        WatchtowerPlayerCommandResolution resolution = resolve(
             encounter,
-            intent.ActorCombatantId);
+            state.RandomSeed,
+            cursorBefore);
 
-        state = ReplaceEncounter(state, turn.State, cursorBefore);
-
-        WatchtowerCombatStepResult primaryStep =
-            CreateTurnStep(
-                encounter,
-                turn,
-                WatchtowerCombatTurnAdvanceReason.PlayerEndTurn);
+        state = ReplaceEncounter(
+            state,
+            resolution.State,
+            resolution.CursorAfter);
 
         List<WatchtowerCombatStepResult> automaticSteps = [];
         state = Normalize(state, automaticSteps);
 
         return CreateResult(
             startingDecision,
-            CreateReceipt(intent),
+            resolution.Receipt,
             encounter.Revision,
             cursorBefore,
-            primaryStep,
+            resolution.PrimaryStep,
             automaticSteps,
             state);
     }
@@ -205,7 +151,7 @@ internal static class WatchtowerCombatOrchestrator
             if (encounter.LifecycleState
                 == EncounterLifecycleState.Completed)
             {
-                AppendCompletionStep(steps, encounter);
+                WatchtowerCombatStepFactory.AppendCompletion(steps, encounter);
                 return state;
             }
 
@@ -250,7 +196,7 @@ internal static class WatchtowerCombatOrchestrator
                     encounter,
                     activeId);
 
-                steps.Add(CreateTurnStep(
+                steps.Add(WatchtowerCombatStepFactory.CreateTurnAdvanced(
                     encounter,
                     turn,
                     WatchtowerCombatTurnAdvanceReason.StableParticipant));
@@ -275,7 +221,7 @@ internal static class WatchtowerCombatOrchestrator
                 encounter,
                 activeId);
 
-            steps.Add(CreateTurnStep(
+            steps.Add(WatchtowerCombatStepFactory.CreateTurnAdvanced(
                 encounter,
                 skippedTurn,
                 WatchtowerCombatTurnAdvanceReason.NoProductiveEnemyAction));
@@ -316,12 +262,12 @@ internal static class WatchtowerCombatOrchestrator
             Array.AsReadOnly(
                 new[]
                 {
-                    CreateDie(
+                    WatchtowerCombatStepFactory.CreateDie(
                         randomRoll,
                         WatchtowerCombatDiePurpose.DeathSavingThrow)
                 });
 
-        steps.Add(CreateDeathSaveStep(
+        steps.Add(WatchtowerCombatStepFactory.CreateDeathSavingThrow(
             encounter,
             deathSave,
             dice));
@@ -343,7 +289,7 @@ internal static class WatchtowerCombatOrchestrator
             deathSave.State,
             actorId);
 
-        steps.Add(CreateTurnStep(
+        steps.Add(WatchtowerCombatStepFactory.CreateTurnAdvanced(
             deathSave.State,
             turn,
             WatchtowerCombatTurnAdvanceReason.DyingParticipantAfterSave));
@@ -367,7 +313,7 @@ internal static class WatchtowerCombatOrchestrator
 
         if (plan.Movement is not null)
         {
-            steps.Add(CreateMovementStep(
+            steps.Add(WatchtowerCombatStepFactory.CreateMovement(
                 encounter,
                 plan.Movement));
 
@@ -389,7 +335,7 @@ internal static class WatchtowerCombatOrchestrator
                     attackPlan.TargetCombatantId,
                     attackPlan.WeaponId);
 
-            steps.Add(CreateWeaponAttackStep(
+            steps.Add(WatchtowerCombatStepFactory.CreateWeaponAttack(
                 encounter,
                 attack.Result,
                 attack.Dice));
@@ -412,7 +358,7 @@ internal static class WatchtowerCombatOrchestrator
             encounter,
             actorId);
 
-        steps.Add(CreateTurnStep(
+        steps.Add(WatchtowerCombatStepFactory.CreateTurnAdvanced(
             encounter,
             turn,
             plan.TurnAdvanceReason));
@@ -428,7 +374,13 @@ internal static class WatchtowerCombatOrchestrator
         long expectedRevision,
         string actorId)
     {
-        ValidateRequiredId(actorId, nameof(actorId));
+        if (string.IsNullOrWhiteSpace(actorId))
+        {
+            throw new ArgumentException(
+                "A combat identifier is required.",
+                nameof(actorId));
+        }
+
         WatchtowerCombatDecision decision =
             WatchtowerCombatDecisionFactory.Create(state);
 
@@ -455,16 +407,6 @@ internal static class WatchtowerCombatOrchestrator
         }
 
         return decision;
-    }
-
-    private static void EnsureLegalPlayerAttack(
-        WatchtowerCombatAttackAvailability prerequisites)
-    {
-        if (!prerequisites.IsLegal)
-        {
-            throw new InvalidOperationException(
-                $"The selected weapon attack is unavailable for reason '{prerequisites.UnavailabilityReason}'.");
-        }
     }
 
     private static EncounterTurnAdvancementResult AdvanceTurn(
@@ -548,186 +490,4 @@ internal static class WatchtowerCombatOrchestrator
         };
     }
 
-    private static WatchtowerCombatIntentReceipt CreateReceipt(
-        WatchtowerCombatMoveIntent intent,
-        GridPosition[] path)
-    {
-        return new WatchtowerCombatIntentReceipt
-        {
-            Kind = WatchtowerCombatIntentKind.Move,
-            ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
-            ActorCombatantId = intent.ActorCombatantId,
-            Path = Array.AsReadOnly(path),
-            WeaponId = null,
-            TargetCombatantId = null
-        };
-    }
-
-    private static WatchtowerCombatIntentReceipt CreateReceipt(
-        WatchtowerCombatWeaponAttackIntent intent)
-    {
-        return new WatchtowerCombatIntentReceipt
-        {
-            Kind = WatchtowerCombatIntentKind.WeaponAttack,
-            ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
-            ActorCombatantId = intent.ActorCombatantId,
-            Path = Array.Empty<GridPosition>(),
-            WeaponId = intent.WeaponId,
-            TargetCombatantId = intent.TargetCombatantId
-        };
-    }
-
-    private static WatchtowerCombatIntentReceipt CreateReceipt(
-        WatchtowerCombatEndTurnIntent intent)
-    {
-        return new WatchtowerCombatIntentReceipt
-        {
-            Kind = WatchtowerCombatIntentKind.EndTurn,
-            ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
-            ActorCombatantId = intent.ActorCombatantId,
-            Path = Array.Empty<GridPosition>(),
-            WeaponId = null,
-            TargetCombatantId = null
-        };
-    }
-
-    private static WatchtowerCombatStepResult CreateMovementStep(
-        EncounterState startingState,
-        EncounterMovementResult movement)
-    {
-        return new WatchtowerCombatStepResult
-        {
-            Kind = WatchtowerCombatStepKind.Movement,
-            StartingEncounterRevision = startingState.Revision,
-            ResultingEncounterRevision = movement.State.Revision,
-            ActorCombatantId = movement.ActorCombatantId,
-            TargetCombatantId = null,
-            Dice = Array.Empty<WatchtowerCombatDieRoll>(),
-            Movement = movement,
-            WeaponAttack = null,
-            DeathSavingThrow = null,
-            TurnAdvancement = null,
-            TurnAdvanceReason = null,
-            WinningSideId = movement.State.WinningSideId
-        };
-    }
-
-    private static WatchtowerCombatStepResult CreateWeaponAttackStep(
-        EncounterState startingState,
-        EncounterWeaponAttackResult attack,
-        IReadOnlyList<WatchtowerCombatDieRoll> dice)
-    {
-        return new WatchtowerCombatStepResult
-        {
-            Kind = WatchtowerCombatStepKind.WeaponAttack,
-            StartingEncounterRevision = startingState.Revision,
-            ResultingEncounterRevision = attack.State.Revision,
-            ActorCombatantId = attack.ActorCombatantId,
-            TargetCombatantId = attack.TargetCombatantId,
-            Dice = Array.AsReadOnly(dice.ToArray()),
-            Movement = null,
-            WeaponAttack = attack,
-            DeathSavingThrow = null,
-            TurnAdvancement = null,
-            TurnAdvanceReason = null,
-            WinningSideId = attack.State.WinningSideId
-        };
-    }
-
-    private static WatchtowerCombatStepResult CreateDeathSaveStep(
-        EncounterState startingState,
-        EncounterDeathSavingThrowResult deathSave,
-        IReadOnlyList<WatchtowerCombatDieRoll> dice)
-    {
-        return new WatchtowerCombatStepResult
-        {
-            Kind = WatchtowerCombatStepKind.DeathSavingThrow,
-            StartingEncounterRevision = startingState.Revision,
-            ResultingEncounterRevision = deathSave.State.Revision,
-            ActorCombatantId = deathSave.ActorCombatantId,
-            TargetCombatantId = null,
-            Dice = Array.AsReadOnly(dice.ToArray()),
-            Movement = null,
-            WeaponAttack = null,
-            DeathSavingThrow = deathSave,
-            TurnAdvancement = null,
-            TurnAdvanceReason = null,
-            WinningSideId = deathSave.State.WinningSideId
-        };
-    }
-
-    private static WatchtowerCombatStepResult CreateTurnStep(
-        EncounterState startingState,
-        EncounterTurnAdvancementResult turn,
-        WatchtowerCombatTurnAdvanceReason reason)
-    {
-        return new WatchtowerCombatStepResult
-        {
-            Kind = WatchtowerCombatStepKind.TurnAdvanced,
-            StartingEncounterRevision = startingState.Revision,
-            ResultingEncounterRevision = turn.State.Revision,
-            ActorCombatantId = turn.EndedTurnCombatantId,
-            TargetCombatantId = null,
-            Dice = Array.Empty<WatchtowerCombatDieRoll>(),
-            Movement = null,
-            WeaponAttack = null,
-            DeathSavingThrow = null,
-            TurnAdvancement = turn,
-            TurnAdvanceReason = reason,
-            WinningSideId = turn.State.WinningSideId
-        };
-    }
-
-    private static void AppendCompletionStep(
-        List<WatchtowerCombatStepResult> steps,
-        EncounterState encounter)
-    {
-        if (steps.Count > 0
-            && steps[^1].Kind
-                == WatchtowerCombatStepKind.CombatCompleted)
-        {
-            return;
-        }
-
-        steps.Add(new WatchtowerCombatStepResult
-        {
-            Kind = WatchtowerCombatStepKind.CombatCompleted,
-            StartingEncounterRevision = encounter.Revision,
-            ResultingEncounterRevision = encounter.Revision,
-            ActorCombatantId = null,
-            TargetCombatantId = null,
-            Dice = Array.Empty<WatchtowerCombatDieRoll>(),
-            Movement = null,
-            WeaponAttack = null,
-            DeathSavingThrow = null,
-            TurnAdvancement = null,
-            TurnAdvanceReason = null,
-            WinningSideId = encounter.WinningSideId
-        });
-    }
-
-    private static WatchtowerCombatDieRoll CreateDie(
-        ApplicationRandomRoll roll,
-        WatchtowerCombatDiePurpose purpose)
-    {
-        return new WatchtowerCombatDieRoll
-        {
-            Ordinal = roll.Ordinal,
-            Sides = roll.Sides,
-            Value = roll.Value,
-            Purpose = purpose
-        };
-    }
-
-    private static void ValidateRequiredId(
-        string value,
-        string parameterName)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new ArgumentException(
-                "A combat identifier is required.",
-                parameterName);
-        }
-    }
 }
