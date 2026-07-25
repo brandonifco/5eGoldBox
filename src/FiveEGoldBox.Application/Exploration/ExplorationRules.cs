@@ -1,4 +1,5 @@
 using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
 using FiveEGoldBox.Core.Runtime;
@@ -64,8 +65,8 @@ public static class ExplorationRules
             {
                 CurrentMode = ApplicationMode.Exploration,
                 RegionalTravel = null,
-                Exploration = WatchtowerExplorationMap
-                    .CreateStartingState()
+                Exploration = ScenarioExplorationMap.CreateStartingState(
+                    RequireMap(canonicalSession))
             });
     }
 
@@ -121,8 +122,13 @@ public static class ExplorationRules
             GetForwardPosition(
                 exploration.Position,
                 exploration.Facing);
+        ExplorationMapDefinition map =
+            ScenarioExplorationMap.FindCurrent(canonicalSession)
+            ?? throw new InvalidOperationException(
+                "The exploration location has no map.");
         bool didMove =
-            WatchtowerExplorationMap.IsTraversable(
+            ScenarioExplorationMap.IsTraversable(
+                map,
                 exploration.Floor,
                 destination);
 
@@ -255,12 +261,12 @@ public static class ExplorationRules
         ExplorationState exploration =
             session.Exploration!;
 
-        return WatchtowerExplorationMap
-            .TryGetStairDestination(
-                exploration.Floor,
-                exploration.Position,
-                out destinationFloor,
-                out destinationPosition);
+        return ScenarioExplorationMap.TryGetStairDestination(
+            RequireMap(session),
+            exploration.Floor,
+            exploration.Position,
+            out destinationFloor,
+            out destinationPosition);
     }
 
     private static ApplicationSessionState
@@ -355,5 +361,13 @@ public static class ExplorationRules
         UnsupportedRoute = 3,
         WrongDestination = 4,
         WrongProgress = 5
+    }
+
+    private static ExplorationMapDefinition RequireMap(
+        ApplicationSessionState session)
+    {
+        return ScenarioExplorationMap.FindCurrent(session)
+            ?? throw new InvalidOperationException(
+                "The exploration location has no map.");
     }
 }

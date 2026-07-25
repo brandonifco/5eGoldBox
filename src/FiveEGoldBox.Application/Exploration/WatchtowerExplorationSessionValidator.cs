@@ -1,4 +1,5 @@
 using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
 
@@ -50,6 +51,12 @@ internal static class WatchtowerExplorationSessionValidator
                 nameof(state));
         }
 
-        WatchtowerExplorationMap.Validate(exploration);
+        ExplorationMapDefinition map =
+            ScenarioExplorationMap.FindCurrent(state)
+            ?? throw new ArgumentException(
+                "The exploration location has no map.",
+                nameof(state));
+
+        ScenarioExplorationMap.Validate(map, exploration);
     }
 }

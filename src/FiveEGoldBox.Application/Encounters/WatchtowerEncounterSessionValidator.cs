@@ -59,7 +59,13 @@ internal static class WatchtowerEncounterSessionValidator
                 "An active encounter requires an exploration return context.",
                 nameof(state));
 
-        WatchtowerExplorationMap.Validate(returnContext);
+        ExplorationMapDefinition map =
+            ScenarioExplorationMap.FindCurrent(state)
+            ?? throw new ArgumentException(
+                "The encounter location has no map to return to.",
+                nameof(state));
+
+        ScenarioExplorationMap.Validate(map, returnContext);
 
         EncounterState encounter =
             activeEncounter.Encounter

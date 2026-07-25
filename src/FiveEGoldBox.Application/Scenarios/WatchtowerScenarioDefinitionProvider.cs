@@ -215,64 +215,69 @@ internal static class WatchtowerScenarioDefinitionProvider
         };
     }
 
+    private const int MapWidth = 3;
+
+    private const int MapHeight = 3;
+
     private static ExplorationMapDefinition CreateMap()
     {
         return new ExplorationMapDefinition
         {
-            MapId = WatchtowerExplorationMap.MapId,
-            Width = WatchtowerExplorationMap.Width,
-            Height = WatchtowerExplorationMap.Height,
-            StartingFloor = WatchtowerExplorationMap.StartingFloor,
-            StartingPosition = WatchtowerExplorationMap.StartingPosition,
-            StartingFacing = WatchtowerExplorationMap.StartingFacing,
+            MapId = "map.ruined-watchtower",
+            Width = MapWidth,
+            Height = MapHeight,
+            StartingFloor = ExplorationFloor.GroundFloor,
+            StartingPosition = new GridPosition(0, 0),
+            StartingFacing = ExplorationFacing.East,
             Floors =
             [
-                CreateFloor(ExplorationFloor.GroundFloor),
-                CreateFloor(ExplorationFloor.UpperFloor)
+                new ExplorationFloorDefinition
+                {
+                    Floor = ExplorationFloor.GroundFloor,
+                    TraversablePositions =
+                    [
+                        new GridPosition(0, 0),
+                        new GridPosition(1, 0),
+                        new GridPosition(2, 0),
+                        new GridPosition(0, 1),
+                        new GridPosition(2, 1),
+                        new GridPosition(0, 2),
+                        new GridPosition(1, 2),
+                        new GridPosition(2, 2)
+                    ],
+                    Stairs =
+                    [
+                        new StairDefinition
+                        {
+                            Position = new GridPosition(2, 0),
+                            DestinationFloor = ExplorationFloor.UpperFloor,
+                            DestinationPosition = new GridPosition(2, 0)
+                        }
+                    ]
+                },
+                new ExplorationFloorDefinition
+                {
+                    Floor = ExplorationFloor.UpperFloor,
+                    TraversablePositions =
+                    [
+                        new GridPosition(0, 0),
+                        new GridPosition(1, 0),
+                        new GridPosition(2, 0),
+                        new GridPosition(0, 1),
+                        new GridPosition(1, 1),
+                        new GridPosition(2, 1)
+                    ],
+                    Stairs =
+                    [
+                        new StairDefinition
+                        {
+                            Position = new GridPosition(2, 0),
+                            DestinationFloor = ExplorationFloor.GroundFloor,
+                            DestinationPosition = new GridPosition(2, 0)
+                        }
+                    ]
+                }
             ]
-        };
-    }
-
-    private static ExplorationFloorDefinition CreateFloor(
-        ExplorationFloor floor)
-    {
-        List<GridPosition> traversable = [];
-        List<StairDefinition> stairs = [];
-
-        for (int y = 0; y < WatchtowerExplorationMap.Height; y++)
-        {
-            for (int x = 0; x < WatchtowerExplorationMap.Width; x++)
-            {
-                GridPosition position = new(x, y);
-
-                if (!WatchtowerExplorationMap.IsTraversable(floor, position))
-                {
-                    continue;
-                }
-
-                traversable.Add(position);
-
-                if (WatchtowerExplorationMap.TryGetStairDestination(
-                    floor,
-                    position,
-                    out ExplorationFloor destinationFloor,
-                    out GridPosition destinationPosition))
-                {
-                    stairs.Add(new StairDefinition
-                    {
-                        Position = position,
-                        DestinationFloor = destinationFloor,
-                        DestinationPosition = destinationPosition
-                    });
-                }
-            }
-        }
-
-        return new ExplorationFloorDefinition
-        {
-            Floor = floor,
-            TraversablePositions = traversable,
-            Stairs = stairs
         };
     }
 
