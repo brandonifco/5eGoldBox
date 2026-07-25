@@ -14,6 +14,20 @@ internal static class WatchtowerEncounterSessionValidator
     {
         ArgumentNullException.ThrowIfNull(state);
 
+        if (state.RegionalTravel is not null)
+        {
+            throw new ArgumentException(
+                "An encounter session cannot contain regional-travel state.",
+                nameof(state));
+        }
+
+        if (state.Exploration is not null)
+        {
+            throw new ArgumentException(
+                "An encounter session cannot contain root exploration state.",
+                nameof(state));
+        }
+
         ActiveEncounterState activeEncounter =
             state.ActiveEncounter
             ?? throw new ArgumentException(

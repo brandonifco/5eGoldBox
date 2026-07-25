@@ -1,5 +1,6 @@
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
+using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Travel;
@@ -125,77 +126,15 @@ internal static class ApplicationSessionRules
         switch (state.CurrentMode)
         {
             case ApplicationMode.Outpost:
-                if (state.RegionalTravel is not null)
-                {
-                    throw new ArgumentException(
-                        "An outpost session cannot contain regional-travel state.",
-                        nameof(state));
-                }
-
-                if (state.Exploration is not null)
-                {
-                    throw new ArgumentException(
-                        "An outpost session cannot contain exploration state.",
-                        nameof(state));
-                }
-
-                if (state.ActiveEncounter is not null)
-                {
-                    throw new ArgumentException(
-                        "An outpost session cannot contain an active encounter.",
-                        nameof(state));
-                }
-
+                WatchtowerOutpostSessionValidator.Validate(state);
                 break;
             case ApplicationMode.RegionalTravel:
-                if (state.Exploration is not null)
-                {
-                    throw new ArgumentException(
-                        "A regional-travel session cannot contain exploration state.",
-                        nameof(state));
-                }
-
-                if (state.ActiveEncounter is not null)
-                {
-                    throw new ArgumentException(
-                        "A regional-travel session cannot contain an active encounter.",
-                        nameof(state));
-                }
-
-                ValidateRegionalTravel(state);
+                WatchtowerTravelSessionValidator.Validate(state);
                 break;
             case ApplicationMode.Exploration:
-                if (state.RegionalTravel is not null)
-                {
-                    throw new ArgumentException(
-                        "An exploration session cannot contain regional-travel state.",
-                        nameof(state));
-                }
-
-                if (state.ActiveEncounter is not null)
-                {
-                    throw new ArgumentException(
-                        "An exploration session cannot contain an active encounter.",
-                        nameof(state));
-                }
-
-                ValidateExploration(state);
+                WatchtowerExplorationSessionValidator.Validate(state);
                 break;
             case ApplicationMode.Encounter:
-                if (state.RegionalTravel is not null)
-                {
-                    throw new ArgumentException(
-                        "An encounter session cannot contain regional-travel state.",
-                        nameof(state));
-                }
-
-                if (state.Exploration is not null)
-                {
-                    throw new ArgumentException(
-                        "An encounter session cannot contain root exploration state.",
-                        nameof(state));
-                }
-
                 WatchtowerEncounterSessionValidator.Validate(state);
                 break;
             case ApplicationMode.ScenarioConclusion:
@@ -205,106 +144,6 @@ internal static class ApplicationSessionRules
                 throw new ArgumentException(
                     "The application mode is not supported in this application phase.",
                     nameof(state));
-        }
-    }
-
-    private static void ValidateExploration(
-        ApplicationSessionState state)
-    {
-        ExplorationState exploration =
-            state.Exploration
-            ?? throw new ArgumentException(
-                "An exploration session requires exploration state.",
-                nameof(state));
-
-        if (!string.Equals(
-            state.CurrentLocationId,
-            WatchtowerRegionalRoute.WatchtowerLocationId,
-            StringComparison.Ordinal))
-        {
-            throw new ArgumentException(
-                "Watchtower exploration requires the ruined-watchtower location.",
-                nameof(state));
-        }
-
-        if (state.Scenario.Progress is not (
-            WatchtowerScenarioProgress.MissionAccepted
-            or WatchtowerScenarioProgress.RaidersDefeated))
-        {
-            throw new ArgumentException(
-                "Watchtower exploration requires accepted-mission or raiders-defeated progress.",
-                nameof(state));
-        }
-
-        WatchtowerExplorationMap.Validate(exploration);
-    }
-
-    private static void ValidateRegionalTravel(
-        ApplicationSessionState state)
-    {
-        RegionalTravelState travel =
-            state.RegionalTravel
-            ?? throw new ArgumentException(
-                "A regional-travel session requires regional-travel state.",
-                nameof(state));
-
-        if (state.Scenario.Progress
-            == WatchtowerScenarioProgress.MissionNotAccepted)
-        {
-            throw new ArgumentException(
-                "Regional travel cannot begin before the watchtower mission is accepted.",
-                nameof(state));
-        }
-
-        if (!string.Equals(
-            travel.RouteId,
-            WatchtowerRegionalRoute.RouteId,
-            StringComparison.Ordinal))
-        {
-            throw new ArgumentException(
-                "The regional-travel route is unsupported.",
-                nameof(state));
-        }
-
-        if (!WatchtowerRegionalRoute.HasSupportedEndpoints(
-            travel.OriginLocationId,
-            travel.DestinationLocationId))
-        {
-            throw new ArgumentException(
-                "The regional-travel endpoints are inconsistent with the watchtower route.",
-                nameof(state));
-        }
-
-        if (travel.FinalStepIndex
-            != WatchtowerRegionalRoute.FinalStepIndex)
-        {
-            throw new ArgumentException(
-                "The regional-travel final step is inconsistent with the watchtower route.",
-                nameof(state));
-        }
-
-        if (travel.CurrentStepIndex < 0
-            || travel.CurrentStepIndex
-                > travel.FinalStepIndex)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(state),
-                travel.CurrentStepIndex,
-                "The regional-travel current step must be within the fixed route.");
-        }
-
-        string expectedLocationId = travel.IsComplete
-            ? travel.DestinationLocationId
-            : travel.OriginLocationId;
-
-        if (!string.Equals(
-            state.CurrentLocationId,
-            expectedLocationId,
-            StringComparison.Ordinal))
-        {
-            throw new ArgumentException(
-                "The current location is inconsistent with regional-travel progress.",
-                nameof(state));
         }
     }
 
