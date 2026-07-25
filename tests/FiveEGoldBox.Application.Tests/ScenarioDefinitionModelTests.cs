@@ -176,7 +176,9 @@ public sealed class ScenarioDefinitionModelTests
                 && property.Name != nameof(ScenarioDefinition.PartyRequirement));
     }
 
-    private static ScenarioDefinition CreateWatchtowerDefinition()
+    /// Shared with ScenarioDefinitionValidatorTests, which uses this as the
+    /// known-good baseline it then breaks one field at a time.
+    internal static ScenarioDefinition CreateWatchtowerDefinition()
     {
         return new ScenarioDefinition
         {
