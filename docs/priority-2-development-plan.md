@@ -58,7 +58,14 @@ Don't need full implementation yet — just a decision and a paragraph in this d
 9. **Conditions system** — commit to full mechanical effects (Phase 10) or explicitly scope out with a written reason
 10. **Spellcasting** — explicit yes / no / later. The party includes a Ranger (a 5e half-caster), so this needs an answer before scenario #2 gets authored around it
 11. **Victory conclusion** — decide whether `WatchtowerScenarioConclusionValidator` gets a victory branch now (cheap, Phase 5/6-adjacent) or waits
-12. **Party composition genericity** — decide whether party shape (currently hardcoded to exactly Fighter+Barbarian+Ranger×3) becomes scenario-configurable, ruleset-configurable, or stays fixed. This materially changes the shape of Phase 6, so decide it first, not mid-refactor
+12. ~~**Party composition genericity**~~ — **decided: campaign-declared.** Party composition belongs to a campaign, not to a scenario and not to the ruleset. The Scope Matrix's governing decisions settle it: players create their party in town from a supported catalog, keep a reserve roster, and replace dead characters, so a scenario cannot own a roster the player mutates between and during adventures. Party size is likewise a product decision, not a 5e rules fact — the ruleset says which classes exist, not how many adventurers make a party. Goals Phase 10 lists "party size" in the version-one product contract rather than among the things Phase 9 turns into content definitions.
+
+    Consequences for the rest of Phase 6:
+
+    - `ScenarioDefinition` carries **no roster**. Party composition is not scenario content.
+    - Scenarios may still declare **entry requirements** — a predicate over the party ("at least two conscious members", "level 3+"). That is distinct from composition and does belong in the definition. The two compose: a campaign says parties here are 1–6, a scenario says you need at least 2 to attempt it.
+    - There is **no campaign concept in the code yet** (no `Campaign` type anywhere in `src/`). Until there is, `WatchtowerPartyCompositionValidator` is the placeholder holding the current campaign's values.
+    - This defuses a discrepancy worth knowing about: the Scope Matrix specifies four active characters (plus up to four reserve) while the code enforces exactly three (Fighter, Barbarian, Ranger). Once party size is campaign configuration rather than a constant, that becomes a data value to set rather than a code change, so it no longer blocks anything. **Still unresolved which of the two is stale.**
 
 ---
 
@@ -69,8 +76,8 @@ Don't need full implementation yet — just a decision and a paragraph in this d
 ### Phase 6 — Scenario Content Boundary (expanded scope per the retrospective)
 
 1. `refactor/genericize-application-session-scenario-state` — replace `ApplicationSessionState.Scenario: WatchtowerScenarioState` with a generic `ScenarioState`/`ScenarioProgress` shape; Watchtower's specific progress enum becomes scenario-supplied data, not a hardcoded session-state field. **This is the actual de-centering step** — the one that makes the engine loadable with any scenario rather than merely organized around one.
-2. `refactor/genericize-party-composition-rules` — per the Priority 3 decision, make party shape configurable rather than a hardcoded constant in `ApplicationSessionRules`
-3. `feature/add-scenario-definition-model` — immutable in-memory definitions: `ScenarioDefinition`, `LocationDefinition`, `EncounterDefinition`, `CombatantDefinition`, `ObjectiveDefinition`, `TransitionDefinition`, `RewardDefinition` (Priority 1 plan Step 6.2)
+2. `refactor/genericize-party-composition-rules` — **done (PR #89)**, deliberately decision-neutral: it moved the Watchtower party requirements out of `ApplicationSessionRules` without deciding where they ultimately live. Priority 3 item 12 has since answered that (campaign-declared), so the remaining work is a campaign-level home for them — which needs a campaign concept to exist first, and is therefore sequenced after this phase rather than inside it
+3. `feature/add-scenario-definition-model` — immutable in-memory definitions: `ScenarioDefinition`, `LocationDefinition`, `EncounterDefinition`, `CombatantDefinition`, `ObjectiveDefinition`, `TransitionDefinition`, `RewardDefinition` (Priority 1 plan Step 6.2). Per Priority 3 item 12, these carry **no party roster**; scenario-level party constraints are expressed as entry requirements only
 4. `feature/add-scenario-definition-validation` — validate content at load time: unique IDs, valid references, supported dice, reachable transitions, valid maps/coordinates, valid starting state (Step 6.3)
 5. `refactor/move-watchtower-content-to-definition` — move authored Watchtower constants into a definition instance; remove scenario-name checks from execution code, renaming `CanEnterWatchtower`-style methods to generic verbs (Step 6.4)
 6. `refactor/genericize-console-scenario-rendering` — update Console to render off the generic scenario definition plus the new Phase-5 combat write facade, closing the remaining Watchtower-coupling gap end to end
