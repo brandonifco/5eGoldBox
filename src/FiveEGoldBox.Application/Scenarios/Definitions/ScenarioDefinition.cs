@@ -27,6 +27,9 @@ internal sealed record ScenarioDefinition
 
     internal required IReadOnlyList<EncounterDefinition> Encounters { get; init; }
 
-    /// What the party can do to move the scenario forward.
+    /// Things in the world the party interacts with to move forward.
     internal required IReadOnlyList<ScenarioTriggerDefinition> Triggers { get; init; }
+
+    /// Choices the party is offered for being somewhere.
+    internal required IReadOnlyList<ScenarioDecisionDefinition> Decisions { get; init; }
 }

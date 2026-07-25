@@ -22,7 +22,10 @@ internal static partial class ScenarioDefinitionValidator
         AddLocationIssues(definition, issues);
         AddRouteIssues(definition, issues);
         AddEncounterIssues(definition, issues);
+        AddEncounterOutcomeIssues(definition, issues);
         AddTriggerIssues(definition, issues);
+        AddDecisionIssues(definition, issues);
+        AddProgressReachabilityIssues(definition, issues);
 
         return new ValidationResult(issues);
     }

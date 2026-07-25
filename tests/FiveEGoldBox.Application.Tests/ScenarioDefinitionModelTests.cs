@@ -259,6 +259,29 @@ public sealed class ScenarioDefinitionModelTests
                         WatchtowerScenarioProgress.SignalActivated.ToString(),
                     EncounterId = WatchtowerSignalEncounter.EncounterId
                 }
+            ],
+            Decisions =
+            [
+                new ScenarioDecisionDefinition
+                {
+                    DecisionId = "decision.watchtower-mission",
+                    DisplayName = "Investigate the ruined watchtower",
+                    LocationId = WatchtowerScenarioContent.OutpostLocationId,
+                    RequiredProgressIds =
+                    [
+                        WatchtowerScenarioProgress.MissionNotAccepted.ToString()
+                    ],
+                    Options =
+                    [
+                        new ScenarioDecisionOptionDefinition
+                        {
+                            OptionId = "AcceptMission",
+                            DisplayName = "Accept the commission",
+                            ResultingProgressId =
+                                WatchtowerScenarioProgress.MissionAccepted.ToString()
+                        }
+                    ]
+                }
             ]
         };
     }
@@ -365,7 +388,14 @@ public sealed class ScenarioDefinitionModelTests
                         }
                     ]
                 }
-            ]
+            ],
+            Outcome = new EncounterOutcomeDefinition
+            {
+                VictoryProgressId =
+                    WatchtowerScenarioProgress.RaidersDefeated.ToString(),
+                DefeatProgressId =
+                    WatchtowerScenarioProgress.PartyDefeated.ToString()
+            }
         };
     }
 }

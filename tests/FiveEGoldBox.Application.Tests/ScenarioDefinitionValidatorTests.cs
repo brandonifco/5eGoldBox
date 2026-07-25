@@ -18,11 +18,16 @@ public sealed class ScenarioDefinitionValidatorTests
 
         Assert.True(
             result.IsValid,
-            "Watchtower should validate cleanly, but reported: "
+            "Watchtower should carry no errors, but reported: "
                 + string.Join(
                     "; ",
                     result.Issues.Select(issue => issue.Code)));
-        Assert.Empty(result.Issues);
+
+        // Warnings are expected here: the scenario declares the full saved
+        // progress vocabulary, two markers of which nothing yet produces.
+        Assert.DoesNotContain(
+            result.Issues,
+            issue => issue.Severity == ValidationSeverity.Error);
     }
 
     [Theory]
