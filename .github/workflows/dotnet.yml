@@ -10,6 +10,7 @@ on:
       - "fix/**"
       - "test/**"
       - "validation/**"
+      - "docs/**"
   pull_request:
     branches:
       - main
@@ -17,6 +18,13 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+
+    name: build-and-test (${{ matrix.configuration }})
 
     steps:
       - name: Checkout
@@ -31,7 +39,46 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build --configuration ${{ matrix.configuration }} --no-restore
 
       - name: Test
-        run: dotnet test --configuration Release --no-build
+        run: >-
+          dotnet test --configuration ${{ matrix.configuration }} --no-build
+          --logger "trx;LogFileName=test-results.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.configuration }}
+          path: ./TestResults
+          retention-days: 14
+
+  vulnerable-packages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      # `dotnet list package --vulnerable` always exits 0, so fail the job
+      # explicitly when it reports any advisory.
+      - name: Check for vulnerable packages
+        run: |
+          dotnet list package --vulnerable --include-transitive > vulnerable.txt 2>&1
+          cat vulnerable.txt
+          if grep -q "has the following vulnerable packages" vulnerable.txt; then
+            echo "::error::Vulnerable NuGet packages detected."
+            exit 1
+          fi
+          echo "No vulnerable packages found."
