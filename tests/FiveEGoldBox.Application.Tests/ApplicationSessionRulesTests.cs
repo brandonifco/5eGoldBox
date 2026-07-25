@@ -815,6 +815,22 @@ public sealed class ApplicationSessionRulesTests
             ApplicationSessionRules.Validate(state));
     }
 
+    [Fact]
+    public void Validate_OutpostModeWithRegionalTravelState_Throws()
+    {
+        ApplicationSessionState travel =
+            WatchtowerSignalTestData
+                .CreateRegionalTravelSession();
+        ApplicationSessionState state =
+            CreateValidSession() with
+            {
+                RegionalTravel = travel.RegionalTravel
+            };
+
+        Assert.Throws<ArgumentException>(() =>
+            ApplicationSessionRules.Validate(state));
+    }
+
     private static void AssertInvalidHealthThrows(
         Func<CombatantHealthState, CombatantHealthState>
             changeHealth)
