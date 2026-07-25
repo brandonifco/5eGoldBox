@@ -1,0 +1,51 @@
+# 5eGoldBox
+
+A layered C#/.NET 8 D&D 5e engine: `FiveEGoldBox.Core` (pure rules), `FiveEGoldBox.Application` (session/campaign orchestration, the "Watchtower" scenario), `FiveEGoldBox.Console` (working text client), `FiveEGoldBox.Godot` (early UI shell, not yet wired to Application/Core — see "Known WIP" below).
+
+## Current work: the Priority 1 Development Plan
+
+The full plan lives at [docs/priority-1-development-plan.md](docs/priority-1-development-plan.md) — read it before starting any Priority 1 work. It's an 8-phase sequence to stabilize the public API and persistence boundary before further scenario/orchestration refactors, executed as one small branch per phase step.
+
+**Progress** (update this checklist as branches merge — it's the fast way to know where things stand without re-deriving from git log):
+
+- [x] Phase 1 — Public API inventory (no visibility changes)
+- [x] Phase 2 — Bounded public API reduction — `refactor/internalize-ruleset-index` (PR #65), `refactor/internalize-weapon-attack-staging-corrected` (PR #66), `feature/add-generic-combat-query-projection-corrected` (PR #67). **Known gap, deliberately deferred:** `FiveEGoldBox.Console` still references `Watchtower*` combat types directly instead of the new generic `CombatOperations`/`CombatView` facade; 22 `Watchtower`-prefixed types remain public in `Application.Combat`. Not blocking — revisit when convenient.
+- [x] Phase 3, step 1 — `feature/add-versioned-save-v1-dtos` (PR #68): `SaveGameV1` schema + `SaveGameMapper` under `src/FiveEGoldBox.Application/Persistence/V1/`, replacing direct serialization of `ApplicationSessionState`. `ActiveEncounter` is a deliberate empty placeholder (no mode can currently save mid-combat; `EncounterState` carries re-derivable data that needs its own design pass).
+- [ ] Phase 3, step 2 — `test/add-v1-save-compatibility-fixtures` (historical JSON fixtures + version-dispatch loader) — **next up**
+- [ ] Phase 4 — Session validation by lifecycle mode
+- [ ] Phase 5 — Watchtower combat orchestrator decomposition
+- [ ] Phase 6 — Scenario content boundary (Watchtower → data)
+- [ ] Phase 7 — Cross-layer die capability alignment
+- [ ] Phase 8 — Test infrastructure improvement (ongoing, not a separate gate)
+
+## Workflow authorization for Priority 1 branches
+
+For each Priority 1 branch, proceed autonomously through the full loop without stopping to ask permission at each step:
+
+1. Confirm `git status` clean and `main` in sync with `origin/main`.
+2. One narrowly-scoped branch per plan step (see the plan's "Recommended Branch Sequence").
+3. Implement.
+4. Gate: focused tests → full affected-project tests → full solution build+test → `git diff --check`. Also verify compiled public API counts via reflection (`Assembly.GetExportedTypes()`) when a change could affect visibility — don't trust grep or doc claims for this.
+5. Self-review the diff against that phase's completion gate from the plan; report gaps honestly rather than glossing over them.
+6. Commit — one commit, message explains what and why. **Do not** write `Priority_1_Phase_*_Assignment_Packet.md`-style docs; that ceremony was for coordinating across disconnected sessions/tools and doesn't apply when working directly in the repo. Put equivalent content in the commit message and PR body.
+7. `git add` **specific paths only, never `-A` or `.`** — the repo root has ~50 untracked process-doc/patch/log files (see below) that must never be staged.
+8. Push, open a PR (`gh pr create`), wait for CI (`gh run watch`), merge (`gh pr merge --merge --delete-branch`) once green.
+9. `git fetch --prune`, confirm `main` synced, move to the next branch.
+
+Still pause and flag rather than pushing through: gate failures, merge conflicts, CI failures, or anything that looks destructive/irreversible outside the normal branch→PR→merge flow. This authorization is specific to Priority 1 cohort work in this repo — it doesn't generalize to unrelated pushes, merges, or deletions.
+
+## Repo hygiene — leave these alone unless asked
+
+- **~50 untracked files at repo root** (`Priority_1_Phase_*.md`, `priority-1-*.md`, `*.patch`, `*.csv`, `*.log`) are scratch output from an earlier multi-role review workflow. Never `git add -A`/`git add .` — always stage specific paths. User has explicitly said to leave this clutter as-is.
+- **`src/FiveEGoldBox.Godot/` is untracked** — user's in-progress Godot UI work, deliberately kept out of git until Priority 1 housekeeping is done. Don't add it to git, don't modify it, don't wire it to Application/Core unless asked.
+- **`docs/` contains two full copyrighted D&D 5e rulebook HTML files** (~1.3–1.4MB each), untracked. User is aware and wants them kept as local reference — don't delete, don't commit, don't quote from them at length.
+
+## Build & test
+
+```bash
+dotnet build 5eGoldBox.sln -c Debug     # 0 warnings expected (TreatWarningsAsErrors)
+dotnet test 5eGoldBox.sln -c Debug      # full suite, currently 1769 tests
+dotnet build 5eGoldBox.sln -c Release   # required gate before merge
+```
+
+`FiveEGoldBox.Godot` is a separate, not-yet-integrated project (its own `.sln`, not referenced by `5eGoldBox.sln`) — the above commands don't touch it.
