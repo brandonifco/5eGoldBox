@@ -1,12 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FiveEGoldBox.Application.Persistence.V1;
 using FiveEGoldBox.Application.Sessions;
 
 namespace FiveEGoldBox.Application.Persistence;
 
 public static class ManualSaveSerializer
 {
-    public const int SupportedFormatVersion = 1;
+    public const int SupportedFormatVersion = SaveGameMapper.FormatVersion;
 
     private static readonly JsonSerializerOptions
         SerializerOptions = CreateSerializerOptions();
@@ -29,11 +30,8 @@ public static class ManualSaveSerializer
 
         ValidateSaveableMode(canonicalSession);
 
-        ManualSaveData saveData = new()
-        {
-            FormatVersion = SupportedFormatVersion,
-            Session = canonicalSession
-        };
+        SaveGameV1 saveData = SaveGameMapper.ToSaveV1(
+            canonicalSession);
 
         return JsonSerializer.Serialize(
             saveData,
@@ -50,11 +48,11 @@ public static class ManualSaveSerializer
                     .MalformedSerializedData);
         }
 
-        ManualSaveData? saveData;
+        SaveGameV1? saveData;
 
         try
         {
-            saveData = JsonSerializer.Deserialize<ManualSaveData>(
+            saveData = JsonSerializer.Deserialize<SaveGameV1>(
                 serializedData,
                 SerializerOptions);
         }
@@ -88,9 +86,12 @@ public static class ManualSaveSerializer
 
         try
         {
+            ApplicationSessionState runtimeSession =
+                SaveGameMapper.ToRuntime(saveData);
+
             ApplicationSessionState canonicalSession =
                 ApplicationSessionRules.CreateCanonical(
-                    saveData.Session);
+                    runtimeSession);
 
             ValidateSaveableMode(canonicalSession);
 
