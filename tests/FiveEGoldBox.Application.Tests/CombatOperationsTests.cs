@@ -263,8 +263,9 @@ public sealed class CombatOperationsTests
             view.Combatants.Select(combatant => combatant.CombatantId));
 
         CombatantView scout = Assert.Single(
-            view.Combatants.Where(combatant =>
-                combatant.CombatantId == CombatGenericProjectionTestData.ScoutId));
+            view.Combatants,
+            combatant =>
+                combatant.CombatantId == CombatGenericProjectionTestData.ScoutId);
         Assert.Equal(CombatGenericProjectionTestData.ExpeditionSideId, scout.SideId);
         Assert.Equal(new GridPosition(1, 2), scout.Position);
         Assert.Equal(CombatantLifecycleState.Conscious, scout.LifecycleState);
@@ -611,8 +612,9 @@ public sealed class CombatOperationsTests
         CombatMovementOption movement,
         GridPosition destination)
     {
-        return Assert.Single(movement.DestinationOptions.Where(option =>
-            option.Destination == destination));
+        return Assert.Single(
+            movement.DestinationOptions,
+            option => option.Destination == destination);
     }
 
     private static ApplicationSessionState
