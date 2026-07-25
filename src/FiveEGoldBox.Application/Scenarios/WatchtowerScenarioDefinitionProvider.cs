@@ -45,7 +45,14 @@ internal static class WatchtowerScenarioDefinitionProvider
                 {
                     LocationId = WatchtowerRegionalRoute.WatchtowerLocationId,
                     DisplayName = "Ruined Watchtower",
-                    ExplorationMap = CreateMap()
+                    ExplorationMap = CreateMap(),
+                    // Explorable after arriving, and again after the ambush is
+                    // beaten; during the ambush the party is in combat.
+                    ExplorableProgressIds =
+                    [
+                        Progress(WatchtowerScenarioProgress.MissionAccepted),
+                        Progress(WatchtowerScenarioProgress.RaidersDefeated)
+                    ]
                 }
             ],
             Routes = [CreateRoute()],

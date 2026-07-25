@@ -154,8 +154,7 @@ public static class RegionalTravelRules
             return BeginAvailability.WrongMode;
         }
 
-        if (WatchtowerScenario.ProgressOf(session)
-            != WatchtowerScenarioProgress.MissionAccepted)
+        if (!IsRouteOpen(session))
         {
             return BeginAvailability.WrongProgress;
         }
@@ -180,8 +179,7 @@ public static class RegionalTravelRules
             return AdvanceAvailability.WrongMode;
         }
 
-        if (WatchtowerScenario.ProgressOf(session)
-            != WatchtowerScenarioProgress.MissionAccepted)
+        if (!IsRouteOpen(session))
         {
             return AdvanceAvailability.WrongProgress;
         }
@@ -208,5 +206,17 @@ public static class RegionalTravelRules
         WrongMode = 1,
         WrongProgress = 2,
         Complete = 3
+    }
+
+    /// A route opens once the party has made the progress it asks for.
+    private static bool IsRouteOpen(
+        ApplicationSessionState session)
+    {
+        return ScenarioDefinitionRegistry
+            .Resolve(session)
+            .Routes
+            .Any(route => route.RequiredProgressIds.Contains(
+                session.Scenario.ProgressId,
+                StringComparer.Ordinal));
     }
 }

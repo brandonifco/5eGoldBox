@@ -220,32 +220,38 @@ public static class ExplorationRules
                 .IncompleteJourney;
         }
 
-        if (!string.Equals(
-            travel.RouteId,
-            WatchtowerRegionalRoute.RouteId,
-            StringComparison.Ordinal))
+        TravelRouteDefinition? route = ScenarioDefinitionRegistry
+            .Resolve(session)
+            .Routes
+            .FirstOrDefault(candidate => string.Equals(
+                candidate.RouteId,
+                travel.RouteId,
+                StringComparison.Ordinal));
+
+        if (route is null)
         {
             return WatchtowerEntryAvailability
                 .UnsupportedRoute;
         }
 
+        // The party must have arrived at, and be standing in, the place the
+        // route leads to.
         if (!string.Equals(
                 travel.DestinationLocationId,
-                WatchtowerRegionalRoute
-                    .WatchtowerLocationId,
+                route.DestinationLocationId,
                 StringComparison.Ordinal)
             || !string.Equals(
                 session.CurrentLocationId,
-                WatchtowerRegionalRoute
-                    .WatchtowerLocationId,
+                route.DestinationLocationId,
                 StringComparison.Ordinal))
         {
             return WatchtowerEntryAvailability
                 .WrongDestination;
         }
 
-        if (WatchtowerScenario.ProgressOf(session)
-            != WatchtowerScenarioProgress.MissionAccepted)
+        if (!route.RequiredProgressIds.Contains(
+            session.Scenario.ProgressId,
+            StringComparer.Ordinal))
         {
             return WatchtowerEntryAvailability.WrongProgress;
         }
