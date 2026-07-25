@@ -30,7 +30,7 @@ So Phase 6 needs to make the *session state itself* scenario-parametric, not jus
 4. Decide and add a `LICENSE`
 5. Add a Debug-configuration CI job matching the documented local gate
 6. Wire up `coverlet.collector` coverage reporting in CI, or drop the dependency
-7. Add a `dotnet format --verify-no-changes` CI step
+7. ~~Add a `dotnet format --verify-no-changes` CI step~~ — **rejected after evaluation (PR #75).** `dotnet format` disagrees with this codebase's deliberate hand-wrapped declaration style in every mode: it pushes `{ get; init; }` onto its own line across 11 files and puts switch-arm commas on their own lines in tests. Tuning `csharp_new_line_before_open_brace` only trades that for K&R braces on block-bodied properties, inconsistent with the Allman style used everywhere else. `dotnet format analyzers` already passes clean, and `EnforceCodeStyleInBuild` + `TreatWarningsAsErrors` cover real style violations at build time. The one genuine violation it surfaced (a missing final newline) was fixed directly.
 8. Add dependency-vulnerability scanning (Dependabot config or `dotnet list package --vulnerable`)
 
 ### Priority 1 — Phase 5: Watchtower combat orchestrator decomposition
