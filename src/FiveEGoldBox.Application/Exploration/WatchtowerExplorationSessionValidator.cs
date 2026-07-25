@@ -32,31 +32,32 @@ internal static class WatchtowerExplorationSessionValidator
                 "An exploration session requires exploration state.",
                 nameof(state));
 
-        if (!string.Equals(
-            state.CurrentLocationId,
-            WatchtowerRegionalRoute.WatchtowerLocationId,
-            StringComparison.Ordinal))
+        ScenarioLocationDefinition? location = ScenarioDefinitionRegistry
+            .Resolve(state)
+            .Locations
+            .FirstOrDefault(candidate => string.Equals(
+                candidate.LocationId,
+                state.CurrentLocationId,
+                StringComparison.Ordinal));
+
+        if (location?.ExplorationMap is null)
         {
             throw new ArgumentException(
                 "Watchtower exploration requires the ruined-watchtower location.",
                 nameof(state));
         }
 
-        if (WatchtowerScenario.ProgressOf(state) is not (
-            WatchtowerScenarioProgress.MissionAccepted
-            or WatchtowerScenarioProgress.RaidersDefeated))
+        if (!location.ExplorableProgressIds.Contains(
+            state.Scenario.ProgressId,
+            StringComparer.Ordinal))
         {
             throw new ArgumentException(
                 "Watchtower exploration requires accepted-mission or raiders-defeated progress.",
                 nameof(state));
         }
 
-        ExplorationMapDefinition map =
-            ScenarioExplorationMap.FindCurrent(state)
-            ?? throw new ArgumentException(
-                "The exploration location has no map.",
-                nameof(state));
-
-        ScenarioExplorationMap.Validate(map, exploration);
+        ScenarioExplorationMap.Validate(
+            location.ExplorationMap,
+            exploration);
     }
 }

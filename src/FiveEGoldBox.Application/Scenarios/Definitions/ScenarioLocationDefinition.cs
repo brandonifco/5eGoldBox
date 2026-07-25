@@ -10,4 +10,9 @@ internal sealed record ScenarioLocationDefinition
 
     /// Null for hub locations such as an outpost.
     internal ExplorationMapDefinition? ExplorationMap { get; init; }
+
+    /// Progress markers at which the party may be exploring here. Empty for
+    /// hubs, and for maps the scenario only opens at particular points.
+    internal IReadOnlyList<string> ExplorableProgressIds { get; init; } =
+        Array.Empty<string>();
 }

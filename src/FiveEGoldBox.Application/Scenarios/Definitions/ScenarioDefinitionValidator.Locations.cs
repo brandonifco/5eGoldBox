@@ -35,6 +35,19 @@ internal static partial class ScenarioDefinitionValidator
             {
                 AddMapIssues(location, location.ExplorationMap, issues);
             }
+            else if (location.ExplorableProgressIds.Count > 0)
+            {
+                issues.Add(Error(
+                    "scenario.locations.explorable_without_map",
+                    $"Location '{location.LocationId}' declares explorable progress but has no map."));
+            }
+
+            AddUnknownProgressIssues(
+                issues,
+                location.ExplorableProgressIds,
+                ToSet(definition.Progress.ProgressIds),
+                "scenario.locations.explorable_progress_unknown",
+                $"Location '{location.LocationId}'");
         }
 
         AddDuplicateIdIssues(
