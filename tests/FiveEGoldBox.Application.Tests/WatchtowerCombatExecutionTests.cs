@@ -1,6 +1,7 @@
 using System.Collections;
 using FiveEGoldBox.Application.Combat;
 using FiveEGoldBox.Application.Randomness;
+using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Definitions;
@@ -974,7 +975,7 @@ public sealed class WatchtowerCombatExecutionTests
 
         return new RejectedOperationSnapshot(
             source.CurrentMode,
-            source.Scenario.Progress,
+            WatchtowerScenario.ProgressOf(source),
             source.ActiveEncounter!.ReturnContext,
             source.Party.PartyId,
             source.Party.Members.ToArray(),
@@ -993,7 +994,7 @@ public sealed class WatchtowerCombatExecutionTests
         ApplicationSessionState actual)
     {
         Assert.Equal(expected.CurrentMode, actual.CurrentMode);
-        Assert.Equal(expected.ScenarioProgress, actual.Scenario.Progress);
+        Assert.Equal(expected.ScenarioProgress, WatchtowerScenario.ProgressOf(actual));
         Assert.Equal(expected.ReturnContext, actual.ActiveEncounter!.ReturnContext);
         Assert.Equal(expected.PartyId, actual.Party.PartyId);
         Assert.Equal(expected.PartyMembers.Length, actual.Party.Members.Count);

@@ -563,7 +563,7 @@ public sealed class ConsoleSessionRunnerTests
             $"Location: {session.CurrentLocationId}",
             output);
         Assert.Contains(
-            $"Progress: {session.Scenario.Progress}",
+            $"Progress: {WatchtowerScenario.ProgressOf(session)}",
             output);
         Assert.Contains(
             $"Random Seed: {session.RandomSeed}",
@@ -968,12 +968,9 @@ public sealed class ConsoleSessionRunnerTests
             {
                 CurrentMode =
                     ApplicationMode.ScenarioConclusion,
-                Scenario = exploration.Scenario with
-                {
-                    Progress =
-                        WatchtowerScenarioProgress
-                            .PartyDefeated
-                },
+                Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress
+                            .PartyDefeated),
                 Exploration = null
             };
 

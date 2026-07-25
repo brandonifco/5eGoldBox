@@ -238,7 +238,7 @@ public static class ExplorationRules
                 .WrongDestination;
         }
 
-        if (session.Scenario.Progress
+        if (WatchtowerScenario.ProgressOf(session)
             != WatchtowerScenarioProgress.MissionAccepted)
         {
             return WatchtowerEntryAvailability.WrongProgress;

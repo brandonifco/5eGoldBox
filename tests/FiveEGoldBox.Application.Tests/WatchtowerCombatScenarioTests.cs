@@ -29,7 +29,7 @@ public sealed class WatchtowerCombatScenarioTests
         Assert.Equal(ApplicationMode.Encounter, completed.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.SignalActivated,
-            completed.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(completed));
         Assert.Equal(persistentParty.PartyId, completed.Party.PartyId);
         Assert.Equal(
             persistentParty.Members.ToArray(),
@@ -105,7 +105,7 @@ public sealed class WatchtowerCombatScenarioTests
         Assert.Equal(ApplicationMode.Encounter, completed.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.SignalActivated,
-            completed.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(completed));
         Assert.Null(completed.Exploration);
         Assert.NotNull(completed.ActiveEncounter);
         Assert.Equal(

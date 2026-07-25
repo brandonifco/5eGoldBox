@@ -31,12 +31,9 @@ public sealed class RegionalTravelRulesTests
         ApplicationSessionState incompatibleProgress =
             CreateAcceptedSession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress =
-                        WatchtowerScenarioProgress
-                            .SignalActivated
-                }
+                Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress
+                            .SignalActivated)
             };
 
         Assert.False(
@@ -134,12 +131,9 @@ public sealed class RegionalTravelRulesTests
         ApplicationSessionState incompatibleProgress =
             CreateTravelingSession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress =
-                        WatchtowerScenarioProgress
-                            .SignalActivated
-                }
+                Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress
+                            .SignalActivated)
             };
 
         Assert.False(
@@ -192,12 +186,9 @@ public sealed class RegionalTravelRulesTests
         ApplicationSessionState traveling =
             CreateTravelingSession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress =
-                        WatchtowerScenarioProgress
-                            .SignalActivated
-                }
+                Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress
+                            .SignalActivated)
             };
 
         Assert.False(RegionalTravelRules.CanAdvance(traveling));
@@ -251,7 +242,7 @@ public sealed class RegionalTravelRulesTests
 
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            traveling.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(traveling));
         Assert.Equal(session.ScenarioId, traveling.ScenarioId);
         Assert.Equal(session.RandomSeed, traveling.RandomSeed);
         Assert.Equal(
@@ -280,7 +271,7 @@ public sealed class RegionalTravelRulesTests
         Assert.Null(session.RegionalTravel);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            session.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(session));
         Assert.Equal(12, session.RandomValuesConsumed);
     }
 
@@ -346,10 +337,8 @@ public sealed class RegionalTravelRulesTests
         ApplicationSessionState session =
             CreateAcceptedSession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress = progress
-                }
+                Scenario = WatchtowerScenario.CreateState(
+progress)
             };
 
         Assert.Throws<InvalidOperationException>(() =>
@@ -422,7 +411,7 @@ public sealed class RegionalTravelRulesTests
 
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            advanced.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(advanced));
         Assert.Equal(
             traveling.CurrentLocationId,
             advanced.CurrentLocationId);
@@ -469,7 +458,7 @@ public sealed class RegionalTravelRulesTests
         Assert.True(completedTravel.IsComplete);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            result.State.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(result.State));
         AssertPartyEquivalent(
             beforeArrival.Party,
             result.State.Party);
@@ -533,12 +522,9 @@ public sealed class RegionalTravelRulesTests
         ApplicationSessionState traveling =
             CreateTravelingSession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress =
-                        WatchtowerScenarioProgress
-                            .MissionNotAccepted
-                }
+                Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress
+                            .MissionNotAccepted)
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>

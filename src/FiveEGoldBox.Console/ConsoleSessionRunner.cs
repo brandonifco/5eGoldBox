@@ -101,7 +101,7 @@ internal sealed partial class ConsoleSessionRunner
         output.WriteLine(
             $"Location: {session.CurrentLocationId}");
         output.WriteLine(
-            $"Progress: {session.Scenario.Progress}");
+            $"Progress: {session.Scenario.ProgressId}");
         output.WriteLine($"Random Seed: {session.RandomSeed}");
         output.WriteLine(
             $"Random Values Consumed: {session.RandomValuesConsumed}");
@@ -349,7 +349,7 @@ internal sealed partial class ConsoleSessionRunner
             case ApplicationMode.ScenarioConclusion:
                 output.WriteLine("Scenario Conclusion");
                 output.WriteLine(
-                    $"Conclusion Progress: {session.Scenario.Progress}");
+                    $"Conclusion Progress: {session.Scenario.ProgressId}");
                 output.WriteLine(
                     $"Conclusion Location: {session.CurrentLocationId}");
                 break;

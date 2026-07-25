@@ -31,12 +31,8 @@ internal static class ApplicationSessionRules
             CurrentMode = ApplicationMode.Outpost,
             CurrentLocationId = currentLocationId,
             Party = party,
-            Scenario = new WatchtowerScenarioState
-            {
-                Progress =
-                    WatchtowerScenarioProgress
-                        .MissionNotAccepted
-            },
+            Scenario = WatchtowerScenario.CreateState(
+                WatchtowerScenarioProgress.MissionNotAccepted),
             RandomSeed = randomSeed,
             RandomValuesConsumed = 0
         };
@@ -110,10 +106,23 @@ internal static class ApplicationSessionRules
         return canonicalState;
     }
 
+    // Everything below is Watchtower-specific and moves behind the scenario
+    // content boundary later in Phase 6. Until then this is where the running
+    // scenario asserts that the session's opaque progress marker is one it
+    // actually authored.
     private static void ValidateModeState(
         ApplicationSessionState state)
     {
-        if (state.Scenario.Progress
+        if (!WatchtowerScenario.TryGetProgress(
+            state.Scenario,
+            out WatchtowerScenarioProgress _))
+        {
+            throw new ArgumentException(
+                $"Progress '{state.Scenario.ProgressId}' is not part of the watchtower scenario.",
+                nameof(state));
+        }
+
+        if (WatchtowerScenario.ProgressOf(state)
             == WatchtowerScenarioProgress.PartyDefeated
             && state.CurrentMode
                 != ApplicationMode.ScenarioConclusion)
@@ -455,17 +464,19 @@ internal static class ApplicationSessionRules
         }
     }
 
+    /// Progress markers are opaque to the engine: it only requires that one is
+    /// present. Whether a particular marker is meaningful is for the running
+    /// scenario to decide, which its mode validators do.
     private static void ValidateScenario(
-        WatchtowerScenarioState scenario)
+        ScenarioState scenario)
     {
         ArgumentNullException.ThrowIfNull(scenario);
 
-        if (!Enum.IsDefined(scenario.Progress))
+        if (string.IsNullOrWhiteSpace(scenario.ProgressId))
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(scenario),
-                scenario.Progress,
-                "Unsupported watchtower scenario progress.");
+            throw new ArgumentException(
+                "Scenario progress ID is required.",
+                nameof(scenario));
         }
     }
 }

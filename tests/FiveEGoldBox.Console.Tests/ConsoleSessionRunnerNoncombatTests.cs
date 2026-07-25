@@ -50,7 +50,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
 
         Assert.Contains("Mission accepted.", output);
         Assert.Contains(
-            $"Progress: {expected.Scenario.Progress}",
+            $"Progress: {WatchtowerScenario.ProgressOf(expected)}",
             output);
         Assert.Contains("1. Begin Watchtower Journey", output);
     }
@@ -986,12 +986,9 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             {
                 CurrentMode =
                     ApplicationMode.ScenarioConclusion,
-                Scenario = exploration.Scenario with
-                {
-                    Progress =
-                        WatchtowerScenarioProgress
-                            .PartyDefeated
-                },
+                Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress
+                            .PartyDefeated),
                 Exploration = null
             };
 

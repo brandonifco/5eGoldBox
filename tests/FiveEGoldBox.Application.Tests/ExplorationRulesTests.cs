@@ -57,12 +57,9 @@ public sealed class ExplorationRulesTests
         ApplicationSessionState incompatibleProgress =
             completed with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress =
-                        WatchtowerScenarioProgress
-                            .SignalActivated
-                }
+                Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress
+                            .SignalActivated)
             };
 
         ApplicationSessionState[] unavailableStates =
@@ -244,7 +241,7 @@ public sealed class ExplorationRulesTests
         Assert.Equal(arrived.ScenarioId, exploring.ScenarioId);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            exploring.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(exploring));
         Assert.Equal(arrived.RandomSeed, exploring.RandomSeed);
         Assert.Equal(
             arrived.RandomValuesConsumed,
@@ -272,7 +269,7 @@ public sealed class ExplorationRulesTests
         Assert.Null(arrived.Exploration);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            arrived.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(arrived));
         Assert.Equal(12, arrived.RandomValuesConsumed);
     }
 
@@ -395,12 +392,9 @@ public sealed class ExplorationRulesTests
         ApplicationSessionState arrived =
             CreateCompletedArrival() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress =
-                        WatchtowerScenarioProgress
-                            .MissionNotAccepted
-                }
+                Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress
+                            .MissionNotAccepted)
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>
@@ -422,10 +416,8 @@ public sealed class ExplorationRulesTests
         ApplicationSessionState arrived =
             CreateCompletedArrival() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress = progress
-                }
+                Scenario = WatchtowerScenario.CreateState(
+progress)
             };
 
         Assert.Throws<InvalidOperationException>(() =>
@@ -673,7 +665,7 @@ public sealed class ExplorationRulesTests
 
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            result.State.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(result.State));
         Assert.Equal(
             exploring.RandomSeed,
             result.State.RandomSeed);

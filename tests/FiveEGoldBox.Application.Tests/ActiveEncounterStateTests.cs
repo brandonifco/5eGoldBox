@@ -126,12 +126,9 @@ public sealed class ActiveEncounterStateTests
         ApplicationSessionState state =
             WatchtowerSignalTestData.CreateEncounterSession() with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress =
-                        WatchtowerScenarioProgress
-                            .MissionAccepted
-                }
+                Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress
+                            .MissionAccepted)
             };
 
         Assert.Throws<ArgumentException>(() =>

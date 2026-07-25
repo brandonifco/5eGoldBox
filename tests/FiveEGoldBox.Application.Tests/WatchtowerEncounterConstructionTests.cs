@@ -274,7 +274,7 @@ public sealed class WatchtowerEncounterConstructionTests
             source.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            source.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(source));
         Assert.Null(source.ActiveEncounter);
         Assert.Equal(
             originalRandomValuesConsumed,

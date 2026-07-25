@@ -562,7 +562,7 @@ public sealed class WatchtowerCombatDecisionTests
         Assert.Equal(ApplicationMode.Encounter, source.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.SignalActivated,
-            source.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(source));
         Assert.Equal(returnContextBefore, source.ActiveEncounter!.ReturnContext);
         Assert.Equal(cursorBefore, source.RandomValuesConsumed);
         Assert.Equal(partyBefore.Length, source.Party.Members.Count);

@@ -1162,7 +1162,7 @@ public sealed class ConsoleSessionRunnerCombatTests
         List<string> values =
         [
             session.CurrentMode.ToString(),
-            session.Scenario.Progress.ToString(),
+            WatchtowerScenario.ProgressOf(session).ToString(),
             session.CurrentLocationId,
             session.RandomSeed.ToString(),
             session.RandomValuesConsumed.ToString(),

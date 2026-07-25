@@ -26,10 +26,8 @@ public sealed class ScenarioConclusionStateTests
         ApplicationSessionState invalid = CreateConclusion()
             with
             {
-                Scenario = new WatchtowerScenarioState
-                {
-                    Progress = progress
-                }
+                Scenario = WatchtowerScenario.CreateState(
+progress)
             };
 
         Assert.Throws<ArgumentException>(() =>
@@ -106,10 +104,8 @@ public sealed class ScenarioConclusionStateTests
         };
         ApplicationSessionState invalid = source with
         {
-            Scenario = source.Scenario with
-            {
-                Progress = WatchtowerScenarioProgress.PartyDefeated
-            }
+            Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress.PartyDefeated)
         };
 
         Assert.Throws<ArgumentException>(() =>

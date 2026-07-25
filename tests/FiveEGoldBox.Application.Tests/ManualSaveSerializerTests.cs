@@ -122,7 +122,7 @@ public sealed class ManualSaveSerializerTests
         PartyState party = session.Party;
         PartyMemberState[] members =
             session.Party.Members.ToArray();
-        WatchtowerScenarioState scenario =
+        ScenarioState scenario =
             session.Scenario;
         ExplorationState? exploration =
             session.Exploration;
@@ -130,7 +130,7 @@ public sealed class ManualSaveSerializerTests
         int randomValuesConsumed =
             session.RandomValuesConsumed;
         WatchtowerScenarioProgress progress =
-            session.Scenario.Progress;
+            WatchtowerScenario.ProgressOf(session);
         ApplicationMode mode = session.CurrentMode;
 
         bool canSerialize =
@@ -145,7 +145,7 @@ public sealed class ManualSaveSerializerTests
         Assert.Equal(
             randomValuesConsumed,
             session.RandomValuesConsumed);
-        Assert.Equal(progress, session.Scenario.Progress);
+        Assert.Equal(progress, WatchtowerScenario.ProgressOf(session));
         Assert.Equal(mode, session.CurrentMode);
     }
 
@@ -305,7 +305,7 @@ public sealed class ManualSaveSerializerTests
         Assert.Equal(
             WatchtowerScenarioProgress
                 .MissionNotAccepted,
-            loaded.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(loaded));
         Assert.Equal(
             ApplicationMode.Outpost,
             loaded.CurrentMode);
@@ -333,7 +333,7 @@ public sealed class ManualSaveSerializerTests
             loaded.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            loaded.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(loaded));
         Assert.Equal(
             accepted.CurrentLocationId,
             loaded.CurrentLocationId);
@@ -381,7 +381,7 @@ public sealed class ManualSaveSerializerTests
 
         Assert.Equal(
             WatchtowerScenarioProgress.RaidersDefeated,
-            loaded.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(loaded));
     }
 
     [Fact]
@@ -760,7 +760,7 @@ public sealed class ManualSaveSerializerTests
             exploration.Facing);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
-            loaded.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(loaded));
         Assert.Equal(original.RandomSeed, loaded.RandomSeed);
         Assert.Equal(
             original.RandomValuesConsumed,
@@ -1202,12 +1202,9 @@ public sealed class ManualSaveSerializerTests
     {
         return CreateRoundTripSession() with
         {
-            Scenario = new WatchtowerScenarioState
-            {
-                Progress =
-                    WatchtowerScenarioProgress
-                        .MissionNotAccepted
-            }
+            Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress
+                        .MissionNotAccepted)
         };
     }
 
@@ -1274,12 +1271,9 @@ public sealed class ManualSaveSerializerTests
 
         return state with
         {
-            Scenario = new WatchtowerScenarioState
-            {
-                Progress =
-                    WatchtowerScenarioProgress
-                        .RaidersDefeated
-            },
+            Scenario = WatchtowerScenario.CreateState(
+WatchtowerScenarioProgress
+                        .RaidersDefeated),
             RandomValuesConsumed = 12
         };
     }

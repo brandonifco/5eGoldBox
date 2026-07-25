@@ -24,7 +24,7 @@ public sealed class WatchtowerCombatOutcomePersistenceTests
         Assert.Equal(ApplicationMode.Exploration, loaded.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.RaidersDefeated,
-            loaded.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(loaded));
         Assert.Equal(source.CurrentLocationId, loaded.CurrentLocationId);
         Assert.Equal(source.Exploration, loaded.Exploration);
         Assert.Null(loaded.ActiveEncounter);
@@ -49,7 +49,7 @@ public sealed class WatchtowerCombatOutcomePersistenceTests
             loaded.CurrentMode);
         Assert.Equal(
             WatchtowerScenarioProgress.PartyDefeated,
-            loaded.Scenario.Progress);
+            WatchtowerScenario.ProgressOf(loaded));
         Assert.Equal(source.CurrentLocationId, loaded.CurrentLocationId);
         Assert.Null(loaded.Exploration);
         Assert.Null(loaded.ActiveEncounter);
