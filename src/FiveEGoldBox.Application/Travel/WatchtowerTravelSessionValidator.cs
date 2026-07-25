@@ -1,4 +1,5 @@
 using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 
 namespace FiveEGoldBox.Application.Travel;
@@ -38,27 +39,31 @@ internal static class WatchtowerTravelSessionValidator
                 nameof(state));
         }
 
-        if (!string.Equals(
-            travel.RouteId,
-            WatchtowerRegionalRoute.RouteId,
-            StringComparison.Ordinal))
+        // The route is authored content, so it is read from the scenario the
+        // session is running rather than from a constant.
+        TravelRouteDefinition? route = ScenarioDefinitionRegistry
+            .Resolve(state)
+            .Routes
+            .FirstOrDefault(candidate => string.Equals(
+                candidate.RouteId,
+                travel.RouteId,
+                StringComparison.Ordinal));
+
+        if (route is null)
         {
             throw new ArgumentException(
                 "The regional-travel route is unsupported.",
                 nameof(state));
         }
 
-        if (!WatchtowerRegionalRoute.HasSupportedEndpoints(
-            travel.OriginLocationId,
-            travel.DestinationLocationId))
+        if (!HasEndpoints(route, travel))
         {
             throw new ArgumentException(
                 "The regional-travel endpoints are inconsistent with the watchtower route.",
                 nameof(state));
         }
 
-        if (travel.FinalStepIndex
-            != WatchtowerRegionalRoute.FinalStepIndex)
+        if (travel.FinalStepIndex != route.FinalStepIndex)
         {
             throw new ArgumentException(
                 "The regional-travel final step is inconsistent with the watchtower route.",
@@ -88,5 +93,27 @@ internal static class WatchtowerTravelSessionValidator
                 "The current location is inconsistent with regional-travel progress.",
                 nameof(state));
         }
+    }
+
+    private static bool HasEndpoints(
+        TravelRouteDefinition route,
+        RegionalTravelState travel)
+    {
+        return (string.Equals(
+                    travel.OriginLocationId,
+                    route.OriginLocationId,
+                    StringComparison.Ordinal)
+                && string.Equals(
+                    travel.DestinationLocationId,
+                    route.DestinationLocationId,
+                    StringComparison.Ordinal))
+            || (string.Equals(
+                    travel.OriginLocationId,
+                    route.DestinationLocationId,
+                    StringComparison.Ordinal)
+                && string.Equals(
+                    travel.DestinationLocationId,
+                    route.OriginLocationId,
+                    StringComparison.Ordinal));
     }
 }
