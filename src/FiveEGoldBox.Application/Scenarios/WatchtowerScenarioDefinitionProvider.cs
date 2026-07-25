@@ -130,9 +130,11 @@ internal static class WatchtowerScenarioDefinitionProvider
             TriggerId = "trigger.watchtower-signal",
             DisplayName = "Signal mechanism",
             LocationId = WatchtowerRegionalRoute.WatchtowerLocationId,
-            Floor = WatchtowerSignalMechanism.Floor,
-            Position = WatchtowerSignalMechanism.InteractionPosition,
-            RequiredFacing = WatchtowerSignalMechanism.RequiredFacing,
+            // The definition is now the authority for where the mechanism is
+            // and which way the party must face to work it.
+            Floor = ExplorationFloor.UpperFloor,
+            Position = new GridPosition(1, 1),
+            RequiredFacing = ExplorationFacing.East,
             RequiredProgressIds =
             [
                 Progress(WatchtowerScenarioProgress.MissionAccepted)

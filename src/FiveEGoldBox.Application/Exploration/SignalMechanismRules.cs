@@ -1,5 +1,6 @@
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Runtime;
@@ -29,8 +30,10 @@ public static class SignalMechanismRules
                 "The malformed exploration session could not be canonicalized.");
         }
 
-        if (WatchtowerScenario.ProgressOf(session)
-            != WatchtowerScenarioProgress.MissionAccepted)
+        // Checked before canonicalising: a session whose progress no trigger
+        // wants may be one this mode would reject outright, and the caller
+        // expects false rather than an exception.
+        if (!HasProgressForAnyTrigger(session))
         {
             return false;
         }
@@ -38,8 +41,10 @@ public static class SignalMechanismRules
         ApplicationSessionState canonicalSession =
             ApplicationSessionRules.CreateCanonical(session);
 
-        return WatchtowerSignalMechanism.CanActivate(
-            canonicalSession.Exploration!);
+        // Whether there is anything to interact with here is the scenario's
+        // to say, not this rule's.
+        return ScenarioTriggerMatcher.FindAvailable(canonicalSession)
+            is not null;
     }
 
     public static ApplicationSessionState Activate(
@@ -78,19 +83,17 @@ public static class SignalMechanismRules
 
         ExplorationState returnContext =
             canonicalSession.Exploration!;
+        ScenarioTriggerDefinition? trigger =
+            ScenarioTriggerMatcher.FindAvailable(canonicalSession);
 
-        if (!WatchtowerSignalMechanism.CanActivate(
-            returnContext))
+        if (trigger is null)
         {
+            // Distinguish standing in the wrong place from having the wrong
+            // progress, so the caller keeps the message it had before.
             throw new InvalidOperationException(
-                "The party is not in the authored position and facing required to activate the signal mechanism.");
-        }
-
-        if (WatchtowerScenario.ProgressOf(canonicalSession)
-            != WatchtowerScenarioProgress.MissionAccepted)
-        {
-            throw new InvalidOperationException(
-                "The signal mechanism can be activated only while the accepted mission is active.");
+                HasProgressForAnyTrigger(canonicalSession)
+                    ? "The party is not in the authored position and facing required to activate the signal mechanism."
+                    : "The signal mechanism can be activated only while the accepted mission is active.");
         }
 
         EncounterState encounter =
@@ -105,8 +108,10 @@ public static class SignalMechanismRules
             canonicalSession with
             {
                 CurrentMode = ApplicationMode.Encounter,
-                Scenario = WatchtowerScenario.CreateState(
-                    WatchtowerScenarioProgress.SignalActivated),
+                Scenario = new ScenarioState
+                {
+                    ProgressId = trigger.ResultingProgressId
+                },
                 Exploration = null,
                 ActiveEncounter = new ActiveEncounterState
                 {
@@ -116,5 +121,16 @@ public static class SignalMechanismRules
                 RandomValuesConsumed =
                     updatedRandomValuesConsumed
             });
+    }
+
+    private static bool HasProgressForAnyTrigger(
+        ApplicationSessionState session)
+    {
+        return ScenarioDefinitionRegistry
+            .Resolve(session)
+            .Triggers
+            .Any(trigger => trigger.RequiredProgressIds.Contains(
+                session.Scenario.ProgressId,
+                StringComparer.Ordinal));
     }
 }
