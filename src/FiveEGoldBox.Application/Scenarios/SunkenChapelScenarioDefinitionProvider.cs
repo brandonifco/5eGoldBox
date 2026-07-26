@@ -1,6 +1,7 @@
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Scenarios.Definitions;
+using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Scenarios;
@@ -35,9 +36,22 @@ internal static class SunkenChapelScenarioDefinitionProvider
 
     internal const string SealBroken = "chapel.seal-broken";
 
+    internal const string GuardiansRoused = "chapel.guardians-roused";
+
+    internal const string GuardiansBanished = "chapel.guardians-banished";
+
+    internal const string PartyDrowned = "chapel.party-drowned";
+
     internal const string RelicRecovered = "chapel.relic-recovered";
 
-    private const string RulesetId = "ruleset.core";
+    internal const string EncounterId = "encounter.chapel-guardians";
+
+    internal const string GuardianSideId = "side.chapel-guardians";
+
+    internal const string GuardianDaggerId = "weapon.chapel-guardian.dagger";
+
+    // Shared with the other scenario: one campaign, one body of rules.
+    private const string RulesetId = RulesetRegistry.CampaignRulesetId;
 
     private const int MapWidth = 2;
 
@@ -76,13 +90,19 @@ internal static class SunkenChapelScenarioDefinitionProvider
                     ExplorableProgressIds =
                     [
                         CharterSigned,
-                        SealBroken
+                        SealBroken,
+                        GuardiansBanished
                     ]
                 }
             ],
             Routes = [CreateRoute()],
-            Encounters = [],
-            Triggers = [CreateSealTrigger(), CreateRelicTrigger()],
+            Encounters = [CreateGuardianEncounter()],
+            Triggers =
+            [
+                CreateSealTrigger(),
+                CreateGuardianTrigger(),
+                CreateRelicTrigger()
+            ],
             Decisions = [CreateCharterDecision()]
         };
     }
@@ -97,6 +117,9 @@ internal static class SunkenChapelScenarioDefinitionProvider
                 RumourHeard,
                 CharterSigned,
                 SealBroken,
+                GuardiansRoused,
+                GuardiansBanished,
+                PartyDrowned,
                 RelicRecovered
             ],
             Conclusions =
@@ -105,6 +128,12 @@ internal static class SunkenChapelScenarioDefinitionProvider
                 {
                     ProgressId = RelicRecovered,
                     IsSuccess = true,
+                    LocationId = ChapelLocationId
+                },
+                new ScenarioConclusionDefinition
+                {
+                    ProgressId = PartyDrowned,
+                    IsSuccess = false,
                     LocationId = ChapelLocationId
                 }
             ]
@@ -179,9 +208,108 @@ internal static class SunkenChapelScenarioDefinitionProvider
             Floor = ExplorationFloor.GroundFloor,
             Position = new GridPosition(1, 1),
             RequiredFacing = null,
-            RequiredProgressIds = [SealBroken],
+            RequiredProgressIds = [GuardiansBanished],
             ResultingProgressId = RelicRecovered,
             EncounterId = null
+        };
+    }
+
+    /// The scenario's own fight, on its own ground, against its own
+    /// opposition. Nothing here is borrowed from the other adventure.
+    private static ScenarioTriggerDefinition CreateGuardianTrigger()
+    {
+        return new ScenarioTriggerDefinition
+        {
+            TriggerId = "trigger.chapel-guardians",
+            DisplayName = "Flooded nave",
+            LocationId = ChapelLocationId,
+            Floor = ExplorationFloor.GroundFloor,
+            Position = new GridPosition(1, 1),
+            RequiredFacing = null,
+            RequiredProgressIds = [SealBroken],
+            ResultingProgressId = GuardiansRoused,
+            EncounterId = EncounterId
+        };
+    }
+
+    private static EncounterDefinition CreateGuardianEncounter()
+    {
+        return new EncounterDefinition
+        {
+            EncounterId = EncounterId,
+            BattlefieldId = "battlefield.chapel-nave",
+            Width = 4,
+            Height = 4,
+            PartySideId = "side.party",
+            BlockedPositions = [],
+            PartyStartingPositions =
+            [
+                new GridPosition(0, 1),
+                new GridPosition(0, 2),
+                new GridPosition(1, 1)
+            ],
+            Combatants =
+            [
+                CreateGuardian(
+                    "combatant.chapel-guardian.first",
+                    "Drowned acolyte",
+                    new GridPosition(3, 1)),
+                CreateGuardian(
+                    "combatant.chapel-guardian.second",
+                    "Drowned sexton",
+                    new GridPosition(3, 2))
+            ],
+            Outcome = new EncounterOutcomeDefinition
+            {
+                VictoryProgressId = GuardiansBanished,
+                DefeatProgressId = PartyDrowned
+            }
+        };
+    }
+
+    private static CombatantDefinition CreateGuardian(
+        string combatantId,
+        string displayName,
+        GridPosition startingPosition)
+    {
+        return new CombatantDefinition
+        {
+            CombatantId = combatantId,
+            DisplayName = displayName,
+            SideId = GuardianSideId,
+            MaximumHitPoints = 7,
+            ArmorClass = 12,
+            MovementSpeedFeet = 25,
+            StartingPosition = startingPosition,
+            ZeroHitPointPolicy = CombatantZeroHitPointPolicy.Defeated,
+            AbilityModifiers =
+            [
+                Modifier(Ability.Strength, 0),
+                Modifier(Ability.Dexterity, 1),
+                Modifier(Ability.Constitution, 2),
+                Modifier(Ability.Intelligence, -2),
+                Modifier(Ability.Wisdom, 0),
+                Modifier(Ability.Charisma, -3)
+            ],
+            ProficiencyBonus = 2,
+            Weapons =
+            [
+                new CombatantWeaponDefinition
+                {
+                    WeaponId = GuardianDaggerId
+                }
+            ]
+        };
+    }
+
+    private static CombatantAbilityModifier Modifier(
+        Ability ability,
+        int modifier)
+    {
+        return new CombatantAbilityModifier
+        {
+            Ability = ability,
+            Modifier = modifier
         };
     }
 

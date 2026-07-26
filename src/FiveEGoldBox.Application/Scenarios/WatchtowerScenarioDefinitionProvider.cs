@@ -17,7 +17,7 @@ namespace FiveEGoldBox.Application.Scenarios;
 /// content it will consume.
 internal static class WatchtowerScenarioDefinitionProvider
 {
-    private const string RulesetId = "ruleset.watchtower";
+    private const string RulesetId = RulesetRegistry.CampaignRulesetId;
 
     internal static ScenarioDefinition Create()
     {

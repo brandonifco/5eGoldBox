@@ -52,12 +52,15 @@ public static class ScenarioTriggerRules
     {
         ArgumentNullException.ThrowIfNull(session);
 
-        // Resolved lazily: a trigger that starts no encounter needs no
-        // ruleset, and should not have to reach for one scenario's content to
-        // get it.
+        // Resolved lazily, and from the scenario's own declared ruleset: a
+        // trigger that starts no encounter needs no rules at all, and one that
+        // does should get the rules its adventure was authored against.
         return ActivateCanonical(
             session,
-            WatchtowerScenarioContent.CreateRuleset);
+            () => RulesetRegistry.Resolve(
+                ScenarioDefinitionRegistry
+                    .Resolve(session)
+                    .RulesetId));
     }
 
     public static ApplicationSessionState Activate(
