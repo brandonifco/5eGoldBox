@@ -24,8 +24,8 @@ internal sealed partial class ConsoleSessionRunner
             if (decision.State
                 == CombatDecisionState.CombatCompleted)
             {
-                WatchtowerCombatOutcomeResult outcome =
-                    WatchtowerCombatOutcomeRules.Finalize(session);
+                CombatOutcomeResult outcome =
+                    CombatOutcomeRules.Finalize(session);
 
                 RenderCombatOutcome(output, outcome);
 
@@ -617,7 +617,7 @@ internal sealed partial class ConsoleSessionRunner
 
     private static void RenderCombatOutcome(
         TextWriter output,
-        WatchtowerCombatOutcomeResult outcome)
+        CombatOutcomeResult outcome)
     {
         output.WriteLine();
         output.WriteLine("Combat Outcome");
@@ -625,7 +625,7 @@ internal sealed partial class ConsoleSessionRunner
         output.WriteLine(
             $"Resulting Mode: {outcome.ResultingMode}");
         output.WriteLine(
-            $"Resulting Progress: {outcome.ResultingProgress}");
+            $"Resulting Progress: {outcome.ResultingProgressId}");
     }
 
     private static void ValidatePlayerDecision(

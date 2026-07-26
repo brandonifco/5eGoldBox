@@ -83,6 +83,6 @@ public sealed class OutpostDecisionDefinitionTests
 
     private static ApplicationSessionState CreateOutpostSession()
     {
-        return WatchtowerScenarioSessionFactory.CreateNew(randomSeed: 11);
+        return ScenarioSessionFactory.CreateNew(WatchtowerScenarioContent.ScenarioId, randomSeed: 11);
     }
 }

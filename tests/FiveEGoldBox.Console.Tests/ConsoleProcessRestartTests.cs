@@ -568,7 +568,8 @@ public sealed class ConsoleProcessRestartTests
     {
         List<string> selections = ["1"];
         ApplicationSessionState state =
-            WatchtowerScenarioSessionFactory.CreateNew(
+            ScenarioSessionFactory.CreateNew(
+                "scenario.watchtower",
                 DefaultRandomSeed);
 
         state = ApplySessionAction(
@@ -578,7 +579,7 @@ public sealed class ConsoleProcessRestartTests
         state = ApplySessionAction(
             selections,
             state,
-            SessionAction.BeginWatchtowerJourney);
+            SessionAction.BeginJourney);
 
         while (RegionalTravelRules.CanAdvance(state))
         {
@@ -591,7 +592,7 @@ public sealed class ConsoleProcessRestartTests
         state = ApplySessionAction(
             selections,
             state,
-            SessionAction.EnterWatchtower);
+            SessionAction.EnterDestination);
         state = ApplySessionAction(
             selections,
             state,
@@ -653,12 +654,12 @@ public sealed class ConsoleProcessRestartTests
                 OutpostMissionRules.Resolve(
                     state,
                     OutpostMissionChoice.AcceptMission).State,
-            SessionAction.BeginWatchtowerJourney =>
-                RegionalTravelRules.BeginWatchtowerJourney(state),
+            SessionAction.BeginJourney =>
+                RegionalTravelRules.BeginJourney(state),
             SessionAction.AdvanceTravel =>
                 RegionalTravelRules.Advance(state).State,
-            SessionAction.EnterWatchtower =>
-                ExplorationRules.EnterWatchtower(state),
+            SessionAction.EnterDestination =>
+                ExplorationRules.EnterDestination(state),
             SessionAction.MoveForward =>
                 ExplorationRules.MoveForward(state).State,
             SessionAction.TurnLeft =>
@@ -718,10 +719,10 @@ public sealed class ConsoleProcessRestartTests
                 }
 
                 if (RegionalTravelRules
-                    .CanBeginWatchtowerJourney(state))
+                    .CanBeginJourney(state))
                 {
                     actions.Add(
-                        SessionAction.BeginWatchtowerJourney);
+                        SessionAction.BeginJourney);
                 }
 
                 break;
@@ -731,9 +732,9 @@ public sealed class ConsoleProcessRestartTests
                     actions.Add(SessionAction.AdvanceTravel);
                 }
 
-                if (ExplorationRules.CanEnterWatchtower(state))
+                if (ExplorationRules.CanEnterDestination(state))
                 {
-                    actions.Add(SessionAction.EnterWatchtower);
+                    actions.Add(SessionAction.EnterDestination);
                 }
 
                 break;
@@ -790,8 +791,8 @@ public sealed class ConsoleProcessRestartTests
             if (decision.State
                 == WatchtowerCombatDecisionState.CombatCompleted)
             {
-                WatchtowerCombatOutcomeResult outcome =
-                    WatchtowerCombatOutcomeRules.Finalize(state);
+                CombatOutcomeResult outcome =
+                    CombatOutcomeRules.Finalize(state);
 
                 return new CombatPlan(
                     Selections: selections.AsReadOnly(),
@@ -1242,7 +1243,7 @@ public sealed class ConsoleProcessRestartTests
 
     private sealed record CombatPlan(
         IReadOnlyList<string> Selections,
-        WatchtowerCombatOutcomeResult Outcome);
+        CombatOutcomeResult Outcome);
 
     private sealed record VictoryProcessPlan(
         ApplicationSessionState PreSignalState,
@@ -1278,9 +1279,9 @@ public sealed class ConsoleProcessRestartTests
     {
         AcceptMission,
         DeferMission,
-        BeginWatchtowerJourney,
+        BeginJourney,
         AdvanceTravel,
-        EnterWatchtower,
+        EnterDestination,
         MoveForward,
         TurnLeft,
         TurnRight,

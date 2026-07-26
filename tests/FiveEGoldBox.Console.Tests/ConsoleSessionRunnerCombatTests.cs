@@ -550,7 +550,7 @@ public sealed class ConsoleSessionRunnerCombatTests
             encounter);
 
         Assert.Equal(
-            WatchtowerCombatOutcome.PartyVictory,
+            CombatOutcome.PartyVictory,
             script.Outcome.Outcome);
         Assert.Equal(
             1,
@@ -663,7 +663,7 @@ public sealed class ConsoleSessionRunnerCombatTests
             encounter);
 
         Assert.Equal(
-            WatchtowerCombatOutcome.ScenarioDefeat,
+            CombatOutcome.ScenarioDefeat,
             script.Outcome.Outcome);
         Assert.Contains("Outcome: ScenarioDefeat", output);
         Assert.Contains("Mode: ScenarioConclusion", output);
@@ -842,8 +842,8 @@ public sealed class ConsoleSessionRunnerCombatTests
             if (decision.State
                 == WatchtowerCombatDecisionState.CombatCompleted)
             {
-                WatchtowerCombatOutcomeResult outcome =
-                    WatchtowerCombatOutcomeRules.Finalize(state);
+                CombatOutcomeResult outcome =
+                    CombatOutcomeRules.Finalize(state);
 
                 return new CombatScript(
                     selections,
@@ -1215,12 +1215,12 @@ public sealed class ConsoleSessionRunnerCombatTests
     private static ApplicationSessionState CreateEncounterSession()
     {
         ApplicationSessionState current =
-            WatchtowerScenarioSessionFactory.CreateNew(RandomSeed);
+            ScenarioSessionFactory.CreateNew("scenario.watchtower", RandomSeed);
         current = OutpostMissionRules.Resolve(
             current,
             OutpostMissionChoice.AcceptMission)
         .State;
-        current = RegionalTravelRules.BeginWatchtowerJourney(
+        current = RegionalTravelRules.BeginJourney(
             current);
 
         while (RegionalTravelRules.CanAdvance(current))
@@ -1229,7 +1229,7 @@ public sealed class ConsoleSessionRunnerCombatTests
                 .State;
         }
 
-        current = ExplorationRules.EnterWatchtower(current);
+        current = ExplorationRules.EnterDestination(current);
         current = ExplorationRules.MoveForward(current).State;
         current = ExplorationRules.MoveForward(current).State;
         current = ExplorationRules.UseStairs(current);
@@ -1262,7 +1262,8 @@ public sealed class ConsoleSessionRunnerCombatTests
             new StringReader(input),
             output,
             savePath,
-            randomSeed);
+            randomSeed,
+            "scenario.watchtower");
 
         return (exitCode, output.ToString());
     }
@@ -1370,7 +1371,7 @@ public sealed class ConsoleSessionRunnerCombatTests
     private sealed record CombatScript(
         IReadOnlyList<string> Selections,
         ApplicationSessionState CompletedSession,
-        WatchtowerCombatOutcomeResult Outcome);
+        CombatOutcomeResult Outcome);
 
     private enum CombatStrategy
     {

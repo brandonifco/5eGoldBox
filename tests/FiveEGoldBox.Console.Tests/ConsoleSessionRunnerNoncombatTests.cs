@@ -111,7 +111,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
         ApplicationSessionState session =
             CreateMissionAcceptedSession();
         ApplicationSessionState expected =
-            RegionalTravelRules.BeginWatchtowerJourney(
+            RegionalTravelRules.BeginJourney(
                 session);
 
         string output = RunSession(
@@ -261,13 +261,13 @@ public sealed class ConsoleSessionRunnerNoncombatTests
     }
 
     [Fact]
-    public void RunSession_EnterWatchtowerAdoptsExplorationState()
+    public void RunSession_EnterDestinationAdoptsExplorationState()
     {
         using TemporaryDirectory temporary = new();
         ApplicationSessionState session =
             CreateCompletedTravelSession();
         ApplicationSessionState expected =
-            ExplorationRules.EnterWatchtower(session);
+            ExplorationRules.EnterDestination(session);
 
         string output = RunSession(
             "1\n",
@@ -848,7 +848,8 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             new StringReader(input),
             output,
             savePath,
-            randomSeed);
+            randomSeed,
+            "scenario.watchtower");
 
         return (exitCode, output.ToString());
     }
@@ -874,7 +875,8 @@ public sealed class ConsoleSessionRunnerNoncombatTests
     private static ApplicationSessionState
         CreateOutpostSession()
     {
-        return WatchtowerScenarioSessionFactory.CreateNew(
+        return ScenarioSessionFactory.CreateNew(
+            "scenario.watchtower",
             RandomSeed);
     }
 
@@ -890,7 +892,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
     private static ApplicationSessionState
         CreateRegionalTravelSession()
     {
-        return RegionalTravelRules.BeginWatchtowerJourney(
+        return RegionalTravelRules.BeginJourney(
             CreateMissionAcceptedSession());
     }
 
@@ -928,7 +930,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
     private static ApplicationSessionState
         CreateExplorationSession()
     {
-        return ExplorationRules.EnterWatchtower(
+        return ExplorationRules.EnterDestination(
             CreateCompletedTravelSession());
     }
 

@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Combat;
 
-public enum WatchtowerCombatOutcome
+public enum CombatOutcome
 {
     PartyVictory,
     ScenarioDefeat

@@ -9,13 +9,13 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Tests;
 
-public sealed class WatchtowerCombatOutcomeRulesTests
+public sealed class CombatOutcomeRulesTests
 {
     [Fact]
     public void Finalize_WithNullSession_Throws()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            WatchtowerCombatOutcomeRules.Finalize(null!));
+            CombatOutcomeRules.Finalize(null!));
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
                 source.ActiveEncounter);
 
         Assert.Throws<ArgumentException>(() =>
-            WatchtowerCombatOutcomeRules.Finalize(source));
+            CombatOutcomeRules.Finalize(source));
 
         Assert.Equal(ApplicationMode.Encounter, source.CurrentMode);
         Assert.Equal(
@@ -58,7 +58,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
             encounter);
 
         Assert.Throws<ArgumentException>(() =>
-            WatchtowerCombatOutcomeRules.Finalize(source));
+            CombatOutcomeRules.Finalize(source));
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
                 source.ActiveEncounter);
 
         Assert.Throws<ArgumentException>(() =>
-            WatchtowerCombatOutcomeRules.Finalize(source));
+            CombatOutcomeRules.Finalize(source));
 
         Assert.Same(active, source.ActiveEncounter);
         Assert.Same(original, barbarian.Health);
@@ -109,8 +109,8 @@ public sealed class WatchtowerCombatOutcomeRulesTests
                     encounter.Participants.Reverse().ToArray())
             });
 
-        WatchtowerCombatOutcomeResult result =
-            WatchtowerCombatOutcomeRules.Finalize(source);
+        CombatOutcomeResult result =
+            CombatOutcomeRules.Finalize(source);
 
         Assert.Equal(
             source.Party.Members.Select(member =>
@@ -209,7 +209,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
             source.Party.Members;
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            WatchtowerCombatOutcomeRules.Finalize(source));
+            CombatOutcomeRules.Finalize(source));
         Assert.Same(originalMembers, source.Party.Members);
         Assert.Equal(37, source.RandomValuesConsumed);
     }
@@ -222,7 +222,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
                 .CreatePartyVictorySession();
 
         ApplicationSessionState result =
-            WatchtowerCombatOutcomeRules.Finalize(source)
+            CombatOutcomeRules.Finalize(source)
                 .State;
 
         foreach (PartyMemberState member
@@ -253,7 +253,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
 
         PartyMemberState barbarian =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
-                WatchtowerCombatOutcomeRules.Finalize(source)
+                CombatOutcomeRules.Finalize(source)
                     .State,
                 "class.barbarian");
 
@@ -267,7 +267,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
     {
         PartyMemberState ranger =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
-                WatchtowerCombatOutcomeRules.Finalize(
+                CombatOutcomeRules.Finalize(
                     WatchtowerCombatOutcomeTestData
                         .CreatePartyVictorySession())
                     .State,
@@ -283,7 +283,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
     {
         PartyMemberState ranger =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
-                WatchtowerCombatOutcomeRules.Finalize(
+                CombatOutcomeRules.Finalize(
                     WatchtowerCombatOutcomeTestData
                         .CreateRaiderVictorySession())
                     .State,
@@ -335,7 +335,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
                 invalid);
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            WatchtowerCombatOutcomeRules.Finalize(source));
+            CombatOutcomeRules.Finalize(source));
         Assert.Equal(ApplicationMode.Encounter, source.CurrentMode);
         Assert.Equal(37, source.RandomValuesConsumed);
     }
@@ -355,7 +355,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
 
         PartyMemberState ranger =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
-                WatchtowerCombatOutcomeRules.Finalize(source)
+                CombatOutcomeRules.Finalize(source)
                     .State,
                 "class.ranger");
 
@@ -370,7 +370,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
     {
         PartyMemberState ranger =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
-                WatchtowerCombatOutcomeRules.Finalize(
+                CombatOutcomeRules.Finalize(
                     WatchtowerCombatOutcomeTestData
                         .CreatePartyVictorySession(
                             rangerAmmunition: 0))
@@ -432,7 +432,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
             source.Party.Members;
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            WatchtowerCombatOutcomeRules.Finalize(source));
+            CombatOutcomeRules.Finalize(source));
         Assert.Same(originalMembers, source.Party.Members);
         Assert.Same(
             weapons,
@@ -446,7 +446,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
     public void Finalize_DoesNotCreateOrAlterNonRangerAmmunition()
     {
         ApplicationSessionState result =
-            WatchtowerCombatOutcomeRules.Finalize(
+            CombatOutcomeRules.Finalize(
                 WatchtowerCombatOutcomeTestData
                     .CreatePartyVictorySession())
                 .State;
@@ -472,7 +472,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
             WatchtowerCombatOutcomeTestData
                 .CreatePartyVictorySession();
         ApplicationSessionState result =
-            WatchtowerCombatOutcomeRules.Finalize(source)
+            CombatOutcomeRules.Finalize(source)
                 .State;
 
         Assert.Equal(source.Party.PartyId, result.Party.PartyId);
@@ -500,14 +500,15 @@ public sealed class WatchtowerCombatOutcomeRulesTests
             Assert.IsType<ActiveEncounterState>(
                 source.ActiveEncounter);
 
-        WatchtowerCombatOutcomeResult result =
-            WatchtowerCombatOutcomeRules.Finalize(source);
+        CombatOutcomeResult result =
+            CombatOutcomeRules.Finalize(source);
 
-        Assert.Equal(WatchtowerCombatOutcome.PartyVictory, result.Outcome);
+        Assert.Equal(CombatOutcome.PartyVictory, result.Outcome);
         Assert.Equal(ApplicationMode.Exploration, result.ResultingMode);
         Assert.Equal(
-            WatchtowerScenarioProgress.RaidersDefeated,
-            result.ResultingProgress);
+            WatchtowerScenario.ToProgressId(
+                WatchtowerScenarioProgress.RaidersDefeated),
+            result.ResultingProgressId);
         Assert.Equal("location.ruined-watchtower", result.State.CurrentLocationId);
         Assert.Same(active.ReturnContext, result.State.Exploration);
         Assert.Null(result.State.RegionalTravel);
@@ -518,16 +519,17 @@ public sealed class WatchtowerCombatOutcomeRulesTests
     [Fact]
     public void Finalize_RaiderVictory_ReturnsTerminalScenarioConclusionOutcome()
     {
-        WatchtowerCombatOutcomeResult result =
-            WatchtowerCombatOutcomeRules.Finalize(
+        CombatOutcomeResult result =
+            CombatOutcomeRules.Finalize(
                 WatchtowerCombatOutcomeTestData
                     .CreateRaiderVictorySession());
 
-        Assert.Equal(WatchtowerCombatOutcome.ScenarioDefeat, result.Outcome);
+        Assert.Equal(CombatOutcome.ScenarioDefeat, result.Outcome);
         Assert.Equal(ApplicationMode.ScenarioConclusion, result.ResultingMode);
         Assert.Equal(
-            WatchtowerScenarioProgress.PartyDefeated,
-            result.ResultingProgress);
+            WatchtowerScenario.ToProgressId(
+                WatchtowerScenarioProgress.PartyDefeated),
+            result.ResultingProgressId);
         Assert.Equal("location.ruined-watchtower", result.State.CurrentLocationId);
         Assert.Null(result.State.Exploration);
         Assert.Null(result.State.RegionalTravel);
@@ -546,7 +548,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
             : WatchtowerCombatOutcomeTestData.CreateRaiderVictorySession();
 
         ApplicationSessionState result =
-            WatchtowerCombatOutcomeRules.Finalize(source)
+            CombatOutcomeRules.Finalize(source)
                 .State;
 
         Assert.Equal(source.RandomSeed, result.RandomSeed);
@@ -594,7 +596,7 @@ public sealed class WatchtowerCombatOutcomeRulesTests
                 source.ActiveEncounter);
 
         Assert.Throws<ArgumentException>(() =>
-            WatchtowerCombatOutcomeRules.Finalize(source));
+            CombatOutcomeRules.Finalize(source));
 
         Assert.Same(sourceParty, source.Party);
         Assert.Same(sourceEncounter, source.ActiveEncounter);
@@ -611,8 +613,8 @@ public sealed class WatchtowerCombatOutcomeRulesTests
     public void Finalize_ResultMirrorsCanonicalOutcomeState(
         bool partyVictory)
     {
-        WatchtowerCombatOutcomeResult result =
-            WatchtowerCombatOutcomeRules.Finalize(
+        CombatOutcomeResult result =
+            CombatOutcomeRules.Finalize(
                 partyVictory
                     ? WatchtowerCombatOutcomeTestData
                         .CreatePartyVictorySession()
@@ -621,12 +623,12 @@ public sealed class WatchtowerCombatOutcomeRulesTests
 
         Assert.Equal(result.State.CurrentMode, result.ResultingMode);
         Assert.Equal(
-            WatchtowerScenario.ProgressOf(result.State),
-            result.ResultingProgress);
+            result.State.Scenario.ProgressId,
+            result.ResultingProgressId);
         Assert.Equal(
             partyVictory
-                ? WatchtowerCombatOutcome.PartyVictory
-                : WatchtowerCombatOutcome.ScenarioDefeat,
+                ? CombatOutcome.PartyVictory
+                : CombatOutcome.ScenarioDefeat,
             result.Outcome);
     }
 }

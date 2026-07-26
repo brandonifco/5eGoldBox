@@ -7,13 +7,13 @@ using FiveEGoldBox.Application.Sessions;
 
 namespace FiveEGoldBox.Application.Tests;
 
-public sealed class WatchtowerCombatOutcomePersistenceTests
+public sealed class CombatOutcomePersistenceTests
 {
     [Fact]
     public void SerializeAndDeserialize_PostVictoryExploration_PreservesOutcomeState()
     {
         ApplicationSessionState source =
-            WatchtowerCombatOutcomeRules.Finalize(
+            CombatOutcomeRules.Finalize(
                 WatchtowerCombatOutcomeTestData
                     .CreatePartyVictorySession(
                         rangerAmmunition: 2))
@@ -36,7 +36,7 @@ public sealed class WatchtowerCombatOutcomePersistenceTests
     public void SerializeAndDeserialize_PartyDefeatedConclusion_PreservesOutcomeState()
     {
         ApplicationSessionState source =
-            WatchtowerCombatOutcomeRules.Finalize(
+            CombatOutcomeRules.Finalize(
                 WatchtowerCombatOutcomeTestData
                     .CreateRaiderVictorySession(
                         rangerAmmunition: 1))
@@ -64,7 +64,7 @@ public sealed class WatchtowerCombatOutcomePersistenceTests
         bool partyVictory)
     {
         ApplicationSessionState source =
-            WatchtowerCombatOutcomeRules.Finalize(
+            CombatOutcomeRules.Finalize(
                 partyVictory
                     ? WatchtowerCombatOutcomeTestData
                         .CreatePartyVictorySession()
@@ -84,7 +84,7 @@ public sealed class WatchtowerCombatOutcomePersistenceTests
     public void Deserialize_ScenarioConclusionWithInvalidShape_ReturnsInvalidSessionState()
     {
         ApplicationSessionState source =
-            WatchtowerCombatOutcomeRules.Finalize(
+            CombatOutcomeRules.Finalize(
                 WatchtowerCombatOutcomeTestData
                     .CreateRaiderVictorySession())
                 .State;

@@ -121,7 +121,7 @@ internal static class WatchtowerSignalTestData
     internal static ApplicationSessionState
         CreateExplorationSession()
     {
-        return ExplorationRules.EnterWatchtower(
+        return ExplorationRules.EnterDestination(
             CreateCompletedArrival());
     }
 
@@ -140,7 +140,7 @@ internal static class WatchtowerSignalTestData
     internal static ApplicationSessionState
         CreateRegionalTravelSession()
     {
-        return RegionalTravelRules.BeginWatchtowerJourney(
+        return RegionalTravelRules.BeginJourney(
             CreateAcceptedSession());
     }
 
@@ -323,7 +323,7 @@ internal static class WatchtowerSignalTestData
         CreateCompletedArrival()
     {
         ApplicationSessionState current =
-            RegionalTravelRules.BeginWatchtowerJourney(
+            RegionalTravelRules.BeginJourney(
                 CreateAcceptedSession());
 
         while (!Assert.IsType<RegionalTravelState>(

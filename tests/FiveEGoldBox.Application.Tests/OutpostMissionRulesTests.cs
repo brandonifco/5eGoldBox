@@ -91,7 +91,7 @@ public sealed class OutpostMissionRulesTests
                 OutpostMissionChoice.AcceptMission)
                 .State;
         ApplicationSessionState traveling =
-            RegionalTravelRules.BeginWatchtowerJourney(
+            RegionalTravelRules.BeginJourney(
                 accepted);
         ApplicationSessionState exploring =
             CreateExplorationSession();
@@ -100,7 +100,7 @@ public sealed class OutpostMissionRulesTests
                 WatchtowerSignalTestData
                     .CreateSignalReadySession());
         ApplicationSessionState conclusion =
-            WatchtowerCombatOutcomeRules.Finalize(
+            CombatOutcomeRules.Finalize(
                 WatchtowerCombatOutcomeTestData
                     .CreateRaiderVictorySession())
                 .State;
@@ -135,7 +135,7 @@ public sealed class OutpostMissionRulesTests
     public void GetAvailableChoices_WithMalformedOutpostState_Throws()
     {
         ApplicationSessionState traveling =
-            RegionalTravelRules.BeginWatchtowerJourney(
+            RegionalTravelRules.BeginJourney(
                 OutpostMissionRules.Resolve(
                     CreateValidSession(),
                     OutpostMissionChoice.AcceptMission)
@@ -443,8 +443,10 @@ progress)
     private static ApplicationSessionState
         CreateValidSession()
     {
-        return WatchtowerScenarioSessionFactory
-            .CreateNew(8675309) with
+        return ScenarioSessionFactory
+            .CreateNew(
+                WatchtowerScenarioContent.ScenarioId,
+                8675309) with
         {
             RandomValuesConsumed = 12
         };
@@ -454,7 +456,7 @@ progress)
         CreateExplorationSession()
     {
         ApplicationSessionState current =
-            RegionalTravelRules.BeginWatchtowerJourney(
+            RegionalTravelRules.BeginJourney(
                 OutpostMissionRules.Resolve(
                     CreateValidSession(),
                     OutpostMissionChoice.AcceptMission)
@@ -467,6 +469,6 @@ progress)
                 .State;
         }
 
-        return ExplorationRules.EnterWatchtower(current);
+        return ExplorationRules.EnterDestination(current);
     }
 }

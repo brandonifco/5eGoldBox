@@ -60,7 +60,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
         ApplicationSessionState arrived =
             CreateCompletedArrival();
         ApplicationSessionState exploring =
-            ExplorationRules.EnterWatchtower(arrived);
+            ExplorationRules.EnterDestination(arrived);
         ApplicationSessionState invalid =
             exploring with
             {
@@ -242,7 +242,7 @@ progress)
     private static ApplicationSessionState
         CreateExplorationSession()
     {
-        return ExplorationRules.EnterWatchtower(
+        return ExplorationRules.EnterDestination(
             CreateCompletedArrival());
     }
 
@@ -265,7 +265,7 @@ progress)
     private static ApplicationSessionState
         CreateTravelingSession()
     {
-        return RegionalTravelRules.BeginWatchtowerJourney(
+        return RegionalTravelRules.BeginJourney(
             CreateAcceptedSession());
     }
 

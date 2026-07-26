@@ -26,7 +26,8 @@ internal sealed partial class ConsoleSessionRunner
         TextReader input,
         TextWriter output,
         string savePath,
-        int defaultRandomSeed)
+        int defaultRandomSeed,
+        string scenarioId)
     {
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(output);
@@ -36,6 +37,13 @@ internal sealed partial class ConsoleSessionRunner
             throw new ArgumentException(
                 "A save path is required.",
                 nameof(savePath));
+        }
+
+        if (string.IsNullOrWhiteSpace(scenarioId))
+        {
+            throw new ArgumentException(
+                "A scenario ID is required.",
+                nameof(scenarioId));
         }
 
         while (true)
@@ -53,7 +61,8 @@ internal sealed partial class ConsoleSessionRunner
             {
                 case 1:
                     ApplicationSessionState newSession =
-                        WatchtowerScenarioSessionFactory.CreateNew(
+                        ScenarioSessionFactory.CreateNew(
+                            scenarioId,
                             defaultRandomSeed);
 
                     return RunSession(

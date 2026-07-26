@@ -88,8 +88,10 @@ public sealed class WatchtowerPartyCompositionValidatorTests
 
     private static PartyState CreateParty()
     {
-        return WatchtowerScenarioSessionFactory
-            .CreateNew(randomSeed: 7)
+        return ScenarioSessionFactory
+            .CreateNew(
+                WatchtowerScenarioContent.ScenarioId,
+                randomSeed: 7)
             .Party;
     }
 

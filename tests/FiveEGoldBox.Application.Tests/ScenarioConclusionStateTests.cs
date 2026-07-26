@@ -114,7 +114,7 @@ WatchtowerScenarioProgress.PartyDefeated)
 
     private static ApplicationSessionState CreateConclusion()
     {
-        return WatchtowerCombatOutcomeRules.Finalize(
+        return CombatOutcomeRules.Finalize(
             WatchtowerCombatOutcomeTestData
                 .CreateRaiderVictorySession())
             .State;
