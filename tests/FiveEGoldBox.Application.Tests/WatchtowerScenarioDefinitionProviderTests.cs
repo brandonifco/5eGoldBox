@@ -29,28 +29,21 @@ public sealed class WatchtowerScenarioDefinitionProviderTests
                         .Select(issue => $"{issue.Code}: {issue.Message}")));
     }
 
-    /// A real finding, kept visible rather than hidden by trimming the
-    /// vocabulary: the save format records seven progress markers but nothing
-    /// in the scenario ever produces SuccessReported or ScenarioCompleted.
-    /// They are warnings, not errors, so the content still loads and plays.
+    /// The vocabulary is now exactly what the scenario can reach. It used to
+    /// declare two markers - SuccessReported and ScenarioCompleted - that
+    /// nothing produced, which the reachability check reported as warnings.
+    /// They were deleted rather than wired up: reporting back would need a
+    /// return journey, and travel supports one route per scenario.
     [Fact]
-    public void Definition_ReportsItsTwoUnproducedProgressMarkers()
+    public void Definition_DeclaresNoProgressItCannotReach()
     {
         ValidationResult result = ScenarioDefinitionValidator.Validate(
             WatchtowerScenarioDefinitionProvider.Create());
 
-        string[] unreachable = result.Issues
-            .Where(issue => issue.Code == "scenario.progress.unreachable")
-            .Select(issue => issue.Message)
-            .ToArray();
-
-        Assert.Equal(2, unreachable.Length);
-        Assert.Contains(
-            unreachable,
-            message => message.Contains("SuccessReported", StringComparison.Ordinal));
-        Assert.Contains(
-            unreachable,
-            message => message.Contains("ScenarioCompleted", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            result.Issues,
+            issue => issue.Code == "scenario.progress.unreachable");
+        Assert.Empty(result.Issues);
     }
 
     /// The tower's geometry is authored here now, so this pins it: both floors

@@ -184,8 +184,6 @@ WatchtowerScenarioProgress.RaidersDefeated)
     [InlineData("MissionNotAccepted")]
     [InlineData("SignalActivated")]
     [InlineData("PartyDefeated")]
-    [InlineData("SuccessReported")]
-    [InlineData("ScenarioCompleted")]
     public void Validate_OutsideSupportedExplorationProgress_Throws(
         string progressId)
     {

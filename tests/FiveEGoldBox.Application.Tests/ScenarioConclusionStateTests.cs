@@ -18,8 +18,6 @@ public sealed class ScenarioConclusionStateTests
     [InlineData("MissionAccepted")]
     [InlineData("SignalActivated")]
     [InlineData("RaidersDefeated")]
-    [InlineData("SuccessReported")]
-    [InlineData("ScenarioCompleted")]
     public void Validate_WithNonDefeatProgress_Throws(
         string progressId)
     {

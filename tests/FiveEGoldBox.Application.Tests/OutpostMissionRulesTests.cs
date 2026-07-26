@@ -340,12 +340,6 @@ public sealed class OutpostMissionRulesTests
         OutpostMissionChoice.AcceptMission,
         "RaidersDefeated")]
     [InlineData(
-        OutpostMissionChoice.AcceptMission,
-        "SuccessReported")]
-    [InlineData(
-        OutpostMissionChoice.AcceptMission,
-        "ScenarioCompleted")]
-    [InlineData(
         OutpostMissionChoice.NotYet,
         "MissionAccepted")]
     [InlineData(
@@ -354,12 +348,6 @@ public sealed class OutpostMissionRulesTests
     [InlineData(
         OutpostMissionChoice.NotYet,
         "RaidersDefeated")]
-    [InlineData(
-        OutpostMissionChoice.NotYet,
-        "SuccessReported")]
-    [InlineData(
-        OutpostMissionChoice.NotYet,
-        "ScenarioCompleted")]
     public void Resolve_AfterMissionDecisionAvailability_Throws(
         OutpostMissionChoice choice,
         string progressId)
