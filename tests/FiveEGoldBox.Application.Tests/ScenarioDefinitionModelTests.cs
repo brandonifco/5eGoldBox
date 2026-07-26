@@ -3,6 +3,7 @@ using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Travel;
+using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Tests;
@@ -359,6 +360,14 @@ public sealed class ScenarioDefinitionModelTests
                     StartingPosition = new GridPosition(2, 1),
                     ZeroHitPointPolicy =
                         CombatantZeroHitPointPolicy.Defeated,
+                    AbilityModifiers = Enum.GetValues<Ability>()
+                        .Select(ability => new CombatantAbilityModifier
+                        {
+                            Ability = ability,
+                            Modifier = 1
+                        })
+                        .ToArray(),
+                    ProficiencyBonus = 2,
                     Weapons =
                     [
                         new CombatantWeaponDefinition
@@ -378,6 +387,14 @@ public sealed class ScenarioDefinitionModelTests
                     StartingPosition = new GridPosition(4, 2),
                     ZeroHitPointPolicy =
                         CombatantZeroHitPointPolicy.Defeated,
+                    AbilityModifiers = Enum.GetValues<Ability>()
+                        .Select(ability => new CombatantAbilityModifier
+                        {
+                            Ability = ability,
+                            Modifier = 1
+                        })
+                        .ToArray(),
+                    ProficiencyBonus = 2,
                     Weapons =
                     [
                         new CombatantWeaponDefinition

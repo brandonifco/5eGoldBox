@@ -1,6 +1,8 @@
+using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Parties;
+using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
 using FiveEGoldBox.Core.Characters;
@@ -144,110 +146,28 @@ internal static class WatchtowerSignalTestData
             CreateAcceptedSession());
     }
 
+    /// Derived from the authored ruleset rather than rebuilt, so content added
+    /// to the scenario cannot go missing here.
     internal static ValidatedRuleset CreateRuleset(
         bool includeLongbow = true)
     {
-        List<WeaponDefinition> weapons =
-        [
-            CreateMeleeWeapon(
-                "weapon.longsword",
-                "Longsword",
-                DieType.D8),
-            CreateMeleeWeapon(
-                "weapon.greataxe",
-                "Greataxe",
-                DieType.D12)
-        ];
+        RulesetDefinition definition =
+            WatchtowerScenarioContent.CreateRulesetDefinition();
 
-        if (includeLongbow)
+        if (!includeLongbow)
         {
-            weapons.Add(new WeaponDefinition
+            definition = definition with
             {
-                Id = "weapon.longbow",
-                Name = "Longbow",
-                Category = WeaponCategory.Martial,
-                AttackKind = WeaponAttackKind.Ranged,
-                Damage = new DamageDice
-                {
-                    Count = 1,
-                    Die = DieType.D8
-                },
-                DamageType = "damage.piercing",
-                Properties =
-                [
-                    RuleIds.WeaponProperties.Ammunition,
-                    RuleIds.WeaponProperties.Heavy,
-                    RuleIds.WeaponProperties.TwoHanded
-                ],
-                NormalRangeFeet = 150,
-                LongRangeFeet = 600,
-                AmmunitionItemId = "item.arrow"
-            });
+                Weapons = definition.Weapons
+                    .Where(weapon => !string.Equals(
+                        weapon.Id,
+                        WatchtowerPartyDefinitions.RangerWeaponId,
+                        StringComparison.Ordinal))
+                    .ToArray()
+            };
         }
 
-        RulesetDefinition definition = new()
-        {
-            Id = "ruleset.watchtower-test",
-            Name = "Watchtower Test Ruleset",
-            Races =
-            [
-                new RaceDefinition
-                {
-                    Id = "race.human",
-                    Name = "Human",
-                    BaseSpeedFeet = 30,
-                    AbilityScoreIncreases =
-                    [
-                        new AbilityScoreIncrease(
-                            Ability.Strength,
-                            1),
-                        new AbilityScoreIncrease(
-                            Ability.Dexterity,
-                            1),
-                        new AbilityScoreIncrease(
-                            Ability.Constitution,
-                            1),
-                        new AbilityScoreIncrease(
-                            Ability.Intelligence,
-                            1),
-                        new AbilityScoreIncrease(
-                            Ability.Wisdom,
-                            1),
-                        new AbilityScoreIncrease(
-                            Ability.Charisma,
-                            1)
-                    ]
-                }
-            ],
-            Classes = CreateClasses(),
-            Backgrounds =
-            [
-                new BackgroundDefinition
-                {
-                    Id = "background.soldier",
-                    Name = "Soldier"
-                }
-            ],
-            Skills = CreateSkills(),
-            Weapons = weapons,
-            EquipmentItems =
-            [
-                new EquipmentItemDefinition
-                {
-                    Id = "item.arrow",
-                    Name = "Arrow",
-                    WeightPounds = 0.05m
-                }
-            ]
-        };
-
-        RulesetLoadResult load =
-            ValidatedRuleset.Load(definition);
-
-        Assert.True(load.IsValid);
-
-        return Assert.IsType<ValidatedRuleset>(
-            load.Ruleset);
+        return WatchtowerScenarioContent.Load(definition);
     }
 
     internal static CharacterDraft CreateExpectedDraft(

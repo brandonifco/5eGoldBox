@@ -3,6 +3,7 @@ using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Travel;
+using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Scenarios;
@@ -178,6 +179,8 @@ internal static class WatchtowerScenarioDefinitionProvider
                         WatchtowerSignalEncounter.MeleeRaiderStartingPosition,
                     ZeroHitPointPolicy =
                         CombatantZeroHitPointPolicy.Defeated,
+                    AbilityModifiers = RaiderAbilityModifiers(),
+                    ProficiencyBonus = 2,
                     Weapons =
                     [
                         new CombatantWeaponDefinition
@@ -198,6 +201,8 @@ internal static class WatchtowerScenarioDefinitionProvider
                         WatchtowerSignalEncounter.RangedRaiderStartingPosition,
                     ZeroHitPointPolicy =
                         CombatantZeroHitPointPolicy.Defeated,
+                    AbilityModifiers = RaiderAbilityModifiers(),
+                    ProficiencyBonus = 2,
                     Weapons =
                     [
                         new CombatantWeaponDefinition
@@ -285,6 +290,33 @@ internal static class WatchtowerScenarioDefinitionProvider
                     ]
                 }
             ]
+        };
+    }
+
+    /// The raiders' stat line. Both carry the same modifiers, which is why a
+    /// scimitar in a raider's hand hits at +4 and a shortbow does too.
+    private static IReadOnlyList<CombatantAbilityModifier>
+        RaiderAbilityModifiers()
+    {
+        return
+        [
+            Modifier(Ability.Strength, 1),
+            Modifier(Ability.Dexterity, 2),
+            Modifier(Ability.Constitution, 1),
+            Modifier(Ability.Intelligence, 0),
+            Modifier(Ability.Wisdom, 0),
+            Modifier(Ability.Charisma, 0)
+        ];
+    }
+
+    private static CombatantAbilityModifier Modifier(
+        Ability ability,
+        int modifier)
+    {
+        return new CombatantAbilityModifier
+        {
+            Ability = ability,
+            Modifier = modifier
         };
     }
 
