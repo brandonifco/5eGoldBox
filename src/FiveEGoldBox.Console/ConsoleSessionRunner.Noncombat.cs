@@ -3,6 +3,7 @@ using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Persistence;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
+using FiveEGoldBox.Application.Views;
 
 namespace FiveEGoldBox.Console;
 
@@ -62,8 +63,7 @@ internal sealed partial class ConsoleSessionRunner
 
             switch (selectedOption.Action)
             {
-                case SessionMenuAction.AcceptMission:
-                case SessionMenuAction.DeferMission:
+                case SessionMenuAction.ResolveOutpostDecision:
                     session = ResolveMissionChoice(
                         output,
                         session,
@@ -75,7 +75,7 @@ internal sealed partial class ConsoleSessionRunner
                     session = RegionalTravelRules
                         .BeginJourney(session);
                     output.WriteLine(
-                        "Watchtower journey begun.");
+                        "Journey begun.");
                     break;
                 case SessionMenuAction.AdvanceTravel:
                     RegionalTravelAdvanceResult travelResult =
@@ -90,7 +90,7 @@ internal sealed partial class ConsoleSessionRunner
                     session = ExplorationRules
                         .EnterDestination(session);
                     output.WriteLine(
-                        $"Entered location: {session.CurrentLocationId}.");
+                        $"Entered location: {SessionView.Describe(session).LocationDisplayName}.");
                     break;
                 case SessionMenuAction.MoveForward:
                     ExplorationMoveResult moveResult =
@@ -117,7 +117,7 @@ internal sealed partial class ConsoleSessionRunner
                     session = ExplorationRules.UseStairs(session);
                     output.WriteLine("Used stairs.");
                     break;
-                case SessionMenuAction.ActivateSignal:
+                case SessionMenuAction.ActivateTrigger:
                     session = ScenarioTriggerRules.Activate(session);
                     output.WriteLine(
                         "Signal activated. Encounter started.");
@@ -137,29 +137,25 @@ internal sealed partial class ConsoleSessionRunner
         }
     }
 
+    /// The engine decides what is on offer and what to call it; this only
+    /// numbers the list and adds the things the client itself owns.
+    ///
+    /// Nothing here knows which scenario is running, or that scenarios have
+    /// towers or chapels in them. Every label below the client's own three
+    /// comes from authored content.
     private static IReadOnlyList<SessionMenuOption>
         CreateSessionMenuOptions(
             ApplicationSessionState session)
     {
         List<SessionMenuOption> options = new();
 
-        switch (session.CurrentMode)
+        foreach (SessionAction action
+            in SessionView.Describe(session).Actions)
         {
-            case ApplicationMode.Outpost:
-                AddOutpostOptions(options, session);
-                break;
-            case ApplicationMode.RegionalTravel:
-                AddRegionalTravelOptions(options, session);
-                break;
-            case ApplicationMode.Exploration:
-                AddExplorationOptions(options, session);
-                break;
-            case ApplicationMode.Encounter:
-            case ApplicationMode.ScenarioConclusion:
-                break;
-            default:
-                throw new InvalidOperationException(
-                    "The application mode is unsupported by the console client.");
+            options.Add(new SessionMenuOption(
+                action.DisplayName,
+                ToMenuAction(action.Kind),
+                action.MissionChoice));
         }
 
         options.Add(
@@ -183,96 +179,32 @@ internal sealed partial class ConsoleSessionRunner
         return options.AsReadOnly();
     }
 
-    private static void AddOutpostOptions(
-        ICollection<SessionMenuOption> options,
-        ApplicationSessionState session)
+    private static SessionMenuAction ToMenuAction(
+        SessionActionKind kind)
     {
-        IReadOnlyList<OutpostMissionChoice> choices =
-            OutpostMissionRules.GetAvailableChoices(session);
-
-        foreach (OutpostMissionChoice choice in choices)
+        return kind switch
         {
-            options.Add(
-                choice switch
-                {
-                    OutpostMissionChoice.AcceptMission =>
-                        new SessionMenuOption(
-                            "Accept Mission",
-                            SessionMenuAction.AcceptMission,
-                            choice),
-                    OutpostMissionChoice.NotYet =>
-                        new SessionMenuOption(
-                            "Not Yet",
-                            SessionMenuAction.DeferMission,
-                            choice),
-                    _ => throw new InvalidOperationException(
-                        "The outpost mission choice is unsupported by the console client.")
-                });
-        }
-
-        if (RegionalTravelRules
-            .CanBeginJourney(session))
-        {
-            options.Add(
-                new SessionMenuOption(
-                    "Begin Watchtower Journey",
-                    SessionMenuAction.BeginJourney));
-        }
-    }
-
-    private static void AddRegionalTravelOptions(
-        ICollection<SessionMenuOption> options,
-        ApplicationSessionState session)
-    {
-        if (RegionalTravelRules.CanAdvance(session))
-        {
-            options.Add(
-                new SessionMenuOption(
-                    "Advance Travel",
-                    SessionMenuAction.AdvanceTravel));
-        }
-
-        if (ExplorationRules.CanEnterDestination(session))
-        {
-            options.Add(
-                new SessionMenuOption(
-                    "Enter Watchtower",
-                    SessionMenuAction.EnterDestination));
-        }
-    }
-
-    private static void AddExplorationOptions(
-        ICollection<SessionMenuOption> options,
-        ApplicationSessionState session)
-    {
-        options.Add(
-            new SessionMenuOption(
-                "Move Forward",
-                SessionMenuAction.MoveForward));
-        options.Add(
-            new SessionMenuOption(
-                "Turn Left",
-                SessionMenuAction.TurnLeft));
-        options.Add(
-            new SessionMenuOption(
-                "Turn Right",
-                SessionMenuAction.TurnRight));
-
-        if (ExplorationRules.CanUseStairs(session))
-        {
-            options.Add(
-                new SessionMenuOption(
-                    "Use Stairs",
-                    SessionMenuAction.UseStairs));
-        }
-
-        if (ScenarioTriggerRules.CanActivate(session))
-        {
-            options.Add(
-                new SessionMenuOption(
-                    "Activate Signal",
-                    SessionMenuAction.ActivateSignal));
-        }
+            SessionActionKind.ResolveOutpostDecision =>
+                SessionMenuAction.ResolveOutpostDecision,
+            SessionActionKind.BeginJourney =>
+                SessionMenuAction.BeginJourney,
+            SessionActionKind.AdvanceTravel =>
+                SessionMenuAction.AdvanceTravel,
+            SessionActionKind.EnterDestination =>
+                SessionMenuAction.EnterDestination,
+            SessionActionKind.MoveForward =>
+                SessionMenuAction.MoveForward,
+            SessionActionKind.TurnLeft =>
+                SessionMenuAction.TurnLeft,
+            SessionActionKind.TurnRight =>
+                SessionMenuAction.TurnRight,
+            SessionActionKind.UseStairs =>
+                SessionMenuAction.UseStairs,
+            SessionActionKind.ActivateTrigger =>
+                SessionMenuAction.ActivateTrigger,
+            _ => throw new InvalidOperationException(
+                $"The session action '{kind}' is unsupported by the console client.")
+        };
     }
 
     private static ApplicationSessionState ResolveMissionChoice(
@@ -340,8 +272,7 @@ internal sealed partial class ConsoleSessionRunner
 
     private enum SessionMenuAction
     {
-        AcceptMission,
-        DeferMission,
+        ResolveOutpostDecision,
         BeginJourney,
         AdvanceTravel,
         EnterDestination,
@@ -349,7 +280,7 @@ internal sealed partial class ConsoleSessionRunner
         TurnLeft,
         TurnRight,
         UseStairs,
-        ActivateSignal,
+        ActivateTrigger,
         InspectParty,
         Save,
         Exit

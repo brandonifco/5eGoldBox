@@ -430,7 +430,7 @@ public sealed class ConsoleSessionRunnerTests
             CreateRegionalTravelSession());
 
         Assert.DoesNotContain("Save", GetSessionMenu(output));
-        Assert.Contains("1. Advance Travel", output);
+        Assert.Contains("1. Travel onward", output);
         Assert.Contains("2. Inspect Party", output);
         Assert.Contains("3. Exit", output);
     }
@@ -806,8 +806,8 @@ public sealed class ConsoleSessionRunnerTests
             temporary.SavePath,
             CreateOutpostSession());
 
-        Assert.Contains("1. Accept Mission", output);
-        Assert.Contains("2. Not Yet", output);
+        Assert.Contains("1. Accept the commission", output);
+        Assert.Contains("2. Not yet", output);
         Assert.Contains("3. Inspect Party", output);
         Assert.Contains("4. Save", output);
         Assert.Contains("5. Exit", output);
@@ -823,7 +823,7 @@ public sealed class ConsoleSessionRunnerTests
             temporary.SavePath,
             CreateRegionalTravelSession());
 
-        Assert.Contains("1. Advance Travel", output);
+        Assert.Contains("1. Travel onward", output);
         Assert.Contains("2. Inspect Party", output);
         Assert.Contains("3. Exit", output);
         Assert.DoesNotContain("4. Exit", output);

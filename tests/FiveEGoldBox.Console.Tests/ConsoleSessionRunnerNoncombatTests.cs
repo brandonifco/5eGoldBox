@@ -24,8 +24,8 @@ public sealed class ConsoleSessionRunnerNoncombatTests
         string menu = GetLastSessionMenu(output);
         AssertMenuOrder(
             menu,
-            "1. Accept Mission",
-            "2. Not Yet",
+            "1. Accept the commission",
+            "2. Not yet",
             "3. Inspect Party",
             "4. Save",
             "5. Exit");
@@ -52,7 +52,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
         Assert.Contains(
             $"Progress: {WatchtowerScenario.ProgressOf(expected)}",
             output);
-        Assert.Contains("1. Begin Watchtower Journey", output);
+        Assert.Contains("1. Set out for Ruined Watchtower", output);
     }
 
     [Fact]
@@ -96,12 +96,12 @@ public sealed class ConsoleSessionRunnerNoncombatTests
 
         AssertMenuOrder(
             GetLastSessionMenu(output),
-            "1. Begin Watchtower Journey",
+            "1. Set out for Ruined Watchtower",
             "2. Inspect Party",
             "3. Save",
             "4. Exit");
-        Assert.DoesNotContain("Accept Mission", output);
-        Assert.DoesNotContain("Not Yet", output);
+        Assert.DoesNotContain("Accept the commission", output);
+        Assert.DoesNotContain("Not yet", output);
     }
 
     [Fact]
@@ -119,12 +119,12 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             temporary.SavePath,
             session);
 
-        Assert.Contains("Watchtower journey begun.", output);
+        Assert.Contains("Journey begun.", output);
         Assert.Contains("Mode: RegionalTravel", output);
         Assert.Contains(
             $"Route ID: {expected.RegionalTravel!.RouteId}",
             output);
-        Assert.Contains("1. Advance Travel", output);
+        Assert.Contains("1. Travel onward", output);
     }
 
 
@@ -192,11 +192,11 @@ public sealed class ConsoleSessionRunnerNoncombatTests
         string menu = GetLastSessionMenu(output);
         AssertMenuOrder(
             menu,
-            "1. Advance Travel",
+            "1. Travel onward",
             "2. Inspect Party",
             "3. Exit");
         Assert.DoesNotContain("Save", menu);
-        Assert.DoesNotContain("Enter Watchtower", menu);
+        Assert.DoesNotContain("Enter Ruined Watchtower", menu);
     }
 
     [Fact]
@@ -237,9 +237,9 @@ public sealed class ConsoleSessionRunnerNoncombatTests
         Assert.True(expected.DidArrive);
         Assert.Contains("Destination reached.", output);
         Assert.Contains("Travel Complete: Yes", output);
-        Assert.Contains("1. Enter Watchtower", output);
+        Assert.Contains("1. Enter Ruined Watchtower", output);
         Assert.DoesNotContain(
-            "1. Advance Travel",
+            "1. Travel onward",
             GetLastSessionMenu(output));
     }
 
@@ -255,7 +255,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
 
         AssertMenuOrder(
             GetLastSessionMenu(output),
-            "1. Enter Watchtower",
+            "1. Enter Ruined Watchtower",
             "2. Inspect Party",
             "3. Exit");
     }
@@ -274,8 +274,11 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             temporary.SavePath,
             session);
 
+        // The client reports where the party is by the name the scenario
+        // gave the place. The summary block still lists raw identifiers,
+        // which is what a reference client is for.
         Assert.Contains(
-            $"Entered location: {expected.CurrentLocationId}.",
+            "Entered location: Ruined Watchtower.",
             output);
         Assert.Contains("Mode: Exploration", output);
         Assert.Contains(
@@ -298,9 +301,9 @@ public sealed class ConsoleSessionRunnerNoncombatTests
 
         AssertMenuOrder(
             GetLastSessionMenu(output),
-            "1. Move Forward",
-            "2. Turn Left",
-            "3. Turn Right",
+            "1. Move forward",
+            "2. Turn left",
+            "3. Turn right",
             "4. Inspect Party",
             "5. Save",
             "6. Exit");
@@ -439,7 +442,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             CreateExplorationSession());
 
         Assert.DoesNotContain(
-            "Use Stairs",
+            "Take the stairs",
             GetLastSessionMenu(output));
     }
 
@@ -455,14 +458,14 @@ public sealed class ConsoleSessionRunnerNoncombatTests
 
         AssertMenuOrder(
             GetLastSessionMenu(output),
-            "1. Move Forward",
-            "2. Turn Left",
-            "3. Turn Right",
-            "4. Use Stairs",
+            "1. Move forward",
+            "2. Turn left",
+            "3. Turn right",
+            "4. Take the stairs",
             "5. Inspect Party",
             "6. Save",
             "7. Exit");
-        Assert.DoesNotContain("Activate Signal", output);
+        Assert.DoesNotContain("Signal mechanism", output);
     }
 
     [Fact]
@@ -528,10 +531,10 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             CreateStairSession());
 
         Assert.DoesNotContain(
-            "Activate Signal",
+            "Signal mechanism",
             GetLastSessionMenu(ordinaryOutput));
         Assert.DoesNotContain(
-            "Activate Signal",
+            "Signal mechanism",
             GetLastSessionMenu(stairOutput));
     }
 
@@ -547,14 +550,14 @@ public sealed class ConsoleSessionRunnerNoncombatTests
 
         AssertMenuOrder(
             GetLastSessionMenu(output),
-            "1. Move Forward",
-            "2. Turn Left",
-            "3. Turn Right",
-            "4. Activate Signal",
+            "1. Move forward",
+            "2. Turn left",
+            "3. Turn right",
+            "4. Signal mechanism",
             "5. Inspect Party",
             "6. Save",
             "7. Exit");
-        Assert.DoesNotContain("Use Stairs", output);
+        Assert.DoesNotContain("Take the stairs", output);
     }
 
     [Fact]
@@ -662,7 +665,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
 
         AssertMenuOrder(
             GetLastSessionMenu(output),
-            "4. Activate Signal",
+            "4. Signal mechanism",
             "5. Inspect Party",
             "6. Save",
             "7. Exit");
@@ -788,7 +791,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             RandomSeed);
 
         Assert.Equal(0, exitCode);
-        Assert.Contains("Watchtower journey begun.", output);
+        Assert.Contains("Journey begun.", output);
         Assert.Contains("Mode: RegionalTravel", output);
     }
 
@@ -829,7 +832,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             temporary.SavePath,
             session);
 
-        Assert.Contains("1. Advance Travel", output);
+        Assert.Contains("1. Travel onward", output);
         Assert.Same(travel, session.RegionalTravel);
         Assert.Equal(
             randomValuesConsumed,
