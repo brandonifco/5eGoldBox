@@ -55,6 +55,92 @@ public static class EncounterActionDiscoveryRules
         };
     }
 
+    /// Which spells this caster may cast at these targets. A client asks once
+    /// and renders the answer; it does not work legality out for itself.
+    public static EncounterActionDiscoveryResult DiscoverSpellCasts(
+        EncounterState state,
+        IReadOnlyList<EncounterSpellCastDiscoveryCandidate> candidates)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(candidates);
+
+        EncounterRules.ValidateState(state);
+        ValidateSpellCastCandidates(candidates);
+
+        EncounterActionEvaluation[] evaluations = candidates
+            .Select(candidate => EvaluateSpellCastCandidate(state, candidate))
+            .ToArray();
+
+        return new EncounterActionDiscoveryResult
+        {
+            EncounterId = state.EncounterId,
+            EncounterRevision = state.Revision,
+            Evaluations = Array.AsReadOnly(evaluations)
+        };
+    }
+
+    private static EncounterActionEvaluation EvaluateSpellCastCandidate(
+        EncounterState state,
+        EncounterSpellCastDiscoveryCandidate candidate)
+    {
+        EncounterSpellPrerequisiteEvaluation prerequisites =
+            EncounterSpellPrerequisiteRules.Evaluate(
+                state,
+                candidate.ActorCombatantId,
+                candidate.TargetCombatantId,
+                candidate.SpellId);
+
+        return new EncounterActionEvaluation
+        {
+            ActionOptionId = candidate.ActionOptionId,
+            ActorCombatantId = candidate.ActorCombatantId,
+            EncounterRevision = state.Revision,
+            IsCommonlyLegal = prerequisites.IsLegal,
+            UnavailabilityReason = prerequisites.UnavailabilityReason
+        };
+    }
+
+    private static void ValidateSpellCastCandidates(
+        IReadOnlyList<EncounterSpellCastDiscoveryCandidate> candidates)
+    {
+        HashSet<string> actionOptionIds = new(StringComparer.Ordinal);
+
+        foreach (EncounterSpellCastDiscoveryCandidate candidate in candidates)
+        {
+            ArgumentNullException.ThrowIfNull(candidate);
+
+            RequireCandidateString(
+                candidate.ActionOptionId,
+                "Action option ID is required.");
+            RequireCandidateString(
+                candidate.ActorCombatantId,
+                "Actor combatant ID is required.");
+            RequireCandidateString(
+                candidate.TargetCombatantId,
+                "Target combatant ID is required.");
+            RequireCandidateString(
+                candidate.SpellId,
+                "Spell ID is required.");
+
+            if (!actionOptionIds.Add(candidate.ActionOptionId))
+            {
+                throw new ArgumentException(
+                    "Action option IDs must be unique.",
+                    nameof(candidates));
+            }
+        }
+    }
+
+    private static void RequireCandidateString(
+        string value,
+        string message)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException(message, "candidates");
+        }
+    }
+
     private static EncounterActionEvaluation
         EvaluateWeaponAttackCandidate(
             EncounterState state,
