@@ -52,6 +52,11 @@ public static class EncounterSpellRules
 
         ValidateRollsMatchResolution(spell, command);
 
+        IReadOnlyList<string> allTargets = ResolveTargets(
+            state,
+            command,
+            spell);
+
         AttackRollResult? attackRoll = ResolveAttackRoll(
             spell,
             command,
@@ -85,6 +90,15 @@ public static class EncounterSpellRules
 
         CombatantDamageResult? targetDamage = null;
         EncounterState resolvedState;
+
+        if (tookEffect && spell.AppliedEffectId is not null)
+        {
+            castState = ApplyEffect(
+                castState,
+                command.ActorCombatantId,
+                allTargets,
+                spell);
+        }
 
         if (healing > 0)
         {
@@ -134,10 +148,155 @@ public static class EncounterSpellRules
             AttackRoll = attackRoll,
             SavingThrow = savingThrow,
             TookEffect = tookEffect,
+            EffectedCombatantIds = spell.AppliedEffectId is null
+                ? Array.Empty<string>()
+                : allTargets,
             DamageDealt = damage,
             HealingDone = healing,
             TargetDamage = targetDamage,
             State = resolvedState
+        };
+    }
+
+    /// Every creature the spell reaches, the named one first. A spell may not
+    /// touch more than it says, nor the same creature twice.
+    private static IReadOnlyList<string> ResolveTargets(
+        EncounterState state,
+        EncounterSpellCastCommand command,
+        SpellAttack spell)
+    {
+        List<string> targets = [command.TargetCombatantId];
+
+        foreach (string targetId in command.AdditionalTargetCombatantIds)
+        {
+            if (targets.Contains(targetId, StringComparer.Ordinal))
+            {
+                throw new ArgumentException(
+                    $"Spell '{spell.SpellId}' names '{targetId}' twice.",
+                    nameof(command));
+            }
+
+            EncounterSpellPrerequisiteEvaluation additional =
+                EncounterSpellPrerequisiteRules.Evaluate(
+                    state,
+                    command.ActorCombatantId,
+                    targetId,
+                    command.SpellId);
+
+            if (!additional.IsLegal)
+            {
+                throw new InvalidOperationException(
+                    $"Spell '{spell.SpellId}' cannot reach '{targetId}': '{additional.UnavailabilityReason}'.");
+            }
+
+            targets.Add(targetId);
+        }
+
+        if (targets.Count > spell.MaximumTargets)
+        {
+            throw new ArgumentException(
+                $"Spell '{spell.SpellId}' reaches {spell.MaximumTargets} creatures, but {targets.Count} were named.",
+                nameof(command));
+        }
+
+        return Array.AsReadOnly(targets.ToArray());
+    }
+
+    /// Settles the effect on everyone it reached, and takes the caster's
+    /// concentration if it needs it.
+    ///
+    /// A caster sustains one thing at a time, so starting a second drops the
+    /// first — everywhere, not just on the caster, because an effect nobody is
+    /// concentrating on is over.
+    private static EncounterState ApplyEffect(
+        EncounterState state,
+        string casterCombatantId,
+        IReadOnlyList<string> targetCombatantIds,
+        SpellAttack spell)
+    {
+        EncounterParticipantState[] participants =
+            state.Participants.ToArray();
+
+        if (spell.RequiresConcentration)
+        {
+            string? previous = participants
+                .First(participant => string.Equals(
+                    participant.Combatant.CombatantId,
+                    casterCombatantId,
+                    StringComparison.Ordinal))
+                .ConcentratingOnEffectId;
+
+            if (previous is not null)
+            {
+                for (int index = 0; index < participants.Length; index++)
+                {
+                    participants[index] = participants[index] with
+                    {
+                        ActiveEffects = participants[index].ActiveEffects
+                            .Where(effect => !(string.Equals(
+                                    effect.EffectId,
+                                    previous,
+                                    StringComparison.Ordinal)
+                                && string.Equals(
+                                    effect.SourceCombatantId,
+                                    casterCombatantId,
+                                    StringComparison.Ordinal)))
+                            .ToArray()
+                    };
+                }
+            }
+        }
+
+        ActiveEffect applied = new()
+        {
+            EffectId = spell.AppliedEffectId!,
+            SourceCombatantId = casterCombatantId,
+            RemainingRounds = spell.DurationRounds
+                ?? throw new InvalidOperationException(
+                    $"Spell '{spell.SpellId}' applies an effect but states no duration."),
+            RequiresConcentration = spell.RequiresConcentration,
+            Contributions = spell.AppliedContributions
+        };
+
+        foreach (string targetId in targetCombatantIds)
+        {
+            int index = Array.FindIndex(
+                participants,
+                participant => string.Equals(
+                    participant.Combatant.CombatantId,
+                    targetId,
+                    StringComparison.Ordinal));
+
+            participants[index] = participants[index] with
+            {
+                ActiveEffects = participants[index].ActiveEffects
+                    .Where(effect => !string.Equals(
+                        effect.EffectId,
+                        applied.EffectId,
+                        StringComparison.Ordinal))
+                    .Append(applied)
+                    .ToArray()
+            };
+        }
+
+        if (spell.RequiresConcentration)
+        {
+            int casterIndex = Array.FindIndex(
+                participants,
+                participant => string.Equals(
+                    participant.Combatant.CombatantId,
+                    casterCombatantId,
+                    StringComparison.Ordinal));
+
+            participants[casterIndex] = participants[casterIndex] with
+            {
+                ConcentratingOnEffectId = applied.EffectId
+            };
+        }
+
+        return state with
+        {
+            Participants = Array.AsReadOnly(participants)
         };
     }
 

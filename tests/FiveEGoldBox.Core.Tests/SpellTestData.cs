@@ -22,6 +22,14 @@ internal static class SpellTestData
 
     internal const string FirstLevelSlot = "resource.spell-slot.1";
 
+    internal const string Bless = "spell.bless";
+
+    internal const string BlessEffect = "effect.bless";
+
+    internal const string Shield = "spell.shield-of-faith";
+
+    internal const string ShieldEffect = "effect.shield-of-faith";
+
     internal static EncounterState DownTarget(
         EncounterState state)
     {
@@ -161,7 +169,7 @@ internal static class SpellTestData
                 RangeKind = SpellRangeKind.Ranged,
                 RangeFeet = 120,
                 MaximumTargets = 1,
-                Resolution = SpellResolutionKind.SpellAttack,
+                Targets = SpellTargetDisposition.Enemies,                Resolution = SpellResolutionKind.SpellAttack,
                 SaveOutcome = SpellSaveOutcome.Negates,
                 AttackBonus = 5,
                 SaveDc = 13,
@@ -186,7 +194,7 @@ internal static class SpellTestData
                 RangeKind = SpellRangeKind.Ranged,
                 RangeFeet = 60,
                 MaximumTargets = 1,
-                Resolution = SpellResolutionKind.SavingThrow,
+                Targets = SpellTargetDisposition.Enemies,                Resolution = SpellResolutionKind.SavingThrow,
                 SaveAbility = Ability.Dexterity,
                 SaveOutcome = SpellSaveOutcome.Negates,
                 AttackBonus = 5,
@@ -212,7 +220,7 @@ internal static class SpellTestData
                 CastingTime = SpellCastingTime.Action,
                 RangeKind = SpellRangeKind.Touch,
                 MaximumTargets = 1,
-                Resolution = SpellResolutionKind.Automatic,
+                Targets = SpellTargetDisposition.Allies,                Resolution = SpellResolutionKind.Automatic,
                 SaveOutcome = SpellSaveOutcome.Negates,
                 AttackBonus = 5,
                 SaveDc = 13,
@@ -237,7 +245,7 @@ internal static class SpellTestData
                 RangeKind = SpellRangeKind.Ranged,
                 RangeFeet = 60,
                 MaximumTargets = 1,
-                Resolution = SpellResolutionKind.Automatic,
+                Targets = SpellTargetDisposition.Allies,                Resolution = SpellResolutionKind.Automatic,
                 SaveOutcome = SpellSaveOutcome.Negates,
                 AttackBonus = 5,
                 SaveDc = 13,
@@ -262,7 +270,7 @@ internal static class SpellTestData
                 RangeKind = SpellRangeKind.Ranged,
                 RangeFeet = 120,
                 MaximumTargets = 3,
-                Resolution = SpellResolutionKind.Automatic,
+                Targets = SpellTargetDisposition.Enemies,                Resolution = SpellResolutionKind.Automatic,
                 SaveOutcome = SpellSaveOutcome.Negates,
                 AttackBonus = 5,
                 SaveDc = 13,
@@ -277,7 +285,54 @@ internal static class SpellTestData
                         DamageType = "damage.force"
                     }
                 ]
-            }
+            },
+            CreateConcentrationSpell(
+                Bless,
+                "Bless",
+                BlessEffect,
+                maximumTargets: 3),
+            CreateConcentrationSpell(
+                Shield,
+                "Shield of Faith",
+                ShieldEffect,
+                maximumTargets: 1)
         ];
+    }
+
+    /// Two spells that are sustained, so that starting one can be seen to drop
+    /// the other.
+    private static SpellAttack CreateConcentrationSpell(
+        string spellId,
+        string name,
+        string effectId,
+        int maximumTargets)
+    {
+        return new SpellAttack
+        {
+            SpellId = spellId,
+            SpellName = name,
+            Level = 1,
+            SlotResourceId = FirstLevelSlot,
+            CastingTime = SpellCastingTime.Action,
+            RangeKind = SpellRangeKind.Ranged,
+            RangeFeet = 30,
+            MaximumTargets = maximumTargets,
+            Targets = SpellTargetDisposition.Allies,
+            Resolution = SpellResolutionKind.Automatic,
+            SaveOutcome = SpellSaveOutcome.Negates,
+            AttackBonus = 5,
+            SaveDc = 13,
+            AppliedEffectId = effectId,
+            RequiresConcentration = true,
+            DurationRounds = 10,
+            AppliedContributions =
+            [
+                new RollContributionDefinition
+                {
+                    Target = RollContributionTarget.AttackRoll,
+                    Dice = new DamageDice { Count = 1, Die = DieType.D4 }
+                }
+            ]
+        };
     }
 }

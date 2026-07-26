@@ -8,6 +8,12 @@ public sealed record EncounterSpellCastCommand
 
     public required string TargetCombatantId { get; init; }
 
+    /// Everyone else the spell reaches. Bless takes up to three; a spell that
+    /// takes one leaves this empty. The first target is named separately
+    /// because every spell has at least one.
+    public IReadOnlyList<string> AdditionalTargetCombatantIds { get; init; }
+        = Array.Empty<string>();
+
     public required string SpellId { get; init; }
 
     /// The caster's attack roll. Required for a spell resolved by one, and

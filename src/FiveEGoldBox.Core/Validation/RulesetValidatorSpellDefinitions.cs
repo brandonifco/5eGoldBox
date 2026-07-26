@@ -7,10 +7,24 @@ public static partial class RulesetValidator
 {
     private static void AddSpellDefinitionIssues(
         List<ValidationIssue> issues,
-        IReadOnlyList<SpellDefinition> spells)
+        IReadOnlyList<SpellDefinition> spells,
+        IReadOnlyList<EffectDefinition> effects)
     {
+        HashSet<string> declaredEffects = new(
+            effects.Select(effect => effect.Id),
+            StringComparer.Ordinal);
+
         foreach (SpellDefinition spell in spells)
         {
+            if (spell.AppliedEffectId is not null
+                && !declaredEffects.Contains(spell.AppliedEffectId))
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "ruleset.spells.effect_unknown",
+                    $"Ruleset spell '{spell.Id}' applies undeclared effect '{spell.AppliedEffectId}'."));
+            }
+
             string subject = $"Ruleset spell '{spell.Id}'";
 
             AddSpellCostIssues(issues, spell, subject);
@@ -218,6 +232,54 @@ public static partial class RulesetValidator
                 ValidationSeverity.Error,
                 "ruleset.spells.duration.effect_instantaneous",
                 $"{subject} installs an effect that expires immediately."));
+        }
+    }
+
+    private static void AddEffectDefinitionIssues(
+        List<ValidationIssue> issues,
+        IReadOnlyList<EffectDefinition> effects)
+    {
+        foreach (EffectDefinition effect in effects)
+        {
+            string subject = $"Ruleset effect '{effect.Id}'";
+
+            if (effect.Contributions.Count == 0)
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "ruleset.effects.contributes_nothing",
+                    $"{subject} changes nothing."));
+            }
+
+            foreach (RollContributionDefinition contribution
+                in effect.Contributions)
+            {
+                if (!Enum.IsDefined(contribution.Target))
+                {
+                    issues.Add(new ValidationIssue(
+                        ValidationSeverity.Error,
+                        "ruleset.effects.target_undefined",
+                        $"{subject} changes an undefined kind of roll."));
+                }
+
+                if (contribution.Dice is null
+                    && contribution.FlatBonus == 0)
+                {
+                    issues.Add(new ValidationIssue(
+                        ValidationSeverity.Error,
+                        "ruleset.effects.contribution_empty",
+                        $"{subject} contributes neither dice nor a bonus."));
+                }
+
+                if (contribution.Dice is not null
+                    && !Enum.IsDefined(contribution.Dice.Die))
+                {
+                    issues.Add(new ValidationIssue(
+                        ValidationSeverity.Error,
+                        "ruleset.effects.die_undefined",
+                        $"{subject} rolls undefined die '{(int)contribution.Dice.Die}'."));
+                }
+            }
         }
     }
 }
