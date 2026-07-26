@@ -92,7 +92,32 @@ internal static class WatchtowerScenarioContent
 
     internal static ValidatedRuleset CreateRuleset()
     {
-        RulesetDefinition definition = new()
+        return Load(CreateRulesetDefinition());
+    }
+
+    /// Exposed unloaded so tests can derive variants from the authored
+    /// ruleset rather than keeping a parallel copy of it, which is how the
+    /// raiders' weapons went missing from one and not the other.
+    internal static ValidatedRuleset Load(
+        RulesetDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+
+        RulesetLoadResult load =
+            ApplicationRulesetLoader.Load(definition);
+
+        if (!load.IsValid || load.Ruleset is null)
+        {
+            throw new InvalidOperationException(
+                "The canonical watchtower ruleset could not be validated.");
+        }
+
+        return load.Ruleset;
+    }
+
+    internal static RulesetDefinition CreateRulesetDefinition()
+    {
+        return new RulesetDefinition
         {
             Id = RulesetId,
             Name = "Watchtower Test Ruleset",
@@ -148,17 +173,6 @@ internal static class WatchtowerScenarioContent
                 }
             ]
         };
-
-        RulesetLoadResult load =
-            ApplicationRulesetLoader.Load(definition);
-
-        if (!load.IsValid || load.Ruleset is null)
-        {
-            throw new InvalidOperationException(
-                "The canonical watchtower ruleset could not be validated.");
-        }
-
-        return load.Ruleset;
     }
 
     private static PartyMemberState CreatePartyMember(
@@ -349,6 +363,50 @@ internal static class WatchtowerScenarioContent
                 AmmunitionItemId =
                     WatchtowerPartyDefinitions
                         .RangerAmmunitionItemId
+            },
+            // The raiders' gear. It lives in the ruleset like everyone
+            // else's now that the scenario's combatants resolve their
+            // weapons from it rather than carrying hand-built profiles.
+            new WeaponDefinition
+            {
+                Id = WatchtowerSignalEncounter
+                    .MeleeRaiderWeaponId,
+                Name = "Raider Scimitar",
+                Category = WeaponCategory.Martial,
+                AttackKind = WeaponAttackKind.Melee,
+                Damage = new DamageDice
+                {
+                    Count = 1,
+                    Die = DieType.D6
+                },
+                DamageType = "damage.slashing",
+                Properties =
+                [
+                    RuleIds.WeaponProperties.Finesse
+                ],
+                ReachFeet = 5
+            },
+            new WeaponDefinition
+            {
+                Id = WatchtowerSignalEncounter
+                    .RangedRaiderWeaponId,
+                Name = "Raider Shortbow",
+                Category = WeaponCategory.Simple,
+                AttackKind = WeaponAttackKind.Ranged,
+                Damage = new DamageDice
+                {
+                    Count = 1,
+                    Die = DieType.D6
+                },
+                DamageType = "damage.piercing",
+                Properties =
+                [
+                    RuleIds.WeaponProperties.Ammunition
+                ],
+                NormalRangeFeet = 80,
+                LongRangeFeet = 320,
+                AmmunitionItemId = WatchtowerSignalEncounter
+                    .RangedRaiderAmmunitionItemId
             }
         ];
     }

@@ -1,3 +1,4 @@
+using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 using FiveEGoldBox.Core.Validation;
 
@@ -110,6 +111,44 @@ internal static partial class ScenarioDefinitionValidator
         }
     }
 
+    /// Every ability, exactly once. A missing modifier would only surface when
+    /// something asked this combatant for that saving throw, which could be
+    /// most of the way through an adventure.
+    private static void AddAbilityModifierIssues(
+        CombatantDefinition combatant,
+        string subject,
+        List<ValidationIssue> issues)
+    {
+        HashSet<Ability> declared = [];
+
+        foreach (CombatantAbilityModifier modifier
+            in combatant.AbilityModifiers)
+        {
+            if (!Enum.IsDefined(modifier.Ability))
+            {
+                issues.Add(Error(
+                    "scenario.combatants.ability_undefined",
+                    $"{subject} declares a modifier for undefined ability '{(int)modifier.Ability}'."));
+                continue;
+            }
+
+            if (!declared.Add(modifier.Ability))
+            {
+                issues.Add(Error(
+                    "scenario.combatants.ability_duplicate",
+                    $"{subject} declares ability '{modifier.Ability}' more than once."));
+            }
+        }
+
+        foreach (Ability ability in Enum.GetValues<Ability>()
+            .Where(ability => !declared.Contains(ability)))
+        {
+            issues.Add(Error(
+                "scenario.combatants.ability_missing",
+                $"{subject} declares no modifier for ability '{ability}'."));
+        }
+    }
+
     private static void AddCombatantIssues(
         EncounterDefinition encounter,
         HashSet<GridPosition> blocked,
@@ -139,6 +178,15 @@ internal static partial class ScenarioDefinitionValidator
                 combatant.CombatantId,
                 "scenario.combatants.id_required",
                 "Combatant IDs must not be blank.");
+            AddAbilityModifierIssues(combatant, subject, issues);
+
+            if (combatant.ProficiencyBonus < 0)
+            {
+                issues.Add(Error(
+                    "scenario.combatants.proficiency_negative",
+                    $"{subject} has a negative proficiency bonus."));
+            }
+
             AddIfBlank(
                 issues,
                 combatant.SideId,

@@ -130,10 +130,22 @@ public static class ScenarioTriggerRules
                 });
         }
 
+        EncounterDefinition encounterDefinition =
+            ScenarioDefinitionRegistry
+                .Resolve(canonicalSession)
+                .Encounters
+                .FirstOrDefault(candidate => string.Equals(
+                    candidate.EncounterId,
+                    trigger.EncounterId,
+                    StringComparison.Ordinal))
+            ?? throw new InvalidOperationException(
+                $"Trigger '{trigger.TriggerId}' starts encounter '{trigger.EncounterId}', which this scenario does not declare.");
+
         ExplorationState returnContext =
             canonicalSession.Exploration!;
         EncounterState encounter =
-            WatchtowerSignalEncounter.Create(
+            ScenarioEncounterFactory.Create(
+                encounterDefinition,
                 canonicalSession.Party,
                 resolveRuleset(),
                 canonicalSession.RandomSeed,
