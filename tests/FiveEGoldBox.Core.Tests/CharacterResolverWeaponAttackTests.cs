@@ -1,6 +1,7 @@
 using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
+using FiveEGoldBox.Core.Tests.Builders;
 
 namespace FiveEGoldBox.Core.Tests;
 
@@ -256,7 +257,7 @@ public sealed class CharacterResolverWeaponAttackTests
             Name = "Test Ruleset",
             Races =
             [
-                CreateHumanRace()
+                TestRulesetBuilder.HumanRace()
             ],
             Classes =
             [
@@ -279,7 +280,7 @@ public sealed class CharacterResolverWeaponAttackTests
             Name = "Simple Only Ruleset",
             Races =
             [
-                CreateHumanRace()
+                TestRulesetBuilder.HumanRace()
             ],
             Classes =
             [
@@ -309,7 +310,7 @@ public sealed class CharacterResolverWeaponAttackTests
             Name = "Longsword Only Ruleset",
             Races =
             [
-                CreateHumanRace()
+                TestRulesetBuilder.HumanRace()
             ],
             Classes =
             [
@@ -331,28 +332,6 @@ public sealed class CharacterResolverWeaponAttackTests
         };
     }
 
-    private static RaceDefinition CreateHumanRace()
-    {
-        return new RaceDefinition
-        {
-            Id = "race.human",
-            Name = "Human",
-            BaseSpeedFeet = 30,
-            AbilityScoreIncreases =
-            [
-                new AbilityScoreIncrease(Ability.Strength, 1),
-                new AbilityScoreIncrease(Ability.Dexterity, 1),
-                new AbilityScoreIncrease(Ability.Constitution, 1),
-                new AbilityScoreIncrease(Ability.Intelligence, 1),
-                new AbilityScoreIncrease(Ability.Wisdom, 1),
-                new AbilityScoreIncrease(Ability.Charisma, 1)
-            ],
-            Languages =
-            [
-                "language.common"
-            ]
-        };
-    }
 
     private static ClassDefinition CreateFighterClass()
     {

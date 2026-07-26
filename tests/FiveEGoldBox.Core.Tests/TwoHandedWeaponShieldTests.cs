@@ -2,6 +2,7 @@ using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Validation;
+using FiveEGoldBox.Core.Tests.Builders;
 
 namespace FiveEGoldBox.Core.Tests;
 
@@ -132,7 +133,7 @@ public sealed class TwoHandedWeaponShieldTests
             Weapons =
             [
                 CreateGreatsword(),
-                CreateLongsword()
+                TestRulesetBuilder.Longsword()
             ]
         };
     }
@@ -161,31 +162,4 @@ public sealed class TwoHandedWeaponShieldTests
         };
     }
 
-    private static WeaponDefinition CreateLongsword()
-    {
-        return new WeaponDefinition
-        {
-            Id = "weapon.longsword",
-            Name = "Longsword",
-            Category = WeaponCategory.Martial,
-            AttackKind = WeaponAttackKind.Melee,
-            Damage = new DamageDice
-            {
-                Count = 1,
-                Die = DieType.D8
-            },
-            VersatileDamage = new DamageDice
-            {
-                Count = 1,
-                Die = DieType.D10
-            },
-            DamageType = "damage.slashing",
-            Properties =
-            [
-                "weapon_property.versatile"
-            ],
-            WeightPounds = 3m,
-            CostInCopperPieces = 1500
-        };
-    }
 }
