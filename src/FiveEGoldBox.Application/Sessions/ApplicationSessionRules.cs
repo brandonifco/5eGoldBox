@@ -270,6 +270,8 @@ internal static class ApplicationSessionRules
         {
             ValidateAmmunition(member.Ammunition);
         }
+
+        ValidateResources(member);
     }
 
     private static void ValidateHealth(
@@ -400,6 +402,53 @@ internal static class ApplicationSessionRules
             throw new ArgumentException(
                 "A combatant defeated at 0 hit points cannot be dead or have death saving throw progress.",
                 nameof(health));
+        }
+    }
+
+    /// A resource is coherent on its own terms: it exists once, it has a
+    /// ceiling, and it is somewhere between empty and full. What the ceiling
+    /// should be is the campaign's business, not the engine's.
+    private static void ValidateResources(
+        PartyMemberState member)
+    {
+        ArgumentNullException.ThrowIfNull(member.Resources);
+
+        HashSet<string> resourceIds = new(StringComparer.Ordinal);
+
+        foreach (CharacterResourceState resource in member.Resources)
+        {
+            ArgumentNullException.ThrowIfNull(resource);
+
+            if (string.IsNullOrWhiteSpace(resource.ResourceId))
+            {
+                throw new ArgumentException(
+                    "Resource ID is required.",
+                    nameof(member));
+            }
+
+            if (!resourceIds.Add(resource.ResourceId))
+            {
+                throw new ArgumentException(
+                    $"Resource '{resource.ResourceId}' is declared twice.",
+                    nameof(member));
+            }
+
+            if (resource.Maximum <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(member),
+                    resource.Maximum,
+                    $"Resource '{resource.ResourceId}' must have a positive maximum.");
+            }
+
+            if (resource.Remaining < 0
+                || resource.Remaining > resource.Maximum)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(member),
+                    resource.Remaining,
+                    $"Resource '{resource.ResourceId}' is outside its own range.");
+            }
         }
     }
 

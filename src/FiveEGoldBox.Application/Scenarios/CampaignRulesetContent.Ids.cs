@@ -11,6 +11,12 @@ internal static partial class CampaignRulesetContent
     internal const string RangerDefinitionId =
         "character.ranger";
 
+    internal const string ClericClassId =
+        "class.cleric";
+
+    internal const string WizardClassId =
+        "class.wizard";
+
     internal const string FighterClassId =
         "class.fighter";
 

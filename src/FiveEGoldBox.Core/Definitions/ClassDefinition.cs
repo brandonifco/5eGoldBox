@@ -29,4 +29,16 @@ public sealed record ClassDefinition
 
     public IReadOnlyDictionary<int, IReadOnlyList<string>> FeaturesByLevel { get; init; }
         = new Dictionary<int, IReadOnlyList<string>>();
+
+    /// The ability this class casts with. Null for a class that does not cast.
+    public Ability? SpellcastingAbility { get; init; }
+
+    /// Slots this class has, keyed by slot level. Derived at character
+    /// creation the way hit points are derived from the hit die, so a
+    /// character does not restate what its class already says.
+    ///
+    /// There is no character-level dimension because every character is level
+    /// one. Advancement is what adds it.
+    public IReadOnlyDictionary<int, int> SpellSlotsByLevel { get; init; }
+        = new Dictionary<int, int>();
 }

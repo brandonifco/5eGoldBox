@@ -15,4 +15,10 @@ internal sealed record SavePartyMemberV1
     public required SaveHealthV1 Health { get; init; }
 
     public SaveAmmunitionV1? Ammunition { get; init; }
+
+    /// Added after the format was first written. A document from before it
+    /// omits the property entirely and loads with no resources, which is
+    /// exactly right for a party that had none.
+    public IReadOnlyList<SaveCharacterResourceV1> Resources { get; init; }
+        = Array.Empty<SaveCharacterResourceV1>();
 }
