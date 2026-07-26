@@ -490,6 +490,30 @@ public sealed class ManualSaveSerializerTests
         JsonObject session = GetObject(
             save,
             "Session");
+        session["CurrentMode"] = "UnknownMode";
+
+        ManualSaveLoadResult result =
+            ManualSaveSerializer.Deserialize(
+                save.ToJsonString());
+
+        AssertFailure(
+            result,
+            ManualSaveLoadFailureReason
+                .MalformedSerializedData);
+    }
+
+    /// A progress marker is an opaque string in the save format, so an
+    /// unrecognised one is well-formed data describing an invalid session
+    /// rather than malformed data. The scenario it names is what rejects it.
+    [Fact]
+    public void Deserialize_WithProgressOutsideScenarioVocabulary_ReturnsStructuredFailure()
+    {
+        JsonObject save = ParseSave(
+            ManualSaveSerializer.Serialize(
+                CreateRoundTripSession()));
+        JsonObject session = GetObject(
+            save,
+            "Session");
         JsonObject scenario = GetObject(
             session,
             "Scenario");
@@ -502,7 +526,7 @@ public sealed class ManualSaveSerializerTests
         AssertFailure(
             result,
             ManualSaveLoadFailureReason
-                .MalformedSerializedData);
+                .InvalidSessionState);
     }
 
     [Fact]
