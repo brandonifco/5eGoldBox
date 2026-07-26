@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatDecision
+internal sealed record WatchtowerCombatDecision
 {
     public required WatchtowerCombatDecisionState State { get; init; }
 

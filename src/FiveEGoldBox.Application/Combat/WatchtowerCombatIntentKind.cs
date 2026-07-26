@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Combat;
 
-public enum WatchtowerCombatIntentKind
+internal enum WatchtowerCombatIntentKind
 {
     Move,
     WeaponAttack,

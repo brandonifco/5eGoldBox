@@ -2,7 +2,7 @@ using FiveEGoldBox.Application.Sessions;
 
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatResolutionResult
+internal sealed record WatchtowerCombatResolutionResult
 {
     public required WatchtowerCombatDecision StartingDecision { get; init; }
 

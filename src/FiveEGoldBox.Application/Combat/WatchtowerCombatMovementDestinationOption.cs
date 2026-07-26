@@ -2,7 +2,7 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatMovementDestinationOption
+internal sealed record WatchtowerCombatMovementDestinationOption
 {
     public required GridPosition Destination { get; init; }
 

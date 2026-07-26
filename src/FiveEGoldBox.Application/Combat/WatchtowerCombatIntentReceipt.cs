@@ -2,7 +2,7 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatIntentReceipt
+internal sealed record WatchtowerCombatIntentReceipt
 {
     public required WatchtowerCombatIntentKind Kind { get; init; }
 

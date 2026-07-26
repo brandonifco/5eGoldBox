@@ -3,7 +3,7 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatTargetOption
+internal sealed record WatchtowerCombatTargetOption
 {
     public required string TargetCombatantId { get; init; }
 

@@ -2,7 +2,7 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatEndTurnOption
+internal sealed record WatchtowerCombatEndTurnOption
 {
     public required bool IsAvailable { get; init; }
 
