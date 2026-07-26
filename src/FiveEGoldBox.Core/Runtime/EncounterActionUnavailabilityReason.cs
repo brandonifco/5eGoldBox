@@ -20,5 +20,6 @@ public enum EncounterActionUnavailabilityReason
     WeaponUnavailable,
     TargetOutOfRange,
     LineOfSightBlocked,
-    AmmunitionUnavailable
+    AmmunitionUnavailable,
+    SpellUnavailable
 }

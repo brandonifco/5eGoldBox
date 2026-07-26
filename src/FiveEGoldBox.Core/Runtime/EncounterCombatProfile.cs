@@ -9,6 +9,9 @@ public sealed record EncounterCombatProfile
     public IReadOnlyList<WeaponAttack> WeaponAttacks { get; init; }
         = Array.Empty<WeaponAttack>();
 
+    public IReadOnlyList<SpellAttack> SpellAttacks { get; init; }
+        = Array.Empty<SpellAttack>();
+
     public IReadOnlyList<SavingThrowBonus> SavingThrowBonuses { get; init; }
         = Array.Empty<SavingThrowBonus>();
 
