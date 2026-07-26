@@ -104,11 +104,15 @@ Ongoing, not a gate — keep doing this throughout Phases 6 and 7 rather than as
 
 ### Phase 10 — 5e mechanical completeness
 
-- Wire full mechanical effects for all 15 Conditions into attack/save/movement rules (currently only immunity-gating exists)
+> **Superseded in part, 2026-07-26.** `docs/supported-scope-matrix.md` is marked *Accepted baseline* and commits **Prone** as the only reusable combat condition for the slice, alongside the health/lifecycle states. `docs/game-development-goals.md` states the governing principle directly: *"Do not implement every condition at once. Implement the conditions required by current spells, monsters, traps, and environments."* The "all 15 Conditions" item below was written before those documents were read, and does not govern. **Mechanics are built when authored content needs them.** Content leads; this phase follows Phase 9 rather than standing beside it.
+
+- ~~Wire full mechanical effects for all 15 Conditions into attack/save/movement rules~~ — superseded; implement Prone properly, then whatever authored content actually requires (currently only immunity-gating exists)
 - Execute the spellcasting scope decision from short-term Priority 3 — if "yes," this is a substantial new Core subsystem, not a small addition
 - A structured rules-coverage audit against the two locally-held rulebook references, to surface further gaps before they're discovered mid-content-authoring
 
 ### Phase 11 — The Godot client
+
+> **Scoped down, 2026-07-26.** `src/FiveEGoldBox.Godot/` is the user's in-progress work, untracked and actively edited. Phase 11 as executed here means **engine-side only**: the read models, facades and command surfaces a UI client needs, with tests, on the engine side of the boundary. Wiring `AppShell` is the user's.
 
 The single largest remaining unit of work in the project:
 
