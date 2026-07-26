@@ -166,6 +166,7 @@ internal static class EncounterWeaponAttackPrerequisiteRules
             ResolveAttackRollMode(
                 state,
                 actor,
+                target,
                 weapon,
                 distanceFeet);
 
@@ -374,6 +375,7 @@ internal static class EncounterWeaponAttackPrerequisiteRules
     private static D20RollMode? ResolveAttackRollMode(
         EncounterState state,
         EncounterParticipantState actor,
+        EncounterParticipantState target,
         WeaponAttack weapon,
         int distanceFeet)
     {
@@ -410,7 +412,8 @@ internal static class EncounterWeaponAttackPrerequisiteRules
 
         bool hasAdvantage =
             weapon.AttackRollMode
-            == D20RollMode.Advantage;
+                == D20RollMode.Advantage
+            || IsIncapacitatedTarget(target);
 
         bool hasDisadvantage =
             weapon.AttackRollMode
@@ -424,6 +427,22 @@ internal static class EncounterWeaponAttackPrerequisiteRules
         return D20Rules.ResolveRollMode(
             hasAdvantage,
             hasDisadvantage);
+    }
+
+    /// A creature that has dropped is unconscious, and an unconscious creature
+    /// is also prone. Both conditions give attacks against it advantage, which
+    /// is why a downed combatant is in real danger rather than merely out of
+    /// the fight.
+    ///
+    /// The lifecycle state is the whole of it for now: nothing yet applies a
+    /// condition to a combatant who is still standing, so there is no
+    /// condition state to read. When something does, this is where it joins.
+    private static bool IsIncapacitatedTarget(
+        EncounterParticipantState target)
+    {
+        return target.Combatant.LifecycleState
+            is CombatantLifecycleState.Dying
+                or CombatantLifecycleState.Stable;
     }
 
     private static bool HasAdjacentConsciousHostile(
