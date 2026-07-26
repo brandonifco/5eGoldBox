@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
@@ -196,6 +197,10 @@ internal static class EncounterWeaponAttackPrerequisiteRules
             AttackRollMode = attackRollMode,
             DistanceFeet = distanceFeet,
             LineOfSight = lineOfSight,
+            AttackRollContributions =
+                RollContributionRules.Resolve(
+                    actor,
+                    RollContributionTarget.AttackRoll),
             Cover = cover
         };
     }

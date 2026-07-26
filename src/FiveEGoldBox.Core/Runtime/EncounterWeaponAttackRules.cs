@@ -25,7 +25,8 @@ public static class EncounterWeaponAttackRules
             command.TargetCombatantId,
             command.WeaponId,
             command.FirstAttackRoll,
-            command.SecondAttackRoll);
+            command.SecondAttackRoll,
+            command.ContributionRolls);
     }
 
     public static EncounterWeaponAttackResult Resolve(
@@ -46,7 +47,8 @@ public static class EncounterWeaponAttackRules
                 command.TargetCombatantId,
                 command.WeaponId,
                 command.FirstAttackRoll,
-                command.SecondAttackRoll);
+                command.SecondAttackRoll,
+                command.ContributionRolls);
 
         int actorIndex = FindParticipantIndex(
             state,
@@ -173,7 +175,8 @@ public static class EncounterWeaponAttackRules
             string targetCombatantId,
             string weaponId,
             int firstAttackRoll,
-            int? secondAttackRoll)
+            int? secondAttackRoll,
+            IReadOnlyList<int> contributionRolls)
     {
         if (state.LifecycleState
             != EncounterLifecycleState.Active)
@@ -225,12 +228,22 @@ public static class EncounterWeaponAttackRules
                 target.CombatProfile.ArmorClass
                 + prerequisites.Cover.ArmorClassBonus);
 
+        // Whatever the attacker's effects contribute lands in the attack
+        // bonus, because that is what a contribution to an attack roll is —
+        // Bless does not roll a separate d20, it adds a d4 to this one.
+        int attackBonus =
+            checked(
+                weapon.AttackBonus
+                + RollContributionRules.Total(
+                    prerequisites.AttackRollContributions,
+                    contributionRolls));
+
         AttackRollResult attackRoll =
             AttackRollRules.ResolveResult(
                 prerequisites.AttackRollMode!.Value,
                 firstAttackRoll,
                 secondAttackRoll,
-                weapon.AttackBonus,
+                attackBonus,
                 targetArmorClass);
 
         DamageDice? requiredDamageDice =

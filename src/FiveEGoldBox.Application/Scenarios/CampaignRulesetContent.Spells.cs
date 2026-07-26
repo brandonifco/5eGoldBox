@@ -199,8 +199,8 @@ internal static partial class CampaignRulesetContent
     }
 
     /// Proves concentration, several targets, and an effect that outlives the
-    /// casting. Nothing applies the effect yet; the seam that does is the last
-    /// step of this design.
+    /// casting — and, through the contributions that effect carries, that a
+    /// feature can change a roll somebody else makes.
     private static SpellDefinition CreateBless()
     {
         return new SpellDefinition

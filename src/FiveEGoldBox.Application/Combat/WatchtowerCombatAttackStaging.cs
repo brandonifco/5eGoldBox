@@ -24,7 +24,8 @@ internal static class WatchtowerCombatAttackStaging
             evaluation.IsLegal,
             evaluation.UnavailabilityReason,
             evaluation.AttackRollMode,
-            evaluation.DistanceFeet);
+            evaluation.DistanceFeet,
+            evaluation.AttackRollContributions);
     }
 
     internal static WatchtowerCombatAttackExecution Resolve(
@@ -81,6 +82,33 @@ internal static class WatchtowerCombatAttackStaging
                 WatchtowerCombatDiePurpose.AttackRoll));
         }
 
+        // Whatever the attacker's effects add to the roll is rolled here,
+        // after the d20s and before the damage, because the contribution can
+        // turn a miss into a hit and so decides whether damage is rolled at
+        // all.
+        List<int> contributionValues = [];
+
+        foreach (DieType die
+            in availability.AttackRollContributions
+                .RequiredDice)
+        {
+            ApplicationRandomRoll contribution =
+                ApplicationRandomSequence.GenerateDie(
+                    seed,
+                    nextCursor,
+                    die);
+
+            nextCursor = contribution.UpdatedValuesConsumed;
+            contributionValues.Add(contribution.Value);
+            dice.Add(CreateDie(
+                contribution,
+                WatchtowerCombatDiePurpose.AttackRoll));
+        }
+
+        IReadOnlyList<int> contributionRolls =
+            Array.AsReadOnly(
+                contributionValues.ToArray());
+
         CombatAttackEvaluation evaluation =
             CombatAttackStaging.Evaluate(
                 encounter,
@@ -89,7 +117,8 @@ internal static class WatchtowerCombatAttackStaging
                 targetCombatantId,
                 weaponId,
                 first.Value,
-                secondValue);
+                secondValue,
+                contributionRolls);
 
         List<int> damageValues = [];
         DamageDice? requiredDamage =
@@ -126,6 +155,7 @@ internal static class WatchtowerCombatAttackStaging
                     WeaponId = weaponId,
                     FirstAttackRoll = first.Value,
                     SecondAttackRoll = secondValue,
+                    ContributionRolls = contributionRolls,
                     DamageRolls = Array.AsReadOnly(
                         damageValues.ToArray())
                 });
@@ -154,7 +184,8 @@ internal sealed record WatchtowerCombatAttackAvailability(
     bool IsLegal,
     EncounterActionUnavailabilityReason UnavailabilityReason,
     D20RollMode? AttackRollMode,
-    int? DistanceFeet);
+    int? DistanceFeet,
+    RollContributionSet AttackRollContributions);
 
 internal sealed record WatchtowerCombatAttackExecution(
     EncounterWeaponAttackResult Result,

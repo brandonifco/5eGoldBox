@@ -143,6 +143,12 @@ public static class EncounterSpellPrerequisiteRules
             AttackRollMode = ResolveAttackRollMode(spell, target),
             DistanceFeet = distanceFeet,
             LineOfSight = lineOfSight,
+            AttackRollContributions = RollContributionRules.Resolve(
+                actor,
+                RollContributionTarget.AttackRoll),
+            SavingThrowContributions = RollContributionRules.Resolve(
+                target,
+                RollContributionTarget.SavingThrow),
             Cover = EncounterCoverRules.Evaluate(
                 state.Battlefield,
                 lineOfSight)

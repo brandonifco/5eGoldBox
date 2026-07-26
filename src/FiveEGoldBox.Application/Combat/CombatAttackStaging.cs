@@ -23,7 +23,8 @@ internal static class CombatAttackStaging
             evaluation.IsLegal,
             evaluation.UnavailabilityReason,
             evaluation.AttackRollMode,
-            evaluation.DistanceFeet);
+            evaluation.DistanceFeet,
+            evaluation.AttackRollContributions);
     }
 
     internal static CombatAttackEvaluation Evaluate(
@@ -33,7 +34,8 @@ internal static class CombatAttackStaging
         string targetCombatantId,
         string weaponId,
         int firstAttackRoll,
-        int? secondAttackRoll)
+        int? secondAttackRoll,
+        IReadOnlyList<int> contributionRolls)
     {
         EncounterWeaponAttackEvaluation evaluation =
             EncounterWeaponAttackRules.Evaluate(
@@ -45,7 +47,8 @@ internal static class CombatAttackStaging
                     TargetCombatantId = targetCombatantId,
                     WeaponId = weaponId,
                     FirstAttackRoll = firstAttackRoll,
-                    SecondAttackRoll = secondAttackRoll
+                    SecondAttackRoll = secondAttackRoll,
+                    ContributionRolls = contributionRolls
                 });
 
         return new CombatAttackEvaluation(
@@ -57,7 +60,8 @@ internal sealed record CombatAttackAvailability(
     bool IsLegal,
     EncounterActionUnavailabilityReason UnavailabilityReason,
     D20RollMode? AttackRollMode,
-    int? DistanceFeet);
+    int? DistanceFeet,
+    RollContributionSet AttackRollContributions);
 
 internal sealed record CombatAttackEvaluation(
     DamageDice? RequiredDamageDice);
