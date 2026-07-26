@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Validation;
 
@@ -10,6 +11,7 @@ public static partial class RulesetValidator
     {
         foreach (ClassDefinition characterClass in ruleset.Classes)
         {
+            AddClassHitDieIssue(issues, characterClass);
             AddClassSkillChoiceCountIssues(issues, characterClass);
             AddClassFeatureIssues(issues, characterClass);
         }
@@ -18,6 +20,23 @@ public static partial class RulesetValidator
         {
             AddBackgroundFeatureIssue(issues, background);
         }
+    }
+
+    /// A class whose hit die nothing can size would otherwise get as far as
+    /// somebody rolling up a character before it failed.
+    private static void AddClassHitDieIssue(
+        List<ValidationIssue> issues,
+        ClassDefinition characterClass)
+    {
+        if (HitDiceRules.IsSupported(characterClass.HitDie))
+        {
+            return;
+        }
+
+        issues.Add(new ValidationIssue(
+            ValidationSeverity.Error,
+            "ruleset.classes.hit_die.unsupported",
+            $"Ruleset class '{characterClass.Id}' has unsupported hit die '{characterClass.HitDie}'."));
     }
 
     private static void AddClassSkillChoiceCountIssues(

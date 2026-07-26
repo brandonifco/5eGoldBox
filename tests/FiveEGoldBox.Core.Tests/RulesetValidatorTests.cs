@@ -770,6 +770,135 @@ public sealed class RulesetValidatorTests
         Assert.True(result.IsValid);
     }
 
+    /// 5e classes use d6 through d12. A ruleset naming anything else would
+    /// otherwise get as far as somebody rolling up a character before it
+    /// failed.
+    [Theory]
+    [InlineData(DieType.D4)]
+    [InlineData(DieType.D20)]
+    public void Validate_WithUnsupportedClassHitDie_ReturnsError(
+        DieType hitDie)
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Classes =
+            [
+                CreateClass("class.fighter", "Fighter") with
+                {
+                    HitDie = hitDie
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.classes.hit_die.unsupported");
+    }
+
+    [Theory]
+    [InlineData(DieType.D6)]
+    [InlineData(DieType.D8)]
+    [InlineData(DieType.D10)]
+    [InlineData(DieType.D12)]
+    public void Validate_WithSupportedClassHitDie_ReturnsSuccess(
+        DieType hitDie)
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Classes =
+            [
+                CreateClass("class.fighter", "Fighter") with
+                {
+                    HitDie = hitDie
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.True(result.IsValid);
+    }
+
+    /// A damage die outside the enum entirely.
+    [Fact]
+    public void Validate_WithUndefinedWeaponDamageDie_ReturnsError()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Weapons =
+            [
+                new WeaponDefinition
+                {
+                    Id = "weapon.broken",
+                    Name = "Broken Weapon",
+                    Category = WeaponCategory.Simple,
+                    AttackKind = WeaponAttackKind.Melee,
+                    Damage = new DamageDice
+                    {
+                        Count = 1,
+                        Die = (DieType)7
+                    },
+                    DamageType = "damage.slashing"
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.weapons.damage_die.undefined");
+    }
+
+    [Fact]
+    public void Validate_WithUndefinedVersatileDamageDie_ReturnsError()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Weapons =
+            [
+                new WeaponDefinition
+                {
+                    Id = "weapon.versatile",
+                    Name = "Versatile Weapon",
+                    Category = WeaponCategory.Martial,
+                    AttackKind = WeaponAttackKind.Melee,
+                    Damage = new DamageDice
+                    {
+                        Count = 1,
+                        Die = DieType.D8
+                    },
+                    VersatileDamage = new DamageDice
+                    {
+                        Count = 1,
+                        Die = (DieType)9
+                    },
+                    DamageType = "damage.slashing",
+                    Properties = [RuleIds.WeaponProperties.Versatile]
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "ruleset.weapons.damage_die.undefined");
+    }
+
     private static RaceDefinition CreateRace(string id, string name)
     {
         return new RaceDefinition

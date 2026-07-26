@@ -1,5 +1,6 @@
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Parties;
+using FiveEGoldBox.Application.Randomness;
 using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
@@ -149,7 +150,7 @@ internal static class WatchtowerScenarioContent
         };
 
         RulesetLoadResult load =
-            ValidatedRuleset.Load(definition);
+            ApplicationRulesetLoader.Load(definition);
 
         if (!load.IsValid || load.Ruleset is null)
         {
