@@ -161,7 +161,7 @@ internal static class WatchtowerSignalTestData
                 Weapons = definition.Weapons
                     .Where(weapon => !string.Equals(
                         weapon.Id,
-                        WatchtowerPartyDefinitions.RangerWeaponId,
+                        CampaignRulesetContent.RangerWeaponId,
                         StringComparison.Ordinal))
                     .ToArray()
             };
