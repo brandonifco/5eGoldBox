@@ -94,6 +94,7 @@ internal static partial class CampaignRulesetContent
             Skills = CreateSkills(),
             Weapons = CreateWeapons(),
             Spells = CreateSpells(),
+            Effects = CreateEffects(),
             EquipmentItems =
             [
                 new EquipmentItemDefinition

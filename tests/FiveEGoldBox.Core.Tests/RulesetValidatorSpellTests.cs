@@ -189,6 +189,7 @@ public sealed class RulesetValidatorSpellTests
             CastingTime = SpellCastingTime.Action,
             RangeKind = SpellRangeKind.Ranged,
             RangeFeet = 60,
+            Targets = SpellTargetDisposition.Enemies,
             Resolution = SpellResolutionKind.SpellAttack,
             Effects = [Damage()]
         };

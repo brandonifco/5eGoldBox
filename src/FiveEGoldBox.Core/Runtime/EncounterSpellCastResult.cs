@@ -21,6 +21,10 @@ public sealed record EncounterSpellCastResult
     /// Whether the spell had any effect on its target at all.
     public required bool TookEffect { get; init; }
 
+    /// Everyone the spell settled on, in the order it reached them.
+    public IReadOnlyList<string> EffectedCombatantIds { get; init; }
+        = Array.Empty<string>();
+
     public required int DamageDealt { get; init; }
 
     public required int HealingDone { get; init; }

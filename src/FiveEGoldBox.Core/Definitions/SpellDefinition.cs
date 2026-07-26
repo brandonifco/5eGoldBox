@@ -30,6 +30,8 @@ public sealed record SpellDefinition
     /// three. Ignored when the spell only affects its caster.
     public int MaximumTargets { get; init; } = 1;
 
+    public required SpellTargetDisposition Targets { get; init; }
+
     public required SpellResolutionKind Resolution { get; init; }
 
     /// Required when the spell is resolved by a saving throw.

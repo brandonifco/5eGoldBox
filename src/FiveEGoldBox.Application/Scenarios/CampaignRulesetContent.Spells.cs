@@ -25,6 +25,33 @@ internal static partial class CampaignRulesetContent
 
     internal const string BlessEffectId = "effect.bless";
 
+    /// What Bless does while it lasts. Separate from the spell that applies
+    /// it, because installing an effect and being one are different things.
+    private static IReadOnlyList<EffectDefinition> CreateEffects()
+    {
+        return
+        [
+            new EffectDefinition
+            {
+                Id = BlessEffectId,
+                Name = "Blessed",
+                Contributions =
+                [
+                    new RollContributionDefinition
+                    {
+                        Target = RollContributionTarget.AttackRoll,
+                        Dice = new DamageDice { Count = 1, Die = DieType.D4 }
+                    },
+                    new RollContributionDefinition
+                    {
+                        Target = RollContributionTarget.SavingThrow,
+                        Dice = new DamageDice { Count = 1, Die = DieType.D4 }
+                    }
+                ]
+            }
+        ];
+    }
+
     private static IReadOnlyList<SpellDefinition> CreateSpells()
     {
         return
@@ -51,7 +78,7 @@ internal static partial class CampaignRulesetContent
             CastingTime = SpellCastingTime.Action,
             RangeKind = SpellRangeKind.Ranged,
             RangeFeet = 120,
-            Resolution = SpellResolutionKind.SpellAttack,
+            Targets = SpellTargetDisposition.Enemies,            Resolution = SpellResolutionKind.SpellAttack,
             Effects =
             [
                 new SpellEffectDefinition
@@ -77,7 +104,7 @@ internal static partial class CampaignRulesetContent
             CastingTime = SpellCastingTime.Action,
             RangeKind = SpellRangeKind.Ranged,
             RangeFeet = 60,
-            Resolution = SpellResolutionKind.SavingThrow,
+            Targets = SpellTargetDisposition.Enemies,            Resolution = SpellResolutionKind.SavingThrow,
             SaveAbility = Ability.Dexterity,
             SaveOutcome = SpellSaveOutcome.Negates,
             Effects =
@@ -103,7 +130,7 @@ internal static partial class CampaignRulesetContent
             Level = 1,
             CastingTime = SpellCastingTime.Action,
             RangeKind = SpellRangeKind.Touch,
-            Resolution = SpellResolutionKind.Automatic,
+            Targets = SpellTargetDisposition.Allies,            Resolution = SpellResolutionKind.Automatic,
             Effects =
             [
                 new SpellEffectDefinition
@@ -129,7 +156,7 @@ internal static partial class CampaignRulesetContent
             CastingTime = SpellCastingTime.BonusAction,
             RangeKind = SpellRangeKind.Ranged,
             RangeFeet = 60,
-            Resolution = SpellResolutionKind.Automatic,
+            Targets = SpellTargetDisposition.Allies,            Resolution = SpellResolutionKind.Automatic,
             Effects =
             [
                 new SpellEffectDefinition
@@ -157,7 +184,7 @@ internal static partial class CampaignRulesetContent
             RangeKind = SpellRangeKind.Ranged,
             RangeFeet = 120,
             MaximumTargets = 3,
-            Resolution = SpellResolutionKind.Automatic,
+            Targets = SpellTargetDisposition.Enemies,            Resolution = SpellResolutionKind.Automatic,
             Effects =
             [
                 new SpellEffectDefinition
@@ -186,7 +213,7 @@ internal static partial class CampaignRulesetContent
             RangeKind = SpellRangeKind.Ranged,
             RangeFeet = 30,
             MaximumTargets = 3,
-            Resolution = SpellResolutionKind.Automatic,
+            Targets = SpellTargetDisposition.Allies,            Resolution = SpellResolutionKind.Automatic,
             AppliedEffectId = BlessEffectId,
             RequiresConcentration = true,
             DurationRounds = 10

@@ -27,6 +27,9 @@ public sealed record RulesetDefinition
     public IReadOnlyList<SpellDefinition> Spells { get; init; }
         = Array.Empty<SpellDefinition>();
 
+    public IReadOnlyList<EffectDefinition> Effects { get; init; }
+        = Array.Empty<EffectDefinition>();
+
     public IReadOnlyList<EquipmentItemDefinition> EquipmentItems { get; init; }
         = Array.Empty<EquipmentItemDefinition>();
 }

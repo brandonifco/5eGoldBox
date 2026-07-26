@@ -29,6 +29,8 @@ public sealed record SpellAttack
 
     public required int MaximumTargets { get; init; }
 
+    public required SpellTargetDisposition Targets { get; init; }
+
     public required SpellResolutionKind Resolution { get; init; }
 
     /// Set when the spell is resisted by a saving throw.
@@ -46,6 +48,11 @@ public sealed record SpellAttack
         = Array.Empty<SpellAttackEffect>();
 
     public string? AppliedEffectId { get; init; }
+
+    /// What the applied effect contributes, resolved with it rather than
+    /// looked up later.
+    public IReadOnlyList<RollContributionDefinition> AppliedContributions
+    { get; init; } = Array.Empty<RollContributionDefinition>();
 
     public bool RequiresConcentration { get; init; }
 

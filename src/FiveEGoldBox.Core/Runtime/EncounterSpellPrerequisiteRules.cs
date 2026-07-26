@@ -93,19 +93,18 @@ public static class EncounterSpellPrerequisiteRules
                 EncounterActionUnavailabilityReason.SpellSlotUnavailable);
         }
 
-        // Healing is cast on an ally; everything else here is cast at an
-        // enemy. Whether a spell helps or harms is read from what it does
-        // rather than declared twice.
-        if (IsHelpful(spell) != string.Equals(
+        bool isAlly = string.Equals(
             actor.SideId,
             target.SideId,
-            StringComparison.Ordinal))
+            StringComparison.Ordinal);
+
+        if (!IsPermittedTarget(spell, isAlly))
         {
             return Unavailable(
                 EncounterActionUnavailabilityReason.TargetNotHostile);
         }
 
-        if (!IsHelpful(spell) && target.Combatant.IsTerminal)
+        if (!isAlly && target.Combatant.IsTerminal)
         {
             return Unavailable(
                 EncounterActionUnavailabilityReason.TargetCannotBeAttacked);
@@ -205,11 +204,16 @@ public static class EncounterSpellPrerequisiteRules
             && resource.Remaining > 0);
     }
 
-    private static bool IsHelpful(
-        SpellAttack spell)
+    private static bool IsPermittedTarget(
+        SpellAttack spell,
+        bool isAlly)
     {
-        return spell.Effects.Any(effect =>
-            effect.Kind == SpellEffectKind.Healing);
+        return spell.Targets switch
+        {
+            SpellTargetDisposition.Allies => isAlly,
+            SpellTargetDisposition.Enemies => !isAlly,
+            _ => true
+        };
     }
 
     private static int ReachOf(
