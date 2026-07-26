@@ -318,7 +318,9 @@ WatchtowerScenarioProgress.RaidersDefeated)
             }
         };
 
-        Assert.Throws<InvalidOperationException>(() =>
+        // The campaign's roster contradicts this party, which session
+        // validation now rejects before anything tries to resolve a build.
+        Assert.ThrowsAny<ArgumentException>(() =>
             ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
@@ -353,7 +355,9 @@ WatchtowerScenarioProgress.RaidersDefeated)
             }
         };
 
-        Assert.Throws<InvalidOperationException>(() =>
+        // The campaign's roster contradicts this party, which session
+        // validation now rejects before anything tries to resolve a build.
+        Assert.ThrowsAny<ArgumentException>(() =>
             ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
@@ -388,7 +392,9 @@ WatchtowerScenarioProgress.RaidersDefeated)
             }
         };
 
-        Assert.Throws<InvalidOperationException>(() =>
+        // The campaign's roster contradicts this party, which session
+        // validation now rejects before anything tries to resolve a build.
+        Assert.ThrowsAny<ArgumentException>(() =>
             ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
@@ -421,7 +427,9 @@ WatchtowerScenarioProgress.RaidersDefeated)
             }
         };
 
-        Assert.Throws<InvalidOperationException>(() =>
+        // The campaign's roster contradicts this party, which session
+        // validation now rejects before anything tries to resolve a build.
+        Assert.ThrowsAny<ArgumentException>(() =>
             ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
@@ -454,7 +462,9 @@ WatchtowerScenarioProgress.RaidersDefeated)
             }
         };
 
-        Assert.Throws<InvalidOperationException>(() =>
+        // The campaign's roster contradicts this party, which session
+        // validation now rejects before anything tries to resolve a build.
+        Assert.ThrowsAny<ArgumentException>(() =>
             ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));

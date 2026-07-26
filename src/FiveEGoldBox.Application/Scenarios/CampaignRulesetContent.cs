@@ -11,7 +11,7 @@ namespace FiveEGoldBox.Application.Scenarios;
 /// classes, races and skills the party is built from, and the gear both the
 /// party and every scenario's opposition draw on. Two scenarios share it
 /// because one campaign means one body of rules.
-internal static class CampaignRulesetContent
+internal static partial class CampaignRulesetContent
 {
     private const string HumanRaceId =
         "race.human";
@@ -90,7 +90,7 @@ internal static class CampaignRulesetContent
             [
                 new EquipmentItemDefinition
                 {
-                    Id = WatchtowerPartyDefinitions
+                    Id = CampaignRulesetContent
                         .RangerAmmunitionItemId,
                     Name = "Arrow",
                     WeightPounds = 0.05m
@@ -105,7 +105,7 @@ internal static class CampaignRulesetContent
         return
         [
             CreateClass(
-                WatchtowerPartyDefinitions
+                CampaignRulesetContent
                     .FighterClassId,
                 "Fighter",
                 DieType.D10,
@@ -118,7 +118,7 @@ internal static class CampaignRulesetContent
                     "skill.perception"
                 ]),
             CreateClass(
-                WatchtowerPartyDefinitions
+                CampaignRulesetContent
                     .BarbarianClassId,
                 "Barbarian",
                 DieType.D12,
@@ -131,7 +131,7 @@ internal static class CampaignRulesetContent
                     "skill.survival"
                 ]),
             CreateClass(
-                WatchtowerPartyDefinitions
+                CampaignRulesetContent
                     .RangerClassId,
                 "Ranger",
                 DieType.D10,
@@ -209,18 +209,18 @@ internal static class CampaignRulesetContent
         return
         [
             CreateMeleeWeapon(
-                WatchtowerPartyDefinitions
+                CampaignRulesetContent
                     .FighterWeaponId,
                 "Longsword",
                 DieType.D8),
             CreateMeleeWeapon(
-                WatchtowerPartyDefinitions
+                CampaignRulesetContent
                     .BarbarianWeaponId,
                 "Greataxe",
                 DieType.D12),
             new WeaponDefinition
             {
-                Id = WatchtowerPartyDefinitions
+                Id = CampaignRulesetContent
                     .RangerWeaponId,
                 Name = "Longbow",
                 Category = WeaponCategory.Martial,
@@ -242,7 +242,7 @@ internal static class CampaignRulesetContent
                 NormalRangeFeet = 150,
                 LongRangeFeet = 600,
                 AmmunitionItemId =
-                    WatchtowerPartyDefinitions
+                    CampaignRulesetContent
                         .RangerAmmunitionItemId
             },
             // The raiders' gear. It lives in the ruleset like everyone

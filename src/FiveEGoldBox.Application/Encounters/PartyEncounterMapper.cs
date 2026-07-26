@@ -1,3 +1,4 @@
+using FiveEGoldBox.Application.Campaigns;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Definitions;
@@ -18,8 +19,10 @@ internal static class PartyEncounterMapper
         ArgumentNullException.ThrowIfNull(ruleset);
 
         CharacterDraft draft =
-            WatchtowerPartyDefinitions.CreateDraft(
+            CampaignCharacterDraftFactory.CreateDraft(
                 member,
+                CampaignRegistry.Resolve(
+                    FrontierCampaignContent.CampaignId),
                 ruleset);
         CharacterSnapshot snapshot =
             new CharacterResolver(ruleset).Resolve(draft);

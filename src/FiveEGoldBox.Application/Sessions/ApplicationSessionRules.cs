@@ -1,3 +1,4 @@
+using FiveEGoldBox.Application.Campaigns;
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
@@ -126,9 +127,11 @@ internal static class ApplicationSessionRules
                 nameof(state));
         }
 
-        // Party composition is campaign-declared rather than scenario content,
-        // so it is checked for every scenario alike.
-        WatchtowerPartyCompositionValidator.Validate(state.Party);
+        // Party composition is campaign-declared, so it is checked against
+        // the campaign that owns the scenario being played.
+        CampaignPartyCompositionValidator.Validate(
+            CampaignRegistry.ResolveForScenario(state.ScenarioId),
+            state.Party);
 
         if (progress.Conclusions.Any(conclusion => string.Equals(
                 conclusion.ProgressId,
