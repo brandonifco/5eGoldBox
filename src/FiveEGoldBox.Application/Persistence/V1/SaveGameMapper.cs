@@ -219,25 +219,25 @@ internal static class SaveGameMapper
         };
     }
 
-    // V1 only ever stored Watchtower progress, so the saved enum stays the
-    // schema and the runtime marker is translated through this scenario's
-    // vocabulary. A future scenario needs its own format version, not a wider
-    // V1 enum.
+    // The marker is stored as written. Which markers a scenario uses is the
+    // scenario's business, and the session is validated against its own
+    // definition on load, so the save format does not need to know them.
     private static SaveScenarioStateV1 ToSaveScenario(
         ScenarioState scenario)
     {
         return new SaveScenarioStateV1
         {
-            Progress = ToSaveScenarioProgress(
-                WatchtowerScenario.ProgressOf(scenario))
+            Progress = scenario.ProgressId
         };
     }
 
     private static ScenarioState ToRuntimeScenario(
         SaveScenarioStateV1 scenario)
     {
-        return WatchtowerScenario.CreateState(
-            ToRuntimeScenarioProgress(scenario.Progress));
+        return new ScenarioState
+        {
+            ProgressId = scenario.Progress
+        };
     }
 
     private static SaveRegionalTravelV1 ToSaveRegionalTravel(
@@ -339,58 +339,6 @@ internal static class SaveGameMapper
                 nameof(mode),
                 mode,
                 "Unsupported saved application mode.")
-        };
-    }
-
-    private static SaveScenarioProgressV1 ToSaveScenarioProgress(
-        WatchtowerScenarioProgress progress)
-    {
-        return progress switch
-        {
-            WatchtowerScenarioProgress.MissionNotAccepted =>
-                SaveScenarioProgressV1.MissionNotAccepted,
-            WatchtowerScenarioProgress.MissionAccepted =>
-                SaveScenarioProgressV1.MissionAccepted,
-            WatchtowerScenarioProgress.SignalActivated =>
-                SaveScenarioProgressV1.SignalActivated,
-            WatchtowerScenarioProgress.RaidersDefeated =>
-                SaveScenarioProgressV1.RaidersDefeated,
-            WatchtowerScenarioProgress.PartyDefeated =>
-                SaveScenarioProgressV1.PartyDefeated,
-            WatchtowerScenarioProgress.SuccessReported =>
-                SaveScenarioProgressV1.SuccessReported,
-            WatchtowerScenarioProgress.ScenarioCompleted =>
-                SaveScenarioProgressV1.ScenarioCompleted,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(progress),
-                progress,
-                "Unsupported watchtower scenario progress.")
-        };
-    }
-
-    private static WatchtowerScenarioProgress ToRuntimeScenarioProgress(
-        SaveScenarioProgressV1 progress)
-    {
-        return progress switch
-        {
-            SaveScenarioProgressV1.MissionNotAccepted =>
-                WatchtowerScenarioProgress.MissionNotAccepted,
-            SaveScenarioProgressV1.MissionAccepted =>
-                WatchtowerScenarioProgress.MissionAccepted,
-            SaveScenarioProgressV1.SignalActivated =>
-                WatchtowerScenarioProgress.SignalActivated,
-            SaveScenarioProgressV1.RaidersDefeated =>
-                WatchtowerScenarioProgress.RaidersDefeated,
-            SaveScenarioProgressV1.PartyDefeated =>
-                WatchtowerScenarioProgress.PartyDefeated,
-            SaveScenarioProgressV1.SuccessReported =>
-                WatchtowerScenarioProgress.SuccessReported,
-            SaveScenarioProgressV1.ScenarioCompleted =>
-                WatchtowerScenarioProgress.ScenarioCompleted,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(progress),
-                progress,
-                "Unsupported saved watchtower scenario progress.")
         };
     }
 
