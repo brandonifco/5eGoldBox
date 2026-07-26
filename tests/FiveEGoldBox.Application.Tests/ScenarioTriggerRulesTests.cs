@@ -53,18 +53,20 @@ public sealed class ScenarioTriggerRulesTests
     }
 
     [Theory]
-    [InlineData(WatchtowerScenarioProgress.MissionNotAccepted)]
-    [InlineData(WatchtowerScenarioProgress.SignalActivated)]
-    [InlineData(WatchtowerScenarioProgress.SuccessReported)]
-    [InlineData(WatchtowerScenarioProgress.ScenarioCompleted)]
+    [InlineData("MissionNotAccepted")]
+    [InlineData("SignalActivated")]
+    [InlineData("SuccessReported")]
+    [InlineData("ScenarioCompleted")]
     public void CanActivate_WithWrongProgress_ReturnsFalse(
-        WatchtowerScenarioProgress progress)
+        string progressId)
     {
         ApplicationSessionState state =
             WatchtowerSignalTestData.CreateSignalReadySession() with
             {
-                Scenario = WatchtowerScenario.CreateState(
-progress)
+                Scenario = new ScenarioState
+                {
+                    ProgressId = progressId
+                }
             };
 
         Assert.False(
@@ -237,18 +239,20 @@ progress)
     }
 
     [Theory]
-    [InlineData(WatchtowerScenarioProgress.MissionNotAccepted)]
-    [InlineData(WatchtowerScenarioProgress.SignalActivated)]
-    [InlineData(WatchtowerScenarioProgress.SuccessReported)]
-    [InlineData(WatchtowerScenarioProgress.ScenarioCompleted)]
+    [InlineData("MissionNotAccepted")]
+    [InlineData("SignalActivated")]
+    [InlineData("SuccessReported")]
+    [InlineData("ScenarioCompleted")]
     public void Activate_WithWrongScenarioProgress_Throws(
-        WatchtowerScenarioProgress progress)
+        string progressId)
     {
         ApplicationSessionState state =
             WatchtowerSignalTestData.CreateSignalReadySession() with
             {
-                Scenario = WatchtowerScenario.CreateState(
-progress)
+                Scenario = new ScenarioState
+                {
+                    ProgressId = progressId
+                }
             };
 
         Assert.Throws<ArgumentException>(() =>

@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Scenarios;
 
-public enum WatchtowerScenarioProgress
+internal enum WatchtowerScenarioProgress
 {
     MissionNotAccepted,
     MissionAccepted,

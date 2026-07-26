@@ -332,43 +332,45 @@ public sealed class OutpostMissionRulesTests
     [Theory]
     [InlineData(
         OutpostMissionChoice.AcceptMission,
-        WatchtowerScenarioProgress.MissionAccepted)]
+        "MissionAccepted")]
     [InlineData(
         OutpostMissionChoice.AcceptMission,
-        WatchtowerScenarioProgress.SignalActivated)]
+        "SignalActivated")]
     [InlineData(
         OutpostMissionChoice.AcceptMission,
-        WatchtowerScenarioProgress.RaidersDefeated)]
+        "RaidersDefeated")]
     [InlineData(
         OutpostMissionChoice.AcceptMission,
-        WatchtowerScenarioProgress.SuccessReported)]
+        "SuccessReported")]
     [InlineData(
         OutpostMissionChoice.AcceptMission,
-        WatchtowerScenarioProgress.ScenarioCompleted)]
+        "ScenarioCompleted")]
     [InlineData(
         OutpostMissionChoice.NotYet,
-        WatchtowerScenarioProgress.MissionAccepted)]
+        "MissionAccepted")]
     [InlineData(
         OutpostMissionChoice.NotYet,
-        WatchtowerScenarioProgress.SignalActivated)]
+        "SignalActivated")]
     [InlineData(
         OutpostMissionChoice.NotYet,
-        WatchtowerScenarioProgress.RaidersDefeated)]
+        "RaidersDefeated")]
     [InlineData(
         OutpostMissionChoice.NotYet,
-        WatchtowerScenarioProgress.SuccessReported)]
+        "SuccessReported")]
     [InlineData(
         OutpostMissionChoice.NotYet,
-        WatchtowerScenarioProgress.ScenarioCompleted)]
+        "ScenarioCompleted")]
     public void Resolve_AfterMissionDecisionAvailability_Throws(
         OutpostMissionChoice choice,
-        WatchtowerScenarioProgress progress)
+        string progressId)
     {
         ApplicationSessionState session =
             CreateValidSession() with
             {
-                Scenario = WatchtowerScenario.CreateState(
-progress)
+                Scenario = new ScenarioState
+                {
+                    ProgressId = progressId
+                }
             };
 
         Assert.Throws<InvalidOperationException>(() =>

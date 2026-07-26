@@ -14,20 +14,22 @@ public sealed class ScenarioConclusionStateTests
     }
 
     [Theory]
-    [InlineData(WatchtowerScenarioProgress.MissionNotAccepted)]
-    [InlineData(WatchtowerScenarioProgress.MissionAccepted)]
-    [InlineData(WatchtowerScenarioProgress.SignalActivated)]
-    [InlineData(WatchtowerScenarioProgress.RaidersDefeated)]
-    [InlineData(WatchtowerScenarioProgress.SuccessReported)]
-    [InlineData(WatchtowerScenarioProgress.ScenarioCompleted)]
+    [InlineData("MissionNotAccepted")]
+    [InlineData("MissionAccepted")]
+    [InlineData("SignalActivated")]
+    [InlineData("RaidersDefeated")]
+    [InlineData("SuccessReported")]
+    [InlineData("ScenarioCompleted")]
     public void Validate_WithNonDefeatProgress_Throws(
-        WatchtowerScenarioProgress progress)
+        string progressId)
     {
         ApplicationSessionState invalid = CreateConclusion()
             with
             {
-                Scenario = WatchtowerScenario.CreateState(
-progress)
+                Scenario = new ScenarioState
+                {
+                    ProgressId = progressId
+                }
             };
 
         Assert.Throws<ArgumentException>(() =>
