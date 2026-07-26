@@ -87,6 +87,12 @@ public static class EncounterSpellPrerequisiteRules
             return Unavailable(timingProblem.Value);
         }
 
+        if (!HasSlotFor(actor, spell))
+        {
+            return Unavailable(
+                EncounterActionUnavailabilityReason.SpellSlotUnavailable);
+        }
+
         // Healing is cast on an ally; everything else here is cast at an
         // enemy. Whether a spell helps or harms is read from what it does
         // rather than declared twice.
@@ -179,6 +185,24 @@ public static class EncounterSpellPrerequisiteRules
                         .BonusActionUnavailable,
             _ => EncounterActionUnavailabilityReason.UnsupportedTiming
         };
+    }
+
+    /// A cantrip costs nothing, so there is nothing to be out of.
+    private static bool HasSlotFor(
+        EncounterParticipantState actor,
+        SpellAttack spell)
+    {
+        if (spell.SlotResourceId is null)
+        {
+            return true;
+        }
+
+        return actor.CombatProfile.Resources.Any(resource =>
+            string.Equals(
+                resource.ResourceId,
+                spell.SlotResourceId,
+                StringComparison.Ordinal)
+            && resource.Remaining > 0);
     }
 
     private static bool IsHelpful(

@@ -12,6 +12,11 @@ public sealed record EncounterCombatProfile
     public IReadOnlyList<SpellAttack> SpellAttacks { get; init; }
         = Array.Empty<SpellAttack>();
 
+    /// What this combatant can spend. Spell slots today; anything with a
+    /// finite number of uses later.
+    public IReadOnlyList<CombatantResource> Resources { get; init; }
+        = Array.Empty<CombatantResource>();
+
     public IReadOnlyList<SavingThrowBonus> SavingThrowBonuses { get; init; }
         = Array.Empty<SavingThrowBonus>();
 

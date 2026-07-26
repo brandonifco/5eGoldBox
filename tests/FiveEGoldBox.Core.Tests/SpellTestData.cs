@@ -16,6 +16,12 @@ internal static class SpellTestData
 
     internal const string CureWounds = "spell.cure-wounds";
 
+    internal const string HealingWord = "spell.healing-word";
+
+    internal const string MagicMissile = "spell.magic-missile";
+
+    internal const string FirstLevelSlot = "resource.spell-slot.1";
+
     internal static EncounterState DownTarget(
         EncounterState state)
     {
@@ -114,6 +120,17 @@ internal static class SpellTestData
             {
                 ArmorClass = 12,
                 SpellAttacks = spells,
+                Resources = spells.Count == 0
+                    ? Array.Empty<CombatantResource>()
+                    :
+                    [
+                        new CombatantResource
+                        {
+                            ResourceId = FirstLevelSlot,
+                            Remaining = 2,
+                            Maximum = 2
+                        }
+                    ],
                 SavingThrowBonuses = Enum.GetValues<Ability>()
                     .Select(ability => new SavingThrowBonus
                     {
@@ -191,6 +208,7 @@ internal static class SpellTestData
                 SpellId = CureWounds,
                 SpellName = "Cure Wounds",
                 Level = 1,
+                SlotResourceId = FirstLevelSlot,
                 CastingTime = SpellCastingTime.Action,
                 RangeKind = SpellRangeKind.Touch,
                 MaximumTargets = 1,
@@ -206,6 +224,57 @@ internal static class SpellTestData
                         Dice = new DamageDice { Count = 1, Die = DieType.D8 },
                         Instances = 1,
                         FlatBonus = 3
+                    }
+                ]
+            },
+            new SpellAttack
+            {
+                SpellId = HealingWord,
+                SpellName = "Healing Word",
+                Level = 1,
+                SlotResourceId = FirstLevelSlot,
+                CastingTime = SpellCastingTime.BonusAction,
+                RangeKind = SpellRangeKind.Ranged,
+                RangeFeet = 60,
+                MaximumTargets = 1,
+                Resolution = SpellResolutionKind.Automatic,
+                SaveOutcome = SpellSaveOutcome.Negates,
+                AttackBonus = 5,
+                SaveDc = 13,
+                Effects =
+                [
+                    new SpellAttackEffect
+                    {
+                        Kind = SpellEffectKind.Healing,
+                        Dice = new DamageDice { Count = 1, Die = DieType.D4 },
+                        Instances = 1,
+                        FlatBonus = 3
+                    }
+                ]
+            },
+            new SpellAttack
+            {
+                SpellId = MagicMissile,
+                SpellName = "Magic Missile",
+                Level = 1,
+                SlotResourceId = FirstLevelSlot,
+                CastingTime = SpellCastingTime.Action,
+                RangeKind = SpellRangeKind.Ranged,
+                RangeFeet = 120,
+                MaximumTargets = 3,
+                Resolution = SpellResolutionKind.Automatic,
+                SaveOutcome = SpellSaveOutcome.Negates,
+                AttackBonus = 5,
+                SaveDc = 13,
+                Effects =
+                [
+                    new SpellAttackEffect
+                    {
+                        Kind = SpellEffectKind.Damage,
+                        Dice = new DamageDice { Count = 1, Die = DieType.D4 },
+                        Instances = 3,
+                        FlatBonus = 1,
+                        DamageType = "damage.force"
                     }
                 ]
             }

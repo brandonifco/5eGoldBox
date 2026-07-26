@@ -18,6 +18,9 @@ public sealed record SpellAttack
     /// Zero for a cantrip, which costs nothing to cast.
     public required int Level { get; init; }
 
+    /// The resource a cast spends, if any. Null for a cantrip.
+    public string? SlotResourceId { get; init; }
+
     public required SpellCastingTime CastingTime { get; init; }
 
     public required SpellRangeKind RangeKind { get; init; }
