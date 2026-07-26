@@ -111,7 +111,7 @@ internal static class WatchtowerAutomaticTurnProcessor
             ApplicationRandomSequence.GenerateDie(
                 state.RandomSeed,
                 state.RandomValuesConsumed,
-                sides: 20);
+                DieType.D20);
 
         EncounterDeathSavingThrowResult deathSave =
             EncounterDeathSavingThrowRules.Resolve(

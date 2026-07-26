@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Security.Cryptography;
+using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Application.Randomness;
 
@@ -9,10 +10,17 @@ internal static class ApplicationRandomSequence
 
     private const int HashOutputLength = 32;
 
+    /// Every die Core defines can be rolled here.
+    ///
+    /// The die is named by its type rather than a side count so that the set
+    /// this understands cannot drift from the set Core accepts: there is one
+    /// list, and it is DieType. A die Core gains later will not silently
+    /// become rollable — it has no case here until someone gives it one — but
+    /// nor can a die Core already has be quietly missing.
     internal static ApplicationRandomRoll GenerateDie(
         int seed,
         int valuesConsumed,
-        int sides)
+        DieType die)
     {
         if (valuesConsumed < 0)
         {
@@ -22,14 +30,18 @@ internal static class ApplicationRandomSequence
                 "Random values consumed must not be negative.");
         }
 
-        if (sides is not (6 or 8 or 12 or 20))
+        if (!IsSupported(die))
         {
             throw new ArgumentOutOfRangeException(
-                nameof(sides),
-                sides,
-                "Only d6, d8, d12, and d20 are supported by the bounded random sequence.");
+                nameof(die),
+                die,
+                "The die is not one the bounded random sequence can roll.");
         }
 
+        // The side count, not the enum member, goes into the hash. DieType's
+        // values are the side counts, so sequences generated before the
+        // parameter became a die type are reproduced exactly.
+        int sides = (int)die;
         int updatedValuesConsumed = checked(
             valuesConsumed + 1);
 
@@ -80,6 +92,24 @@ internal static class ApplicationRandomSequence
         }
     }
 
+    /// Whether this die can be rolled. Content validation asks before play
+    /// begins, so an unrollable die is refused at load rather than partway
+    /// through a fight.
+    internal static bool IsSupported(
+        DieType die)
+    {
+        return die switch
+        {
+            DieType.D4
+                or DieType.D6
+                or DieType.D8
+                or DieType.D10
+                or DieType.D12
+                or DieType.D20 => true,
+            _ => false
+        };
+    }
+
     internal static IReadOnlyList<int> GenerateD20Rolls(
         int seed,
         int valuesConsumed,
@@ -104,7 +134,7 @@ internal static class ApplicationRandomSequence
             ApplicationRandomRoll roll = GenerateDie(
                 seed,
                 cursor,
-                sides: 20);
+                DieType.D20);
 
             rolls[index] = roll.Value;
             cursor = roll.UpdatedValuesConsumed;

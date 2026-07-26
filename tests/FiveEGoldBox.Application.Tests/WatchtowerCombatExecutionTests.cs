@@ -789,7 +789,7 @@ public sealed class WatchtowerCombatExecutionTests
             ApplicationRandomSequence.GenerateDie(
                 source.RandomSeed,
                 source.RandomValuesConsumed,
-                sides: 20);
+                die: DieType.D20);
         Assert.Equal(20, attackRoll.Value);
 
         WeaponAttack weapon = Assert.Single(
@@ -811,7 +811,7 @@ public sealed class WatchtowerCombatExecutionTests
                 ApplicationRandomSequence.GenerateDie(
                     source.RandomSeed,
                     proposedCursor,
-                    sides: (int)requiredDamage.Die);
+                    die: requiredDamage.Die);
 
             proposedDamageValues.Add(damageRoll.Value);
             proposedCursor = damageRoll.UpdatedValuesConsumed;

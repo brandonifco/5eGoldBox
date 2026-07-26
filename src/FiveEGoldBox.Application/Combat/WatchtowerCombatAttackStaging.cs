@@ -56,7 +56,7 @@ internal static class WatchtowerCombatAttackStaging
             ApplicationRandomSequence.GenerateDie(
                 seed,
                 nextCursor,
-                sides: 20);
+                DieType.D20);
 
         nextCursor = first.UpdatedValuesConsumed;
         dice.Add(CreateDie(
@@ -72,7 +72,7 @@ internal static class WatchtowerCombatAttackStaging
                 ApplicationRandomSequence.GenerateDie(
                     seed,
                     nextCursor,
-                    sides: 20);
+                    DieType.D20);
 
             nextCursor = second.UpdatedValuesConsumed;
             secondValue = second.Value;
@@ -97,8 +97,6 @@ internal static class WatchtowerCombatAttackStaging
 
         if (requiredDamage is not null)
         {
-            int sides = (int)requiredDamage.Die;
-
             for (int index = 0;
                 index < requiredDamage.Count;
                 index++)
@@ -107,7 +105,7 @@ internal static class WatchtowerCombatAttackStaging
                     ApplicationRandomSequence.GenerateDie(
                         seed,
                         nextCursor,
-                        sides);
+                        requiredDamage.Die);
 
                 nextCursor = damage.UpdatedValuesConsumed;
                 damageValues.Add(damage.Value);
