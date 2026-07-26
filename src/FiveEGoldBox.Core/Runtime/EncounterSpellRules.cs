@@ -66,12 +66,17 @@ public static class EncounterSpellRules
         int damage = tookEffect
             ? ResolveDamage(spell, command, attackRoll, savingThrow, target)
             : 0;
+        int healing = tookEffect
+            ? ResolveHealing(spell, command)
+            : 0;
 
         // Casting costs the caster its action or bonus action whether or not
         // the spell landed. A missed Fire Bolt is still a spent turn.
         EncounterParticipantState[] participants =
             state.Participants.ToArray();
-        participants[actorIndex] = SpendCastingTime(actor, spell);
+        participants[actorIndex] = SpendSlot(
+            SpendCastingTime(actor, spell),
+            spell);
 
         EncounterState castState = state with
         {
@@ -81,7 +86,19 @@ public static class EncounterSpellRules
         CombatantDamageResult? targetDamage = null;
         EncounterState resolvedState;
 
-        if (damage > 0)
+        if (healing > 0)
+        {
+            resolvedState = EncounterHealingRules.Resolve(
+                castState,
+                new EncounterHealingCommand
+                {
+                    ExpectedRevision = command.ExpectedRevision,
+                    TargetCombatantId = command.TargetCombatantId,
+                    HealingAmount = healing
+                })
+                .State;
+        }
+        else if (damage > 0)
         {
             EncounterDamageResult damageResult =
                 EncounterDamageRules.Resolve(
@@ -118,6 +135,7 @@ public static class EncounterSpellRules
             SavingThrow = savingThrow,
             TookEffect = tookEffect,
             DamageDealt = damage,
+            HealingDone = healing,
             TargetDamage = targetDamage,
             State = resolvedState
         };
@@ -266,6 +284,44 @@ public static class EncounterSpellRules
             GetDamageResponseTypes(target, effect.DamageType));
     }
 
+    /// Healing has nothing to hit and nothing to resist, so its dice are
+    /// simply totalled. It consumes the same roll list, after any damage.
+    private static int ResolveHealing(
+        SpellAttack spell,
+        EncounterSpellCastCommand command)
+    {
+        int consumed = spell.Effects
+            .Where(effect => effect.Kind == SpellEffectKind.Damage)
+            .Sum(effect => effect.Dice.Count * effect.Instances);
+        int total = 0;
+
+        foreach (SpellAttackEffect effect in spell.Effects
+            .Where(effect => effect.Kind == SpellEffectKind.Healing))
+        {
+            for (int instance = 0; instance < effect.Instances; instance++)
+            {
+                if (consumed + effect.Dice.Count > command.EffectRolls.Count)
+                {
+                    throw new ArgumentException(
+                        "The spell was given fewer dice than it rolls.",
+                        nameof(command));
+                }
+
+                total += DamageRules.GetDamageDiceTotal(
+                    effect.Dice,
+                    command.EffectRolls
+                        .Skip(consumed)
+                        .Take(effect.Dice.Count)
+                        .ToArray())
+                    + effect.FlatBonus;
+
+                consumed += effect.Dice.Count;
+            }
+        }
+
+        return total;
+    }
+
     private static IReadOnlyList<DamageResponseType> GetDamageResponseTypes(
         EncounterParticipantState target,
         string? damageType)
@@ -293,6 +349,40 @@ public static class EncounterSpellRules
             TurnResources = spell.CastingTime == SpellCastingTime.BonusAction
                 ? CombatTurnResourceRules.SpendBonusAction(actor.TurnResources)
                 : CombatTurnResourceRules.SpendAction(actor.TurnResources)
+        };
+    }
+
+    /// A slot is spent whether or not the spell lands, the same way the
+    /// action is. Cantrips spend nothing.
+    private static EncounterParticipantState SpendSlot(
+        EncounterParticipantState actor,
+        SpellAttack spell)
+    {
+        if (spell.SlotResourceId is null)
+        {
+            return actor;
+        }
+
+        CombatantResource[] resources =
+            actor.CombatProfile.Resources.ToArray();
+        int index = Array.FindIndex(
+            resources,
+            resource => string.Equals(
+                resource.ResourceId,
+                spell.SlotResourceId,
+                StringComparison.Ordinal));
+
+        resources[index] = resources[index] with
+        {
+            Remaining = resources[index].Remaining - 1
+        };
+
+        return actor with
+        {
+            CombatProfile = actor.CombatProfile with
+            {
+                Resources = Array.AsReadOnly(resources)
+            }
         };
     }
 

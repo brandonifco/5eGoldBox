@@ -23,6 +23,8 @@ public sealed record EncounterSpellCastResult
 
     public required int DamageDealt { get; init; }
 
+    public required int HealingDone { get; init; }
+
     public CombatantDamageResult? TargetDamage { get; init; }
 
     public required EncounterState State { get; init; }
