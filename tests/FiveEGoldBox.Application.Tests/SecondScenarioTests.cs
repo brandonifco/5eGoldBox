@@ -1,3 +1,5 @@
+using FiveEGoldBox.Application.Combat;
+using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Persistence;
@@ -5,6 +7,8 @@ using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
+using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 using FiveEGoldBox.Core.Validation;
 
@@ -124,6 +128,42 @@ public sealed class SecondScenarioTests
         Assert.True(ScenarioTriggerRules.CanActivate(session));
         session = ScenarioTriggerRules.Activate(session);
 
+        // This scenario's own fight, on its own ground.
+        Assert.Equal(ApplicationMode.Encounter, session.CurrentMode);
+        Assert.Equal(
+            SunkenChapelScenarioDefinitionProvider.GuardiansRoused,
+            session.Scenario.ProgressId);
+
+        EncounterState encounter = Assert
+            .IsType<ActiveEncounterState>(session.ActiveEncounter)
+            .Encounter;
+        Assert.Equal(
+            SunkenChapelScenarioDefinitionProvider.EncounterId,
+            encounter.EncounterId);
+        Assert.Equal(
+            "battlefield.chapel-nave",
+            encounter.Battlefield.BattlefieldId);
+        Assert.Equal(
+            2,
+            encounter.Participants.Count(participant =>
+                participant.SideId
+                    == SunkenChapelScenarioDefinitionProvider.GuardianSideId));
+
+        session = WinTheFight(session);
+
+        // Winning carries the scenario to the marker its own encounter
+        // declares, and puts the party back where it was standing.
+        Assert.Equal(
+            SunkenChapelScenarioDefinitionProvider.GuardiansBanished,
+            session.Scenario.ProgressId);
+        Assert.Equal(ApplicationMode.Exploration, session.CurrentMode);
+        Assert.Equal(
+            new GridPosition(1, 1),
+            session.Exploration!.Position);
+
+        Assert.True(ScenarioTriggerRules.CanActivate(session));
+        session = ScenarioTriggerRules.Activate(session);
+
         // A trigger whose resulting marker is a declared conclusion ends the
         // scenario, the same way winning an encounter does.
         Assert.Equal(
@@ -136,15 +176,75 @@ public sealed class SecondScenarioTests
         Assert.Null(session.RegionalTravel);
     }
 
-    /// The scenario never touches combat, so nothing on this path builds an
-    /// encounter or consumes randomness.
+    /// The opposition is built from what the scenario authored, not from the
+    /// other adventure's raiders: its own combatants, its own side, and a
+    /// dagger whose d4 only became rollable in Phase 7.
     [Fact]
-    public void Traversal_ConsumesNoRandomness()
+    public void Fight_IsBuiltFromThisScenariosOwnContent()
     {
-        ApplicationSessionState session = RunToConclusion();
+        ApplicationSessionState session = RunTo(TraversalStage.Fighting);
+        EncounterState encounter = Assert
+            .IsType<ActiveEncounterState>(session.ActiveEncounter)
+            .Encounter;
+
+        EncounterParticipantState guardian = Assert.Single(
+            encounter.Participants,
+            participant => participant.Combatant.CombatantId
+                == "combatant.chapel-guardian.first");
+
+        Assert.Equal(
+            SunkenChapelScenarioDefinitionProvider.GuardianSideId,
+            guardian.SideId);
+        Assert.Equal(7, guardian.Combatant.Health.HitPoints.MaximumHitPoints);
+        Assert.Equal(12, guardian.CombatProfile.ArmorClass);
+
+        WeaponAttack dagger = Assert.Single(
+            guardian.CombatProfile.WeaponAttacks);
+        Assert.Equal(
+            SunkenChapelScenarioDefinitionProvider.GuardianDaggerId,
+            dagger.WeaponId);
+        Assert.Equal(DieType.D4, dagger.Damage.Die);
+
+        // Finesse, so Dexterity: modifier 1, proficiency 2.
+        Assert.Equal(Ability.Dexterity, dagger.AttackAbility);
+        Assert.Equal(3, dagger.AttackBonus);
+        Assert.Equal(1, dagger.DamageBonus);
+
+        // Every party member is deployed alongside them.
+        Assert.Equal(
+            session.Party.Members.Count + 2,
+            encounter.Participants.Count);
+    }
+
+    /// Nothing before the fight rolls anything: decisions, travel, movement
+    /// and an encounterless trigger are all deterministic.
+    [Fact]
+    public void Traversal_ConsumesNoRandomnessBeforeTheFight()
+    {
+        ApplicationSessionState session = RunTo(TraversalStage.SealBroken);
 
         Assert.Equal(RandomSeed, session.RandomSeed);
         Assert.Equal(0, session.RandomValuesConsumed);
+    }
+
+    /// Initiative is one roll per participant, so a scenario with two
+    /// opponents consumes what it needs rather than what the first scenario's
+    /// five-combatant ambush needed.
+    [Fact]
+    public void Fight_RollsInitiativeOncePerParticipant()
+    {
+        ApplicationSessionState session = RunTo(TraversalStage.Fighting);
+        EncounterState encounter = Assert
+            .IsType<ActiveEncounterState>(session.ActiveEncounter)
+            .Encounter;
+
+        Assert.Equal(RandomSeed, session.RandomSeed);
+        Assert.Equal(
+            encounter.Participants.Count,
+            session.RandomValuesConsumed);
+        Assert.Equal(
+            session.Party.Members.Count + 2,
+            session.RandomValuesConsumed);
     }
 
     /// The save format carries a marker it cannot interpret. Nothing in it
@@ -244,6 +344,7 @@ public sealed class SecondScenarioTests
         Travelling,
         Exploring,
         SealBroken,
+        Fighting,
         Concluded
     }
 
@@ -304,7 +405,74 @@ public sealed class SecondScenarioTests
             session,
             ExplorationTurnDirection.Right);
         session = ExplorationRules.MoveForward(session).State;
+        session = ScenarioTriggerRules.Activate(session);
 
+        if (stage == TraversalStage.Fighting)
+        {
+            return session;
+        }
+
+        session = WinTheFight(session);
+
+        // The relic sits on the square the guardians were roused from, so the
+        // party is already standing on it once they are banished.
         return ScenarioTriggerRules.Activate(session);
+    }
+
+    /// Ends the encounter with the party victorious without playing it out.
+    ///
+    /// Enemy tactics are still written per adventure, so nothing yet decides
+    /// how a drowned acolyte would act. What this proves is the part that is
+    /// generic: an authored encounter resolves through the same outcome rules
+    /// the first scenario uses, and its declared victory marker is what the
+    /// scenario carries forward.
+    private static ApplicationSessionState WinTheFight(
+        ApplicationSessionState session)
+    {
+        ActiveEncounterState active =
+            Assert.IsType<ActiveEncounterState>(session.ActiveEncounter);
+        EncounterState completed = EncounterRules.Complete(
+            DefeatTheGuardians(active.Encounter),
+            winningSideId: "side.party");
+
+        return CombatOutcomeRules.Finalize(
+            session with
+            {
+                ActiveEncounter = active with
+                {
+                    Encounter = completed
+                }
+            })
+            .State;
+    }
+
+    private static EncounterState DefeatTheGuardians(
+        EncounterState encounter)
+    {
+        EncounterParticipantState[] participants = encounter.Participants
+            .Select(participant => participant.SideId
+                    == SunkenChapelScenarioDefinitionProvider.GuardianSideId
+                ? participant with
+                {
+                    Combatant = participant.Combatant with
+                    {
+                        Health = participant.Combatant.Health with
+                        {
+                            HitPoints = participant.Combatant.Health.HitPoints
+                                with
+                            {
+                                CurrentHitPoints = 0,
+                                TemporaryHitPoints = 0
+                            }
+                        }
+                    }
+                }
+                : participant)
+            .ToArray();
+
+        return encounter with
+        {
+            Participants = Array.AsReadOnly(participants)
+        };
     }
 }

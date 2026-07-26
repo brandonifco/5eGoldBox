@@ -152,7 +152,7 @@ internal static class WatchtowerSignalTestData
         bool includeLongbow = true)
     {
         RulesetDefinition definition =
-            WatchtowerScenarioContent.CreateRulesetDefinition();
+            CampaignRulesetContent.CreateRulesetDefinition();
 
         if (!includeLongbow)
         {
@@ -167,7 +167,7 @@ internal static class WatchtowerSignalTestData
             };
         }
 
-        return WatchtowerScenarioContent.Load(definition);
+        return CampaignRulesetContent.Load(definition);
     }
 
     internal static CharacterDraft CreateExpectedDraft(

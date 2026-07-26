@@ -154,7 +154,7 @@ internal static class ApplicationSessionRules
                 ExplorationSessionValidator.Validate(state);
                 break;
             case ApplicationMode.Encounter:
-                WatchtowerEncounterSessionValidator.Validate(state);
+                EncounterSessionValidator.Validate(state);
                 break;
             case ApplicationMode.ScenarioConclusion:
                 ScenarioConclusionValidator.Validate(state);
