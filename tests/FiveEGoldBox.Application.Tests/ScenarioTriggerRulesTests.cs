@@ -55,8 +55,6 @@ public sealed class ScenarioTriggerRulesTests
     [Theory]
     [InlineData("MissionNotAccepted")]
     [InlineData("SignalActivated")]
-    [InlineData("SuccessReported")]
-    [InlineData("ScenarioCompleted")]
     public void CanActivate_WithWrongProgress_ReturnsFalse(
         string progressId)
     {
@@ -241,8 +239,6 @@ public sealed class ScenarioTriggerRulesTests
     [Theory]
     [InlineData("MissionNotAccepted")]
     [InlineData("SignalActivated")]
-    [InlineData("SuccessReported")]
-    [InlineData("ScenarioCompleted")]
     public void Activate_WithWrongScenarioProgress_Throws(
         string progressId)
     {

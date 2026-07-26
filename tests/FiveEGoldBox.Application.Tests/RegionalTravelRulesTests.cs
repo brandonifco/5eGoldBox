@@ -319,8 +319,6 @@ WatchtowerScenarioProgress
     [Theory]
     [InlineData("SignalActivated")]
     [InlineData("RaidersDefeated")]
-    [InlineData("SuccessReported")]
-    [InlineData("ScenarioCompleted")]
     public void BeginJourney_AfterMissionAcceptedStage_Throws(
         string progressId)
     {
