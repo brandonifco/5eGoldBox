@@ -31,7 +31,11 @@ The full plan lives at [docs/priority-1-development-plan.md](docs/priority-1-dev
     - **Deliberate tightening in #105 worth knowing:** `RequiredProgressIds` already gated setting out, advancing, and entering the destination, so the engine always read it as "the route is open at this progress". The travel validator now reads it the same way, which makes travel state held at a progress the route isn't open at *malformed* rather than merely unavailable — `RegionalTravelRules.CanAdvance` throws where it used to return `false`. Such a session is unreachable in play.
     - **Behaviour change in #107:** an unrecognised progress marker now fails a load as `InvalidSessionState` rather than `MalformedSerializedData`. It's well-formed data describing an invalid session; the enum-parse paths stay covered via `CurrentMode`.
   - **Known content finding:** nothing produces `SuccessReported` or `ScenarioCompleted`; both are referenced only by the save mapper. Reachability validation reports them as warnings and a test pins the finding. Open question whether Watchtower lacks a success path or the enum carries dead values. The Sunken Chapel validates with **no** issues at all, so this is a Watchtower content question, not an engine one.
-- [ ] Phase 7 — Cross-layer die capability alignment
+- [x] Phase 7 — Cross-layer die capability alignment. **Complete** (PRs #110–#111). The inventory found a real, latent misalignment: Core defines six dice, and `ApplicationRandomSequence.GenerateDie` accepted four. A weapon dealing **1d4 or 1d10** — a dagger, a heavy crossbow — passed Core's ruleset validation *and* Core's own `Enum.IsDefined` checks, then threw `ArgumentOutOfRangeException` partway through a fight at the moment its damage was rolled. Latent only by luck: the Watchtower's weapons are d6/d8/d12, and the `DieType.D10` in the live ruleset is a class *hit* die, which resolves through fixed averages and never reaches the random source.
+  - **Root cause was two independent lists of numbers.** `GenerateDie` took a raw `int sides` with its own hardcoded set. It now takes a `DieType`, so there is one list and it is Core's. `ApplicationRandomSequence.IsSupported(DieType)` is the single answer to "can this be rolled".
+  - **Determinism is preserved and proven.** The side count still goes into the hash and `DieType`'s values *are* the side counts, so the bytes hashed for a d20 are unchanged. Both frozen combat transcripts pass untouched, and the four vectors the test file already pinned (d6=1, d8=8, d12=9, d20=12) sit unchanged beside the new d4=2 and d10=9. Those new vectors were computed from an independent implementation of the documented algorithm that reproduces all four pre-existing ones — not read out of the code under test.
+  - **Dice are now checked when content loads, not when it is rolled** (PR #111), in three places. Core rejects a weapon whose damage or versatile damage names a die outside `DieType` (the weapon validator checked damage type and properties but never the die). Core rejects a class hit die it cannot size hit points from (previously read for the first time during character resolution, throwing from inside `CharacterResolver`). And `ApplicationRulesetLoader` rejects a die Core accepts but the random sequence cannot produce — **Core cannot make that check itself, because it does not know Application exists**, which is why the two are separate. It catches nothing today; the point is the next die Core gains fails there until someone makes it rollable.
+  - `HitDiceRules` holds the hit-die list so the resolver and the validator read one source. **Hit dice supporting only d6–d12 is 5e being 5e** — there is no d4 or d20 hit die — not a gap to close. Don't "align" it with `DieType`.
 - [ ] Phase 8 — Test infrastructure improvement (ongoing, not a separate gate)
 
 ## Priority 2 Development Plan
@@ -47,12 +51,13 @@ Once Phase 8 wraps, work continues under [docs/priority-2-development-plan.md](d
 - That vulnerability scan immediately found two real high-severity transitive advisories, fixed by bumping the test stack (`Microsoft.NET.Test.Sdk` 17.8.0→18.8.1, `xunit` 2.5.3→2.9.3, `xunit.runner.visualstudio` 2.5.3→3.1.5, `coverlet.collector` 6.0.0→10.0.1).
 - A `dotnet format` CI gate was **evaluated and rejected** (PR #75) — it fights this codebase's hand-wrapped declaration style in every mode. Rationale is recorded in the plan doc; don't re-propose it without reading that first.
 
-**Next up: Phase 7** — cross-layer die capability alignment. Confirm every Core-supported die resolves through Application's deterministic random source, and reject undefined die types at content-load time. That last part now has a natural home: `ScenarioDefinitionValidator` already validates content on first resolve.
+**Next up: Phase 8** — test infrastructure, which the plan says to treat as ongoing rather than a gate, and then the Priority 2 long-term phases (9–12). With Phases 1–7 closed, the engineering foundation Priority 1 scoped is done; what remains is a product, not a refactor.
 
-**Two things Phase 6 deliberately left, both needing a decision rather than more refactoring:**
+**Three things Phases 6–7 deliberately left, all needing a decision rather than more refactoring:**
 
 - **Combat policy is still Watchtower-specific.** `WatchtowerRaiderPolicy`, `WatchtowerRaiderTurnPlanner`, `WatchtowerCombatDecisionFactory` and `WatchtowerAutomaticTurnProcessor` hardcode side IDs and the melee raider, and `ScenarioTriggerRules` still builds `WatchtowerSignalEncounter` for any trigger that names an encounter. The Sunken Chapel avoids combat entirely, so **a second scenario with a fight is not yet possible.** The plan says keeping tactics explicit is intentional — don't generalize it without deciding that's wanted.
 - **No `Campaign` type.** `ScenarioSessionFactory.StartingParties` and `WatchtowerPartyCompositionValidator` are both placeholders for it. Both Sunken Chapel and Watchtower share one roster, which is correct under decision #12, but it means a second *party* can't exist — which is what the ammunition-projection gap above is waiting on.
+- **No scenario declares its ruleset in a resolvable way.** `ScenarioDefinition.RulesetId` is validated non-blank and then read by nothing; `WatchtowerScenarioContent.CreateRuleset()` is the only ruleset in the code, and `ScenarioTriggerRules` reaches for it directly. So `ApplicationRulesetLoader`'s capability check guards the one ruleset that exists. A ruleset registry mirroring `ScenarioDefinitionRegistry` is the obvious shape, but it's only worth building when a second ruleset does.
 
 ## Workflow authorization for Priority 1 branches
 
@@ -81,7 +86,7 @@ Still pause and flag rather than pushing through: gate failures, merge conflicts
 
 ```bash
 dotnet build 5eGoldBox.sln -c Debug     # 0 warnings expected (TreatWarningsAsErrors)
-dotnet test 5eGoldBox.sln -c Debug      # full suite, currently 1863 tests
+dotnet test 5eGoldBox.sln -c Debug      # full suite, currently 1879 tests
 dotnet build 5eGoldBox.sln -c Release   # required gate before merge
 ```
 
