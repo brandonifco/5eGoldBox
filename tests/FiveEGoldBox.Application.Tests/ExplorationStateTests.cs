@@ -181,24 +181,21 @@ WatchtowerScenarioProgress.RaidersDefeated)
     }
 
     [Theory]
-    [InlineData(
-        WatchtowerScenarioProgress.MissionNotAccepted)]
-    [InlineData(
-        WatchtowerScenarioProgress.SignalActivated)]
-    [InlineData(
-        WatchtowerScenarioProgress.PartyDefeated)]
-    [InlineData(
-        WatchtowerScenarioProgress.SuccessReported)]
-    [InlineData(
-        WatchtowerScenarioProgress.ScenarioCompleted)]
+    [InlineData("MissionNotAccepted")]
+    [InlineData("SignalActivated")]
+    [InlineData("PartyDefeated")]
+    [InlineData("SuccessReported")]
+    [InlineData("ScenarioCompleted")]
     public void Validate_OutsideSupportedExplorationProgress_Throws(
-        WatchtowerScenarioProgress progress)
+        string progressId)
     {
         ApplicationSessionState invalid =
             CreateExplorationSession() with
             {
-                Scenario = WatchtowerScenario.CreateState(
-progress)
+                Scenario = new ScenarioState
+                {
+                    ProgressId = progressId
+                }
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>

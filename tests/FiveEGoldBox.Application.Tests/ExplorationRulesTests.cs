@@ -393,22 +393,20 @@ WatchtowerScenarioProgress
     }
 
     [Theory]
-    [InlineData(
-        WatchtowerScenarioProgress.SignalActivated)]
-    [InlineData(
-        WatchtowerScenarioProgress.RaidersDefeated)]
-    [InlineData(
-        WatchtowerScenarioProgress.SuccessReported)]
-    [InlineData(
-        WatchtowerScenarioProgress.ScenarioCompleted)]
+    [InlineData("SignalActivated")]
+    [InlineData("RaidersDefeated")]
+    [InlineData("SuccessReported")]
+    [InlineData("ScenarioCompleted")]
     public void EnterDestination_AfterMissionAcceptedStage_Throws(
-        WatchtowerScenarioProgress progress)
+        string progressId)
     {
         ApplicationSessionState arrived =
             CreateCompletedArrival() with
             {
-                Scenario = WatchtowerScenario.CreateState(
-progress)
+                Scenario = new ScenarioState
+                {
+                    ProgressId = progressId
+                }
             };
 
         // Completed travel state held past the progress its route is open at

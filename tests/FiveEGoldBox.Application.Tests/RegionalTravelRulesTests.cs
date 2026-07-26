@@ -317,22 +317,20 @@ WatchtowerScenarioProgress
     }
 
     [Theory]
-    [InlineData(
-        WatchtowerScenarioProgress.SignalActivated)]
-    [InlineData(
-        WatchtowerScenarioProgress.RaidersDefeated)]
-    [InlineData(
-        WatchtowerScenarioProgress.SuccessReported)]
-    [InlineData(
-        WatchtowerScenarioProgress.ScenarioCompleted)]
+    [InlineData("SignalActivated")]
+    [InlineData("RaidersDefeated")]
+    [InlineData("SuccessReported")]
+    [InlineData("ScenarioCompleted")]
     public void BeginJourney_AfterMissionAcceptedStage_Throws(
-        WatchtowerScenarioProgress progress)
+        string progressId)
     {
         ApplicationSessionState session =
             CreateAcceptedSession() with
             {
-                Scenario = WatchtowerScenario.CreateState(
-progress)
+                Scenario = new ScenarioState
+                {
+                    ProgressId = progressId
+                }
             };
 
         Assert.Throws<InvalidOperationException>(() =>
