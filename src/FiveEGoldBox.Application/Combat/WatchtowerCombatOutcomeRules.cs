@@ -56,13 +56,9 @@ public static class WatchtowerCombatOutcomeRules
                 session,
                 encounter,
                 encounterDefinition.PartySideId);
-        int rangerAmmunition = ResolveRangerAmmunition(
-            session,
-            participantsById);
         PartyState projectedParty = ProjectParty(
             session.Party,
-            participantsById,
-            rangerAmmunition);
+            participantsById);
 
         bool isPartyVictory = string.Equals(
             encounter.WinningSideId,
@@ -186,131 +182,23 @@ public static class WatchtowerCombatOutcomeRules
         return result;
     }
 
-    private static int ResolveRangerAmmunition(
-        ApplicationSessionState session,
-        IReadOnlyDictionary<string, EncounterParticipantState>
-            participantsById)
-    {
-        PartyMemberState ranger = AssertSingleRanger(session);
-        AmmunitionState persistentAmmunition =
-            ranger.Ammunition
-            ?? throw new ArgumentException(
-                "The bounded Ranger requires persistent ammunition state.",
-                nameof(session));
-
-        if (!string.Equals(
-            persistentAmmunition.WeaponId,
-            WatchtowerPartyDefinitions.RangerWeaponId,
-            StringComparison.Ordinal)
-            || !string.Equals(
-                persistentAmmunition.AmmunitionItemId,
-                WatchtowerPartyDefinitions.RangerAmmunitionItemId,
-                StringComparison.Ordinal))
-        {
-            throw new ArgumentException(
-                "The persistent Ranger ammunition identity does not match the authored longbow profile.",
-                nameof(session));
-        }
-
-        EncounterParticipantState rangerParticipant =
-            participantsById[ranger.PartyMemberId];
-        ArgumentNullException.ThrowIfNull(
-            rangerParticipant.CombatProfile);
-        ArgumentNullException.ThrowIfNull(
-            rangerParticipant.CombatProfile.WeaponAttacks);
-
-        WeaponAttack[] matchingWeapons =
-            rangerParticipant.CombatProfile.WeaponAttacks
-                .Where(weapon => string.Equals(
-                    weapon.WeaponId,
-                    WatchtowerPartyDefinitions.RangerWeaponId,
-                    StringComparison.Ordinal))
-                .ToArray();
-
-        if (matchingWeapons.Length != 1)
-        {
-            throw new ArgumentException(
-                "The completed Ranger profile must contain exactly one authored longbow.",
-                nameof(session));
-        }
-
-        WeaponAttack weapon = matchingWeapons[0];
-
-        if (!string.Equals(
-            weapon.AmmunitionItemId,
-            WatchtowerPartyDefinitions.RangerAmmunitionItemId,
-            StringComparison.Ordinal))
-        {
-            throw new ArgumentException(
-                "The completed Ranger longbow has an unsupported ammunition item.",
-                nameof(session));
-        }
-
-        int remainingQuantity =
-            weapon.AmmunitionQuantityAvailable
-            ?? throw new ArgumentException(
-                "The completed Ranger longbow requires an authoritative ammunition quantity.",
-                nameof(session));
-
-        if (remainingQuantity < 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(session),
-                remainingQuantity,
-                "The completed Ranger ammunition quantity must not be negative.");
-        }
-
-        return remainingQuantity;
-    }
-
-    private static PartyMemberState AssertSingleRanger(
-        ApplicationSessionState session)
-    {
-        PartyMemberState[] rangers = session.Party.Members
-            .Where(member => string.Equals(
-                member.ClassId,
-                WatchtowerPartyDefinitions.RangerClassId,
-                StringComparison.Ordinal))
-            .ToArray();
-
-        if (rangers.Length != 1)
-        {
-            throw new ArgumentException(
-                "The bounded party must contain exactly one Ranger.",
-                nameof(session));
-        }
-
-        return rangers[0];
-    }
-
     private static PartyState ProjectParty(
         PartyState source,
         IReadOnlyDictionary<string, EncounterParticipantState>
-            participantsById,
-        int rangerAmmunition)
+            participantsById)
     {
         PartyMemberState[] projectedMembers = source.Members
             .Select(member =>
             {
                 EncounterParticipantState participant =
                     participantsById[member.PartyMemberId];
-                AmmunitionState? ammunition = member.Ammunition;
-
-                if (string.Equals(
-                    member.ClassId,
-                    WatchtowerPartyDefinitions.RangerClassId,
-                    StringComparison.Ordinal))
-                {
-                    ammunition = ammunition! with
-                    {
-                        RemainingQuantity = rangerAmmunition
-                    };
-                }
 
                 return member with
                 {
                     Health = participant.Combatant.Health,
-                    Ammunition = ammunition
+                    Ammunition = ProjectAmmunition(
+                        member,
+                        participant)
                 };
             })
             .ToArray();
@@ -318,6 +206,71 @@ public static class WatchtowerCombatOutcomeRules
         return source with
         {
             Members = Array.AsReadOnly(projectedMembers)
+        };
+    }
+
+    /// A member who tracks ammunition between encounters carries out of one
+    /// however much the weapon it belongs to has left.
+    private static AmmunitionState? ProjectAmmunition(
+        PartyMemberState member,
+        EncounterParticipantState participant)
+    {
+        AmmunitionState? persistentAmmunition = member.Ammunition;
+
+        if (persistentAmmunition is null)
+        {
+            return null;
+        }
+
+        ArgumentNullException.ThrowIfNull(
+            participant.CombatProfile);
+        ArgumentNullException.ThrowIfNull(
+            participant.CombatProfile.WeaponAttacks);
+
+        WeaponAttack[] matchingWeapons =
+            participant.CombatProfile.WeaponAttacks
+                .Where(weapon => string.Equals(
+                    weapon.WeaponId,
+                    persistentAmmunition.WeaponId,
+                    StringComparison.Ordinal))
+                .ToArray();
+
+        if (matchingWeapons.Length != 1)
+        {
+            throw new ArgumentException(
+                $"The completed profile for '{member.PartyMemberId}' must contain exactly one weapon '{persistentAmmunition.WeaponId}'.",
+                nameof(participant));
+        }
+
+        WeaponAttack weapon = matchingWeapons[0];
+
+        if (!string.Equals(
+            weapon.AmmunitionItemId,
+            persistentAmmunition.AmmunitionItemId,
+            StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                $"The completed weapon '{persistentAmmunition.WeaponId}' for '{member.PartyMemberId}' has an unsupported ammunition item.",
+                nameof(participant));
+        }
+
+        int remainingQuantity =
+            weapon.AmmunitionQuantityAvailable
+            ?? throw new ArgumentException(
+                $"The completed weapon '{persistentAmmunition.WeaponId}' for '{member.PartyMemberId}' requires an authoritative ammunition quantity.",
+                nameof(participant));
+
+        if (remainingQuantity < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(participant),
+                remainingQuantity,
+                $"The completed ammunition quantity for '{member.PartyMemberId}' must not be negative.");
+        }
+
+        return persistentAmmunition with
+        {
+            RemainingQuantity = remainingQuantity
         };
     }
 }
