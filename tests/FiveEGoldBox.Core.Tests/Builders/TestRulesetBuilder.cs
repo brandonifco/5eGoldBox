@@ -140,6 +140,60 @@ internal sealed class TestRulesetBuilder
         };
     }
 
+    public static WeaponDefinition Longsword()
+    {
+        return new WeaponDefinition
+        {
+            Id = "weapon.longsword",
+            Name = "Longsword",
+            Category = WeaponCategory.Martial,
+            AttackKind = WeaponAttackKind.Melee,
+            Damage = new DamageDice
+            {
+                Count = 1,
+                Die = DieType.D8
+            },
+            VersatileDamage = new DamageDice
+            {
+                Count = 1,
+                Die = DieType.D10
+            },
+            DamageType = "damage.slashing",
+            Properties =
+            [
+                "weapon_property.versatile"
+            ],
+            WeightPounds = 3m,
+            CostInCopperPieces = 1500
+        };
+    }
+
+    public static ArmorDefinition LeatherArmor()
+    {
+        return new ArmorDefinition
+        {
+            Id = "armor.leather",
+            Name = "Leather",
+            Category = ArmorCategory.Light,
+            BaseArmorClass = 11,
+            AddsDexterityModifier = true,
+            WeightPounds = 10m
+        };
+    }
+
+    public static ArmorDefinition Shield()
+    {
+        return new ArmorDefinition
+        {
+            Id = "armor.shield",
+            Name = "Shield",
+            Category = ArmorCategory.Shield,
+            BaseArmorClass = 0,
+            ArmorClassBonus = 2,
+            WeightPounds = 6m
+        };
+    }
+
     public static IReadOnlyList<SkillDefinition> FighterSkillDefinitions()
     {
         return

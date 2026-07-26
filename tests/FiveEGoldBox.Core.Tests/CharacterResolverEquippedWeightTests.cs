@@ -1,6 +1,7 @@
 using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
+using FiveEGoldBox.Core.Tests.Builders;
 
 namespace FiveEGoldBox.Core.Tests;
 
@@ -142,8 +143,8 @@ public sealed class CharacterResolverEquippedWeightTests
             ],
             Armors =
             [
-                CreateLeatherArmor(),
-                CreateShield()
+                TestRulesetBuilder.LeatherArmor(),
+                TestRulesetBuilder.Shield()
             ],
             Weapons =
             [
@@ -153,31 +154,7 @@ public sealed class CharacterResolverEquippedWeightTests
         };
     }
 
-    private static ArmorDefinition CreateLeatherArmor()
-    {
-        return new ArmorDefinition
-        {
-            Id = "armor.leather",
-            Name = "Leather",
-            Category = ArmorCategory.Light,
-            BaseArmorClass = 11,
-            AddsDexterityModifier = true,
-            WeightPounds = 10m
-        };
-    }
 
-    private static ArmorDefinition CreateShield()
-    {
-        return new ArmorDefinition
-        {
-            Id = "armor.shield",
-            Name = "Shield",
-            Category = ArmorCategory.Shield,
-            BaseArmorClass = 0,
-            ArmorClassBonus = 2,
-            WeightPounds = 6m
-        };
-    }
 
     private static WeaponDefinition CreateLongsword()
     {
