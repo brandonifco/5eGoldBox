@@ -161,7 +161,9 @@ public static class RegionalTravelRules
 
         if (!string.Equals(
             session.CurrentLocationId,
-            WatchtowerScenarioContent.OutpostLocationId,
+            ScenarioDefinitionRegistry
+                .Resolve(session)
+                .StartingLocationId,
             StringComparison.Ordinal))
         {
             return BeginAvailability.WrongLocation;

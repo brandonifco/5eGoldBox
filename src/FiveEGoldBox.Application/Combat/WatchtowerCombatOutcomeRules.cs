@@ -40,18 +40,6 @@ public static class WatchtowerCombatOutcomeRules
                 nameof(session));
         }
 
-        Dictionary<string, EncounterParticipantState>
-            participantsById = CreatePartyParticipantMap(
-                session,
-                encounter);
-        int rangerAmmunition = ResolveRangerAmmunition(
-            session,
-            participantsById);
-        PartyState projectedParty = ProjectParty(
-            session.Party,
-            participantsById,
-            rangerAmmunition);
-
         ScenarioDefinition scenario =
             ScenarioDefinitionRegistry.Resolve(session);
         EncounterDefinition encounterDefinition = scenario.Encounters
@@ -62,6 +50,19 @@ public static class WatchtowerCombatOutcomeRules
             ?? throw new ArgumentException(
                 "The completed encounter is not part of this scenario.",
                 nameof(session));
+
+        Dictionary<string, EncounterParticipantState>
+            participantsById = CreatePartyParticipantMap(
+                session,
+                encounter,
+                encounterDefinition.PartySideId);
+        int rangerAmmunition = ResolveRangerAmmunition(
+            session,
+            participantsById);
+        PartyState projectedParty = ProjectParty(
+            session.Party,
+            participantsById,
+            rangerAmmunition);
 
         bool isPartyVictory = string.Equals(
             encounter.WinningSideId,
@@ -133,7 +134,8 @@ public static class WatchtowerCombatOutcomeRules
     private static Dictionary<string, EncounterParticipantState>
         CreatePartyParticipantMap(
             ApplicationSessionState session,
-            EncounterState encounter)
+            EncounterState encounter,
+            string partySideId)
     {
         Dictionary<string, EncounterParticipantState> result =
             new(StringComparer.Ordinal);
@@ -155,7 +157,7 @@ public static class WatchtowerCombatOutcomeRules
 
             if (!string.Equals(
                 participant.SideId,
-                WatchtowerSignalEncounter.PartySideId,
+                partySideId,
                 StringComparison.Ordinal))
             {
                 throw new ArgumentException(
