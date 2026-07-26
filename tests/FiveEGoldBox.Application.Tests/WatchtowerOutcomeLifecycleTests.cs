@@ -197,14 +197,14 @@ public sealed class WatchtowerOutcomeLifecycleTests
             y: 1,
             ExplorationFacing.East);
 
-        Assert.True(SignalMechanismRules.CanActivate(current));
+        Assert.True(ScenarioTriggerRules.CanActivate(current));
 
         ExplorationState returnContext = current.Exploration!;
         PartyState preCombatParty = current.Party;
         int cursorBeforeSignalActivation =
             current.RandomValuesConsumed;
 
-        current = SignalMechanismRules.Activate(current);
+        current = ScenarioTriggerRules.Activate(current);
 
         Assert.Equal(ApplicationMode.Encounter, current.CurrentMode);
         Assert.Equal(

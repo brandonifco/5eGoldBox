@@ -84,7 +84,7 @@ public sealed class WatchtowerCombatScenarioTests
                 Members = Array.AsReadOnly(members)
             }
         };
-        ApplicationSessionState source = SignalMechanismRules.Activate(
+        ApplicationSessionState source = ScenarioTriggerRules.Activate(
             signalReady,
             WatchtowerSignalTestData.CreateRuleset());
         PartyState persistentParty = source.Party;

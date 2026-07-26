@@ -7,7 +7,7 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Exploration;
 
-public static class SignalMechanismRules
+public static class ScenarioTriggerRules
 {
     public static bool CanActivate(
         ApplicationSessionState session)
@@ -52,9 +52,12 @@ public static class SignalMechanismRules
     {
         ArgumentNullException.ThrowIfNull(session);
 
+        // Resolved lazily: a trigger that starts no encounter needs no
+        // ruleset, and should not have to reach for one scenario's content to
+        // get it.
         return ActivateCanonical(
             session,
-            WatchtowerScenarioContent.CreateRuleset());
+            WatchtowerScenarioContent.CreateRuleset);
     }
 
     public static ApplicationSessionState Activate(
@@ -64,12 +67,12 @@ public static class SignalMechanismRules
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(ruleset);
 
-        return ActivateCanonical(session, ruleset);
+        return ActivateCanonical(session, () => ruleset);
     }
 
     private static ApplicationSessionState ActivateCanonical(
         ApplicationSessionState session,
-        ValidatedRuleset ruleset)
+        Func<ValidatedRuleset> resolveRuleset)
     {
         ApplicationSessionState canonicalSession =
             ApplicationSessionRules.CreateCanonical(session);
@@ -78,11 +81,9 @@ public static class SignalMechanismRules
             != ApplicationMode.Exploration)
         {
             throw new InvalidOperationException(
-                "The signal mechanism can be activated only in exploration mode.");
+                "A trigger can be activated only in exploration mode.");
         }
 
-        ExplorationState returnContext =
-            canonicalSession.Exploration!;
         ScenarioTriggerDefinition? trigger =
             ScenarioTriggerMatcher.FindAvailable(canonicalSession);
 
@@ -92,14 +93,33 @@ public static class SignalMechanismRules
             // progress, so the caller keeps the message it had before.
             throw new InvalidOperationException(
                 HasProgressForAnyTrigger(canonicalSession)
-                    ? "The party is not in the authored position and facing required to activate the signal mechanism."
-                    : "The signal mechanism can be activated only while the accepted mission is active.");
+                    ? "The party is not in the authored position and facing required to activate this trigger."
+                    : "No trigger here is available at the scenario's current progress.");
         }
 
+        ScenarioState resultingScenario = new()
+        {
+            ProgressId = trigger.ResultingProgressId
+        };
+
+        // Starting an encounter is one thing a trigger can do, not the only
+        // thing. A trigger that names no encounter - a lever, an inscription -
+        // moves the scenario on and leaves the party where it was standing.
+        if (trigger.EncounterId is null)
+        {
+            return ApplicationSessionRules.CreateCanonical(
+                canonicalSession with
+                {
+                    Scenario = resultingScenario
+                });
+        }
+
+        ExplorationState returnContext =
+            canonicalSession.Exploration!;
         EncounterState encounter =
             WatchtowerSignalEncounter.Create(
                 canonicalSession.Party,
-                ruleset,
+                resolveRuleset(),
                 canonicalSession.RandomSeed,
                 canonicalSession.RandomValuesConsumed,
                 out int updatedRandomValuesConsumed);
@@ -108,10 +128,7 @@ public static class SignalMechanismRules
             canonicalSession with
             {
                 CurrentMode = ApplicationMode.Encounter,
-                Scenario = new ScenarioState
-                {
-                    ProgressId = trigger.ResultingProgressId
-                },
+                Scenario = resultingScenario,
                 Exploration = null,
                 ActiveEncounter = new ActiveEncounterState
                 {

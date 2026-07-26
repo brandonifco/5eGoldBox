@@ -564,7 +564,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
         ApplicationSessionState session =
             CreateSignalReadySession();
         ApplicationSessionState expected =
-            SignalMechanismRules.Activate(session);
+            ScenarioTriggerRules.Activate(session);
 
         string output = RunSession(
             "4\n",
@@ -974,7 +974,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
     private static ApplicationSessionState
         CreateEncounterSession()
     {
-        return SignalMechanismRules.Activate(
+        return ScenarioTriggerRules.Activate(
             CreateSignalReadySession());
     }
 

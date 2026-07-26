@@ -118,7 +118,7 @@ internal sealed partial class ConsoleSessionRunner
                     output.WriteLine("Used stairs.");
                     break;
                 case SessionMenuAction.ActivateSignal:
-                    session = SignalMechanismRules.Activate(session);
+                    session = ScenarioTriggerRules.Activate(session);
                     output.WriteLine(
                         "Signal activated. Encounter started.");
                     break;
@@ -266,7 +266,7 @@ internal sealed partial class ConsoleSessionRunner
                     SessionMenuAction.UseStairs));
         }
 
-        if (SignalMechanismRules.CanActivate(session))
+        if (ScenarioTriggerRules.CanActivate(session))
         {
             options.Add(
                 new SessionMenuOption(

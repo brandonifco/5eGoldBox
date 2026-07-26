@@ -356,7 +356,7 @@ public sealed class ConsoleProcessRestartTests
     {
         SignalReadyPlan signalReady = CreateSignalReadyPlan();
         ApplicationSessionState encounter =
-            SignalMechanismRules.Activate(signalReady.State);
+            ScenarioTriggerRules.Activate(signalReady.State);
         CombatPlan combat = CreateCombatPlan(
             encounter,
             CombatStrategy.PartyVictory);
@@ -422,7 +422,7 @@ public sealed class ConsoleProcessRestartTests
     {
         SignalReadyPlan signalReady = CreateSignalReadyPlan();
         ApplicationSessionState encounter =
-            SignalMechanismRules.Activate(signalReady.State);
+            ScenarioTriggerRules.Activate(signalReady.State);
         CombatPlan combat = CreateCombatPlan(
             encounter,
             CombatStrategy.PartyVictory);
@@ -470,7 +470,7 @@ public sealed class ConsoleProcessRestartTests
     {
         SignalReadyPlan signalReady = CreateSignalReadyPlan();
         ApplicationSessionState encounter =
-            SignalMechanismRules.Activate(signalReady.State);
+            ScenarioTriggerRules.Activate(signalReady.State);
         CombatPlan combat = CreateCombatPlan(
             encounter,
             CombatStrategy.ScenarioDefeat);
@@ -526,7 +526,7 @@ public sealed class ConsoleProcessRestartTests
     {
         SignalReadyPlan signalReady = CreateSignalReadyPlan();
         ApplicationSessionState encounter =
-            SignalMechanismRules.Activate(signalReady.State);
+            ScenarioTriggerRules.Activate(signalReady.State);
         WatchtowerCombatResolutionResult normalized =
             WatchtowerCombatRules.AdvanceToDecision(encounter);
         int exitSelection = GetCombatExitSelection(
@@ -630,7 +630,7 @@ public sealed class ConsoleProcessRestartTests
             state,
             SessionAction.TurnLeft);
 
-        if (!SignalMechanismRules.CanActivate(state))
+        if (!ScenarioTriggerRules.CanActivate(state))
         {
             throw new InvalidOperationException(
                 "The public noncombat script did not reach the signal mechanism.");
@@ -748,7 +748,7 @@ public sealed class ConsoleProcessRestartTests
                     actions.Add(SessionAction.UseStairs);
                 }
 
-                if (SignalMechanismRules.CanActivate(state))
+                if (ScenarioTriggerRules.CanActivate(state))
                 {
                     actions.Add(SessionAction.ActivateSignal);
                 }
