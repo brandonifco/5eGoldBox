@@ -95,17 +95,16 @@ internal static class WatchtowerCombatStepFactory
         };
     }
 
+    /// Records that the fight is over.
+    ///
+    /// Called once, by the automatic processor, which returns as soon as it
+    /// has. Both of its callers hand it a list they created empty a line
+    /// earlier, so it cannot be asked to append a completion to a run that
+    /// already ended.
     internal static void AppendCompletion(
         List<WatchtowerCombatStepResult> steps,
         EncounterState encounter)
     {
-        if (steps.Count > 0
-            && steps[^1].Kind
-                == WatchtowerCombatStepKind.CombatCompleted)
-        {
-            return;
-        }
-
         steps.Add(new WatchtowerCombatStepResult
         {
             Kind = WatchtowerCombatStepKind.CombatCompleted,
