@@ -150,6 +150,87 @@ public sealed class EncounterWeaponAttackPrerequisiteRulesTests
         Assert.Equal(expectedMode, result.AttackRollMode);
     }
 
+    /// An unconscious creature is also prone, and both conditions give
+    /// attacks against it advantage.
+    [Theory]
+    [InlineData(CombatantLifecycleState.Dying)]
+    [InlineData(CombatantLifecycleState.Stable)]
+    public void Evaluate_AgainstADownedTarget_HasAdvantage(
+        CombatantLifecycleState lifecycleState)
+    {
+        EncounterState state = DownTarget(
+            CreateEncounter(),
+            lifecycleState);
+
+        EncounterWeaponAttackPrerequisiteEvaluation result = Evaluate(state);
+
+        Assert.True(result.IsLegal);
+        Assert.Equal(D20RollMode.Advantage, result.AttackRollMode);
+    }
+
+    [Fact]
+    public void Evaluate_AgainstAStandingTarget_IsNormal()
+    {
+        EncounterWeaponAttackPrerequisiteEvaluation result =
+            Evaluate(CreateEncounter());
+
+        Assert.True(result.IsLegal);
+        Assert.Equal(D20RollMode.Normal, result.AttackRollMode);
+    }
+
+    /// Advantage from a downed target and disadvantage from an adjacent
+    /// hostile cancel, as any two opposing sources do.
+    [Fact]
+    public void Evaluate_DownedTargetWithAdjacentHostile_IsNormal()
+    {
+        EncounterState state = DownTarget(
+            CreateEncounter(includeAdjacentThreat: true),
+            CombatantLifecycleState.Dying);
+
+        EncounterWeaponAttackPrerequisiteEvaluation result = Evaluate(state);
+
+        Assert.True(result.IsLegal);
+        Assert.Equal(D20RollMode.Normal, result.AttackRollMode);
+    }
+
+    private static EncounterState DownTarget(
+        EncounterState state,
+        CombatantLifecycleState lifecycleState)
+    {
+        EncounterParticipantState[] participants = state.Participants
+            .Select(participant => participant.Combatant.CombatantId
+                    == "combatant.target"
+                ? participant with
+                {
+                    Combatant = participant.Combatant with
+                    {
+                        Health = participant.Combatant.Health with
+                        {
+                            HitPoints = participant.Combatant.Health.HitPoints
+                                with
+                            {
+                                CurrentHitPoints = 0,
+                                TemporaryHitPoints = 0
+                            },
+                            DeathSavingThrows =
+                                participant.Combatant.Health.DeathSavingThrows
+                                    with
+                                {
+                                    IsStable = lifecycleState
+                                        == CombatantLifecycleState.Stable
+                                }
+                        }
+                    }
+                }
+                : participant)
+            .ToArray();
+
+        return state with
+        {
+            Participants = Array.AsReadOnly(participants)
+        };
+    }
+
     private static EncounterWeaponAttackPrerequisiteEvaluation Evaluate(
         EncounterState state)
     {
