@@ -118,7 +118,15 @@ internal static class SaveGameMapper
             Health = ToSaveHealth(member.Health),
             Ammunition = member.Ammunition is null
                 ? null
-                : ToSaveAmmunition(member.Ammunition)
+                : ToSaveAmmunition(member.Ammunition),
+            Resources = member.Resources
+                .Select(resource => new SaveCharacterResourceV1
+                {
+                    ResourceId = resource.ResourceId,
+                    Remaining = resource.Remaining,
+                    Maximum = resource.Maximum
+                })
+                .ToArray()
         };
     }
 
@@ -136,7 +144,16 @@ internal static class SaveGameMapper
             Health = ToRuntimeHealth(member.Health),
             Ammunition = member.Ammunition is null
                 ? null
-                : ToRuntimeAmmunition(member.Ammunition)
+                : ToRuntimeAmmunition(member.Ammunition),
+            Resources = (member.Resources
+                    ?? Array.Empty<SaveCharacterResourceV1>())
+                .Select(resource => new CharacterResourceState
+                {
+                    ResourceId = resource.ResourceId,
+                    Remaining = resource.Remaining,
+                    Maximum = resource.Maximum
+                })
+                .ToArray()
         };
     }
 

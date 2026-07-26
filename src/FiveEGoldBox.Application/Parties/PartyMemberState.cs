@@ -18,4 +18,9 @@ public sealed record PartyMemberState
     public required CombatantHealthState Health { get; init; }
 
     public AmmunitionState? Ammunition { get; init; }
+
+    /// Spell slots and anything else spent and recovered on a rest. Empty for
+    /// a character with nothing to spend.
+    public IReadOnlyList<CharacterResourceState> Resources { get; init; }
+        = Array.Empty<CharacterResourceState>();
 }

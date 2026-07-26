@@ -58,7 +58,8 @@ internal static class RulesetDefinitionCanonicalizer
             WeaponProficiencies = Protect(characterClass.WeaponProficiencies),
             ToolProficiencies = Protect(characterClass.ToolProficiencies),
             SkillChoices = Protect(characterClass.SkillChoices),
-            FeaturesByLevel = ProtectFeatures(characterClass.FeaturesByLevel)
+            FeaturesByLevel = ProtectFeatures(characterClass.FeaturesByLevel),
+            SpellSlotsByLevel = ProtectSlots(characterClass.SpellSlotsByLevel)
         };
     }
 
@@ -87,6 +88,15 @@ internal static class RulesetDefinitionCanonicalizer
         {
             Tags = Protect(equipmentItem.Tags)
         };
+    }
+
+    private static IReadOnlyDictionary<int, int> ProtectSlots(
+        IReadOnlyDictionary<int, int> slotsByLevel)
+    {
+        return new ReadOnlyDictionary<int, int>(
+            slotsByLevel.ToDictionary(
+                entry => entry.Key,
+                entry => entry.Value));
     }
 
     private static IReadOnlyDictionary<int, IReadOnlyList<string>> ProtectFeatures(

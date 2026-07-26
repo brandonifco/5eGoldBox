@@ -70,6 +70,49 @@ internal static class CampaignPartyCompositionValidator
         }
 
         ValidateAmmunition(character, member);
+        ValidateResources(campaign, character, member);
+    }
+
+    /// A character has exactly the resources its class grants, at exactly the
+    /// ceilings the class sets. How much is left is play.
+    private static void ValidateResources(
+        CampaignDefinition campaign,
+        CampaignCharacterDefinition character,
+        PartyMemberState member)
+    {
+        IReadOnlyDictionary<string, int> granted =
+            CampaignResourceGrants.ForCharacter(campaign, character);
+
+        foreach (CharacterResourceState resource in member.Resources)
+        {
+            if (!granted.TryGetValue(
+                    resource.ResourceId,
+                    out int maximum))
+            {
+                throw new ArgumentException(
+                    $"Character '{member.CharacterDefinitionId}' holds resource '{resource.ResourceId}', which its build does not grant.",
+                    nameof(member));
+            }
+
+            if (resource.Maximum != maximum)
+            {
+                throw new ArgumentException(
+                    $"Character '{member.CharacterDefinitionId}' has {resource.Maximum} of '{resource.ResourceId}' but its build grants {maximum}.",
+                    nameof(member));
+            }
+        }
+
+        foreach (string resourceId in granted.Keys
+            .Where(resourceId => !member.Resources.Any(resource =>
+                string.Equals(
+                    resource.ResourceId,
+                    resourceId,
+                    StringComparison.Ordinal))))
+        {
+            throw new ArgumentException(
+                $"Character '{member.CharacterDefinitionId}' is missing resource '{resourceId}', which its build grants.",
+                nameof(member));
+        }
     }
 
     /// A character carries ammunition exactly when its build says so, and for

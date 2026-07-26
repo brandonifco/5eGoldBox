@@ -1,6 +1,7 @@
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Randomness;
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Validation;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Application.Scenarios;
@@ -33,7 +34,13 @@ internal static partial class CampaignRulesetContent
         if (!load.IsValid || load.Ruleset is null)
         {
             throw new InvalidOperationException(
-                "The canonical watchtower ruleset could not be validated.");
+                "The campaign ruleset could not be validated: "
+                    + string.Join(
+                        "; ",
+                        load.Validation.Issues
+                            .Where(issue =>
+                                issue.Severity == ValidationSeverity.Error)
+                            .Select(issue => $"{issue.Code} {issue.Message}")));
         }
 
         return load.Ruleset;
@@ -131,6 +138,32 @@ internal static partial class CampaignRulesetContent
                     "skill.athletics",
                     "skill.survival"
                 ]),
+            CreateCaster(
+                ClericClassId,
+                "Cleric",
+                DieType.D8,
+                Ability.Wisdom,
+                [
+                    Ability.Wisdom,
+                    Ability.Charisma
+                ],
+                [
+                    "skill.perception",
+                    "skill.survival"
+                ]),
+            CreateCaster(
+                WizardClassId,
+                "Wizard",
+                DieType.D6,
+                Ability.Intelligence,
+                [
+                    Ability.Intelligence,
+                    Ability.Wisdom
+                ],
+                [
+                    "skill.perception",
+                    "skill.stealth"
+                ]),
             CreateClass(
                 CampaignRulesetContent
                     .RangerClassId,
@@ -146,6 +179,27 @@ internal static partial class CampaignRulesetContent
                     "skill.survival"
                 ])
         ];
+    }
+
+    /// A class that casts. Every caster in the campaign is level one, so all
+    /// of them have the same two first-level slots; what differs is the
+    /// ability they cast with.
+    private static ClassDefinition CreateCaster(
+        string id,
+        string name,
+        DieType hitDie,
+        Ability spellcastingAbility,
+        IReadOnlyList<Ability> savingThrows,
+        IReadOnlyList<string> skills)
+    {
+        return CreateClass(id, name, hitDie, savingThrows, skills) with
+        {
+            SpellcastingAbility = spellcastingAbility,
+            SpellSlotsByLevel = new Dictionary<int, int>
+            {
+                [1] = 2
+            }
+        };
     }
 
     private static ClassDefinition CreateClass(

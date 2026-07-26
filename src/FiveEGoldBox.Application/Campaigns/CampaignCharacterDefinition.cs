@@ -43,4 +43,11 @@ internal sealed record CampaignCharacterDefinition
 
     /// Null for characters who carry nothing that runs out.
     internal CampaignAmmunitionDefinition? Ammunition { get; init; }
+
+    /// Which spells this character has ready. Preparation is a choice its
+    /// player made, so it belongs to the character rather than the class -
+    /// two Clerics prepare differently. Empty for a character who casts
+    /// nothing.
+    internal IReadOnlyList<string> PreparedSpellIds { get; init; }
+        = Array.Empty<string>();
 }

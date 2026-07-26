@@ -1,4 +1,6 @@
 using FiveEGoldBox.Application.Parties;
+using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -12,18 +14,22 @@ internal static class CampaignPartyFactory
     {
         ArgumentNullException.ThrowIfNull(campaign);
 
+        ValidatedRuleset ruleset =
+            RulesetRegistry.Resolve(campaign.RulesetId);
+
         return new PartyState
         {
             PartyId = FrontierCampaignContent.StartingPartyId,
             Members = campaign.Roster
                 .Take(campaign.ActivePartySize)
-                .Select(ToMember)
+                .Select(character => ToMember(character, ruleset))
                 .ToArray()
         };
     }
 
     private static PartyMemberState ToMember(
-        CampaignCharacterDefinition character)
+        CampaignCharacterDefinition character,
+        ValidatedRuleset ruleset)
     {
         return new PartyMemberState
         {
@@ -55,7 +61,37 @@ internal static class CampaignPartyFactory
                     WeaponId = character.Ammunition.WeaponId,
                     AmmunitionItemId = character.Ammunition.AmmunitionItemId,
                     RemainingQuantity = character.Ammunition.Quantity
-                }
+                },
+            Resources = CreateStartingResources(character, ruleset)
         };
+    }
+
+    /// Slots come from the class, the way hit points come from the hit die. A
+    /// character starts rested, so everything is full.
+    private static IReadOnlyList<CharacterResourceState> CreateStartingResources(
+        CampaignCharacterDefinition character,
+        ValidatedRuleset ruleset)
+    {
+        ClassDefinition? characterClass = ruleset.Definition.Classes
+            .FirstOrDefault(candidate => string.Equals(
+                candidate.Id,
+                character.ClassId,
+                StringComparison.Ordinal));
+
+        if (characterClass is null
+            || characterClass.SpellSlotsByLevel.Count == 0)
+        {
+            return Array.Empty<CharacterResourceState>();
+        }
+
+        return characterClass.SpellSlotsByLevel
+            .OrderBy(slots => slots.Key)
+            .Select(slots => new CharacterResourceState
+            {
+                ResourceId = SpellSlotResources.ForLevel(slots.Key),
+                Remaining = slots.Value,
+                Maximum = slots.Value
+            })
+            .ToArray();
     }
 }
