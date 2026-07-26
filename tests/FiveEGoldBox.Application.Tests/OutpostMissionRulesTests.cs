@@ -96,7 +96,7 @@ public sealed class OutpostMissionRulesTests
         ApplicationSessionState exploring =
             CreateExplorationSession();
         ApplicationSessionState encounter =
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 WatchtowerSignalTestData
                     .CreateSignalReadySession());
         ApplicationSessionState conclusion =

@@ -12,13 +12,13 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Tests;
 
-public sealed class SignalMechanismRulesTests
+public sealed class ScenarioTriggerRulesTests
 {
     [Fact]
     public void CanActivate_AtAuthoredSignalState_ReturnsTrue()
     {
         Assert.True(
-            SignalMechanismRules.CanActivate(
+            ScenarioTriggerRules.CanActivate(
                 WatchtowerSignalTestData.CreateSignalReadySession()));
     }
 
@@ -26,7 +26,7 @@ public sealed class SignalMechanismRulesTests
     public void CanActivate_OnGroundFloor_ReturnsFalse()
     {
         Assert.False(
-            SignalMechanismRules.CanActivate(
+            ScenarioTriggerRules.CanActivate(
                 WatchtowerSignalTestData.CreateExplorationSession()));
     }
 
@@ -37,7 +37,7 @@ public sealed class SignalMechanismRulesTests
             WatchtowerSignalTestData.MoveToUpperFloorStair();
 
         Assert.False(
-            SignalMechanismRules.CanActivate(state));
+            ScenarioTriggerRules.CanActivate(state));
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public sealed class SignalMechanismRulesTests
                 ExplorationTurnDirection.Left);
 
         Assert.False(
-            SignalMechanismRules.CanActivate(state));
+            ScenarioTriggerRules.CanActivate(state));
     }
 
     [Theory]
@@ -68,7 +68,7 @@ progress)
             };
 
         Assert.False(
-            SignalMechanismRules.CanActivate(state));
+            ScenarioTriggerRules.CanActivate(state));
     }
 
     [Theory]
@@ -91,14 +91,14 @@ progress)
         };
 
         Assert.False(
-            SignalMechanismRules.CanActivate(state));
+            ScenarioTriggerRules.CanActivate(state));
     }
 
     [Fact]
     public void CanActivate_WithNullSession_Throws()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            SignalMechanismRules.CanActivate(null!));
+            ScenarioTriggerRules.CanActivate(null!));
     }
 
     [Fact]
@@ -111,7 +111,7 @@ progress)
             };
 
         Assert.Throws<ArgumentException>(() =>
-            SignalMechanismRules.CanActivate(state));
+            ScenarioTriggerRules.CanActivate(state));
     }
 
     [Fact]
@@ -122,7 +122,7 @@ progress)
         ValidatedRuleset ruleset = WatchtowerSignalTestData.CreateRuleset();
 
         ApplicationSessionState result =
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 source,
                 ruleset);
 
@@ -167,7 +167,7 @@ progress)
         int originalRandomValuesConsumed =
             source.RandomValuesConsumed;
 
-        _ = SignalMechanismRules.Activate(
+        _ = ScenarioTriggerRules.Activate(
             source,
             WatchtowerSignalTestData.CreateRuleset());
 
@@ -190,7 +190,7 @@ progress)
     public void Activate_WithNullSession_Throws()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 null!,
                 WatchtowerSignalTestData.CreateRuleset()));
     }
@@ -199,7 +199,7 @@ progress)
     public void Activate_WithNullRuleset_Throws()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 WatchtowerSignalTestData.CreateSignalReadySession(),
                 null!));
     }
@@ -208,7 +208,7 @@ progress)
     public void Activate_OutsideExploration_Throws()
     {
         Assert.Throws<InvalidOperationException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 WatchtowerSignalTestData.CreateAcceptedSession(),
                 WatchtowerSignalTestData.CreateRuleset()));
     }
@@ -217,7 +217,7 @@ progress)
     public void Activate_AtWrongPosition_Throws()
     {
         Assert.Throws<InvalidOperationException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 WatchtowerSignalTestData.MoveToUpperFloorStair(),
                 WatchtowerSignalTestData.CreateRuleset()));
     }
@@ -231,7 +231,7 @@ progress)
                 ExplorationTurnDirection.Left);
 
         Assert.Throws<InvalidOperationException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
     }
@@ -252,7 +252,7 @@ progress)
             };
 
         Assert.Throws<ArgumentException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
     }
@@ -268,7 +268,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
             };
 
         Assert.Throws<InvalidOperationException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
     }
@@ -280,7 +280,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
             WatchtowerSignalTestData.CreateSignalReadySession();
         ValidatedRuleset ruleset = WatchtowerSignalTestData.CreateRuleset();
         ApplicationSessionState activated =
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 signalReady,
                 ruleset);
         ApplicationSessionState invalid =
@@ -291,7 +291,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
             };
 
         Assert.Throws<ArgumentException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 invalid,
                 ruleset));
     }
@@ -319,7 +319,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
         };
 
         Assert.Throws<InvalidOperationException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
     }
@@ -354,7 +354,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
         };
 
         Assert.Throws<InvalidOperationException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
     }
@@ -389,7 +389,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
         };
 
         Assert.Throws<InvalidOperationException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
     }
@@ -422,7 +422,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
         };
 
         Assert.Throws<InvalidOperationException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
     }
@@ -455,7 +455,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
         };
 
         Assert.Throws<InvalidOperationException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 state,
                 WatchtowerSignalTestData.CreateRuleset()));
     }
@@ -464,7 +464,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
     public void Activate_WhenBoundedWeaponContentIsMissing_Throws()
     {
         Assert.Throws<InvalidOperationException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 WatchtowerSignalTestData.CreateSignalReadySession(),
                 WatchtowerSignalTestData.CreateRuleset(includeLongbow: false)));
     }
@@ -476,7 +476,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
             CreateCanonicalSignalReadySession();
 
         ApplicationSessionState result =
-            SignalMechanismRules.Activate(source);
+            ScenarioTriggerRules.Activate(source);
 
         Assert.Equal(
             ApplicationMode.Encounter,
@@ -508,7 +508,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
     public void Activate_WithoutRuleset_WithNullSession_Throws()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            SignalMechanismRules.Activate(null!));
+            ScenarioTriggerRules.Activate(null!));
     }
 
     [Fact]
@@ -518,9 +518,9 @@ WatchtowerScenarioProgress.RaidersDefeated)
             CreateCanonicalSignalReadySession();
 
         ApplicationSessionState clientSafeResult =
-            SignalMechanismRules.Activate(source);
+            ScenarioTriggerRules.Activate(source);
         ApplicationSessionState explicitResult =
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 source,
                 WatchtowerSignalTestData.CreateRuleset());
 
@@ -533,10 +533,10 @@ WatchtowerScenarioProgress.RaidersDefeated)
     public void Activate_WithoutRuleset_RepeatedIndependentActivationsAreDeterministicAndIndependent()
     {
         ApplicationSessionState first =
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 CreateCanonicalSignalReadySession());
         ApplicationSessionState second =
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 CreateCanonicalSignalReadySession());
 
         AssertActivatedStateEquivalent(first, second);

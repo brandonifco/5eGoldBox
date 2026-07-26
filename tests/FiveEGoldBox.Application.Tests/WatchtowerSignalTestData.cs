@@ -15,7 +15,7 @@ internal static class WatchtowerSignalTestData
     internal static ApplicationSessionState
         CreateEncounterSession()
     {
-        return SignalMechanismRules.Activate(
+        return ScenarioTriggerRules.Activate(
             CreateSignalReadySession(),
             CreateRuleset());
     }

@@ -273,7 +273,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
             })
             .ToArray();
 
-        return SignalMechanismRules.Activate(
+        return ScenarioTriggerRules.Activate(
             signalReady with
             {
                 Party = signalReady.Party with

@@ -966,7 +966,7 @@ public sealed class ConsoleSessionRunnerTests
             current,
             ExplorationTurnDirection.Left);
 
-        return SignalMechanismRules.Activate(current);
+        return ScenarioTriggerRules.Activate(current);
     }
 
     private static ApplicationSessionState

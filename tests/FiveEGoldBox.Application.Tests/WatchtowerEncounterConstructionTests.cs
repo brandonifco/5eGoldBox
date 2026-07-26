@@ -170,7 +170,7 @@ public sealed class WatchtowerEncounterConstructionTests
             WatchtowerSignalTestData
                 .CreateSignalReadySessionWithStableAndDyingParty();
         ApplicationSessionState result =
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 source,
                 WatchtowerSignalTestData.CreateRuleset());
         EncounterState encounter = GetEncounter(result);
@@ -265,7 +265,7 @@ public sealed class WatchtowerEncounterConstructionTests
         Assert.True(source.Party.Members[0].Health.IsDead);
 
         Assert.Throws<ArgumentException>(() =>
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 source,
                 WatchtowerSignalTestData.CreateRuleset()));
 
@@ -474,12 +474,12 @@ public sealed class WatchtowerEncounterConstructionTests
     public void WatchtowerEncounter_SameRandomStateProducesSameInitiative()
     {
         ApplicationSessionState first =
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 WatchtowerSignalTestData
                     .CreateSignalReadySession(),
                 WatchtowerSignalTestData.CreateRuleset());
         ApplicationSessionState second =
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 WatchtowerSignalTestData
                     .CreateSignalReadySession(),
                 WatchtowerSignalTestData.CreateRuleset());
@@ -510,7 +510,7 @@ public sealed class WatchtowerEncounterConstructionTests
         ValidatedRuleset ruleset =
             WatchtowerSignalTestData.CreateRuleset();
         ApplicationSessionState result =
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 source,
                 ruleset);
         EncounterState encounter = GetEncounter(result);
@@ -622,7 +622,7 @@ public sealed class WatchtowerEncounterConstructionTests
         ApplicationSessionState source =
             WatchtowerSignalTestData.CreateSignalReadySession();
         ApplicationSessionState result =
-            SignalMechanismRules.Activate(
+            ScenarioTriggerRules.Activate(
                 source,
                 WatchtowerSignalTestData.CreateRuleset());
 

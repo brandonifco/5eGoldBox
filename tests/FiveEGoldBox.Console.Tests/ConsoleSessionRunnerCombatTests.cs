@@ -1132,7 +1132,7 @@ public sealed class ConsoleSessionRunnerCombatTests
                 count++;
             }
 
-            if (SignalMechanismRules.CanActivate(session))
+            if (ScenarioTriggerRules.CanActivate(session))
             {
                 count++;
             }
@@ -1247,7 +1247,7 @@ public sealed class ConsoleSessionRunnerCombatTests
         current = ExplorationRules.Turn(
             current,
             ExplorationTurnDirection.Left);
-        return SignalMechanismRules.Activate(current);
+        return ScenarioTriggerRules.Activate(current);
     }
 
     private static (int ExitCode, string Output) Run(
