@@ -23,6 +23,12 @@ public static class ScenarioSessionFactory
             StringComparer.Ordinal)
         {
             [WatchtowerScenarioContent.ScenarioId] =
+                WatchtowerScenarioContent.CreateStartingParty,
+            // The same roster, and deliberately so: one campaign, one party,
+            // whichever of its scenarios is being attempted. That both entries
+            // point at the same factory is the shape a campaign would take if
+            // it existed as a type.
+            [SunkenChapelScenarioDefinitionProvider.ScenarioId] =
                 WatchtowerScenarioContent.CreateStartingParty
         };
 

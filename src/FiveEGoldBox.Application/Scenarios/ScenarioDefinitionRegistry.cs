@@ -22,7 +22,9 @@ internal static class ScenarioDefinitionRegistry
             StringComparer.Ordinal)
         {
             [WatchtowerScenarioContent.ScenarioId] =
-                WatchtowerScenarioDefinitionProvider.Create
+                WatchtowerScenarioDefinitionProvider.Create,
+            [SunkenChapelScenarioDefinitionProvider.ScenarioId] =
+                SunkenChapelScenarioDefinitionProvider.Create
         };
 
     private static readonly ConcurrentDictionary<string, ScenarioDefinition>

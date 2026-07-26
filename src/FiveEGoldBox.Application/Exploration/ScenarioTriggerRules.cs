@@ -104,13 +104,29 @@ public static class ScenarioTriggerRules
 
         // Starting an encounter is one thing a trigger can do, not the only
         // thing. A trigger that names no encounter - a lever, an inscription -
-        // moves the scenario on and leaves the party where it was standing.
+        // moves the scenario on and leaves the party where it was standing,
+        // unless what it moves the scenario to is an ending.
         if (trigger.EncounterId is null)
         {
+            bool concludesScenario = ScenarioDefinitionRegistry
+                .Resolve(canonicalSession)
+                .Progress
+                .Conclusions
+                .Any(conclusion => string.Equals(
+                    conclusion.ProgressId,
+                    trigger.ResultingProgressId,
+                    StringComparison.Ordinal));
+
             return ApplicationSessionRules.CreateCanonical(
                 canonicalSession with
                 {
-                    Scenario = resultingScenario
+                    CurrentMode = concludesScenario
+                        ? ApplicationMode.ScenarioConclusion
+                        : canonicalSession.CurrentMode,
+                    Scenario = resultingScenario,
+                    Exploration = concludesScenario
+                        ? null
+                        : canonicalSession.Exploration
                 });
         }
 
