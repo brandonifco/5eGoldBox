@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Combat;
 
-public enum WatchtowerCombatDecisionState
+internal enum WatchtowerCombatDecisionState
 {
     PlayerDecisionRequired,
     AutomaticProcessingRequired,

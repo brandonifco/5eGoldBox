@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatWeaponAttackIntent
+internal sealed record WatchtowerCombatWeaponAttackIntent
 {
     public required long ExpectedEncounterRevision { get; init; }
 

@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatEndTurnIntent
+internal sealed record WatchtowerCombatEndTurnIntent
 {
     public required long ExpectedEncounterRevision { get; init; }
 

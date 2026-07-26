@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Combat;
 
-public enum WatchtowerCombatStepKind
+internal enum WatchtowerCombatStepKind
 {
     Movement,
     WeaponAttack,

@@ -2,7 +2,7 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatMoveIntent
+internal sealed record WatchtowerCombatMoveIntent
 {
     public required long ExpectedEncounterRevision { get; init; }
 

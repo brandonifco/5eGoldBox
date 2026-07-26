@@ -2,7 +2,7 @@ using FiveEGoldBox.Application.Sessions;
 
 namespace FiveEGoldBox.Application.Combat;
 
-public static class WatchtowerCombatRules
+internal static class WatchtowerCombatRules
 {
     public static WatchtowerCombatResolutionResult AdvanceToDecision(
         ApplicationSessionState session)

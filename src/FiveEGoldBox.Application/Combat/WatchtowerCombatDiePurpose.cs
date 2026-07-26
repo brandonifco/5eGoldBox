@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Combat;
 
-public enum WatchtowerCombatDiePurpose
+internal enum WatchtowerCombatDiePurpose
 {
     AttackRoll,
     DamageRoll,

@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatDieRoll
+internal sealed record WatchtowerCombatDieRoll
 {
     public required int Ordinal { get; init; }
 

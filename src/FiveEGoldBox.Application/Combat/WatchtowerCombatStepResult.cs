@@ -2,7 +2,7 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatStepResult
+internal sealed record WatchtowerCombatStepResult
 {
     public required WatchtowerCombatStepKind Kind { get; init; }
 

@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Combat;
 
-public enum WatchtowerCombatTurnAdvanceReason
+internal enum WatchtowerCombatTurnAdvanceReason
 {
     PlayerEndTurn,
     StableParticipant,

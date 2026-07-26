@@ -2,7 +2,7 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
 
-public sealed record WatchtowerCombatWeaponAttackOption
+internal sealed record WatchtowerCombatWeaponAttackOption
 {
     public required string WeaponId { get; init; }
 
