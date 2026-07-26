@@ -38,7 +38,7 @@ public sealed class ScenarioDefinitionModelTests
     }
 
     /// Party-defeated ends the scenario at the watchtower, which is exactly the
-    /// rule WatchtowerScenarioConclusionValidator enforces today.
+    /// rule ScenarioConclusionValidator enforces today.
     [Fact]
     public void Definition_ExpressesTheDefeatConclusion()
     {

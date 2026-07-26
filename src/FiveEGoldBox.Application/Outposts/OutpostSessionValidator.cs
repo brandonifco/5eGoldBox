@@ -2,7 +2,7 @@ using FiveEGoldBox.Application.Sessions;
 
 namespace FiveEGoldBox.Application.Outposts;
 
-internal static class WatchtowerOutpostSessionValidator
+internal static class OutpostSessionValidator
 {
     internal static void Validate(
         ApplicationSessionState state)

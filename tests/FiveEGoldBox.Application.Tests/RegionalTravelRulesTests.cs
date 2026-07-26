@@ -128,19 +128,9 @@ WatchtowerScenarioProgress
     {
         ApplicationSessionState beforeStart =
             CreateAcceptedSession();
-        ApplicationSessionState incompatibleProgress =
-            CreateTravelingSession() with
-            {
-                Scenario = WatchtowerScenario.CreateState(
-WatchtowerScenarioProgress
-                            .SignalActivated)
-            };
 
         Assert.False(
             RegionalTravelRules.CanAdvance(beforeStart));
-        Assert.False(
-            RegionalTravelRules.CanAdvance(
-                incompatibleProgress));
     }
 
     [Fact]
@@ -180,8 +170,11 @@ WatchtowerScenarioProgress
             RegionalTravelRules.CanAdvance(malformed));
     }
 
+    /// Holding travel state at progress the route is not open at is a
+    /// malformed session rather than an unavailable one: the route gates the
+    /// whole journey, so there is no way to have legitimately got here.
     [Fact]
-    public void Advance_WithIncompatibleProgress_StillRejectsAuthoritatively()
+    public void Advance_WithIncompatibleProgress_RejectsSessionAsMalformed()
     {
         ApplicationSessionState traveling =
             CreateTravelingSession() with
@@ -191,8 +184,9 @@ WatchtowerScenarioProgress
                             .SignalActivated)
             };
 
-        Assert.False(RegionalTravelRules.CanAdvance(traveling));
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsAny<ArgumentException>(() =>
+            RegionalTravelRules.CanAdvance(traveling));
+        Assert.ThrowsAny<ArgumentException>(() =>
             RegionalTravelRules.Advance(traveling));
     }
 
