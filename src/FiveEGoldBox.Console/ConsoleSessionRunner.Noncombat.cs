@@ -71,9 +71,9 @@ internal sealed partial class ConsoleSessionRunner
                             ?? throw new InvalidOperationException(
                                 "A mission menu option did not contain a mission choice."));
                     break;
-                case SessionMenuAction.BeginWatchtowerJourney:
+                case SessionMenuAction.BeginJourney:
                     session = RegionalTravelRules
-                        .BeginWatchtowerJourney(session);
+                        .BeginJourney(session);
                     output.WriteLine(
                         "Watchtower journey begun.");
                     break;
@@ -86,9 +86,9 @@ internal sealed partial class ConsoleSessionRunner
                             ? "Destination reached."
                             : "Travel advanced.");
                     break;
-                case SessionMenuAction.EnterWatchtower:
+                case SessionMenuAction.EnterDestination:
                     session = ExplorationRules
-                        .EnterWatchtower(session);
+                        .EnterDestination(session);
                     output.WriteLine(
                         $"Entered location: {session.CurrentLocationId}.");
                     break;
@@ -211,12 +211,12 @@ internal sealed partial class ConsoleSessionRunner
         }
 
         if (RegionalTravelRules
-            .CanBeginWatchtowerJourney(session))
+            .CanBeginJourney(session))
         {
             options.Add(
                 new SessionMenuOption(
                     "Begin Watchtower Journey",
-                    SessionMenuAction.BeginWatchtowerJourney));
+                    SessionMenuAction.BeginJourney));
         }
     }
 
@@ -232,12 +232,12 @@ internal sealed partial class ConsoleSessionRunner
                     SessionMenuAction.AdvanceTravel));
         }
 
-        if (ExplorationRules.CanEnterWatchtower(session))
+        if (ExplorationRules.CanEnterDestination(session))
         {
             options.Add(
                 new SessionMenuOption(
                     "Enter Watchtower",
-                    SessionMenuAction.EnterWatchtower));
+                    SessionMenuAction.EnterDestination));
         }
     }
 
@@ -342,9 +342,9 @@ internal sealed partial class ConsoleSessionRunner
     {
         AcceptMission,
         DeferMission,
-        BeginWatchtowerJourney,
+        BeginJourney,
         AdvanceTravel,
-        EnterWatchtower,
+        EnterDestination,
         MoveForward,
         TurnLeft,
         TurnRight,

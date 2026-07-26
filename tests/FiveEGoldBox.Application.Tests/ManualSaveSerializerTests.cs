@@ -39,7 +39,7 @@ public sealed class ManualSaveSerializerTests
     public void CanSerialize_ValidScenarioConclusionSession_ReturnsTrue()
     {
         ApplicationSessionState session =
-            WatchtowerCombatOutcomeRules.Finalize(
+            CombatOutcomeRules.Finalize(
                 WatchtowerCombatOutcomeTestData
                     .CreateRaiderVictorySession())
                 .State;
@@ -1128,7 +1128,7 @@ public sealed class ManualSaveSerializerTests
                 .State;
         }
 
-        return ExplorationRules.EnterWatchtower(current);
+        return ExplorationRules.EnterDestination(current);
     }
 
     private static ApplicationSessionState
@@ -1141,7 +1141,7 @@ public sealed class ManualSaveSerializerTests
                 .State;
 
         return RegionalTravelRules
-            .BeginWatchtowerJourney(accepted);
+            .BeginJourney(accepted);
     }
 
     private static ManualSaveLoadResult RoundTrip()

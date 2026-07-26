@@ -15,7 +15,7 @@ public sealed class AtomicManualSaveFileWriterTests
     {
         using TemporaryDirectory temporary = new();
         ApplicationSessionState session =
-            WatchtowerScenarioSessionFactory.CreateNew(RandomSeed);
+            ScenarioSessionFactory.CreateNew("scenario.watchtower", RandomSeed);
         ConsoleSessionRunner runner = new();
         StringWriter output = new();
 
@@ -40,7 +40,7 @@ public sealed class AtomicManualSaveFileWriterTests
     {
         using TemporaryDirectory temporary = new();
         ApplicationSessionState session =
-            WatchtowerScenarioSessionFactory.CreateNew(RandomSeed);
+            ScenarioSessionFactory.CreateNew("scenario.watchtower", RandomSeed);
         File.WriteAllText(
             temporary.SavePath,
             "old data");
@@ -74,7 +74,7 @@ public sealed class AtomicManualSaveFileWriterTests
     {
         using TemporaryDirectory temporary = new();
         ApplicationSessionState session =
-            WatchtowerScenarioSessionFactory.CreateNew(RandomSeed);
+            ScenarioSessionFactory.CreateNew("scenario.watchtower", RandomSeed);
         byte[] originalContents = "existing valid save"u8.ToArray();
         File.WriteAllBytes(
             temporary.SavePath,
@@ -120,7 +120,7 @@ public sealed class AtomicManualSaveFileWriterTests
     {
         using TemporaryDirectory temporary = new();
         ApplicationSessionState session =
-            WatchtowerScenarioSessionFactory.CreateNew(RandomSeed);
+            ScenarioSessionFactory.CreateNew("scenario.watchtower", RandomSeed);
         byte[] originalContents = "existing valid save"u8.ToArray();
         File.WriteAllBytes(
             temporary.SavePath,
@@ -219,7 +219,7 @@ public sealed class AtomicManualSaveFileWriterTests
     {
         using TemporaryDirectory temporary = new();
         ApplicationSessionState session =
-            WatchtowerScenarioSessionFactory.CreateNew(RandomSeed);
+            ScenarioSessionFactory.CreateNew("scenario.watchtower", RandomSeed);
         var party = session.Party;
         var scenario = session.Scenario;
         string serializedBefore =
@@ -312,14 +312,14 @@ public sealed class AtomicManualSaveFileWriterTests
         CreateRegionalTravelSession()
     {
         ApplicationSessionState session =
-            WatchtowerScenarioSessionFactory.CreateNew(RandomSeed);
+            ScenarioSessionFactory.CreateNew("scenario.watchtower", RandomSeed);
         ApplicationSessionState accepted =
             OutpostMissionRules.Resolve(
                 session,
                 OutpostMissionChoice.AcceptMission)
             .State;
 
-        return RegionalTravelRules.BeginWatchtowerJourney(
+        return RegionalTravelRules.BeginJourney(
             accepted);
     }
 

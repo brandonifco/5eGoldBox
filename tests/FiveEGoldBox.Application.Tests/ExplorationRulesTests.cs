@@ -12,15 +12,15 @@ namespace FiveEGoldBox.Application.Tests;
 public sealed class ExplorationRulesTests
 {
     [Fact]
-    public void CanEnterWatchtower_AfterCanonicalArrival_ReturnsTrue()
+    public void CanEnterDestination_AfterCanonicalArrival_ReturnsTrue()
     {
         Assert.True(
-            ExplorationRules.CanEnterWatchtower(
+            ExplorationRules.CanEnterDestination(
                 CreateCompletedArrival()));
     }
 
     [Fact]
-    public void CanEnterWatchtower_InOrdinarilyUnavailableStates_ReturnsFalse()
+    public void CanEnterDestination_InOrdinarilyUnavailableStates_ReturnsFalse()
     {
         ApplicationSessionState beforeAcceptance =
             CreateMissionNotAcceptedSession();
@@ -33,7 +33,7 @@ public sealed class ExplorationRulesTests
                 WatchtowerSignalTestData
                     .CreateSignalReadySession());
         ApplicationSessionState conclusion =
-            WatchtowerCombatOutcomeRules.Finalize(
+            CombatOutcomeRules.Finalize(
                 WatchtowerCombatOutcomeTestData
                     .CreateRaiderVictorySession())
                 .State;
@@ -77,13 +77,13 @@ WatchtowerScenarioProgress
             in unavailableStates)
         {
             Assert.False(
-                ExplorationRules.CanEnterWatchtower(
+                ExplorationRules.CanEnterDestination(
                     state));
         }
     }
 
     [Fact]
-    public void CanEnterWatchtower_DoesNotMutateOrConsumeRandomness()
+    public void CanEnterDestination_DoesNotMutateOrConsumeRandomness()
     {
         ApplicationSessionState arrived =
             CreateCompletedArrival();
@@ -91,7 +91,7 @@ WatchtowerScenarioProgress
             Assert.IsType<RegionalTravelState>(
                 arrived.RegionalTravel);
 
-        _ = ExplorationRules.CanEnterWatchtower(arrived);
+        _ = ExplorationRules.CanEnterDestination(arrived);
 
         Assert.Equal(ApplicationMode.RegionalTravel, arrived.CurrentMode);
         Assert.True(travel.IsComplete);
@@ -101,14 +101,14 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
-    public void CanEnterWatchtower_WithNullSession_Throws()
+    public void CanEnterDestination_WithNullSession_Throws()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            ExplorationRules.CanEnterWatchtower(null!));
+            ExplorationRules.CanEnterDestination(null!));
     }
 
     [Fact]
-    public void CanEnterWatchtower_WithMalformedRegionalTravelState_Throws()
+    public void CanEnterDestination_WithMalformedRegionalTravelState_Throws()
     {
         ApplicationSessionState malformed =
             CreateAcceptedSession() with
@@ -118,7 +118,7 @@ WatchtowerScenarioProgress
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            ExplorationRules.CanEnterWatchtower(
+            ExplorationRules.CanEnterDestination(
                 malformed));
     }
 
@@ -197,13 +197,13 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
-    public void EnterWatchtower_WithCompletedArrival_CreatesAuthoredExplorationState()
+    public void EnterDestination_WithCompletedArrival_CreatesAuthoredExplorationState()
     {
         ApplicationSessionState arrived =
             CreateCompletedArrival();
 
         ApplicationSessionState exploring =
-            ExplorationRules.EnterWatchtower(arrived);
+            ExplorationRules.EnterDestination(arrived);
         ExplorationState exploration =
             Assert.IsType<ExplorationState>(
                 exploring.Exploration);
@@ -230,13 +230,13 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
-    public void EnterWatchtower_WithCompletedArrival_PreservesPersistentState()
+    public void EnterDestination_WithCompletedArrival_PreservesPersistentState()
     {
         ApplicationSessionState arrived =
             CreateCompletedArrival();
 
         ApplicationSessionState exploring =
-            ExplorationRules.EnterWatchtower(arrived);
+            ExplorationRules.EnterDestination(arrived);
 
         Assert.Equal(arrived.ScenarioId, exploring.ScenarioId);
         Assert.Equal(
@@ -252,7 +252,7 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
-    public void EnterWatchtower_DoesNotMutateInputSession()
+    public void EnterDestination_DoesNotMutateInputSession()
     {
         ApplicationSessionState arrived =
             CreateCompletedArrival();
@@ -260,7 +260,7 @@ WatchtowerScenarioProgress
             Assert.IsType<RegionalTravelState>(
                 arrived.RegionalTravel);
 
-        _ = ExplorationRules.EnterWatchtower(arrived);
+        _ = ExplorationRules.EnterDestination(arrived);
 
         Assert.Equal(
             ApplicationMode.RegionalTravel,
@@ -274,14 +274,14 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
-    public void EnterWatchtower_WithNullSession_Throws()
+    public void EnterDestination_WithNullSession_Throws()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            ExplorationRules.EnterWatchtower(null!));
+            ExplorationRules.EnterDestination(null!));
     }
 
     [Fact]
-    public void EnterWatchtower_WithInvalidSession_Throws()
+    public void EnterDestination_WithInvalidSession_Throws()
     {
         ApplicationSessionState arrived =
             CreateCompletedArrival() with
@@ -290,21 +290,21 @@ WatchtowerScenarioProgress
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            ExplorationRules.EnterWatchtower(arrived));
+            ExplorationRules.EnterDestination(arrived));
     }
 
     [Fact]
-    public void EnterWatchtower_WhenModeIsNotRegionalTravel_Throws()
+    public void EnterDestination_WhenModeIsNotRegionalTravel_Throws()
     {
         ApplicationSessionState accepted =
             CreateAcceptedSession();
 
         Assert.Throws<InvalidOperationException>(() =>
-            ExplorationRules.EnterWatchtower(accepted));
+            ExplorationRules.EnterDestination(accepted));
     }
 
     [Fact]
-    public void EnterWatchtower_WithMissingTravelState_Throws()
+    public void EnterDestination_WithMissingTravelState_Throws()
     {
         ApplicationSessionState arrived =
             CreateCompletedArrival() with
@@ -313,21 +313,21 @@ WatchtowerScenarioProgress
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            ExplorationRules.EnterWatchtower(arrived));
+            ExplorationRules.EnterDestination(arrived));
     }
 
     [Fact]
-    public void EnterWatchtower_BeforeRouteCompletion_Throws()
+    public void EnterDestination_BeforeRouteCompletion_Throws()
     {
         ApplicationSessionState traveling =
             CreateTravelingSession();
 
         Assert.Throws<InvalidOperationException>(() =>
-            ExplorationRules.EnterWatchtower(traveling));
+            ExplorationRules.EnterDestination(traveling));
     }
 
     [Fact]
-    public void EnterWatchtower_WithWrongDestination_Throws()
+    public void EnterDestination_WithWrongDestination_Throws()
     {
         ApplicationSessionState arrived =
             CreateCompletedArrival();
@@ -348,12 +348,12 @@ WatchtowerScenarioProgress
             };
 
         Assert.Throws<InvalidOperationException>(() =>
-            ExplorationRules.EnterWatchtower(
+            ExplorationRules.EnterDestination(
                 reverseArrival));
     }
 
     [Fact]
-    public void EnterWatchtower_WithWrongCurrentLocation_Throws()
+    public void EnterDestination_WithWrongCurrentLocation_Throws()
     {
         ApplicationSessionState arrived =
             CreateCompletedArrival() with
@@ -362,11 +362,11 @@ WatchtowerScenarioProgress
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            ExplorationRules.EnterWatchtower(arrived));
+            ExplorationRules.EnterDestination(arrived));
     }
 
     [Fact]
-    public void EnterWatchtower_WithUnsupportedRoute_Throws()
+    public void EnterDestination_WithUnsupportedRoute_Throws()
     {
         ApplicationSessionState arrived =
             CreateCompletedArrival();
@@ -383,11 +383,11 @@ WatchtowerScenarioProgress
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            ExplorationRules.EnterWatchtower(invalid));
+            ExplorationRules.EnterDestination(invalid));
     }
 
     [Fact]
-    public void EnterWatchtower_BeforeMissionAcceptance_Throws()
+    public void EnterDestination_BeforeMissionAcceptance_Throws()
     {
         ApplicationSessionState arrived =
             CreateCompletedArrival() with
@@ -398,7 +398,7 @@ WatchtowerScenarioProgress
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            ExplorationRules.EnterWatchtower(arrived));
+            ExplorationRules.EnterDestination(arrived));
     }
 
     [Theory]
@@ -410,7 +410,7 @@ WatchtowerScenarioProgress
         WatchtowerScenarioProgress.SuccessReported)]
     [InlineData(
         WatchtowerScenarioProgress.ScenarioCompleted)]
-    public void EnterWatchtower_AfterMissionAcceptedStage_Throws(
+    public void EnterDestination_AfterMissionAcceptedStage_Throws(
         WatchtowerScenarioProgress progress)
     {
         ApplicationSessionState arrived =
@@ -421,7 +421,7 @@ progress)
             };
 
         Assert.Throws<InvalidOperationException>(() =>
-            ExplorationRules.EnterWatchtower(arrived));
+            ExplorationRules.EnterDestination(arrived));
     }
 
     [Theory]
@@ -917,7 +917,7 @@ progress)
     private static ApplicationSessionState
         CreateExplorationSession()
     {
-        return ExplorationRules.EnterWatchtower(
+        return ExplorationRules.EnterDestination(
             CreateCompletedArrival());
     }
 
@@ -940,7 +940,7 @@ progress)
     private static ApplicationSessionState
         CreateTravelingSession()
     {
-        return RegionalTravelRules.BeginWatchtowerJourney(
+        return RegionalTravelRules.BeginJourney(
             CreateAcceptedSession());
     }
 
@@ -959,8 +959,10 @@ progress)
     private static ApplicationSessionState
         CreateMissionNotAcceptedSession()
     {
-        return WatchtowerScenarioSessionFactory
-            .CreateNew(8675309);
+        return ScenarioSessionFactory
+            .CreateNew(
+                WatchtowerScenarioContent.ScenarioId,
+                8675309);
     }
 
     private static ExplorationState AssertExploration(

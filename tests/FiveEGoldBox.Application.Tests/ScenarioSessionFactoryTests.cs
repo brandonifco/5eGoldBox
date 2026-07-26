@@ -6,7 +6,7 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Tests;
 
-public sealed class WatchtowerScenarioSessionFactoryTests
+public sealed class ScenarioSessionFactoryTests
 {
     private const int RandomSeed = 8675309;
 
@@ -14,7 +14,8 @@ public sealed class WatchtowerScenarioSessionFactoryTests
     public void CreateNew_ReturnsCanonicalWatchtowerStartingState()
     {
         ApplicationSessionState state =
-            WatchtowerScenarioSessionFactory.CreateNew(
+            ScenarioSessionFactory.CreateNew(
+                WatchtowerScenarioContent.ScenarioId,
                 RandomSeed);
 
         Assert.Equal(
@@ -86,10 +87,12 @@ public sealed class WatchtowerScenarioSessionFactoryTests
     public void CreateNew_WithSameSeed_ReturnsValueEquivalentState()
     {
         ApplicationSessionState first =
-            WatchtowerScenarioSessionFactory.CreateNew(
+            ScenarioSessionFactory.CreateNew(
+                WatchtowerScenarioContent.ScenarioId,
                 RandomSeed);
         ApplicationSessionState second =
-            WatchtowerScenarioSessionFactory.CreateNew(
+            ScenarioSessionFactory.CreateNew(
+                WatchtowerScenarioContent.ScenarioId,
                 RandomSeed);
 
         AssertStateEquivalent(first, second);
@@ -99,10 +102,12 @@ public sealed class WatchtowerScenarioSessionFactoryTests
     public void CreateNew_RepeatedCallsReturnIndependentState()
     {
         ApplicationSessionState first =
-            WatchtowerScenarioSessionFactory.CreateNew(
+            ScenarioSessionFactory.CreateNew(
+                WatchtowerScenarioContent.ScenarioId,
                 RandomSeed);
         ApplicationSessionState second =
-            WatchtowerScenarioSessionFactory.CreateNew(
+            ScenarioSessionFactory.CreateNew(
+                WatchtowerScenarioContent.ScenarioId,
                 RandomSeed);
 
         Assert.NotSame(first, second);

@@ -8,9 +8,9 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
 
-public static class WatchtowerCombatOutcomeRules
+public static class CombatOutcomeRules
 {
-    public static WatchtowerCombatOutcomeResult Finalize(
+    public static CombatOutcomeResult Finalize(
         ApplicationSessionState session)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -19,7 +19,7 @@ public static class WatchtowerCombatOutcomeRules
         ActiveEncounterState activeEncounter =
             session.ActiveEncounter
             ?? throw new ArgumentException(
-                "Watchtower combat finalization requires active-encounter state.",
+                "Combat finalization requires active-encounter state.",
                 nameof(session));
         EncounterState encounter = activeEncounter.Encounter;
 
@@ -27,7 +27,7 @@ public static class WatchtowerCombatOutcomeRules
             != EncounterLifecycleState.Completed)
         {
             throw new ArgumentException(
-                "Watchtower combat finalization requires a completed encounter.",
+                "Combat finalization requires a completed encounter.",
                 nameof(session));
         }
 
@@ -36,7 +36,7 @@ public static class WatchtowerCombatOutcomeRules
                 == CombatantLifecycleState.Dying))
         {
             throw new ArgumentException(
-                "A completed watchtower encounter cannot contain a dying participant.",
+                "A completed encounter cannot contain a dying participant.",
                 nameof(session));
         }
 
@@ -73,7 +73,7 @@ public static class WatchtowerCombatOutcomeRules
         if (!isPartyVictory && !isOpposingVictory)
         {
             throw new ArgumentException(
-                "The completed watchtower encounter has an unsupported winner.",
+                "The completed encounter has an unsupported winner.",
                 nameof(session));
         }
 
@@ -92,12 +92,9 @@ public static class WatchtowerCombatOutcomeRules
         ApplicationMode resultingMode = concludesScenario
             ? ApplicationMode.ScenarioConclusion
             : ApplicationMode.Exploration;
-        WatchtowerScenarioProgress resultingProgress =
-            WatchtowerScenario.ProgressOf(
-                new ScenarioState { ProgressId = resultingProgressId });
-        WatchtowerCombatOutcome outcome = isPartyVictory
-            ? WatchtowerCombatOutcome.PartyVictory
-            : WatchtowerCombatOutcome.ScenarioDefeat;
+        CombatOutcome outcome = isPartyVictory
+            ? CombatOutcome.PartyVictory
+            : CombatOutcome.ScenarioDefeat;
 
         ApplicationSessionState resultState =
             ApplicationSessionRules.CreateCanonical(
@@ -118,11 +115,11 @@ public static class WatchtowerCombatOutcomeRules
                     ActiveEncounter = null
                 });
 
-        return new WatchtowerCombatOutcomeResult
+        return new CombatOutcomeResult
         {
             Outcome = outcome,
             ResultingMode = resultingMode,
-            ResultingProgress = resultingProgress,
+            ResultingProgressId = resultingProgressId,
             State = resultState
         };
     }

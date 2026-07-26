@@ -588,7 +588,8 @@ WatchtowerScenarioProgress.RaidersDefeated)
         CreateCanonicalSignalReadySession()
     {
         ApplicationSessionState current =
-            WatchtowerScenarioSessionFactory.CreateNew(
+            ScenarioSessionFactory.CreateNew(
+                WatchtowerScenarioContent.ScenarioId,
                 randomSeed: 8675309);
 
         current = OutpostMissionRules.Resolve(
@@ -596,7 +597,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
             OutpostMissionChoice.AcceptMission)
                 .State;
         current =
-            RegionalTravelRules.BeginWatchtowerJourney(
+            RegionalTravelRules.BeginJourney(
                 current);
 
         while (!current.RegionalTravel!.IsComplete)
@@ -605,7 +606,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
                 current).State;
         }
 
-        current = ExplorationRules.EnterWatchtower(
+        current = ExplorationRules.EnterDestination(
             current);
         current = ExplorationRules.MoveForward(
             current).State;

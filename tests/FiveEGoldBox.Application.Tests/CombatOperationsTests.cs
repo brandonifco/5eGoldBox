@@ -43,7 +43,7 @@ public sealed class CombatOperationsTests
     public void Query_ValidSessionWithoutEncounter_ThrowsInvalidOperationException()
     {
         ApplicationSessionState session =
-            WatchtowerScenarioSessionFactory.CreateNew(randomSeed: 41);
+            ScenarioSessionFactory.CreateNew(WatchtowerScenarioContent.ScenarioId, randomSeed: 41);
 
         Assert.Throws<InvalidOperationException>(
             () => CombatOperations.Query(session));

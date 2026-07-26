@@ -22,7 +22,8 @@ public sealed class ConsoleSessionRunnerTests
                 null!,
                 new StringWriter(),
                 "savegame.json",
-                RandomSeed));
+                RandomSeed,
+                "scenario.watchtower"));
     }
 
     [Fact]
@@ -35,7 +36,8 @@ public sealed class ConsoleSessionRunnerTests
                 new StringReader(string.Empty),
                 null!,
                 "savegame.json",
-                RandomSeed));
+                RandomSeed,
+                "scenario.watchtower"));
     }
 
     [Theory]
@@ -52,7 +54,8 @@ public sealed class ConsoleSessionRunnerTests
                 new StringReader(string.Empty),
                 new StringWriter(),
                 savePath!,
-                RandomSeed));
+                RandomSeed,
+                "scenario.watchtower"));
     }
 
     [Fact]
@@ -65,7 +68,8 @@ public sealed class ConsoleSessionRunnerTests
             new StringReader(string.Empty),
             new StringWriter(),
             temporary.SavePath,
-            RandomSeed);
+            RandomSeed,
+            "scenario.watchtower");
 
         Assert.Equal(0, exitCode);
     }
@@ -80,7 +84,8 @@ public sealed class ConsoleSessionRunnerTests
             new StringReader("1\n"),
             new StringWriter(),
             temporary.SavePath,
-            RandomSeed);
+            RandomSeed,
+            "scenario.watchtower");
 
         Assert.Equal(0, exitCode);
     }
@@ -95,7 +100,8 @@ public sealed class ConsoleSessionRunnerTests
             new StringReader("3\n"),
             new StringWriter(),
             temporary.SavePath,
-            RandomSeed);
+            RandomSeed,
+            "scenario.watchtower");
 
         Assert.Equal(0, exitCode);
     }
@@ -110,7 +116,8 @@ public sealed class ConsoleSessionRunnerTests
             new StringReader("1\n5\n"),
             new StringWriter(),
             temporary.SavePath,
-            RandomSeed);
+            RandomSeed,
+            "scenario.watchtower");
 
         Assert.Equal(0, exitCode);
     }
@@ -125,7 +132,8 @@ public sealed class ConsoleSessionRunnerTests
             new StringReader("1\n5\n"),
             new StringWriter(),
             temporary.SavePath,
-            RandomSeed);
+            RandomSeed,
+            "scenario.watchtower");
 
         Assert.False(File.Exists(temporary.SavePath));
     }
@@ -541,7 +549,8 @@ public sealed class ConsoleSessionRunnerTests
             new StringReader("2\n6\n"),
             secondOutput,
             temporary.SavePath,
-            RandomSeed);
+            RandomSeed,
+            "scenario.watchtower");
 
         Assert.Equal(0, exitCode);
         Assert.Contains(
@@ -846,7 +855,8 @@ public sealed class ConsoleSessionRunnerTests
             new StringReader(input),
             output,
             savePath,
-            randomSeed);
+            randomSeed,
+            "scenario.watchtower");
 
         Assert.Equal(0, exitCode);
         return output.ToString();
@@ -895,7 +905,8 @@ public sealed class ConsoleSessionRunnerTests
     private static ApplicationSessionState
         CreateOutpostSession()
     {
-        return WatchtowerScenarioSessionFactory.CreateNew(
+        return ScenarioSessionFactory.CreateNew(
+            "scenario.watchtower",
             RandomSeed);
     }
 
@@ -908,7 +919,7 @@ public sealed class ConsoleSessionRunnerTests
                 OutpostMissionChoice.AcceptMission)
             .State;
 
-        return RegionalTravelRules.BeginWatchtowerJourney(
+        return RegionalTravelRules.BeginJourney(
             accepted);
     }
 
@@ -924,7 +935,7 @@ public sealed class ConsoleSessionRunnerTests
                 .State;
         }
 
-        return ExplorationRules.EnterWatchtower(current);
+        return ExplorationRules.EnterDestination(current);
     }
 
     private static ApplicationSessionState

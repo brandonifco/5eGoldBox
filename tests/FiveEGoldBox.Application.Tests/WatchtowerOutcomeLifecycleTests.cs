@@ -46,7 +46,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
     public void WatchtowerScenario_PublicOperations_PartyVictoryProjectsPersistsAndContinuesExploration()
     {
         ApplicationSessionState current =
-            WatchtowerScenarioSessionFactory.CreateNew(RandomSeed);
+            ScenarioSessionFactory.CreateNew(WatchtowerScenarioContent.ScenarioId, RandomSeed);
         PartyState startingParty = current.Party;
 
         Assert.Equal(ApplicationMode.Outpost, current.CurrentMode);
@@ -91,10 +91,10 @@ public sealed class WatchtowerOutcomeLifecycleTests
             WatchtowerScenario.ProgressOf(current));
 
         Assert.True(
-            RegionalTravelRules.CanBeginWatchtowerJourney(
+            RegionalTravelRules.CanBeginJourney(
                 current));
 
-        current = RegionalTravelRules.BeginWatchtowerJourney(
+        current = RegionalTravelRules.BeginJourney(
             current);
 
         Assert.Equal(
@@ -123,9 +123,9 @@ public sealed class WatchtowerOutcomeLifecycleTests
         Assert.Equal(
             WatchtowerLocationId,
             current.CurrentLocationId);
-        Assert.True(ExplorationRules.CanEnterWatchtower(current));
+        Assert.True(ExplorationRules.CanEnterDestination(current));
 
-        current = ExplorationRules.EnterWatchtower(current);
+        current = ExplorationRules.EnterDestination(current);
 
         AssertExploration(
             current,
@@ -309,25 +309,26 @@ public sealed class WatchtowerOutcomeLifecycleTests
         int cursorBeforeFinalization =
             current.RandomValuesConsumed;
 
-        WatchtowerCombatOutcomeResult outcome =
-            WatchtowerCombatOutcomeRules.Finalize(current);
+        CombatOutcomeResult outcome =
+            CombatOutcomeRules.Finalize(current);
         ApplicationSessionState finalized = outcome.State;
 
         Assert.Equal(
-            WatchtowerCombatOutcome.PartyVictory,
+            CombatOutcome.PartyVictory,
             outcome.Outcome);
         Assert.Equal(
             ApplicationMode.Exploration,
             outcome.ResultingMode);
         Assert.Equal(
-            WatchtowerScenarioProgress.RaidersDefeated,
-            outcome.ResultingProgress);
+            WatchtowerScenario.ToProgressId(
+                WatchtowerScenarioProgress.RaidersDefeated),
+            outcome.ResultingProgressId);
         Assert.Equal(
             outcome.ResultingMode,
             finalized.CurrentMode);
         Assert.Equal(
-            outcome.ResultingProgress,
-            WatchtowerScenario.ProgressOf(finalized));
+            outcome.ResultingProgressId,
+            finalized.Scenario.ProgressId);
         Assert.Equal(
             WatchtowerLocationId,
             finalized.CurrentLocationId);

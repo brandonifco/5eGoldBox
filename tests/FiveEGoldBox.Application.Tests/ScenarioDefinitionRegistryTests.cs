@@ -13,7 +13,7 @@ public sealed class ScenarioDefinitionRegistryTests
     public void Resolve_FindsContentFromTheSessionsScenarioId()
     {
         ApplicationSessionState session =
-            WatchtowerScenarioSessionFactory.CreateNew(randomSeed: 5);
+            ScenarioSessionFactory.CreateNew(WatchtowerScenarioContent.ScenarioId, randomSeed: 5);
 
         ScenarioDefinition definition =
             ScenarioDefinitionRegistry.Resolve(session);

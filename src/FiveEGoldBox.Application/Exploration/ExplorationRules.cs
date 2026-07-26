@@ -8,7 +8,7 @@ namespace FiveEGoldBox.Application.Exploration;
 
 public static class ExplorationRules
 {
-    public static bool CanEnterWatchtower(
+    public static bool CanEnterDestination(
         ApplicationSessionState session)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -22,12 +22,12 @@ public static class ExplorationRules
         ApplicationSessionState canonicalSession =
             ApplicationSessionRules.CreateCanonical(session);
 
-        return GetWatchtowerEntryAvailability(
+        return GetDestinationEntryAvailability(
             canonicalSession)
-            == WatchtowerEntryAvailability.Available;
+            == DestinationEntryAvailability.Available;
     }
 
-    public static ApplicationSessionState EnterWatchtower(
+    public static ApplicationSessionState EnterDestination(
         ApplicationSessionState session)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -35,29 +35,29 @@ public static class ExplorationRules
         ApplicationSessionState canonicalSession =
             ApplicationSessionRules.CreateCanonical(session);
 
-        switch (GetWatchtowerEntryAvailability(
+        switch (GetDestinationEntryAvailability(
             canonicalSession))
         {
-            case WatchtowerEntryAvailability.Available:
+            case DestinationEntryAvailability.Available:
                 break;
-            case WatchtowerEntryAvailability.WrongMode:
+            case DestinationEntryAvailability.WrongMode:
                 throw new InvalidOperationException(
-                    "The watchtower may be entered only after regional travel reaches it.");
-            case WatchtowerEntryAvailability.IncompleteJourney:
+                    "The destination may be entered only after regional travel reaches it.");
+            case DestinationEntryAvailability.IncompleteJourney:
                 throw new InvalidOperationException(
-                    "The watchtower may be entered only after the regional journey is complete.");
-            case WatchtowerEntryAvailability.UnsupportedRoute:
+                    "The destination may be entered only after the regional journey is complete.");
+            case DestinationEntryAvailability.UnsupportedRoute:
                 throw new InvalidOperationException(
-                    "The completed regional route is unsupported for watchtower entry.");
-            case WatchtowerEntryAvailability.WrongDestination:
+                    "The completed regional route is unsupported for destination entry.");
+            case DestinationEntryAvailability.WrongDestination:
                 throw new InvalidOperationException(
-                    "The completed journey did not arrive at the ruined watchtower.");
-            case WatchtowerEntryAvailability.WrongProgress:
+                    "The completed journey did not arrive at its declared destination.");
+            case DestinationEntryAvailability.WrongProgress:
                 throw new InvalidOperationException(
-                    "The watchtower may be entered only while the accepted mission is active.");
+                    "The destination may be entered only while its route remains open.");
             default:
                 throw new InvalidOperationException(
-                    "The watchtower-entry availability could not be resolved.");
+                    "The destination-entry availability could not be resolved.");
         }
 
         return ApplicationSessionRules.CreateCanonical(
@@ -187,7 +187,7 @@ public static class ExplorationRules
             out GridPosition destinationPosition))
         {
             throw new InvalidOperationException(
-                "The party is not standing on the authored watchtower staircase.");
+                "The party is not standing on an authored staircase.");
         }
 
         return ApplicationSessionRules.CreateCanonical(
@@ -201,14 +201,14 @@ public static class ExplorationRules
             });
     }
 
-    private static WatchtowerEntryAvailability
-        GetWatchtowerEntryAvailability(
+    private static DestinationEntryAvailability
+        GetDestinationEntryAvailability(
             ApplicationSessionState session)
     {
         if (session.CurrentMode
             != ApplicationMode.RegionalTravel)
         {
-            return WatchtowerEntryAvailability.WrongMode;
+            return DestinationEntryAvailability.WrongMode;
         }
 
         RegionalTravelState travel =
@@ -216,7 +216,7 @@ public static class ExplorationRules
 
         if (!travel.IsComplete)
         {
-            return WatchtowerEntryAvailability
+            return DestinationEntryAvailability
                 .IncompleteJourney;
         }
 
@@ -230,7 +230,7 @@ public static class ExplorationRules
 
         if (route is null)
         {
-            return WatchtowerEntryAvailability
+            return DestinationEntryAvailability
                 .UnsupportedRoute;
         }
 
@@ -245,7 +245,7 @@ public static class ExplorationRules
                 route.DestinationLocationId,
                 StringComparison.Ordinal))
         {
-            return WatchtowerEntryAvailability
+            return DestinationEntryAvailability
                 .WrongDestination;
         }
 
@@ -253,10 +253,10 @@ public static class ExplorationRules
             session.Scenario.ProgressId,
             StringComparer.Ordinal))
         {
-            return WatchtowerEntryAvailability.WrongProgress;
+            return DestinationEntryAvailability.WrongProgress;
         }
 
-        return WatchtowerEntryAvailability.Available;
+        return DestinationEntryAvailability.Available;
     }
 
     private static bool TryGetStairDestination(
@@ -359,7 +359,7 @@ public static class ExplorationRules
         };
     }
 
-    private enum WatchtowerEntryAvailability
+    private enum DestinationEntryAvailability
     {
         Available = 0,
         WrongMode = 1,

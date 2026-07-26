@@ -46,7 +46,7 @@ public sealed class ActiveEncounterStateTests
         ApplicationSessionState encounter =
             WatchtowerSignalTestData.CreateEncounterSession();
         ApplicationSessionState travel =
-            RegionalTravelRules.BeginWatchtowerJourney(
+            RegionalTravelRules.BeginJourney(
                 WatchtowerSignalTestData.CreateAcceptedSession());
         ApplicationSessionState state = encounter with
         {
@@ -96,7 +96,7 @@ public sealed class ActiveEncounterStateTests
         ApplicationSessionState encounter =
             WatchtowerSignalTestData.CreateEncounterSession();
         ApplicationSessionState travel =
-            RegionalTravelRules.BeginWatchtowerJourney(
+            RegionalTravelRules.BeginJourney(
                 WatchtowerSignalTestData.CreateAcceptedSession());
         ApplicationSessionState state = travel with
         {

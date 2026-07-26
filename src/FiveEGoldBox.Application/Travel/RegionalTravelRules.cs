@@ -6,7 +6,7 @@ namespace FiveEGoldBox.Application.Travel;
 
 public static class RegionalTravelRules
 {
-    public static bool CanBeginWatchtowerJourney(
+    public static bool CanBeginJourney(
         ApplicationSessionState session)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -24,7 +24,7 @@ public static class RegionalTravelRules
     }
 
     public static ApplicationSessionState
-        BeginWatchtowerJourney(
+        BeginJourney(
             ApplicationSessionState session)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -38,16 +38,16 @@ public static class RegionalTravelRules
                 break;
             case BeginAvailability.WrongMode:
                 throw new InvalidOperationException(
-                    "A watchtower journey may begin only from the outpost.");
+                    "A journey may begin only from the outpost.");
             case BeginAvailability.WrongProgress:
                 throw new InvalidOperationException(
-                    "A watchtower journey may begin only after the mission is accepted and before later scenario progress.");
+                    "A journey may begin only once the scenario has made the progress its route requires.");
             case BeginAvailability.WrongLocation:
                 throw new InvalidOperationException(
-                    "A watchtower journey may begin only from the canonical outpost location.");
+                    "A journey may begin only from the scenario's starting location.");
             default:
                 throw new InvalidOperationException(
-                    "The watchtower journey availability could not be resolved.");
+                    "The journey availability could not be resolved.");
         }
 
         TravelRouteDefinition route = ScenarioDefinitionRegistry
@@ -109,7 +109,7 @@ public static class RegionalTravelRules
                     "Regional travel can advance only while the session is in regional-travel mode.");
             case AdvanceAvailability.WrongProgress:
                 throw new InvalidOperationException(
-                    "The outbound watchtower journey can advance only while the accepted mission is active.");
+                    "The outbound journey can advance only while its route remains open.");
             case AdvanceAvailability.Complete:
                 throw new InvalidOperationException(
                     "A completed regional journey cannot advance again.");
