@@ -27,22 +27,11 @@ public sealed partial class CharacterResolver
 
         int additionalHitPointsPerLevel = Math.Max(
             1,
-            GetFixedHitPointsAfterFirstLevel(selectedClass.HitDie)
+            HitDiceRules.GetFixedHitPointsAfterFirstLevel(
+                selectedClass.HitDie)
                 + constitutionModifier);
 
         return firstLevelHitPoints
             + ((level - 1) * additionalHitPointsPerLevel);
-    }
-
-    private static int GetFixedHitPointsAfterFirstLevel(DieType hitDie)
-    {
-        return hitDie switch
-        {
-            DieType.D6 => 4,
-            DieType.D8 => 5,
-            DieType.D10 => 6,
-            DieType.D12 => 7,
-            _ => throw new InvalidOperationException($"Unsupported class hit die '{hitDie}'.")
-        };
     }
 }
