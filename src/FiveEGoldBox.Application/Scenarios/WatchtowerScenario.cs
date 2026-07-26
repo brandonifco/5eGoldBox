@@ -60,28 +60,14 @@ internal static class WatchtowerScenario
         return progress;
     }
 
-    internal static bool TryGetProgress(
+    private static bool TryGetProgress(
         ScenarioState scenario,
         out WatchtowerScenarioProgress progress)
     {
-        ArgumentNullException.ThrowIfNull(scenario);
-
         return Enum.TryParse(
                 scenario.ProgressId,
                 ignoreCase: false,
                 out progress)
             && Enum.IsDefined(progress);
-    }
-
-    internal static ApplicationSessionState WithProgress(
-        ApplicationSessionState state,
-        WatchtowerScenarioProgress progress)
-    {
-        ArgumentNullException.ThrowIfNull(state);
-
-        return state with
-        {
-            Scenario = CreateState(progress)
-        };
     }
 }

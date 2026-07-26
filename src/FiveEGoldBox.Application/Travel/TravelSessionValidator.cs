@@ -4,7 +4,7 @@ using FiveEGoldBox.Application.Sessions;
 
 namespace FiveEGoldBox.Application.Travel;
 
-internal static class WatchtowerTravelSessionValidator
+internal static class TravelSessionValidator
 {
     internal static void Validate(
         ApplicationSessionState state)
@@ -31,14 +31,6 @@ internal static class WatchtowerTravelSessionValidator
                 "A regional-travel session requires regional-travel state.",
                 nameof(state));
 
-        if (WatchtowerScenario.ProgressOf(state)
-            == WatchtowerScenarioProgress.MissionNotAccepted)
-        {
-            throw new ArgumentException(
-                "Regional travel cannot begin before the watchtower mission is accepted.",
-                nameof(state));
-        }
-
         // The route is authored content, so it is read from the scenario the
         // session is running rather than from a constant.
         TravelRouteDefinition? route = ScenarioDefinitionRegistry
@@ -56,17 +48,28 @@ internal static class WatchtowerTravelSessionValidator
                 nameof(state));
         }
 
+        // Being on a road the scenario has not opened yet is the generic form
+        // of setting out before accepting the job.
+        if (!route.RequiredProgressIds.Contains(
+            state.Scenario.ProgressId,
+            StringComparer.Ordinal))
+        {
+            throw new ArgumentException(
+                "Regional travel cannot begin before the route's required progress is made.",
+                nameof(state));
+        }
+
         if (!HasEndpoints(route, travel))
         {
             throw new ArgumentException(
-                "The regional-travel endpoints are inconsistent with the watchtower route.",
+                "The regional-travel endpoints are inconsistent with the authored route.",
                 nameof(state));
         }
 
         if (travel.FinalStepIndex != route.FinalStepIndex)
         {
             throw new ArgumentException(
-                "The regional-travel final step is inconsistent with the watchtower route.",
+                "The regional-travel final step is inconsistent with the authored route.",
                 nameof(state));
         }
 

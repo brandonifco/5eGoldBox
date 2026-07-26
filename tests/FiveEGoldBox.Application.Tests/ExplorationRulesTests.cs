@@ -54,14 +54,6 @@ public sealed class ExplorationRulesTests
                         "location.outpost"
                 }
             };
-        ApplicationSessionState incompatibleProgress =
-            completed with
-            {
-                Scenario = WatchtowerScenario.CreateState(
-WatchtowerScenarioProgress
-                            .SignalActivated)
-            };
-
         ApplicationSessionState[] unavailableStates =
         [
             beforeAcceptance,
@@ -69,8 +61,7 @@ WatchtowerScenarioProgress
             exploring,
             encounter,
             conclusion,
-            wrongDestination,
-            incompatibleProgress
+            wrongDestination
         ];
 
         foreach (ApplicationSessionState state
@@ -420,7 +411,10 @@ WatchtowerScenarioProgress
 progress)
             };
 
-        Assert.Throws<InvalidOperationException>(() =>
+        // Completed travel state held past the progress its route is open at
+        // is malformed rather than merely unavailable, so this is rejected by
+        // session validation before entry availability is consulted.
+        Assert.ThrowsAny<ArgumentException>(() =>
             ExplorationRules.EnterDestination(arrived));
     }
 

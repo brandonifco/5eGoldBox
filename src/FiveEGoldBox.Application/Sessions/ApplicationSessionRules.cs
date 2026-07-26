@@ -3,6 +3,7 @@ using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Travel;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
@@ -23,8 +24,15 @@ internal static class ApplicationSessionRules
             CurrentMode = ApplicationMode.Outpost,
             CurrentLocationId = currentLocationId,
             Party = party,
-            Scenario = WatchtowerScenario.CreateState(
-                WatchtowerScenarioProgress.MissionNotAccepted),
+            // Where a scenario starts is something it declares, not something
+            // the engine knows.
+            Scenario = new ScenarioState
+            {
+                ProgressId = ScenarioDefinitionRegistry
+                    .Resolve(scenarioId)
+                    .Progress
+                    .InitialProgressId
+            },
             RandomSeed = randomSeed,
             RandomValuesConsumed = 0
         };
@@ -98,50 +106,58 @@ internal static class ApplicationSessionRules
         return canonicalState;
     }
 
-    // Everything below is Watchtower-specific and moves behind the scenario
-    // content boundary later in Phase 6. Until then this is where the running
-    // scenario asserts that the session's opaque progress marker is one it
-    // actually authored.
+    /// Checks the session against the scenario it is running: the progress
+    /// marker must be one that scenario declared, and a marker the scenario
+    /// calls an ending may only be held once the session has actually ended.
     private static void ValidateModeState(
         ApplicationSessionState state)
     {
-        if (!WatchtowerScenario.TryGetProgress(
-            state.Scenario,
-            out WatchtowerScenarioProgress _))
+        ScenarioProgressDefinition progress =
+            ScenarioDefinitionRegistry
+                .Resolve(state)
+                .Progress;
+
+        if (!progress.ProgressIds.Contains(
+            state.Scenario.ProgressId,
+            StringComparer.Ordinal))
         {
             throw new ArgumentException(
-                $"Progress '{state.Scenario.ProgressId}' is not part of the watchtower scenario.",
+                $"Progress '{state.Scenario.ProgressId}' is not part of scenario '{state.ScenarioId}'.",
                 nameof(state));
         }
 
+        // Party composition is campaign-declared rather than scenario content,
+        // so it is checked for every scenario alike.
         WatchtowerPartyCompositionValidator.Validate(state.Party);
 
-        if (WatchtowerScenario.ProgressOf(state)
-            == WatchtowerScenarioProgress.PartyDefeated
+        if (progress.Conclusions.Any(conclusion => string.Equals(
+                conclusion.ProgressId,
+                state.Scenario.ProgressId,
+                StringComparison.Ordinal))
             && state.CurrentMode
                 != ApplicationMode.ScenarioConclusion)
         {
             throw new ArgumentException(
-                "Party-defeated progress is valid only in the watchtower scenario conclusion.",
+                $"Progress '{state.Scenario.ProgressId}' ends the scenario and is valid only in its conclusion.",
                 nameof(state));
         }
 
         switch (state.CurrentMode)
         {
             case ApplicationMode.Outpost:
-                WatchtowerOutpostSessionValidator.Validate(state);
+                OutpostSessionValidator.Validate(state);
                 break;
             case ApplicationMode.RegionalTravel:
-                WatchtowerTravelSessionValidator.Validate(state);
+                TravelSessionValidator.Validate(state);
                 break;
             case ApplicationMode.Exploration:
-                WatchtowerExplorationSessionValidator.Validate(state);
+                ExplorationSessionValidator.Validate(state);
                 break;
             case ApplicationMode.Encounter:
                 WatchtowerEncounterSessionValidator.Validate(state);
                 break;
             case ApplicationMode.ScenarioConclusion:
-                WatchtowerScenarioConclusionValidator.Validate(state);
+                ScenarioConclusionValidator.Validate(state);
                 break;
             default:
                 throw new ArgumentException(

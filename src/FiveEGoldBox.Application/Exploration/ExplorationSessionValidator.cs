@@ -5,7 +5,7 @@ using FiveEGoldBox.Application.Travel;
 
 namespace FiveEGoldBox.Application.Exploration;
 
-internal static class WatchtowerExplorationSessionValidator
+internal static class ExplorationSessionValidator
 {
     internal static void Validate(
         ApplicationSessionState state)
@@ -43,7 +43,7 @@ internal static class WatchtowerExplorationSessionValidator
         if (location?.ExplorationMap is null)
         {
             throw new ArgumentException(
-                "Watchtower exploration requires the ruined-watchtower location.",
+                "Exploration requires a location the scenario gave a map.",
                 nameof(state));
         }
 
@@ -52,7 +52,7 @@ internal static class WatchtowerExplorationSessionValidator
             StringComparer.Ordinal))
         {
             throw new ArgumentException(
-                "Watchtower exploration requires accepted-mission or raiders-defeated progress.",
+                "Exploration here requires progress the scenario opens this map at.",
                 nameof(state));
         }
 

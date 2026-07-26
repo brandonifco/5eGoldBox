@@ -12,7 +12,9 @@ internal sealed record TravelRouteDefinition
     /// Index of the final step; a route of 3 takes four positions to walk.
     internal required int FinalStepIndex { get; init; }
 
-    /// Progress the party must already have made before this route opens.
+    /// Progress at which this route is open. Checked for the whole journey,
+    /// not only at the start: it gates setting out, advancing a step, entering
+    /// the destination, and holding travel state at all.
     internal IReadOnlyList<string> RequiredProgressIds { get; init; } =
         Array.Empty<string>();
 }

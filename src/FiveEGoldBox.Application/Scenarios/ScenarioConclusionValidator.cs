@@ -9,7 +9,7 @@ namespace FiveEGoldBox.Application.Scenarios;
 /// declared by the scenario rather than known here - so an adventure with
 /// several endings, or one that ends somewhere other than where it was fought,
 /// needs no change to this validator.
-internal static class WatchtowerScenarioConclusionValidator
+internal static class ScenarioConclusionValidator
 {
     internal static void Validate(
         ApplicationSessionState state)
@@ -26,7 +26,7 @@ internal static class WatchtowerScenarioConclusionValidator
                     state.Scenario.ProgressId,
                     StringComparison.Ordinal))
             ?? throw new ArgumentException(
-                "The watchtower scenario conclusion requires party-defeated progress.",
+                "The scenario conclusion requires progress the scenario declares as an ending.",
                 nameof(state));
 
         if (!string.Equals(
@@ -35,28 +35,28 @@ internal static class WatchtowerScenarioConclusionValidator
             StringComparison.Ordinal))
         {
             throw new ArgumentException(
-                "The watchtower defeat conclusion must remain at the ruined watchtower.",
+                "The scenario conclusion must be at the location its ending declares.",
                 nameof(state));
         }
 
         if (state.RegionalTravel is not null)
         {
             throw new ArgumentException(
-                "A watchtower scenario conclusion cannot contain regional-travel state.",
+                "A scenario conclusion cannot contain regional-travel state.",
                 nameof(state));
         }
 
         if (state.Exploration is not null)
         {
             throw new ArgumentException(
-                "A watchtower scenario conclusion cannot contain exploration state.",
+                "A scenario conclusion cannot contain exploration state.",
                 nameof(state));
         }
 
         if (state.ActiveEncounter is not null)
         {
             throw new ArgumentException(
-                "A watchtower scenario conclusion cannot contain an active encounter.",
+                "A scenario conclusion cannot contain an active encounter.",
                 nameof(state));
         }
     }
