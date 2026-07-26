@@ -44,7 +44,7 @@ public sealed record SpellDefinition
         = Array.Empty<SpellEffectDefinition>();
 
     /// An effect the spell installs on its targets for a while, named by ID.
-    /// Bless is the committed example; nothing applies these yet.
+    /// Bless is the committed example.
     public string? AppliedEffectId { get; init; }
 
     public bool RequiresConcentration { get; init; }

@@ -22,8 +22,18 @@ public sealed record EncounterSpellCastCommand
 
     public int? SecondAttackRoll { get; init; }
 
+    /// The dice the caster's own effects added to that attack roll, in the
+    /// order the prerequisite evaluation asked for them.
+    public IReadOnlyList<int> AttackContributionRolls { get; init; }
+        = Array.Empty<int>();
+
     /// The target's saving throw. Required for a spell resisted by one.
     public int? SavingThrowRoll { get; init; }
+
+    /// The dice the target's own effects added to that saving throw. A blessed
+    /// creature resists a Sacred Flame a d4 better.
+    public IReadOnlyList<int> SavingThrowContributionRolls { get; init; }
+        = Array.Empty<int>();
 
     /// The spell's own dice, already rolled. The caller owns randomness, the
     /// same way it does for a weapon attack.

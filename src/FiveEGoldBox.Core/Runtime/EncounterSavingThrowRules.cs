@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
@@ -14,7 +15,8 @@ public static class EncounterSavingThrowRules
         int? secondRoll,
         int difficultyClass,
         EncounterSavingThrowCoverPolicy coverPolicy,
-        GridPosition? originPosition)
+        GridPosition? originPosition,
+        IReadOnlyList<int>? contributionRolls = null)
     {
         ArgumentNullException.ThrowIfNull(state);
 
@@ -49,6 +51,17 @@ public static class EncounterSavingThrowRules
                 target,
                 ability);
 
+        // What the target's own effects add. Asked for here rather than taken
+        // on trust, so a caller that rolled the wrong number of dice is told
+        // rather than quietly having them ignored.
+        int contributionBonus =
+            RollContributionRules.Total(
+                RollContributionRules.Resolve(
+                    target,
+                    RollContributionTarget.SavingThrow),
+                contributionRolls
+                    ?? Array.Empty<int>());
+
         if (ability != Ability.Dexterity)
         {
             return ResolveCompletedSavingThrow(
@@ -62,6 +75,7 @@ public static class EncounterSavingThrowRules
                 EncounterSavingThrowCoverDisposition
                     .NotApplicableToAbility,
                 baseSavingThrowBonus,
+                contributionBonus,
                 lineOfSight: null,
                 cover: null);
         }
@@ -87,6 +101,7 @@ public static class EncounterSavingThrowRules
                 coverPolicy,
                 disposition,
                 baseSavingThrowBonus,
+                contributionBonus,
                 lineOfSight: null,
                 cover: null);
         }
@@ -151,6 +166,7 @@ public static class EncounterSavingThrowRules
             coverPolicy,
             coverDisposition,
             baseSavingThrowBonus,
+            contributionBonus,
             lineOfSight,
             cover);
     }
@@ -197,6 +213,7 @@ public static class EncounterSavingThrowRules
             EncounterSavingThrowCoverDisposition
                 coverDisposition,
             SavingThrowBonus baseSavingThrowBonus,
+            int contributionBonus,
             EncounterLineOfSightResult? lineOfSight,
             EncounterCoverEvaluation? cover)
     {
@@ -207,7 +224,8 @@ public static class EncounterSavingThrowRules
         int combinedSavingThrowBonus =
             checked(
                 baseSavingThrowBonus.TotalBonus
-                + appliedCoverBonus);
+                + appliedCoverBonus
+                + contributionBonus);
 
         SavingThrowResult savingThrow =
             SavingThrowRules.ResolveSavingThrow(

@@ -65,6 +65,7 @@ public static class EncounterSpellRules
         SavingThrowResult? savingThrow = ResolveSavingThrow(
             spell,
             command,
+            prerequisites,
             target);
         bool tookEffect = TookEffect(spell, attackRoll, savingThrow);
 
@@ -315,7 +316,10 @@ public static class EncounterSpellRules
             prerequisites.AttackRollMode!.Value,
             command.FirstAttackRoll!.Value,
             command.SecondAttackRoll,
-            spell.AttackBonus,
+            checked(spell.AttackBonus
+                + RollContributionRules.Total(
+                    prerequisites.AttackRollContributions,
+                    command.AttackContributionRolls)),
             target.CombatProfile.ArmorClass
                 + (prerequisites.Cover?.ArmorClassBonus ?? 0));
     }
@@ -323,6 +327,7 @@ public static class EncounterSpellRules
     private static SavingThrowResult? ResolveSavingThrow(
         SpellAttack spell,
         EncounterSpellCastCommand command,
+        EncounterSpellPrerequisiteEvaluation prerequisites,
         EncounterParticipantState target)
     {
         if (spell.Resolution != SpellResolutionKind.SavingThrow)
@@ -341,7 +346,10 @@ public static class EncounterSpellRules
             D20RollMode.Normal,
             command.SavingThrowRoll!.Value,
             secondRoll: null,
-            bonus.TotalBonus,
+            checked(bonus.TotalBonus
+                + RollContributionRules.Total(
+                    prerequisites.SavingThrowContributions,
+                    command.SavingThrowContributionRolls)),
             spell.SaveDc);
     }
 
@@ -550,6 +558,10 @@ public static class EncounterSpellRules
         EncounterSpellCastCommand command)
     {
         ArgumentNullException.ThrowIfNull(command.EffectRolls);
+        ArgumentNullException.ThrowIfNull(
+            command.AttackContributionRolls);
+        ArgumentNullException.ThrowIfNull(
+            command.SavingThrowContributionRolls);
 
         bool needsAttackRoll =
             spell.Resolution == SpellResolutionKind.SpellAttack;
@@ -567,6 +579,24 @@ public static class EncounterSpellRules
         {
             throw new ArgumentException(
                 $"Spell '{spell.SpellId}' {(needsSavingThrow ? "requires" : "does not use")} a saving throw.",
+                nameof(command));
+        }
+
+        // Dice contributed to a roll nobody makes were rolled for nothing, and
+        // randomness spent here is randomness the next roll does not get.
+        if (!needsAttackRoll
+            && command.AttackContributionRolls.Count > 0)
+        {
+            throw new ArgumentException(
+                $"Spell '{spell.SpellId}' does not use an attack roll, so nothing can contribute to one.",
+                nameof(command));
+        }
+
+        if (!needsSavingThrow
+            && command.SavingThrowContributionRolls.Count > 0)
+        {
+            throw new ArgumentException(
+                $"Spell '{spell.SpellId}' does not use a saving throw, so nothing can contribute to one.",
                 nameof(command));
         }
     }

@@ -14,6 +14,12 @@ public sealed record EncounterWeaponAttackCommand
 
     public int? SecondAttackRoll { get; init; }
 
+    /// The dice the attacker's effects added to the attack roll, in the order
+    /// the prerequisite evaluation asked for them. Empty for an attacker
+    /// nothing is contributing to.
+    public IReadOnlyList<int> ContributionRolls { get; init; }
+        = Array.Empty<int>();
+
     public required IReadOnlyList<int>
         DamageRolls
     { get; init; }

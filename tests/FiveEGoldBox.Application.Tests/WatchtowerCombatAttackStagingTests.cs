@@ -1,6 +1,7 @@
 using FiveEGoldBox.Application.Combat;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -225,5 +226,107 @@ public sealed class WatchtowerCombatAttackStagingTests
             die => Assert.Equal(
                 WatchtowerCombatDiePurpose.DamageRoll,
                 die.Purpose));
+    }
+
+    /// A contribution that adds dice changes how many the caller owes, and the
+    /// caller is the one holding the random sequence. The extra die is drawn
+    /// after the d20 and before the damage, because the contribution can turn
+    /// a miss into a hit and so decides whether damage is rolled at all.
+    [Fact]
+    public void Resolve_BlessedAttacker_DrawsTheExtraDieBetweenAttackAndDamage()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatTestData.AdvanceToCombatant(
+                WatchtowerCombatTestData.CreatePlayerDecisionSession(),
+                "party-member.ranger");
+        EncounterParticipantState ranger =
+            WatchtowerCombatTestData.GetParticipant(
+                source,
+                "party-member.ranger");
+        WeaponAttack weapon = Assert.Single(
+            ranger.CombatProfile.WeaponAttacks);
+
+        source = WatchtowerCombatTestData.ReplaceParticipant(
+            source,
+            ranger with
+            {
+                ActiveEffects =
+                [
+                    new ActiveEffect
+                    {
+                        EffectId = "effect.bless",
+                        SourceCombatantId = "party-member.ranger",
+                        RemainingRounds = 10,
+                        RequiresConcentration = true,
+                        Contributions =
+                        [
+                            new RollContributionDefinition
+                            {
+                                Target =
+                                    RollContributionTarget.AttackRoll,
+                                Dice = new DamageDice
+                                {
+                                    Count = 1,
+                                    Die = DieType.D4
+                                }
+                            }
+                        ]
+                    }
+                ]
+            });
+
+        EncounterState encounter =
+            WatchtowerCombatTestData.GetEncounter(source);
+        int cursorBefore = source.RandomValuesConsumed;
+
+        WatchtowerCombatAttackAvailability availability =
+            WatchtowerCombatAttackStaging.EvaluateAvailability(
+                encounter,
+                ranger.Combatant.CombatantId,
+                "combatant.watchtower-raider.melee",
+                weapon.WeaponId);
+
+        Assert.Equal(
+            new[] { DieType.D4 },
+            availability.AttackRollContributions.RequiredDice);
+
+        WatchtowerCombatAttackExecution execution =
+            WatchtowerCombatAttackStaging.Resolve(
+                encounter,
+                source.RandomSeed,
+                cursorBefore,
+                ranger.Combatant.CombatantId,
+                "combatant.watchtower-raider.melee",
+                weapon.WeaponId);
+
+        WatchtowerCombatDieRoll contribution = execution.Dice[1];
+
+        Assert.Equal(
+            D20RollMode.Normal,
+            execution.Result.Attack.AttackRoll.RollMode);
+        Assert.Equal(20, execution.Dice[0].Sides);
+        Assert.Equal(4, contribution.Sides);
+        Assert.Equal(
+            WatchtowerCombatDiePurpose.AttackRoll,
+            contribution.Purpose);
+        Assert.All(
+            execution.Dice.Skip(2),
+            die => Assert.Equal(
+                WatchtowerCombatDiePurpose.DamageRoll,
+                die.Purpose));
+
+        // The contribution lands in the attack bonus, which is what adding a
+        // d4 to an attack roll means.
+        Assert.Equal(
+            weapon.AttackBonus + contribution.Value,
+            execution.Result.Attack.AttackRoll.AttackBonus);
+        Assert.Equal(
+            execution.Dice.Count,
+            execution.CursorAfter - cursorBefore);
+        Assert.Equal(
+            Enumerable.Range(
+                cursorBefore + 1,
+                execution.Dice.Count),
+            execution.Dice.Select(die => die.Ordinal));
     }
 }

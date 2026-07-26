@@ -290,12 +290,42 @@ internal static class SpellTestData
                 Bless,
                 "Bless",
                 BlessEffect,
-                maximumTargets: 3),
+                maximumTargets: 3,
+                [
+                    new RollContributionDefinition
+                    {
+                        Target = RollContributionTarget.AttackRoll,
+                        Dice = new DamageDice
+                        {
+                            Count = 1,
+                            Die = DieType.D4
+                        }
+                    },
+                    new RollContributionDefinition
+                    {
+                        Target = RollContributionTarget.SavingThrow,
+                        Dice = new DamageDice
+                        {
+                            Count = 1,
+                            Die = DieType.D4
+                        }
+                    }
+                ]),
             CreateConcentrationSpell(
                 Shield,
                 "Shield of Faith",
                 ShieldEffect,
-                maximumTargets: 1)
+                maximumTargets: 1,
+                // Flat rather than dice, so that a contribution which changes
+                // a roll without changing how many dice it takes is covered
+                // too.
+                [
+                    new RollContributionDefinition
+                    {
+                        Target = RollContributionTarget.AttackRoll,
+                        FlatBonus = 2
+                    }
+                ])
         ];
     }
 
@@ -305,7 +335,8 @@ internal static class SpellTestData
         string spellId,
         string name,
         string effectId,
-        int maximumTargets)
+        int maximumTargets,
+        IReadOnlyList<RollContributionDefinition> contributions)
     {
         return new SpellAttack
         {
@@ -325,14 +356,7 @@ internal static class SpellTestData
             AppliedEffectId = effectId,
             RequiresConcentration = true,
             DurationRounds = 10,
-            AppliedContributions =
-            [
-                new RollContributionDefinition
-                {
-                    Target = RollContributionTarget.AttackRoll,
-                    Dice = new DamageDice { Count = 1, Die = DieType.D4 }
-                }
-            ]
+            AppliedContributions = contributions
         };
     }
 }

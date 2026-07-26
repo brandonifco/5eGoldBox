@@ -5,8 +5,8 @@ using FiveEGoldBox.Core.Runtime;
 namespace FiveEGoldBox.Core.Tests;
 
 /// Effects that outlive the casting, and the concentration that sustains
-/// them. What the effects contribute to a roll is the next commit; this is
-/// whether they arrive, who they land on, and when they stop.
+/// them: whether they arrive, who they land on, and when they stop. What they
+/// then contribute to a roll is EncounterRollContributionTests.
 public sealed class EncounterSpellEffectTests
 {
     [Fact]

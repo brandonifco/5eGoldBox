@@ -13,4 +13,7 @@ internal sealed record EncounterWeaponAttackEvaluationCommand
     public required int FirstAttackRoll { get; init; }
 
     public int? SecondAttackRoll { get; init; }
+
+    public IReadOnlyList<int> ContributionRolls { get; init; }
+        = Array.Empty<int>();
 }
