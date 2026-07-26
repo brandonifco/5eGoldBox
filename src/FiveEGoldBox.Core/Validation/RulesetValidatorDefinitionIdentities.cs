@@ -81,6 +81,15 @@ public static partial class RulesetValidator
 
         AddRequiredDefinitionStringIssues(
             issues,
+            ruleset.Spells,
+            "ruleset.spells.id.required",
+            "ruleset.spells.name.required",
+            "spell",
+            spell => spell.Id,
+            spell => spell.Name);
+
+        AddRequiredDefinitionStringIssues(
+            issues,
             ruleset.EquipmentItems,
             "ruleset.equipment_items.id.required",
             "ruleset.equipment_items.name.required",

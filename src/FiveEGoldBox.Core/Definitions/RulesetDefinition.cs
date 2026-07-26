@@ -24,6 +24,9 @@ public sealed record RulesetDefinition
     public IReadOnlyList<WeaponDefinition> Weapons { get; init; }
         = Array.Empty<WeaponDefinition>();
 
+    public IReadOnlyList<SpellDefinition> Spells { get; init; }
+        = Array.Empty<SpellDefinition>();
+
     public IReadOnlyList<EquipmentItemDefinition> EquipmentItems { get; init; }
         = Array.Empty<EquipmentItemDefinition>();
 }
