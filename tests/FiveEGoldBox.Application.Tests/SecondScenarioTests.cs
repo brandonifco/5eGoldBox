@@ -355,12 +355,12 @@ public sealed class SecondScenarioTests
             RandomSeed);
     }
 
-    private static ApplicationSessionState RunToConclusion()
+    internal static ApplicationSessionState RunToConclusion()
     {
         return RunTo(TraversalStage.Concluded);
     }
 
-    private static ApplicationSessionState RunTo(
+    internal static ApplicationSessionState RunTo(
         TraversalStage stage)
     {
         ApplicationSessionState session = CreateSession();
