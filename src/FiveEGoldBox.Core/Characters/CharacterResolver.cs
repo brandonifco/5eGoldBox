@@ -234,8 +234,53 @@ public sealed partial class CharacterResolver
             Traits = CoreCollectionProtection.ProtectList(traits),
             ClassFeatures = CoreCollectionProtection.ProtectList(classFeatures),
             Contributions = CoreCollectionProtection.ProtectList(
-                ResolveFeatureContributions(classFeatures))
+                ResolveFeatureContributions(classFeatures)),
+            SpellAttacks = CoreCollectionProtection.ProtectList(
+                ResolveSpellAttacks(
+                    draft,
+                    selectedClass,
+                    abilityModifiers,
+                    proficiencyBonus))
         };
+    }
+
+    /// The prepared spells this caster can actually cast. A character whose
+    /// class does not cast, or who prepared nothing, has none — and a prepared
+    /// spell the ruleset does not declare is skipped here rather than throwing,
+    /// for the same reason an unknown feature is: ruleset validation is where
+    /// an unresolvable ID is caught.
+    private IReadOnlyList<SpellAttack> ResolveSpellAttacks(
+        CharacterDraft draft,
+        ClassDefinition? selectedClass,
+        IReadOnlyDictionary<Ability, int> abilityModifiers,
+        int proficiencyBonus)
+    {
+        if (_rulesetIndex is null
+            || selectedClass?.SpellcastingAbility is null
+            || draft.PreparedSpellIds.Count == 0)
+        {
+            return Array.Empty<SpellAttack>();
+        }
+
+        List<SpellAttack> spellAttacks = [];
+
+        foreach (string spellId in draft.PreparedSpellIds)
+        {
+            if (_rulesetIndex.SpellsById.TryGetValue(
+                spellId,
+                out SpellDefinition? spell))
+            {
+                spellAttacks.Add(
+                    SpellAttackResolver.Create(
+                        spell,
+                        selectedClass.SpellcastingAbility.Value,
+                        abilityModifiers,
+                        proficiencyBonus,
+                        _rulesetIndex.EffectsById));
+            }
+        }
+
+        return spellAttacks;
     }
 
     /// What the character's features change about its rolls. A feature ID the

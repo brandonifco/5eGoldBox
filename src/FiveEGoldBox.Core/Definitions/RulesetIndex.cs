@@ -17,6 +17,8 @@ internal sealed class RulesetIndex
         WeaponsById = CreateIndex(Ruleset.Weapons, weapon => weapon.Id);
         EquipmentItemsById = CreateIndex(Ruleset.EquipmentItems, item => item.Id);
         FeaturesById = CreateIndex(Ruleset.Features, feature => feature.Id);
+        SpellsById = CreateIndex(Ruleset.Spells, spell => spell.Id);
+        EffectsById = CreateIndex(Ruleset.Effects, effect => effect.Id);
     }
 
     public RulesetDefinition Ruleset { get; }
@@ -36,6 +38,10 @@ internal sealed class RulesetIndex
     public IReadOnlyDictionary<string, EquipmentItemDefinition> EquipmentItemsById { get; }
 
     public IReadOnlyDictionary<string, FeatureDefinition> FeaturesById { get; }
+
+    public IReadOnlyDictionary<string, SpellDefinition> SpellsById { get; }
+
+    public IReadOnlyDictionary<string, EffectDefinition> EffectsById { get; }
 
     private static IReadOnlyDictionary<string, TDefinition> CreateIndex<TDefinition>(
         IEnumerable<TDefinition> definitions,

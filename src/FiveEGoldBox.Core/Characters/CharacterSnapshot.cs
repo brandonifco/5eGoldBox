@@ -139,4 +139,10 @@ public sealed record CharacterSnapshot
     /// something.
     public IReadOnlyList<RollContributionDefinition> Contributions
     { get; init; } = Array.Empty<RollContributionDefinition>();
+
+    /// The prepared spells, with this caster's attack bonus and save DC
+    /// already worked out — the same resolution WeaponAttacks get, for the
+    /// same reason.
+    public IReadOnlyList<SpellAttack> SpellAttacks { get; init; }
+        = Array.Empty<SpellAttack>();
 }

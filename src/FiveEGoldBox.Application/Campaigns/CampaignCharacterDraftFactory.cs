@@ -42,6 +42,7 @@ internal static class CampaignCharacterDraftFactory
             BaseAbilityScores = character.AbilityScores,
             SelectedSkillIds = character.SelectedSkillIds,
             EquippedWeaponIds = character.EquippedWeaponIds,
+            PreparedSpellIds = character.PreparedSpellIds,
             InventoryItems = CreateInventory(member)
         };
     }
