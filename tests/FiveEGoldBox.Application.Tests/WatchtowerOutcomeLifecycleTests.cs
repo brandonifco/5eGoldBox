@@ -464,48 +464,52 @@ public sealed class WatchtowerOutcomeLifecycleTests
             EncounterState encounter =
                 current.ActiveEncounter.Encounter;
 
-            // Focus the most hurt reachable raider. Spreading damage around
-            // loses this fight, which is why the old version was a
-            // hand-tuned sequence rather than a loop.
-            WatchtowerCombatTargetOption? target =
-                decision.WeaponAttack is { IsAvailable: true }
-                    ? decision.WeaponAttack.Targets
-                        .Where(candidate => candidate.IsAvailable)
-                        .OrderBy(candidate => encounter.Participants
-                            .Single(participant => string.Equals(
-                                participant.Combatant.CombatantId,
-                                candidate.TargetCombatantId,
-                                StringComparison.Ordinal))
-                            .Combatant.Health.HitPoints
-                            .CurrentHitPoints)
-                        .FirstOrDefault()
-                    : null;
+            // Focus the most hurt reachable raider, with whichever carried
+            // weapon can reach it. Spreading damage around loses this fight,
+            // which is why the old version was a hand-tuned sequence rather
+            // than a loop.
+            var attacks = decision.WeaponAttacks
+                .Where(weapon => weapon.IsAvailable)
+                .SelectMany(weapon => weapon.Targets
+                    .Where(candidate => candidate.IsAvailable)
+                    .Select(candidate => (weapon.WeaponId, Target: candidate)))
+                .OrderBy(candidate => encounter.Participants
+                    .Single(participant => string.Equals(
+                        participant.Combatant.CombatantId,
+                        candidate.Target.TargetCombatantId,
+                        StringComparison.Ordinal))
+                    .Combatant.Health.HitPoints
+                    .CurrentHitPoints)
+                .ToArray();
 
-            if (target is not null)
+            if (attacks.Length > 0)
             {
                 current = ExecuteAttack(
                     current,
                     decision.ActiveCombatantId!,
-                    decision.WeaponAttack!.WeaponId,
-                    target.TargetCombatantId);
+                    attacks[0].WeaponId,
+                    attacks[0].Target.TargetCombatantId);
                 continue;
             }
 
-            string? unreachableTargetId = decision.WeaponAttack
-                ?.Targets
-                .Where(candidate => candidate.UnavailabilityReason
-                    == EncounterActionUnavailabilityReason.TargetOutOfRange)
+            var unreachable = decision.WeaponAttacks
+                .SelectMany(weapon => weapon.Targets
+                    .Where(candidate => candidate.UnavailabilityReason
+                        == EncounterActionUnavailabilityReason
+                            .TargetOutOfRange)
+                    .Select(candidate =>
+                        (weapon.WeaponId, candidate.TargetCombatantId,
+                            candidate.DistanceFeet)))
                 .OrderBy(candidate => candidate.DistanceFeet)
                 .ThenBy(candidate => candidate.TargetCombatantId)
-                .FirstOrDefault()
-                ?.TargetCombatantId;
-            EncounterMovementResult? movement = unreachableTargetId is null
+                .ToArray();
+            EncounterMovementResult? movement = unreachable.Length == 0
                 ? null
                 : WatchtowerCombatPathSearch.FindMovement(
                     encounter,
                     decision.ActiveCombatantId!,
-                    unreachableTargetId,
-                    decision.WeaponAttack!.WeaponId);
+                    unreachable[0].TargetCombatantId,
+                    unreachable[0].WeaponId);
 
             current = movement is null
                 ? ExecuteEndTurn(current, decision.ActiveCombatantId!)
@@ -533,13 +537,15 @@ public sealed class WatchtowerOutcomeLifecycleTests
             advanced.ResultingDecision;
 
         AssertPlayerDecision(decision, expectedActorId);
-        Assert.True(decision.WeaponAttack!.IsAvailable);
-        Assert.Equal(
-            expectedWeaponId,
-            decision.WeaponAttack.WeaponId);
+
+        WatchtowerCombatWeaponAttackOption weaponOption = Assert.Single(
+            decision.WeaponAttacks,
+            candidate => candidate.WeaponId == expectedWeaponId);
+
+        Assert.True(weaponOption.IsAvailable);
 
         WatchtowerCombatTargetOption target = Assert.Single(
-            decision.WeaponAttack.Targets,
+            weaponOption.Targets,
             candidate => string.Equals(
                 candidate.TargetCombatantId,
                 expectedTargetId,
@@ -555,7 +561,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
-                    WeaponId = decision.WeaponAttack.WeaponId,
+                    WeaponId = weaponOption.WeaponId,
                     TargetCombatantId = target.TargetCombatantId
                 });
 
@@ -567,7 +573,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
             decision.ActiveCombatantId,
             result.SubmittedIntent.ActorCombatantId);
         Assert.Equal(
-            decision.WeaponAttack.WeaponId,
+            weaponOption.WeaponId,
             result.SubmittedIntent.WeaponId);
         Assert.Equal(
             target.TargetCombatantId,
@@ -661,7 +667,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
             decision.State);
         Assert.Equal(expectedActorId, decision.ActiveCombatantId);
         Assert.NotNull(decision.Movement);
-        Assert.NotNull(decision.WeaponAttack);
+        Assert.NotEmpty(decision.WeaponAttacks);
         Assert.NotNull(decision.EndTurn);
         Assert.True(decision.EndTurn!.IsAvailable);
     }

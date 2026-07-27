@@ -809,25 +809,28 @@ public sealed class ConsoleProcessRestartTests
 
             IReadOnlyList<WatchtowerCombatMovementDestinationOption>
                 movements = GetAvailableMovements(decision);
-            IReadOnlyList<WatchtowerCombatTargetOption> targets =
-                GetAvailableTargets(decision);
+            IReadOnlyList<(string WeaponId, WatchtowerCombatTargetOption Target)>
+                pairs = GetAvailableWeaponTargetPairs(decision);
 
             if (strategy == CombatStrategy.PartyVictory
-                && targets.Count > 0)
+                && pairs.Count > 0)
             {
-                WatchtowerCombatTargetOption target = targets
-                    .OrderBy(candidate =>
-                        GetParticipantCurrentHitPoints(
-                            state,
-                            candidate.TargetCombatantId))
-                    .ThenBy(candidate =>
-                        candidate.TargetCombatantId,
-                        StringComparer.Ordinal)
-                    .First();
-                int targetIndex = targets.ToList()
-                    .IndexOf(target);
+                (string WeaponId, WatchtowerCombatTargetOption Target)
+                    chosen = pairs
+                        .OrderBy(pair =>
+                            GetParticipantCurrentHitPoints(
+                                state,
+                                pair.Target.TargetCombatantId))
+                        .ThenBy(pair =>
+                            pair.Target.TargetCombatantId,
+                            StringComparer.Ordinal)
+                        .ThenBy(pair =>
+                            pair.WeaponId,
+                            StringComparer.Ordinal)
+                        .First();
+                int pairIndex = pairs.ToList().IndexOf(chosen);
                 int selection = movements.Count
-                    + targetIndex
+                    + pairIndex
                     + 1;
                 selections.Add(ToSelection(selection));
                 result = WatchtowerCombatRules.Execute(
@@ -840,9 +843,9 @@ public sealed class ConsoleProcessRestartTests
                             decision.ActiveCombatantId
                             ?? throw new InvalidOperationException(
                                 "A player combat decision did not identify the active combatant."),
-                        WeaponId = decision.WeaponAttack!.WeaponId,
+                        WeaponId = chosen.WeaponId,
                         TargetCombatantId =
-                            target.TargetCombatantId
+                            chosen.Target.TargetCombatantId
                     });
             }
             else if (strategy == CombatStrategy.PartyVictory
@@ -879,7 +882,7 @@ public sealed class ConsoleProcessRestartTests
                 }
 
                 int selection = movements.Count
-                    + targets.Count
+                    + pairs.Count
                     + 1;
                 selections.Add(ToSelection(selection));
                 result = WatchtowerCombatRules.Execute(
@@ -911,7 +914,8 @@ public sealed class ConsoleProcessRestartTests
                 movements)
     {
         WatchtowerCombatTargetOption target =
-            decision.WeaponAttack!.Targets
+            decision.WeaponAttacks
+                .SelectMany(weapon => weapon.Targets)
                 .OrderBy(candidate =>
                     candidate.DistanceFeet ?? int.MaxValue)
                 .ThenBy(candidate =>
@@ -948,15 +952,25 @@ public sealed class ConsoleProcessRestartTests
             : Array.Empty<WatchtowerCombatMovementDestinationOption>();
     }
 
+    private static IReadOnlyList<(string WeaponId, WatchtowerCombatTargetOption Target)>
+        GetAvailableWeaponTargetPairs(
+            WatchtowerCombatDecision decision)
+    {
+        return decision.WeaponAttacks
+            .Where(weapon => weapon.IsAvailable)
+            .SelectMany(weapon => weapon.Targets
+                .Where(target => target.IsAvailable)
+                .Select(target => (weapon.WeaponId, Target: target)))
+            .ToArray();
+    }
+
     private static IReadOnlyList<WatchtowerCombatTargetOption>
         GetAvailableTargets(
             WatchtowerCombatDecision decision)
     {
-        return decision.WeaponAttack?.IsAvailable == true
-            ? decision.WeaponAttack.Targets
-                .Where(target => target.IsAvailable)
-                .ToArray()
-            : Array.Empty<WatchtowerCombatTargetOption>();
+        return GetAvailableWeaponTargetPairs(decision)
+            .Select(pair => pair.Target)
+            .ToArray();
     }
 
     private static int GetCombatExitSelection(

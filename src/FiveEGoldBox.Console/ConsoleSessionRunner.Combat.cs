@@ -159,8 +159,6 @@ internal sealed partial class ConsoleSessionRunner
 
         CombatMovementOption movement =
             decision.Movement!;
-        CombatWeaponAttackOption weaponAttack =
-            decision.WeaponAttacks[0];
         CombatEndTurnOption endTurn =
             decision.EndTurn!;
 
@@ -186,13 +184,26 @@ internal sealed partial class ConsoleSessionRunner
             $"Movement Unavailability Reason: {movement.UnavailabilityReason}");
         output.WriteLine(
             $"Legal Movement Destination Count: {(movement.IsAvailable ? movement.DestinationOptions.Count : 0)}");
-        output.WriteLine($"Weapon ID: {weaponAttack.WeaponId}");
-        output.WriteLine(
-            $"Weapon Attack Available: {FormatBoolean(weaponAttack.IsAvailable)}");
-        output.WriteLine(
-            $"Weapon Attack Unavailability Reason: {weaponAttack.UnavailabilityReason}");
-        output.WriteLine(
-            $"Legal Attack Target Count: {(weaponAttack.IsAvailable ? weaponAttack.Targets.Count(target => target.IsAvailable) : 0)}");
+
+        // One block per weapon carried, rather than the single fixed weapon
+        // this used to assume — a combatant with a bow and a dagger reports
+        // both.
+        for (int index = 0;
+            index < decision.WeaponAttacks.Count;
+            index++)
+        {
+            CombatWeaponAttackOption weaponAttack =
+                decision.WeaponAttacks[index];
+
+            output.WriteLine($"Weapon {index + 1} ID: {weaponAttack.WeaponId}");
+            output.WriteLine(
+                $"Weapon {index + 1} Attack Available: {FormatBoolean(weaponAttack.IsAvailable)}");
+            output.WriteLine(
+                $"Weapon {index + 1} Attack Unavailability Reason: {weaponAttack.UnavailabilityReason}");
+            output.WriteLine(
+                $"Weapon {index + 1} Legal Attack Target Count: {(weaponAttack.IsAvailable ? weaponAttack.Targets.Count(target => target.IsAvailable) : 0)}");
+        }
+
         output.WriteLine(
             $"End Turn Available: {FormatBoolean(endTurn.IsAvailable)}");
         output.WriteLine(
@@ -284,11 +295,17 @@ internal sealed partial class ConsoleSessionRunner
             }
         }
 
-        CombatWeaponAttackOption weaponAttack =
-            decision.WeaponAttacks[0];
-
-        if (weaponAttack.IsAvailable)
+        // One menu row per (weapon, target) pair, across every weapon the
+        // combatant carries — a bow and a dagger each offer their own row
+        // rather than the second going unmentioned.
+        foreach (CombatWeaponAttackOption weaponAttack
+            in decision.WeaponAttacks)
         {
+            if (!weaponAttack.IsAvailable)
+            {
+                continue;
+            }
+
             foreach (CombatTargetOption target
                 in weaponAttack.Targets.Where(target =>
                     target.IsAvailable))
@@ -652,11 +669,10 @@ internal sealed partial class ConsoleSessionRunner
         }
 
         if (decision.Movement is null
-            || decision.WeaponAttacks.FirstOrDefault() is null
             || decision.EndTurn is null)
         {
             throw new InvalidOperationException(
-                "A player combat decision requires movement, weapon-attack, and End Turn options.");
+                "A player combat decision requires movement and End Turn options.");
         }
     }
 

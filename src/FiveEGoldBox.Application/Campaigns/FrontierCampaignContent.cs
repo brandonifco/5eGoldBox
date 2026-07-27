@@ -96,11 +96,11 @@ internal static class FrontierCampaignContent
     /// PR #102 and until now the only bow belonged to the only character who
     /// could hold one.
     ///
-    /// The bow only, for now: `WatchtowerCombatDecisionFactory` offers a
-    /// combatant its one weapon and throws on a second, so carrying a sidearm
-    /// as well needs weapon choice in the decision surface — a feature, not a
-    /// roster edit. Sneak Attack does not mind, since a ranged weapon
-    /// satisfies it exactly as a finesse one does.
+    /// Carries the dagger too, now that the decision surface offers a
+    /// combatant every weapon it carries rather than exactly one. Either
+    /// satisfies Sneak Attack — a ranged weapon and a finesse one both do —
+    /// so the choice between them is purely about range and ammunition, the
+    /// way it would be for a real rogue at the table.
     private static CampaignCharacterDefinition CreateRogue()
     {
         return new CampaignCharacterDefinition
@@ -127,7 +127,8 @@ internal static class FrontierCampaignContent
             ],
             EquippedWeaponIds =
             [
-                CampaignRulesetContent.RogueWeaponId
+                CampaignRulesetContent.RogueWeaponId,
+                CampaignRulesetContent.RogueSidearmWeaponId
             ],
             ZeroHitPointPolicy =
                 CombatantZeroHitPointPolicy.DeathSavingThrows,

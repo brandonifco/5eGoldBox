@@ -30,7 +30,8 @@ public sealed class WatchtowerCombatAttackStagingTests
         EncounterState encounter =
             WatchtowerCombatTestData.GetEncounter(source);
         WeaponAttack weapon = Assert.Single(
-            archer.CombatProfile.WeaponAttacks);
+            archer.CombatProfile.WeaponAttacks,
+            candidate => candidate.WeaponId == "weapon.shortbow");
 
         WatchtowerCombatAttackAvailability availability =
             WatchtowerCombatAttackStaging.EvaluateAvailability(
@@ -84,8 +85,7 @@ public sealed class WatchtowerCombatAttackStagingTests
             WatchtowerCombatRules.AdvanceToDecision(source)
                 .ResultingDecision;
         WatchtowerCombatWeaponAttackOption attackOption =
-            Assert.IsType<WatchtowerCombatWeaponAttackOption>(
-                decision.WeaponAttack);
+            decision.WeaponAttacks.Single();
         string actorId = Assert.IsType<string>(
             decision.ActiveCombatantId);
         WatchtowerCombatTargetOption target =
@@ -167,7 +167,8 @@ public sealed class WatchtowerCombatAttackStagingTests
                 source,
                 "party-member.rogue");
         WeaponAttack weapon = Assert.Single(
-            archer.CombatProfile.WeaponAttacks);
+            archer.CombatProfile.WeaponAttacks,
+            candidate => candidate.WeaponId == "weapon.shortbow");
 
         ApplicationSessionState priorSource =
             WatchtowerCombatTestData.ReplaceParticipant(
@@ -244,7 +245,8 @@ public sealed class WatchtowerCombatAttackStagingTests
                 source,
                 "party-member.rogue");
         WeaponAttack weapon = Assert.Single(
-            archer.CombatProfile.WeaponAttacks);
+            archer.CombatProfile.WeaponAttacks,
+            candidate => candidate.WeaponId == "weapon.shortbow");
 
         source = WatchtowerCombatTestData.ReplaceParticipant(
             source,
@@ -349,7 +351,8 @@ public sealed class WatchtowerCombatAttackStagingTests
                 source,
                 "party-member.rogue");
         WeaponAttack weapon = Assert.Single(
-            archer.CombatProfile.WeaponAttacks);
+            archer.CombatProfile.WeaponAttacks,
+            candidate => candidate.WeaponId == "weapon.shortbow");
 
         source = WatchtowerCombatTestData.ReplaceParticipant(
             source,
