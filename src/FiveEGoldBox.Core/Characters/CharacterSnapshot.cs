@@ -1,3 +1,4 @@
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Characters;
@@ -130,4 +131,12 @@ public sealed record CharacterSnapshot
 
     public IReadOnlyList<string> ClassFeatures { get; init; }
         = Array.Empty<string>();
+
+    /// What those features change about this character's rolls, resolved here
+    /// rather than looked up later — the same reason a weapon attack carries
+    /// resolved damage. Empty when the ruleset declares no feature the class
+    /// names, which is every character until one has a feature that does
+    /// something.
+    public IReadOnlyList<RollContributionDefinition> Contributions
+    { get; init; } = Array.Empty<RollContributionDefinition>();
 }

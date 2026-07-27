@@ -241,45 +241,105 @@ public static partial class RulesetValidator
     {
         foreach (EffectDefinition effect in effects)
         {
-            string subject = $"Ruleset effect '{effect.Id}'";
+            AddRollContributionIssues(
+                issues,
+                effect.Contributions,
+                "ruleset.effects",
+                $"Ruleset effect '{effect.Id}'",
+                // An effect that changes nothing is nothing. A feature that
+                // changes nothing is a feature whose other legs are not built
+                // yet, which is where Second Wind will sit.
+                requireAtLeastOne: true);
+        }
+    }
 
-            if (effect.Contributions.Count == 0)
+    /// The same checks whether a spell's effect or a class feature is doing
+    /// the contributing, because a contribution is a contribution. Only the
+    /// issue code and the subject differ, so that a broken ruleset still says
+    /// which thing is broken.
+    private static void AddRollContributionIssues(
+        List<ValidationIssue> issues,
+        IReadOnlyList<RollContributionDefinition> contributions,
+        string codePrefix,
+        string subject,
+        bool requireAtLeastOne)
+    {
+        if (requireAtLeastOne
+            && contributions.Count == 0)
+        {
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Error,
+                $"{codePrefix}.contributes_nothing",
+                $"{subject} changes nothing."));
+        }
+
+        foreach (RollContributionDefinition contribution in contributions)
+        {
+            if (!Enum.IsDefined(contribution.Target))
             {
                 issues.Add(new ValidationIssue(
                     ValidationSeverity.Error,
-                    "ruleset.effects.contributes_nothing",
-                    $"{subject} changes nothing."));
+                    $"{codePrefix}.target_undefined",
+                    $"{subject} changes an undefined kind of roll."));
             }
 
-            foreach (RollContributionDefinition contribution
-                in effect.Contributions)
+            if (contribution.Dice is null
+                && contribution.FlatBonus == 0)
             {
-                if (!Enum.IsDefined(contribution.Target))
-                {
-                    issues.Add(new ValidationIssue(
-                        ValidationSeverity.Error,
-                        "ruleset.effects.target_undefined",
-                        $"{subject} changes an undefined kind of roll."));
-                }
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    $"{codePrefix}.contribution_empty",
+                    $"{subject} contributes neither dice nor a bonus."));
+            }
 
-                if (contribution.Dice is null
-                    && contribution.FlatBonus == 0)
-                {
-                    issues.Add(new ValidationIssue(
-                        ValidationSeverity.Error,
-                        "ruleset.effects.contribution_empty",
-                        $"{subject} contributes neither dice nor a bonus."));
-                }
+            if (contribution.Dice is not null
+                && !Enum.IsDefined(contribution.Dice.Die))
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    $"{codePrefix}.die_undefined",
+                    $"{subject} rolls undefined die '{(int)contribution.Dice.Die}'."));
+            }
 
-                if (contribution.Dice is not null
-                    && !Enum.IsDefined(contribution.Dice.Die))
+            if (contribution.Dice is not null
+                && contribution.Dice.Count < 1)
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    $"{codePrefix}.dice_count_invalid",
+                    $"{subject} rolls {contribution.Dice.Count} dice."));
+            }
+
+            foreach (RollContributionCondition condition
+                in contribution.Conditions)
+            {
+                if (!Enum.IsDefined(condition))
                 {
                     issues.Add(new ValidationIssue(
                         ValidationSeverity.Error,
-                        "ruleset.effects.die_undefined",
-                        $"{subject} rolls undefined die '{(int)contribution.Dice.Die}'."));
+                        $"{codePrefix}.condition_undefined",
+                        $"{subject} asks an undefined condition '{(int)condition}'."));
                 }
             }
+        }
+    }
+
+    /// A feature is a contribution with a name, until something reads the
+    /// other two legs the design gives it — a granted resource and a granted
+    /// action. A feature declaring no contributions is therefore allowed: it
+    /// is as inert as the bare string ID it replaced, and no more wrong.
+    private static void AddFeatureDefinitionIssues(
+        List<ValidationIssue> issues,
+        IReadOnlyList<FeatureDefinition> features)
+    {
+        foreach (FeatureDefinition feature in features)
+        {
+            AddRollContributionIssues(
+                issues,
+                feature.Contributions,
+                "ruleset.features",
+                $"Ruleset feature '{feature.Id}'",
+                requireAtLeastOne: false);
         }
     }
 }
