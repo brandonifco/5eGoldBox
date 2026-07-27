@@ -81,9 +81,10 @@ public static class RollContributionRules
         {
             ArgumentNullException.ThrowIfNull(effect);
 
-            // An effect whose rounds have run out is over. Nothing counts
-            // rounds down yet, so this catches only an effect applied with no
-            // duration left to it.
+            // An effect whose rounds have run out is over.
+            // EncounterTurnAdvancementRules removes an expired effect at the
+            // start of the next round, so this guard only ever catches one
+            // applied with no duration left to it in the first place.
             if (effect.RemainingRounds <= 0)
             {
                 continue;

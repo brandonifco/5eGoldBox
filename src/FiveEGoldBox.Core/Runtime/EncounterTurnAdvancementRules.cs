@@ -29,7 +29,7 @@ public static class EncounterTurnAdvancementRules
 
         int currentParticipantIndex =
             FindParticipantIndex(
-                state,
+                state.Participants,
                 command.ActorCombatantId);
 
         if (currentParticipantIndex < 0)
@@ -85,7 +85,7 @@ public static class EncounterTurnAdvancementRules
 
             int candidateParticipantIndex =
                 FindParticipantIndex(
-                    state,
+                    state.Participants,
                     candidateCombatantId);
 
             if (candidateParticipantIndex < 0)
@@ -133,6 +133,16 @@ public static class EncounterTurnAdvancementRules
             {
                 TurnResources = refreshedResources
             };
+
+        bool startedNewRound =
+            resolvedTurnState.RoundNumber
+                > state.TurnState.RoundNumber;
+
+        if (startedNewRound)
+        {
+            participants =
+                DecrementActiveEffects(participants);
+        }
 
         IReadOnlyList<string>
             protectedSkippedCombatantIds =
@@ -212,16 +222,91 @@ public static class EncounterTurnAdvancementRules
         return CombatTurnRules.AdvanceTurn(state);
     }
 
+    /// Ticks every active effect down by one round and drops what runs out.
+    ///
+    /// Ticked once per round rather than once per the sustaining caster's
+    /// turn — this engine has no notion of "whose turn started the effect,"
+    /// and every effect on a target was created at the same encounter moment
+    /// as any other copy of it, so ticking them all in lockstep at round start
+    /// keeps a spell affecting several targets expiring together.
+    private static EncounterParticipantState[] DecrementActiveEffects(
+        EncounterParticipantState[] participants)
+    {
+        List<(string SourceCombatantId, string EffectId)> expired = [];
+
+        for (int index = 0; index < participants.Length; index++)
+        {
+            EncounterParticipantState participant =
+                participants[index];
+
+            if (participant.ActiveEffects.Count == 0)
+            {
+                continue;
+            }
+
+            List<ActiveEffect> remaining = [];
+
+            foreach (ActiveEffect effect in participant.ActiveEffects)
+            {
+                int remainingRounds =
+                    effect.RemainingRounds - 1;
+
+                if (remainingRounds > 0)
+                {
+                    remaining.Add(effect with
+                    {
+                        RemainingRounds = remainingRounds
+                    });
+                }
+                else
+                {
+                    expired.Add((
+                        effect.SourceCombatantId,
+                        effect.EffectId));
+                }
+            }
+
+            participants[index] = participant with
+            {
+                ActiveEffects =
+                    Array.AsReadOnly(remaining.ToArray())
+            };
+        }
+
+        foreach ((string sourceCombatantId, string effectId)
+            in expired)
+        {
+            int sourceIndex = FindParticipantIndex(
+                participants,
+                sourceCombatantId);
+
+            if (string.Equals(
+                participants[sourceIndex]
+                    .ConcentratingOnEffectId,
+                effectId,
+                StringComparison.Ordinal))
+            {
+                participants[sourceIndex] =
+                    participants[sourceIndex] with
+                    {
+                        ConcentratingOnEffectId = null
+                    };
+            }
+        }
+
+        return participants;
+    }
+
     private static int FindParticipantIndex(
-        EncounterState state,
+        IReadOnlyList<EncounterParticipantState> participants,
         string combatantId)
     {
         for (int index = 0;
-            index < state.Participants.Count;
+            index < participants.Count;
             index++)
         {
             if (string.Equals(
-                state.Participants[index]
+                participants[index]
                     .Combatant.CombatantId,
                 combatantId,
                 StringComparison.Ordinal))
