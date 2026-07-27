@@ -30,6 +30,10 @@ public sealed record RulesetDefinition
     public IReadOnlyList<EffectDefinition> Effects { get; init; }
         = Array.Empty<EffectDefinition>();
 
+    /// What `ClassDefinition.FeaturesByLevel` names.
+    public IReadOnlyList<FeatureDefinition> Features { get; init; }
+        = Array.Empty<FeatureDefinition>();
+
     public IReadOnlyList<EquipmentItemDefinition> EquipmentItems { get; init; }
         = Array.Empty<EquipmentItemDefinition>();
 }

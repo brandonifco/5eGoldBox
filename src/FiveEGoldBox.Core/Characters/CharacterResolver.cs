@@ -154,6 +154,15 @@ public sealed partial class CharacterResolver
             + inventoryWeightPounds
             + currencyWeightPounds;
 
+        IReadOnlyList<string> classFeatures = selectedClass is null
+            ? Array.Empty<string>()
+            : selectedClass.FeaturesByLevel
+                .Where(pair => pair.Key <= draft.Level)
+                .OrderBy(pair => pair.Key)
+                .SelectMany(pair => pair.Value)
+                .Distinct()
+                .ToArray();
+
         return new CharacterSnapshot
         {
             Name = draft.Name!.Trim(),
@@ -223,15 +232,38 @@ public sealed partial class CharacterResolver
             SkillBonuses = CoreCollectionProtection.ProtectList(skillBonuses),
             Languages = CoreCollectionProtection.ProtectList(languages),
             Traits = CoreCollectionProtection.ProtectList(traits),
-            ClassFeatures = CoreCollectionProtection.ProtectList(
-                selectedClass is null
-                    ? Array.Empty<string>()
-                    : selectedClass.FeaturesByLevel
-                        .Where(pair => pair.Key <= draft.Level)
-                        .OrderBy(pair => pair.Key)
-                        .SelectMany(pair => pair.Value)
-                        .Distinct())
+            ClassFeatures = CoreCollectionProtection.ProtectList(classFeatures),
+            Contributions = CoreCollectionProtection.ProtectList(
+                ResolveFeatureContributions(classFeatures))
         };
+    }
+
+    /// What the character's features change about its rolls. A feature ID the
+    /// ruleset does not declare contributes nothing here rather than throwing,
+    /// because a resolver with no ruleset in hand is a supported way to build
+    /// a character and ruleset validation is where an unknown ID is caught.
+    private IReadOnlyList<RollContributionDefinition>
+        ResolveFeatureContributions(
+            IReadOnlyList<string> classFeatures)
+    {
+        if (_rulesetIndex is null)
+        {
+            return Array.Empty<RollContributionDefinition>();
+        }
+
+        List<RollContributionDefinition> contributions = [];
+
+        foreach (string featureId in classFeatures)
+        {
+            if (_rulesetIndex.FeaturesById.TryGetValue(
+                featureId,
+                out FeatureDefinition? feature))
+            {
+                contributions.AddRange(feature.Contributions);
+            }
+        }
+
+        return contributions;
     }
 
 

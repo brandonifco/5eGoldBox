@@ -26,6 +26,12 @@ internal static partial class CampaignRulesetContent
     internal const string RangerClassId =
         "class.ranger";
 
+    internal const string RogueClassId =
+        "class.rogue";
+
+    internal const string SneakAttackFeatureId =
+        "feature.sneak_attack";
+
     internal const string FighterWeaponId =
         "weapon.longsword";
 

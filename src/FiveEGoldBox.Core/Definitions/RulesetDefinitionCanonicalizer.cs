@@ -16,7 +16,26 @@ internal static class RulesetDefinitionCanonicalizer
             Skills = Protect(definition.Skills),
             Armors = Protect(definition.Armors),
             Weapons = Protect(definition.Weapons.Select(CopyWeapon)),
-            EquipmentItems = Protect(definition.EquipmentItems.Select(CopyEquipmentItem))
+            EquipmentItems = Protect(definition.EquipmentItems.Select(CopyEquipmentItem)),
+            Features = Protect(definition.Features.Select(CopyFeature))
+        };
+    }
+
+    private static FeatureDefinition CopyFeature(FeatureDefinition feature)
+    {
+        return feature with
+        {
+            Contributions = Protect(
+                feature.Contributions.Select(CopyContribution))
+        };
+    }
+
+    private static RollContributionDefinition CopyContribution(
+        RollContributionDefinition contribution)
+    {
+        return contribution with
+        {
+            Conditions = Protect(contribution.Conditions)
         };
     }
 

@@ -560,7 +560,22 @@ public sealed class RulesetOwnershipTests
             Skills = skills,
             Armors = armors,
             Weapons = weapons,
-            EquipmentItems = equipmentItems
+            EquipmentItems = equipmentItems,
+            // The class and background above name these, and a ruleset now has
+            // to declare what its feature IDs point at.
+            Features =
+            [
+                new FeatureDefinition
+                {
+                    Id = "feature.level-one",
+                    Name = "Test Feature"
+                },
+                new FeatureDefinition
+                {
+                    Id = "feature.background",
+                    Name = "Test Background Feature"
+                }
+            ]
         };
 
         return new MutableRulesetFixture(

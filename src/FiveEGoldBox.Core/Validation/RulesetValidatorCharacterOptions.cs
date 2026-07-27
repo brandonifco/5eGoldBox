@@ -9,16 +9,26 @@ public static partial class RulesetValidator
         List<ValidationIssue> issues,
         RulesetDefinition ruleset)
     {
+        HashSet<string> declaredFeatures = new(
+            ruleset.Features.Select(feature => feature.Id),
+            StringComparer.Ordinal);
+
         foreach (ClassDefinition characterClass in ruleset.Classes)
         {
             AddClassHitDieIssue(issues, characterClass);
             AddClassSkillChoiceCountIssues(issues, characterClass);
-            AddClassFeatureIssues(issues, characterClass);
+            AddClassFeatureIssues(
+                issues,
+                characterClass,
+                declaredFeatures);
         }
 
         foreach (BackgroundDefinition background in ruleset.Backgrounds)
         {
-            AddBackgroundFeatureIssue(issues, background);
+            AddBackgroundFeatureIssue(
+                issues,
+                background,
+                declaredFeatures);
         }
     }
 
@@ -60,9 +70,13 @@ public static partial class RulesetValidator
         }
     }
 
+    /// A feature ID that names nothing was inert for as long as nothing read
+    /// these. Now that a class feature can change a roll, an ID pointing
+    /// nowhere is content that silently does less than it says.
     private static void AddClassFeatureIssues(
         List<ValidationIssue> issues,
-        ClassDefinition characterClass)
+        ClassDefinition characterClass,
+        HashSet<string> declaredFeatures)
     {
         foreach (KeyValuePair<int, IReadOnlyList<string>> featuresForLevel in characterClass.FeaturesByLevel)
         {
@@ -81,13 +95,23 @@ public static partial class RulesetValidator
                     featureId,
                     "ruleset.classes.features.feature_id.required",
                     $"Ruleset class '{characterClass.Id}' contains a blank feature ID at level '{featuresForLevel.Key}'.");
+
+                if (!string.IsNullOrWhiteSpace(featureId)
+                    && !declaredFeatures.Contains(featureId))
+                {
+                    issues.Add(new ValidationIssue(
+                        ValidationSeverity.Error,
+                        "ruleset.classes.features.feature_unknown",
+                        $"Ruleset class '{characterClass.Id}' has undeclared feature '{featureId}' at level '{featuresForLevel.Key}'."));
+                }
             }
         }
     }
 
     private static void AddBackgroundFeatureIssue(
         List<ValidationIssue> issues,
-        BackgroundDefinition background)
+        BackgroundDefinition background,
+        HashSet<string> declaredFeatures)
     {
         if (background.FeatureId is null)
         {
@@ -99,5 +123,17 @@ public static partial class RulesetValidator
             background.FeatureId,
             "ruleset.backgrounds.feature_id.required",
             $"Ruleset background '{background.Id}' has blank feature ID.");
+
+        // One rule for both, rather than class features resolving and
+        // background features staying inert — the difference would be
+        // arbitrary and somebody would trip on it.
+        if (!string.IsNullOrWhiteSpace(background.FeatureId)
+            && !declaredFeatures.Contains(background.FeatureId))
+        {
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Error,
+                "ruleset.backgrounds.feature_unknown",
+                $"Ruleset background '{background.Id}' has undeclared feature '{background.FeatureId}'."));
+        }
     }
 }

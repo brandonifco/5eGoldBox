@@ -18,6 +18,7 @@ public static partial class RulesetValidator
         AddWeaponDefinitionIssues(issues, ruleset.Weapons);
         AddSpellDefinitionIssues(issues, ruleset.Spells, ruleset.Effects);
         AddEffectDefinitionIssues(issues, ruleset.Effects);
+        AddFeatureDefinitionIssues(issues, ruleset.Features);
         AddEquipmentSemanticIssues(issues, ruleset);
         AddSubraceIssues(issues, ruleset.Races);
         AddDefinitionReferenceIssues(issues, ruleset);

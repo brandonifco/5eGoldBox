@@ -94,6 +94,8 @@ internal static class PartyEncounterMapper
             {
                 ArmorClass = armorClass,
                 WeaponAttacks = snapshot.WeaponAttacks,
+                Contributions =
+                    snapshot.Contributions,
                 SavingThrowBonuses =
                     snapshot.SavingThrowBonuses,
                 DamageResponses =

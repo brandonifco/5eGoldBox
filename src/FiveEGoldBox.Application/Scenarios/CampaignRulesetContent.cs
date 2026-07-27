@@ -95,6 +95,7 @@ internal static partial class CampaignRulesetContent
             Weapons = CreateWeapons(),
             Spells = CreateSpells(),
             Effects = CreateEffects(),
+            Features = CreateFeatures(),
             EquipmentItems =
             [
                 new EquipmentItemDefinition
@@ -178,7 +179,31 @@ internal static partial class CampaignRulesetContent
                     "skill.perception",
                     "skill.stealth",
                     "skill.survival"
-                ])
+                ]),
+
+            // The first class that declares a feature. Nobody in the roster is
+            // one yet — the same position Cleric and Wizard were in when
+            // spellcasting was built, and for the same reason: content leads,
+            // and the roster changes once when the real party is authored.
+            CreateClass(
+                CampaignRulesetContent
+                    .RogueClassId,
+                "Rogue",
+                DieType.D8,
+                [
+                    Ability.Dexterity,
+                    Ability.Intelligence
+                ],
+                [
+                    "skill.perception",
+                    "skill.stealth"
+                ]) with
+            {
+                FeaturesByLevel = new Dictionary<int, IReadOnlyList<string>>
+                {
+                    [1] = [SneakAttackFeatureId]
+                }
+            }
         ];
     }
 
