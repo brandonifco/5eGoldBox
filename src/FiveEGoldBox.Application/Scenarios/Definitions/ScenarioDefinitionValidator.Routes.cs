@@ -14,6 +14,18 @@ internal static partial class ScenarioDefinitionValidator
             "scenario.routes.duplicate_id",
             "route ID");
 
+        // RegionalTravelRules.BeginJourney reads Routes.Single() — a second
+        // route (a return journey, a fork, a choice of approach) passes every
+        // other check here and then throws the first time anyone begins a
+        // journey. Caught here instead, until BeginJourney can actually run
+        // more than one.
+        if (definition.Routes.Count > 1)
+        {
+            issues.Add(Error(
+                "scenario.routes.multiple_routes_unsupported",
+                $"Scenario declares {definition.Routes.Count} routes, but RegionalTravelRules.BeginJourney can only run a single route."));
+        }
+
         HashSet<string> locations = ToSet(
             definition.Locations.Select(location => location.LocationId));
         HashSet<string> progress = ToSet(definition.Progress.ProgressIds);

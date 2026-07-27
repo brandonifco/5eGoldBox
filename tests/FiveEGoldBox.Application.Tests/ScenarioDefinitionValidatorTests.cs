@@ -41,6 +41,7 @@ public sealed class ScenarioDefinitionValidatorTests
     [InlineData("scenario.map.position_out_of_bounds")]
     [InlineData("scenario.map.stair_destination_impassable")]
     [InlineData("scenario.routes.circular")]
+    [InlineData("scenario.routes.multiple_routes_unsupported")]
     [InlineData("scenario.triggers.resulting_progress_unknown")]
     [InlineData("scenario.triggers.encounter_unknown")]
     [InlineData("scenario.triggers.position_impassable")]
@@ -198,6 +199,26 @@ public sealed class ScenarioDefinitionValidatorTests
                 [
                     source.Routes[0] with
                     {
+                        DestinationLocationId =
+                            source.Routes[0].OriginLocationId
+                    }
+                ]
+            });
+
+        // A second, otherwise-well-formed route (the reverse of the first,
+        // like a return journey) trips only this rule.
+        Add(breakages, "scenario.routes.multiple_routes_unsupported",
+            source => source with
+            {
+                Routes =
+                [
+                    .. source.Routes,
+                    source.Routes[0] with
+                    {
+                        RouteId =
+                            source.Routes[0].RouteId + ".return",
+                        OriginLocationId =
+                            source.Routes[0].DestinationLocationId,
                         DestinationLocationId =
                             source.Routes[0].OriginLocationId
                     }
