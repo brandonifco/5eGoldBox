@@ -137,51 +137,21 @@ public sealed class WatchtowerCombatScenarioTests
     /// scripting a turn order.
     ///
     /// The scripted version named each actor, its weapon and its target, which
-    /// pinned the roster instead of the scenario. It also assumed a party that
-    /// could win: the raiders are tuned for the barbarian-and-ranger party
-    /// this campaign used to field, and Fighter/Rogue/Cleric/Wizard lose the
-    /// straight damage race, so the raiders start a little hurt — eight hit
-    /// points each rather than nine and eight. That is a Watchtower balance
-    /// problem rather than something this test is about.
+    /// pinned the roster instead of the scenario. Full-strength raiders, no
+    /// nerf: a doc comment here once claimed the baseline party loses the
+    /// straight damage race against them, which does not hold up — a driven
+    /// party that actually closes distance on the ranged raider (this loop
+    /// does, below) wins the fight in the very large majority of random
+    /// seeds. That claim came from a different test's driver that never
+    /// issued movement, mistaking "my script can't reach the target" for
+    /// "the encounter is unbalanced."
     private static ScenarioResolution ResolvePartyVictoryScenario(
         ApplicationSessionState source)
     {
-        ScenarioMetrics metrics = new();
-        ApplicationSessionState state = source;
-
-        foreach (string raiderId in new[]
-        {
-            "combatant.watchtower-raider.melee",
-            "combatant.watchtower-raider.ranged"
-        })
-        {
-            EncounterParticipantState raider =
-                WatchtowerCombatTestData.GetParticipant(
-                    state,
-                    raiderId);
-
-            state = WatchtowerCombatTestData.ReplaceParticipant(
-                state,
-                raider with
-                {
-                    Combatant = raider.Combatant with
-                    {
-                        Health = raider.Combatant.Health with
-                        {
-                            HitPoints = raider.Combatant.Health
-                                .HitPoints with
-                            {
-                                CurrentHitPoints = 8
-                            }
-                        }
-                    }
-                });
-        }
-
         return ResolveScenario(
-            state,
+            source,
             attackWhenPossible: true,
-            metrics);
+            new ScenarioMetrics());
     }
 
     private static ScenarioResolution ResolveScenario(
