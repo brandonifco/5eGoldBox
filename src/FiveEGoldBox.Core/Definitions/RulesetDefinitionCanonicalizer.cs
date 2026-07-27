@@ -17,7 +17,26 @@ internal static class RulesetDefinitionCanonicalizer
             Armors = Protect(definition.Armors),
             Weapons = Protect(definition.Weapons.Select(CopyWeapon)),
             EquipmentItems = Protect(definition.EquipmentItems.Select(CopyEquipmentItem)),
+            Spells = Protect(definition.Spells.Select(CopySpell)),
+            Effects = Protect(definition.Effects.Select(CopyEffect)),
             Features = Protect(definition.Features.Select(CopyFeature))
+        };
+    }
+
+    private static SpellDefinition CopySpell(SpellDefinition spell)
+    {
+        return spell with
+        {
+            Effects = Protect(spell.Effects)
+        };
+    }
+
+    private static EffectDefinition CopyEffect(EffectDefinition effect)
+    {
+        return effect with
+        {
+            Contributions = Protect(
+                effect.Contributions.Select(CopyContribution))
         };
     }
 
