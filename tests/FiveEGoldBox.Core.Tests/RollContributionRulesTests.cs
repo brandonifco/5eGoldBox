@@ -238,6 +238,104 @@ public sealed class RollContributionRulesTests
                 [roll]));
     }
 
+    /// A feature is not an effect and does not sit on the creature — it is
+    /// part of what the creature is. The query cannot tell the difference, and
+    /// that is the whole reason this seam is not spell-shaped.
+    [Fact]
+    public void Resolve_GathersWhatTheCombatantIsAsWellAsWhatIsOnIt()
+    {
+        RollContributionSet contributions = RollContributionRules.Resolve(
+            CreateParticipant(
+                [Dice(RollContributionTarget.AttackRoll, 1, DieType.D8)],
+                CreateEffect(
+                    "effect.bless",
+                    Dice(RollContributionTarget.AttackRoll, 1, DieType.D4))),
+            RollContributionTarget.AttackRoll);
+
+        Assert.Equal(
+            [DieType.D8, DieType.D4],
+            contributions.RequiredDice);
+    }
+
+    [Theory]
+    [InlineData(true, true, true)]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(false, false, false)]
+    public void Resolve_AConditionalContribution_NeedsEveryConditionToHold(
+        bool hasOpening,
+        bool finesseOrRanged,
+        bool expectsDie)
+    {
+        RollContributionSet contributions = RollContributionRules.Resolve(
+            CreateParticipant(
+                [
+                    Dice(RollContributionTarget.DamageRoll, 1, DieType.D6)
+                        with
+                    {
+                        Conditions =
+                        [
+                            RollContributionCondition
+                                .AdvantageOrAdjacentEnemy,
+                            RollContributionCondition
+                                .FinesseOrRangedWeapon
+                        ]
+                    }
+                ]),
+            RollContributionTarget.DamageRoll,
+            new RollContributionContext
+            {
+                AttackRollMode = hasOpening
+                    ? D20RollMode.Advantage
+                    : D20RollMode.Normal,
+                TargetHasAdjacentEnemy = false,
+                WeaponIsFinesseOrRanged = finesseOrRanged
+            });
+
+        Assert.Equal(
+            expectsDie,
+            contributions.RequiredDice.Count == 1);
+    }
+
+    /// Dropping a contribution because the roll forgot to say what it looked
+    /// like is the same class of bug as handing in too few dice, so it is an
+    /// error rather than a silent "no".
+    [Fact]
+    public void Resolve_AConditionalContributionAndNoContext_Throws()
+    {
+        EncounterParticipantState participant = CreateParticipant(
+            [
+                Dice(RollContributionTarget.DamageRoll, 1, DieType.D6)
+                    with
+                {
+                    Conditions =
+                    [
+                        RollContributionCondition.FinesseOrRangedWeapon
+                    ]
+                }
+            ]);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            RollContributionRules.Resolve(
+                participant,
+                RollContributionTarget.DamageRoll));
+    }
+
+    /// A contribution that asks nothing needs no context, which is why Bless
+    /// still resolves through the saving-throw path that supplies none.
+    [Fact]
+    public void Resolve_AnUnconditionalContributionAndNoContext_IsFine()
+    {
+        RollContributionSet contributions = RollContributionRules.Resolve(
+            CreateParticipant(
+                CreateEffect(
+                    "effect.bless",
+                    Dice(RollContributionTarget.SavingThrow, 1, DieType.D4))),
+            RollContributionTarget.SavingThrow);
+
+        Assert.Equal([DieType.D4], contributions.RequiredDice);
+    }
+
     private static RollContributionDefinition Dice(
         RollContributionTarget target,
         int count,
@@ -271,6 +369,15 @@ public sealed class RollContributionRulesTests
     private static EncounterParticipantState CreateParticipant(
         params ActiveEffect[] effects)
     {
+        return CreateParticipant(
+            Array.Empty<RollContributionDefinition>(),
+            effects);
+    }
+
+    private static EncounterParticipantState CreateParticipant(
+        IReadOnlyList<RollContributionDefinition> profileContributions,
+        params ActiveEffect[] effects)
+    {
         return new EncounterParticipantState
         {
             Combatant = CombatantRules.Create(
@@ -279,7 +386,8 @@ public sealed class RollContributionRulesTests
                 CombatantZeroHitPointPolicy.DeathSavingThrows),
             CombatProfile = new EncounterCombatProfile
             {
-                ArmorClass = 12
+                ArmorClass = 12,
+                Contributions = profileContributions
             },
             SideId = "side.party",
             TurnResources = CombatTurnResourceRules.StartTurn(

@@ -144,6 +144,27 @@ internal static class WatchtowerCombatAttackStaging
             }
         }
 
+        // Damage the attacker adds by being what it is — a rogue's Sneak
+        // Attack — is drawn after the weapon's own dice, since nothing
+        // downstream depends on it.
+        List<int> damageContributionValues = [];
+
+        foreach (DieType die
+            in evaluation.DamageContributions.RequiredDice)
+        {
+            ApplicationRandomRoll contribution =
+                ApplicationRandomSequence.GenerateDie(
+                    seed,
+                    nextCursor,
+                    die);
+
+            nextCursor = contribution.UpdatedValuesConsumed;
+            damageContributionValues.Add(contribution.Value);
+            dice.Add(CreateDie(
+                contribution,
+                WatchtowerCombatDiePurpose.DamageRoll));
+        }
+
         EncounterWeaponAttackResult result =
             EncounterWeaponAttackRules.Resolve(
                 encounter,
@@ -157,7 +178,9 @@ internal static class WatchtowerCombatAttackStaging
                     SecondAttackRoll = secondValue,
                     ContributionRolls = contributionRolls,
                     DamageRolls = Array.AsReadOnly(
-                        damageValues.ToArray())
+                        damageValues.ToArray()),
+                    DamageContributionRolls = Array.AsReadOnly(
+                        damageContributionValues.ToArray())
                 });
 
         return new WatchtowerCombatAttackExecution(

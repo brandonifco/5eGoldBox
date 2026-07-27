@@ -81,12 +81,18 @@ public static class EncounterWeaponAttackRules
                     target,
                     weapon.DamageType);
 
+        // The contribution joins the damage bonus, which puts it inside the
+        // total that resistance then halves. That is 5e's order: a resistant
+        // creature resists the whole blow, Sneak Attack included.
         AttackDamageResolutionResult attackDamage =
             DamageRules.ResolveAttackDamage(
                 weapon.Damage,
                 evaluation.AttackRoll.Outcome,
                 protectedDamageRolls,
-                weapon.DamageBonus,
+                checked(weapon.DamageBonus
+                    + RollContributionRules.Total(
+                        evaluation.DamageContributions,
+                        command.DamageContributionRolls)),
                 responseTypes);
 
         AttackResolutionResult attack = new()
@@ -259,7 +265,46 @@ public static class EncounterWeaponAttackRules
             WeaponId = weaponId,
             Prerequisites = prerequisites,
             AttackRoll = attackRoll,
-            RequiredDamageDice = requiredDamageDice
+            RequiredDamageDice = requiredDamageDice,
+            DamageContributions = ResolveDamageContributions(
+                actor,
+                prerequisites,
+                attackRoll.Outcome)
+        };
+    }
+
+    /// A miss contributes nothing to damage there is none of. A critical hit
+    /// doubles the dice and not the flat bonus, the same way it doubles the
+    /// weapon's — every die of the attack's damage is rolled twice, and Sneak
+    /// Attack's are the attack's.
+    private static RollContributionSet ResolveDamageContributions(
+        EncounterParticipantState actor,
+        EncounterWeaponAttackPrerequisiteEvaluation prerequisites,
+        AttackRollOutcome outcome)
+    {
+        if (outcome == AttackRollOutcome.Miss)
+        {
+            return RollContributionSet.None(
+                RollContributionTarget.DamageRoll);
+        }
+
+        RollContributionSet contributions =
+            RollContributionRules.Resolve(
+                actor,
+                RollContributionTarget.DamageRoll,
+                prerequisites.ContributionContext);
+
+        if (outcome != AttackRollOutcome.CriticalHit)
+        {
+            return contributions;
+        }
+
+        return contributions with
+        {
+            RequiredDice = Array.AsReadOnly(
+                contributions.RequiredDice
+                    .Concat(contributions.RequiredDice)
+                    .ToArray())
         };
     }
 
