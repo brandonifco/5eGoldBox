@@ -1,18 +1,19 @@
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
 
-/// Decides how a raider spends its turn. Pure and deterministic: it reads the
-/// encounter, defers target choice to WatchtowerRaiderPolicy and reachability to
-/// WatchtowerCombatPathSearch, and returns a plan. It never mutates session
-/// state, appends steps, or consumes randomness — the orchestrator does that
-/// when it applies the plan.
-internal static class WatchtowerRaiderTurnPlanner
+/// Decides how an opposing combatant spends its turn. Pure and deterministic:
+/// it reads the encounter, defers target choice to EncounterTacticsPolicy and
+/// reachability to WatchtowerCombatPathSearch, and returns a plan. It never
+/// mutates session state, appends steps, or consumes randomness — the
+/// orchestrator does that when it applies the plan.
+internal static class EncounterTacticsTurnPlanner
 {
-    internal static WatchtowerRaiderTurnPlan Plan(
+    internal static EncounterTacticsTurnPlan Plan(
         EncounterState encounter,
         PartyState party)
     {
@@ -33,7 +34,7 @@ internal static class WatchtowerRaiderTurnPlanner
         }
 
         EncounterParticipantState? target =
-            WatchtowerRaiderPolicy.SelectTarget(
+            EncounterTacticsPolicy.SelectTarget(
                 encounter,
                 party,
                 raider);
@@ -60,7 +61,7 @@ internal static class WatchtowerRaiderTurnPlanner
         EncounterMovementResult? movement = null;
 
         if (!prerequisites.IsLegal
-            && IsMeleeRaider(actorId))
+            && weapon.AttackKind == WeaponAttackKind.Melee)
         {
             movement = WatchtowerCombatPathSearch.FindMovement(
                 encounter,
@@ -84,10 +85,10 @@ internal static class WatchtowerRaiderTurnPlanner
             return Unproductive(movement);
         }
 
-        return new WatchtowerRaiderTurnPlan
+        return new EncounterTacticsTurnPlan
         {
             Movement = movement,
-            Attack = new WatchtowerRaiderAttackPlan
+            Attack = new EncounterTacticsAttackPlan
             {
                 TargetCombatantId = targetId,
                 WeaponId = weapon.WeaponId
@@ -97,21 +98,21 @@ internal static class WatchtowerRaiderTurnPlanner
         };
     }
 
-    /// With no attackable target the melee raider still closes on whoever it
-    /// could eventually reach. The ranged raider holds position.
+    /// With no attackable target a melee combatant still closes on whoever it
+    /// could eventually reach. A ranged one holds position.
     private static EncounterMovementResult? PlanProgressMovement(
         EncounterState encounter,
         PartyState party,
         EncounterParticipantState raider,
         WeaponAttack weapon)
     {
-        if (!IsMeleeRaider(raider.Combatant.CombatantId))
+        if (weapon.AttackKind != WeaponAttackKind.Melee)
         {
             return null;
         }
 
         EncounterParticipantState? progressTarget =
-            WatchtowerRaiderPolicy.SelectProgressTarget(
+            EncounterTacticsPolicy.SelectProgressTarget(
                 encounter,
                 party,
                 raider);
@@ -125,24 +126,15 @@ internal static class WatchtowerRaiderTurnPlanner
                 weapon.WeaponId);
     }
 
-    private static WatchtowerRaiderTurnPlan Unproductive(
+    private static EncounterTacticsTurnPlan Unproductive(
         EncounterMovementResult? movement)
     {
-        return new WatchtowerRaiderTurnPlan
+        return new EncounterTacticsTurnPlan
         {
             Movement = movement,
             Attack = null,
             TurnAdvanceReason =
                 WatchtowerCombatTurnAdvanceReason.NoProductiveEnemyAction
         };
-    }
-
-    private static bool IsMeleeRaider(
-        string combatantId)
-    {
-        return string.Equals(
-            combatantId,
-            WatchtowerSignalEncounter.MeleeRaiderId,
-            StringComparison.Ordinal);
     }
 }

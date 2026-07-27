@@ -5,7 +5,7 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Tests;
 
-public sealed class WatchtowerCombatRaiderPolicyTests
+public sealed class EncounterTacticsPolicyTests
 {
     [Fact]
     public void SelectTarget_EqualDistanceUsesPersistentPartyOrder()
@@ -21,7 +21,7 @@ public sealed class WatchtowerCombatRaiderPolicyTests
                 "combatant.watchtower-raider.melee");
 
         EncounterParticipantState? target =
-            WatchtowerRaiderPolicy.SelectTarget(
+            EncounterTacticsPolicy.SelectTarget(
                 encounter,
                 source.Party,
                 raider);
@@ -59,7 +59,7 @@ public sealed class WatchtowerCombatRaiderPolicyTests
         int cursorBefore = source.RandomValuesConsumed;
 
         EncounterParticipantState? target =
-            WatchtowerRaiderPolicy.SelectTarget(
+            EncounterTacticsPolicy.SelectTarget(
                 encounter,
                 source.Party,
                 raider);
@@ -88,7 +88,7 @@ public sealed class WatchtowerCombatRaiderPolicyTests
                 "combatant.watchtower-raider.melee");
         EncounterParticipantState expected =
             Assert.IsType<EncounterParticipantState>(
-                WatchtowerRaiderPolicy.SelectTarget(
+                EncounterTacticsPolicy.SelectTarget(
                     encounter,
                     source.Party,
                     raider));
@@ -111,7 +111,7 @@ public sealed class WatchtowerCombatRaiderPolicyTests
 
         EncounterParticipantState actual =
             Assert.IsType<EncounterParticipantState>(
-                WatchtowerRaiderPolicy.SelectTarget(
+                EncounterTacticsPolicy.SelectTarget(
                     encounter,
                     renamedParty,
                     raider));
@@ -140,7 +140,7 @@ public sealed class WatchtowerCombatRaiderPolicyTests
         EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
         EncounterParticipantState expectedTarget =
             Assert.IsType<EncounterParticipantState>(
-                WatchtowerRaiderPolicy.SelectTarget(
+                EncounterTacticsPolicy.SelectTarget(
                     encounter,
                     source.Party,
                     raider));
@@ -170,7 +170,7 @@ public sealed class WatchtowerCombatRaiderPolicyTests
                 "combatant.watchtower-raider.melee");
         EncounterParticipantState actualTarget =
             Assert.IsType<EncounterParticipantState>(
-                WatchtowerRaiderPolicy.SelectTarget(
+                EncounterTacticsPolicy.SelectTarget(
                     reorderedEncounter,
                     reorderedSource.Party,
                     reorderedRaider));
@@ -231,7 +231,7 @@ public sealed class WatchtowerCombatRaiderPolicyTests
                 "combatant.watchtower-raider.melee");
 
         EncounterParticipantState? target =
-            WatchtowerRaiderPolicy.SelectTarget(
+            EncounterTacticsPolicy.SelectTarget(
                 encounter,
                 unrelatedParty,
                 raider);
