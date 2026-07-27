@@ -52,7 +52,8 @@ internal static class CombatAttackStaging
                 });
 
         return new CombatAttackEvaluation(
-            evaluation.RequiredDamageDice);
+            evaluation.RequiredDamageDice,
+            evaluation.DamageContributions);
     }
 }
 
@@ -64,4 +65,5 @@ internal sealed record CombatAttackAvailability(
     RollContributionSet AttackRollContributions);
 
 internal sealed record CombatAttackEvaluation(
-    DamageDice? RequiredDamageDice);
+    DamageDice? RequiredDamageDice,
+    RollContributionSet DamageContributions);

@@ -329,4 +329,110 @@ public sealed class WatchtowerCombatAttackStagingTests
                 execution.Dice.Count),
             execution.Dice.Select(die => die.Ordinal));
     }
+
+    /// The other half of the seam, reached from a feature rather than a spell:
+    /// extra damage declared on the combat profile, gated on a condition the
+    /// attack has to answer. The dice come last, since nothing downstream
+    /// depends on them.
+    [Fact]
+    public void Resolve_ExtraDamageFromAFeature_DrawsItsDiceAfterTheWeaponsOwn()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatTestData.AdvanceToCombatant(
+                WatchtowerCombatTestData.CreatePlayerDecisionSession(),
+                "party-member.ranger");
+        EncounterParticipantState ranger =
+            WatchtowerCombatTestData.GetParticipant(
+                source,
+                "party-member.ranger");
+        WeaponAttack weapon = Assert.Single(
+            ranger.CombatProfile.WeaponAttacks);
+
+        source = WatchtowerCombatTestData.ReplaceParticipant(
+            source,
+            ranger with
+            {
+                CombatProfile = ranger.CombatProfile with
+                {
+                    Contributions =
+                    [
+                        new RollContributionDefinition
+                        {
+                            Target = RollContributionTarget.DamageRoll,
+                            Dice = new DamageDice
+                            {
+                                Count = 1,
+                                Die = DieType.D6
+                            },
+                            Conditions =
+                            [
+                                RollContributionCondition
+                                    .FinesseOrRangedWeapon
+                            ]
+                        }
+                    ]
+                }
+            });
+
+        // The contribution only shows up on a hit, so the raider is made easy
+        // to hit rather than the test hoping this seed obliges.
+        EncounterParticipantState raider =
+            WatchtowerCombatTestData.GetParticipant(
+                source,
+                "combatant.watchtower-raider.melee");
+        source = WatchtowerCombatTestData.ReplaceParticipant(
+            source,
+            raider with
+            {
+                CombatProfile = raider.CombatProfile with
+                {
+                    ArmorClass = 5
+                }
+            });
+
+        EncounterState encounter =
+            WatchtowerCombatTestData.GetEncounter(source);
+        int cursorBefore = source.RandomValuesConsumed;
+
+        WatchtowerCombatAttackExecution execution =
+            WatchtowerCombatAttackStaging.Resolve(
+                encounter,
+                source.RandomSeed,
+                cursorBefore,
+                ranger.Combatant.CombatantId,
+                "combatant.watchtower-raider.melee",
+                weapon.WeaponId);
+
+        Assert.NotEqual(
+            AttackRollOutcome.Miss,
+            execution.Result.Attack.AttackRoll.Outcome);
+
+        WatchtowerCombatDieRoll[] damageDice = execution.Dice
+            .Where(die => die.Purpose
+                == WatchtowerCombatDiePurpose.DamageRoll)
+            .ToArray();
+        WatchtowerCombatDieRoll contribution = damageDice[^1];
+
+        // Last of everything drawn for this attack.
+        Assert.Equal(
+            execution.Dice.Count,
+            contribution.Ordinal - cursorBefore);
+        Assert.Equal(6, contribution.Sides);
+        Assert.Equal(
+            execution.Result.Attack.Damage.DamageDice!.Count + 1,
+            damageDice.Length);
+
+        // A longbow is ranged, so the condition holds and the die counts.
+        Assert.Equal(
+            weapon.DamageBonus + contribution.Value,
+            execution.Result.Attack.Damage.DamageRoll!.DamageBonus);
+        Assert.Equal(
+            execution.Dice.Count,
+            execution.CursorAfter - cursorBefore);
+        Assert.Equal(
+            Enumerable.Range(
+                cursorBefore + 1,
+                execution.Dice.Count),
+            execution.Dice.Select(die => die.Ordinal));
+    }
 }

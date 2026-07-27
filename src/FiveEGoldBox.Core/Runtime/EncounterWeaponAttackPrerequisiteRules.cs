@@ -189,6 +189,18 @@ internal static class EncounterWeaponAttackPrerequisiteRules
                 lineOfSight);
         }
 
+        RollContributionContext contributionContext = new()
+        {
+            AttackRollMode = attackRollMode.Value,
+            TargetHasAdjacentEnemy =
+                HasAdjacentConsciousAlly(
+                    state,
+                    actor,
+                    target),
+            WeaponIsFinesseOrRanged =
+                IsFinesseOrRanged(weapon)
+        };
+
         return new EncounterWeaponAttackPrerequisiteEvaluation
         {
             IsLegal = true,
@@ -200,7 +212,9 @@ internal static class EncounterWeaponAttackPrerequisiteRules
             AttackRollContributions =
                 RollContributionRules.Resolve(
                     actor,
-                    RollContributionTarget.AttackRoll),
+                    RollContributionTarget.AttackRoll,
+                    contributionContext),
+            ContributionContext = contributionContext,
             Cover = cover
         };
     }
@@ -448,6 +462,56 @@ internal static class EncounterWeaponAttackPrerequisiteRules
         return target.Combatant.LifecycleState
             is CombatantLifecycleState.Dying
                 or CombatantLifecycleState.Stable;
+    }
+
+    /// Somebody on the attacker's side, other than the attacker, standing over
+    /// the target. 5e says "another enemy of the target", which from where the
+    /// attacker stands means an ally — and the attacker crowding its own
+    /// target does not count, or every melee attack would qualify.
+    ///
+    /// The mirror of HasAdjacentConsciousHostile below, which asks the same
+    /// question about the attacker instead.
+    private static bool HasAdjacentConsciousAlly(
+        EncounterState state,
+        EncounterParticipantState actor,
+        EncounterParticipantState target)
+    {
+        foreach (EncounterParticipantState participant
+            in state.Participants)
+        {
+            if (!string.Equals(
+                participant.SideId,
+                actor.SideId,
+                StringComparison.Ordinal)
+                || string.Equals(
+                    participant.Combatant.CombatantId,
+                    actor.Combatant.CombatantId,
+                    StringComparison.Ordinal)
+                || participant.Combatant.LifecycleState
+                    != CombatantLifecycleState.Conscious)
+            {
+                continue;
+            }
+
+            if (CalculateDistanceFeet(
+                participant.Position,
+                target.Position) <= DefaultMeleeReachFeet)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsFinesseOrRanged(
+        WeaponAttack weapon)
+    {
+        return weapon.AttackKind
+                == WeaponAttackKind.Ranged
+            || weapon.Properties.Contains(
+                RuleIds.WeaponProperties.Finesse,
+                StringComparer.Ordinal);
     }
 
     private static bool HasAdjacentConsciousHostile(

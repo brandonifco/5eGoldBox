@@ -23,4 +23,10 @@ public sealed record EncounterWeaponAttackCommand
     public required IReadOnlyList<int>
         DamageRolls
     { get; init; }
+
+    /// The dice the attacker's own features and effects added to the damage,
+    /// in the order the evaluation asked for them. Sneak Attack is the first
+    /// of these.
+    public IReadOnlyList<int> DamageContributionRolls { get; init; }
+        = Array.Empty<int>();
 }

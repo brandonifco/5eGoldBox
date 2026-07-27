@@ -20,4 +20,10 @@ public sealed record RollContributionDefinition
     /// else, which is why a roll has to be asked what it needs before it is
     /// made.
     public DamageDice? Dice { get; init; }
+
+    /// What has to be true for this to count. Every one of them, or the
+    /// contribution stays out of the roll. Empty means always, which is Bless
+    /// and most of what will follow it.
+    public IReadOnlyList<RollContributionCondition> Conditions { get; init; }
+        = Array.Empty<RollContributionCondition>();
 }

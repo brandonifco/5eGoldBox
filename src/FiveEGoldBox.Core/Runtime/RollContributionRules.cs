@@ -3,13 +3,13 @@ using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
 
-/// Asks a combatant what its effects contribute to a roll, and totals what
-/// came back.
+/// Asks a combatant what it contributes to a roll, and totals what came back.
 ///
-/// This is the seam the spellcasting design turns on. Bless installs a
-/// contribution; so will Rage, Sneak Attack and a fighting style. Nothing here
-/// knows what a spell is — a contribution arrives on an effect already
-/// resolved, and this reads it.
+/// This is the seam the spellcasting design turns on, and it is deliberately
+/// blind to where a contribution came from. Bless arrives on an effect sitting
+/// on a creature; Sneak Attack is part of what a rogue is and sits on the
+/// combat profile. Neither is privileged here, which is the point — a
+/// contribution is a contribution.
 ///
 /// Two calls rather than one, deliberately: `Resolve` says what the roll needs
 /// before it is rolled, and `Total` consumes what the caller then rolled.
@@ -21,7 +21,8 @@ public static class RollContributionRules
     public static RollContributionSet Resolve(
         EncounterState state,
         string combatantId,
-        RollContributionTarget target)
+        RollContributionTarget target,
+        RollContributionContext? context = null)
     {
         ArgumentNullException.ThrowIfNull(state);
 
@@ -44,12 +45,14 @@ public static class RollContributionRules
 
         return Resolve(
             participant,
-            target);
+            target,
+            context);
     }
 
     public static RollContributionSet Resolve(
         EncounterParticipantState participant,
-        RollContributionTarget target)
+        RollContributionTarget target,
+        RollContributionContext? context = null)
     {
         ArgumentNullException.ThrowIfNull(participant);
 
@@ -64,6 +67,16 @@ public static class RollContributionRules
         int flatBonus = 0;
         List<DieType> requiredDice = [];
 
+        // What the combatant is, then what has happened to it. The order fixes
+        // the order of the dice the caller is asked for, and nothing else
+        // depends on it.
+        Gather(
+            participant.CombatProfile.Contributions,
+            target,
+            context,
+            ref flatBonus,
+            requiredDice);
+
         foreach (ActiveEffect effect in participant.ActiveEffects)
         {
             ArgumentNullException.ThrowIfNull(effect);
@@ -76,23 +89,12 @@ public static class RollContributionRules
                 continue;
             }
 
-            foreach (RollContributionDefinition contribution
-                in effect.Contributions)
-            {
-                ArgumentNullException.ThrowIfNull(contribution);
-
-                if (contribution.Target != target)
-                {
-                    continue;
-                }
-
-                flatBonus = checked(
-                    flatBonus + contribution.FlatBonus);
-
-                AppendDice(
-                    requiredDice,
-                    contribution.Dice);
-            }
+            Gather(
+                effect.Contributions,
+                target,
+                context,
+                ref flatBonus,
+                requiredDice);
         }
 
         return new RollContributionSet
@@ -101,6 +103,90 @@ public static class RollContributionRules
             FlatBonus = flatBonus,
             RequiredDice = Array.AsReadOnly(
                 requiredDice.ToArray())
+        };
+    }
+
+    private static void Gather(
+        IReadOnlyList<RollContributionDefinition> contributions,
+        RollContributionTarget target,
+        RollContributionContext? context,
+        ref int flatBonus,
+        List<DieType> requiredDice)
+    {
+        foreach (RollContributionDefinition contribution
+            in contributions)
+        {
+            ArgumentNullException.ThrowIfNull(contribution);
+
+            if (contribution.Target != target
+                || !Holds(contribution, context))
+            {
+                continue;
+            }
+
+            flatBonus = checked(
+                flatBonus + contribution.FlatBonus);
+
+            AppendDice(
+                requiredDice,
+                contribution.Dice);
+        }
+    }
+
+    /// Every condition, or none of it. A contribution that asks a question the
+    /// roll cannot answer is an error rather than a "no" — silently dropping
+    /// Sneak Attack because the damage roll forgot to say how the attack went
+    /// is the same class of bug as handing in too few dice.
+    private static bool Holds(
+        RollContributionDefinition contribution,
+        RollContributionContext? context)
+    {
+        foreach (RollContributionCondition condition
+            in contribution.Conditions)
+        {
+            if (!Enum.IsDefined(condition))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(contribution),
+                    condition,
+                    "Unsupported roll contribution condition.");
+            }
+
+            if (context is null)
+            {
+                throw new InvalidOperationException(
+                    $"A contribution to the {contribution.Target} asks '{condition}', but the roll supplied no context to answer it.");
+            }
+
+            if (!Holds(condition, context))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool Holds(
+        RollContributionCondition condition,
+        RollContributionContext context)
+    {
+        return condition switch
+        {
+            // Advantage qualifies on its own. Otherwise a crowded target
+            // qualifies, so long as nothing is spoiling the shot — and
+            // advantage and disadvantage having already cancelled each other
+            // is why those two clauses are all this takes.
+            RollContributionCondition.AdvantageOrAdjacentEnemy =>
+                context.AttackRollMode == D20RollMode.Advantage
+                || (context.AttackRollMode != D20RollMode.Disadvantage
+                    && context.TargetHasAdjacentEnemy),
+
+            RollContributionCondition.FinesseOrRangedWeapon =>
+                context.WeaponIsFinesseOrRanged,
+
+            _ => throw new InvalidOperationException(
+                "Validated roll contribution condition was not handled.")
         };
     }
 

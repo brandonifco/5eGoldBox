@@ -23,6 +23,12 @@ internal sealed record EncounterWeaponAttackPrerequisiteEvaluation
         RollContributionSet.None(
             RollContributionTarget.AttackRoll);
 
+    /// What this attack looks like to a contribution that only counts some of
+    /// the time. Worked out once here so the attack roll and the damage roll
+    /// cannot disagree about it. Null when the attack is not legal, because
+    /// there is then no attack to describe.
+    public RollContributionContext? ContributionContext { get; init; }
+
     public EncounterCoverEvaluation Cover { get; init; } =
         new()
         {
