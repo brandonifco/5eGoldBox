@@ -20,6 +20,8 @@ public sealed class RulesetOwnershipTests
         Assert.NotSame(fixture.Background, validated.Definition.Backgrounds.Single());
         Assert.NotSame(fixture.Weapon, validated.Definition.Weapons.Single());
         Assert.NotSame(fixture.EquipmentItem, validated.Definition.EquipmentItems.Single());
+        Assert.NotSame(fixture.Spell, validated.Definition.Spells.Single());
+        Assert.NotSame(fixture.Effect, validated.Definition.Effects.Single());
         Assert.Same(validated.Definition.Races.Single(), validated.Index.RacesById[fixture.Race.Id]);
         Assert.Same(validated.Definition.Classes.Single(), validated.Index.ClassesById[fixture.Class.Id]);
         Assert.Same(
@@ -39,6 +41,9 @@ public sealed class RulesetOwnershipTests
         fixture.Armors.Clear();
         fixture.Weapons.Clear();
         fixture.EquipmentItems.Clear();
+        fixture.Spells.Clear();
+        fixture.Effects.Clear();
+        fixture.Features.Clear();
 
         Assert.Empty(fixture.Definition.Races);
         Assert.Empty(fixture.Definition.Classes);
@@ -47,6 +52,9 @@ public sealed class RulesetOwnershipTests
         Assert.Empty(fixture.Definition.Armors);
         Assert.Empty(fixture.Definition.Weapons);
         Assert.Empty(fixture.Definition.EquipmentItems);
+        Assert.Empty(fixture.Definition.Spells);
+        Assert.Empty(fixture.Definition.Effects);
+        Assert.Empty(fixture.Definition.Features);
 
         Assert.Single(validated.Definition.Races);
         Assert.Single(validated.Definition.Classes);
@@ -55,6 +63,9 @@ public sealed class RulesetOwnershipTests
         Assert.Single(validated.Definition.Armors);
         Assert.Single(validated.Definition.Weapons);
         Assert.Single(validated.Definition.EquipmentItems);
+        Assert.Single(validated.Definition.Spells);
+        Assert.Single(validated.Definition.Effects);
+        Assert.Equal(2, validated.Definition.Features.Count);
         Assert.Single(validated.Index.RacesById);
         Assert.Single(validated.Index.ClassesById);
         Assert.Single(validated.Index.BackgroundsById);
@@ -193,6 +204,81 @@ public sealed class RulesetOwnershipTests
         Assert.Equal(["language.background"], background.Languages);
         Assert.Equal([RuleIds.WeaponProperties.Finesse], weapon.Properties);
         Assert.Equal(["tag.test"], equipmentItem.Tags);
+    }
+
+    /// Spells and effects were added during the spellcasting work and did not
+    /// get the defensive copy every other content list gets, so a caller could
+    /// still reach into a loaded ruleset through the lists it handed over.
+    /// Features carry contributions too, and a contribution now carries
+    /// conditions, so all three are pinned here rather than leaving whichever
+    /// one is newest untested.
+    [Fact]
+    public void Load_AfterSpellEffectAndFeatureCollectionsMutate_KeepsCanonicalContentStable()
+    {
+        MutableRulesetFixture fixture = CreateMutableFixture();
+        ValidatedRuleset validated = Load(fixture.Definition);
+
+        fixture.SpellEffects.Clear();
+        fixture.EffectContributions.Clear();
+        fixture.EffectConditions.Clear();
+        fixture.FeatureContributions.Clear();
+
+        Assert.Empty(fixture.SpellEffects);
+        Assert.Empty(fixture.EffectContributions);
+        Assert.Empty(fixture.EffectConditions);
+        Assert.Empty(fixture.FeatureContributions);
+
+        SpellDefinition spell = Assert.Single(validated.Definition.Spells);
+        EffectDefinition effect = Assert.Single(validated.Definition.Effects);
+        FeatureDefinition feature = Assert.Single(
+            validated.Definition.Features,
+            candidate => candidate.Id == "feature.level-one");
+
+        Assert.Equal(
+            DieType.D10,
+            Assert.Single(spell.Effects).Dice.Die);
+
+        RollContributionDefinition contribution = Assert.Single(
+            effect.Contributions);
+
+        Assert.Equal(DieType.D4, contribution.Dice!.Die);
+        Assert.Equal(
+            [RollContributionCondition.FinesseOrRangedWeapon],
+            contribution.Conditions);
+        Assert.Equal(
+            2,
+            Assert.Single(feature.Contributions).FlatBonus);
+    }
+
+    /// The lists themselves, not just their contents — a caller handed a
+    /// canonical ruleset must not be able to add to it either.
+    [Fact]
+    public void Load_SpellEffectAndFeatureCollections_RejectMutation()
+    {
+        ValidatedRuleset validated = Load(CreateMutableFixture().Definition);
+
+        SpellDefinition spell = Assert.Single(validated.Definition.Spells);
+        EffectDefinition effect = Assert.Single(validated.Definition.Effects);
+
+        AssertListProtected(validated.Definition.Spells, spell);
+        AssertListProtected(validated.Definition.Effects, effect);
+        AssertListProtected(
+            effect.Contributions,
+            Assert.Single(effect.Contributions));
+        AssertListProtected(
+            Assert.Single(effect.Contributions).Conditions,
+            RollContributionCondition.FinesseOrRangedWeapon);
+        AssertListProtected(
+            spell.Effects,
+            Assert.Single(spell.Effects));
+    }
+
+    private static void AssertListProtected<T>(
+        IReadOnlyList<T> list,
+        T value)
+    {
+        Assert.Throws<NotSupportedException>(() =>
+            Assert.IsAssignableFrom<IList<T>>(list).Add(value));
     }
 
     [Fact]
@@ -542,6 +628,83 @@ public sealed class RulesetOwnershipTests
             Tags = equipmentTags
         };
 
+        List<SpellEffectDefinition> spellEffects =
+        [
+            new SpellEffectDefinition
+            {
+                Kind = SpellEffectKind.Damage,
+                Dice = new DamageDice
+                {
+                    Count = 1,
+                    Die = DieType.D10
+                },
+                DamageType = "damage.fire"
+            }
+        ];
+        SpellDefinition spell = new()
+        {
+            Id = "spell.test",
+            Name = "Test Spell",
+            Cost = SpellCostKind.Cantrip,
+            Level = 0,
+            CastingTime = SpellCastingTime.Action,
+            RangeKind = SpellRangeKind.Ranged,
+            RangeFeet = 60,
+            MaximumTargets = 1,
+            Targets = SpellTargetDisposition.Enemies,
+            Resolution = SpellResolutionKind.SpellAttack,
+            Effects = spellEffects
+        };
+
+        List<RollContributionCondition> effectConditions =
+            [RollContributionCondition.FinesseOrRangedWeapon];
+        List<RollContributionDefinition> effectContributions =
+        [
+            new RollContributionDefinition
+            {
+                Target = RollContributionTarget.AttackRoll,
+                Dice = new DamageDice
+                {
+                    Count = 1,
+                    Die = DieType.D4
+                },
+                Conditions = effectConditions
+            }
+        ];
+        EffectDefinition effect = new()
+        {
+            Id = "effect.test",
+            Name = "Test Effect",
+            Contributions = effectContributions
+        };
+
+        List<RollContributionDefinition> featureContributions =
+        [
+            new RollContributionDefinition
+            {
+                Target = RollContributionTarget.DamageRoll,
+                FlatBonus = 2
+            }
+        ];
+        // The class and background above name these, and a ruleset has to
+        // declare what its feature IDs point at.
+        List<FeatureDefinition> features =
+        [
+            new FeatureDefinition
+            {
+                Id = "feature.level-one",
+                Name = "Test Feature",
+                Contributions = featureContributions
+            },
+            new FeatureDefinition
+            {
+                Id = "feature.background",
+                Name = "Test Background Feature"
+            }
+        ];
+
+        List<SpellDefinition> spells = [spell];
+        List<EffectDefinition> effects = [effect];
         List<RaceDefinition> races = [race];
         List<ClassDefinition> classes = [characterClass];
         List<BackgroundDefinition> backgrounds = [background];
@@ -561,21 +724,9 @@ public sealed class RulesetOwnershipTests
             Armors = armors,
             Weapons = weapons,
             EquipmentItems = equipmentItems,
-            // The class and background above name these, and a ruleset now has
-            // to declare what its feature IDs point at.
-            Features =
-            [
-                new FeatureDefinition
-                {
-                    Id = "feature.level-one",
-                    Name = "Test Feature"
-                },
-                new FeatureDefinition
-                {
-                    Id = "feature.background",
-                    Name = "Test Background Feature"
-                }
-            ]
+            Spells = spells,
+            Effects = effects,
+            Features = features
         };
 
         return new MutableRulesetFixture(
@@ -595,6 +746,15 @@ public sealed class RulesetOwnershipTests
             armors,
             weapons,
             equipmentItems,
+            spell,
+            effect,
+            spells,
+            effects,
+            features,
+            spellEffects,
+            effectContributions,
+            effectConditions,
+            featureContributions,
             raceAbilityScoreIncreases,
             raceLanguages,
             raceTraits,
@@ -648,6 +808,15 @@ public sealed class RulesetOwnershipTests
         List<ArmorDefinition> Armors,
         List<WeaponDefinition> Weapons,
         List<EquipmentItemDefinition> EquipmentItems,
+        SpellDefinition Spell,
+        EffectDefinition Effect,
+        List<SpellDefinition> Spells,
+        List<EffectDefinition> Effects,
+        List<FeatureDefinition> Features,
+        List<SpellEffectDefinition> SpellEffects,
+        List<RollContributionDefinition> EffectContributions,
+        List<RollContributionCondition> EffectConditions,
+        List<RollContributionDefinition> FeatureContributions,
         List<AbilityScoreIncrease> RaceAbilityScoreIncreases,
         List<string> RaceLanguages,
         List<string> RaceTraits,
