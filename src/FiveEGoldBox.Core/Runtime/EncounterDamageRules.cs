@@ -1,3 +1,5 @@
+using FiveEGoldBox.Core.Rules;
+
 namespace FiveEGoldBox.Core.Runtime;
 
 public static class EncounterDamageRules
@@ -75,6 +77,91 @@ public static class EncounterDamageRules
                 Combatant = combatantDamage.State
             };
 
+        EncounterConcentrationCheckResult? concentrationCheck =
+            null;
+
+        if (target.ConcentratingOnEffectId is not null
+            && command.DamageAmount > 0)
+        {
+            string effectId =
+                target.ConcentratingOnEffectId;
+
+            if (combatantDamage.State.LifecycleState
+                != CombatantLifecycleState.Conscious)
+            {
+                // 5e never asks an incapacitated creature to roll for it —
+                // concentration just ends.
+                participants = ActiveEffectRules.Drop(
+                    participants,
+                    command.TargetCombatantId,
+                    effectId);
+
+                concentrationCheck =
+                    new EncounterConcentrationCheckResult
+                    {
+                        CombatantId =
+                            command.TargetCombatantId,
+                        EffectId = effectId,
+                        BrokenByIncapacitation = true,
+                        SavingThrow = null,
+                        EffectDropped = true
+                    };
+            }
+            else
+            {
+                if (command.ConcentrationSavingThrowRoll
+                    is null)
+                {
+                    throw new ArgumentException(
+                        $"Target '{command.TargetCombatantId}' is concentrating on '{effectId}' and requires a concentration saving throw roll.",
+                        nameof(command));
+                }
+
+                int difficultyClass = Math.Max(
+                    10,
+                    command.DamageAmount / 2);
+
+                EncounterSavingThrowResult savingThrow =
+                    EncounterSavingThrowRules.Resolve(
+                        state,
+                        command.TargetCombatantId,
+                        Ability.Constitution,
+                        D20RollMode.Normal,
+                        command.ConcentrationSavingThrowRoll
+                            .Value,
+                        secondRoll: null,
+                        difficultyClass,
+                        EncounterSavingThrowCoverPolicy
+                            .Ignored,
+                        originPosition: null,
+                        command
+                            .ConcentrationSavingThrowContributionRolls);
+
+                bool succeeded =
+                    savingThrow.SavingThrow!.Test.Outcome
+                        == D20TestOutcome.Success;
+
+                if (!succeeded)
+                {
+                    participants = ActiveEffectRules.Drop(
+                        participants,
+                        command.TargetCombatantId,
+                        effectId);
+                }
+
+                concentrationCheck =
+                    new EncounterConcentrationCheckResult
+                    {
+                        CombatantId =
+                            command.TargetCombatantId,
+                        EffectId = effectId,
+                        BrokenByIncapacitation = false,
+                        SavingThrow = savingThrow,
+                        EffectDropped = !succeeded
+                    };
+            }
+        }
+
         EncounterState resolvedState =
             EncounterCompletionRules.Resolve(
                 state with
@@ -102,6 +189,7 @@ public static class EncounterDamageRules
                 clearedPendingDeathSavingThrow,
             CombatantDamage =
                 combatantDamage,
+            ConcentrationCheck = concentrationCheck,
             State = resolvedState
         };
     }

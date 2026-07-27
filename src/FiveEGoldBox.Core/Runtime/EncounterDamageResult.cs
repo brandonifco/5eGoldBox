@@ -20,5 +20,10 @@ public sealed record EncounterDamageResult
         CombatantDamage
     { get; init; }
 
+    /// Set when the target was concentrating on something before this damage
+    /// landed.
+    public EncounterConcentrationCheckResult? ConcentrationCheck
+    { get; init; }
+
     public required EncounterState State { get; init; }
 }

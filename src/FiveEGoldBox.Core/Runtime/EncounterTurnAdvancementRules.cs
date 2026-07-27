@@ -276,22 +276,11 @@ public static class EncounterTurnAdvancementRules
         foreach ((string sourceCombatantId, string effectId)
             in expired)
         {
-            int sourceIndex = FindParticipantIndex(
-                participants,
-                sourceCombatantId);
-
-            if (string.Equals(
-                participants[sourceIndex]
-                    .ConcentratingOnEffectId,
-                effectId,
-                StringComparison.Ordinal))
-            {
-                participants[sourceIndex] =
-                    participants[sourceIndex] with
-                    {
-                        ConcentratingOnEffectId = null
-                    };
-            }
+            participants =
+                ActiveEffectRules.ClearConcentrationIfMatching(
+                    participants,
+                    sourceCombatantId,
+                    effectId);
         }
 
         return participants;

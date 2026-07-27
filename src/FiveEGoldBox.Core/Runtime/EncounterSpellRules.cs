@@ -90,6 +90,7 @@ public static class EncounterSpellRules
         };
 
         CombatantDamageResult? targetDamage = null;
+        EncounterConcentrationCheckResult? concentrationCheck = null;
         EncounterState resolvedState;
 
         if (tookEffect && spell.AppliedEffectId is not null)
@@ -124,10 +125,16 @@ public static class EncounterSpellRules
                         TargetCombatantId = command.TargetCombatantId,
                         DamageAmount = damage,
                         IsCriticalHit = attackRoll?.Outcome
-                            == AttackRollOutcome.CriticalHit
+                            == AttackRollOutcome.CriticalHit,
+                        ConcentrationSavingThrowRoll =
+                            command.ConcentrationSavingThrowRoll,
+                        ConcentrationSavingThrowContributionRolls =
+                            command
+                                .ConcentrationSavingThrowContributionRolls
                     });
 
             targetDamage = damageResult.CombatantDamage;
+            concentrationCheck = damageResult.ConcentrationCheck;
             resolvedState = damageResult.State;
         }
         else
@@ -155,6 +162,7 @@ public static class EncounterSpellRules
             DamageDealt = damage,
             HealingDone = healing,
             TargetDamage = targetDamage,
+            ConcentrationCheck = concentrationCheck,
             State = resolvedState
         };
     }
@@ -229,22 +237,10 @@ public static class EncounterSpellRules
 
             if (previous is not null)
             {
-                for (int index = 0; index < participants.Length; index++)
-                {
-                    participants[index] = participants[index] with
-                    {
-                        ActiveEffects = participants[index].ActiveEffects
-                            .Where(effect => !(string.Equals(
-                                    effect.EffectId,
-                                    previous,
-                                    StringComparison.Ordinal)
-                                && string.Equals(
-                                    effect.SourceCombatantId,
-                                    casterCombatantId,
-                                    StringComparison.Ordinal)))
-                            .ToArray()
-                    };
-                }
+                participants = ActiveEffectRules.Drop(
+                    participants,
+                    casterCombatantId,
+                    previous);
             }
         }
 
