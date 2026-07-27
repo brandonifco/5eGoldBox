@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Application.Combat;
 
-internal sealed record WatchtowerRaiderAttackPlan
+internal sealed record EncounterTacticsAttackPlan
 {
     internal required string TargetCombatantId { get; init; }
 

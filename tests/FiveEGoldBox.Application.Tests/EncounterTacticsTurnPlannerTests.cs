@@ -10,7 +10,7 @@ namespace FiveEGoldBox.Application.Tests;
 /// state, so these exercise its decision branches without driving a whole
 /// combat. The melee close-then-attack paths are covered end to end by the
 /// orchestrator characterization transcripts.
-public sealed class WatchtowerRaiderTurnPlannerTests
+public sealed class EncounterTacticsTurnPlannerTests
 {
     private const string RangedRaiderId =
         "combatant.watchtower-raider.ranged";
@@ -25,12 +25,12 @@ public sealed class WatchtowerRaiderTurnPlannerTests
         EncounterState encounter =
             WatchtowerCombatTestData.GetEncounter(state);
 
-        WatchtowerRaiderTurnPlan plan =
-            WatchtowerRaiderTurnPlanner.Plan(encounter, state.Party);
+        EncounterTacticsTurnPlan plan =
+            EncounterTacticsTurnPlanner.Plan(encounter, state.Party);
 
         Assert.Null(plan.Movement);
-        WatchtowerRaiderAttackPlan attack =
-            Assert.IsType<WatchtowerRaiderAttackPlan>(plan.Attack);
+        EncounterTacticsAttackPlan attack =
+            Assert.IsType<EncounterTacticsAttackPlan>(plan.Attack);
         Assert.Equal(
             GetFixedWeaponId(state, RangedRaiderId),
             attack.WeaponId);
@@ -47,7 +47,7 @@ public sealed class WatchtowerRaiderTurnPlannerTests
             RangedRaiderId,
             weapon => weapon with { AmmunitionQuantityAvailable = 0 });
 
-        WatchtowerRaiderTurnPlan plan = WatchtowerRaiderTurnPlanner.Plan(
+        EncounterTacticsTurnPlan plan = EncounterTacticsTurnPlanner.Plan(
             WatchtowerCombatTestData.GetEncounter(state),
             state.Party);
 
@@ -72,7 +72,7 @@ public sealed class WatchtowerRaiderTurnPlannerTests
                 LongRangeFeet = 5
             });
 
-        WatchtowerRaiderTurnPlan plan = WatchtowerRaiderTurnPlanner.Plan(
+        EncounterTacticsTurnPlan plan = EncounterTacticsTurnPlanner.Plan(
             WatchtowerCombatTestData.GetEncounter(state),
             state.Party);
 
@@ -97,10 +97,10 @@ public sealed class WatchtowerRaiderTurnPlannerTests
             .Select(participant => participant.Position)
             .ToArray();
 
-        WatchtowerRaiderTurnPlan first =
-            WatchtowerRaiderTurnPlanner.Plan(encounter, state.Party);
-        WatchtowerRaiderTurnPlan second =
-            WatchtowerRaiderTurnPlanner.Plan(encounter, state.Party);
+        EncounterTacticsTurnPlan first =
+            EncounterTacticsTurnPlanner.Plan(encounter, state.Party);
+        EncounterTacticsTurnPlan second =
+            EncounterTacticsTurnPlanner.Plan(encounter, state.Party);
 
         Assert.Equal(first.Attack, second.Attack);
         Assert.Equal(first.TurnAdvanceReason, second.TurnAdvanceReason);

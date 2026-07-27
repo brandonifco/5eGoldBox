@@ -11,7 +11,7 @@ namespace FiveEGoldBox.Application.Combat;
 /// It stops as soon as a conscious party member owns the turn, or the encounter
 /// completes.
 ///
-/// Raider tactics are decided by WatchtowerRaiderTurnPlanner; this type only
+/// Raider tactics are decided by EncounterTacticsTurnPlanner; this type only
 /// applies plans, threads the random cursor, and records steps.
 internal static class WatchtowerAutomaticTurnProcessor
 {
@@ -21,6 +21,9 @@ internal static class WatchtowerAutomaticTurnProcessor
     {
         ApplicationSessionState state = initialState;
         HashSet<(long Revision, int Cursor, string Actor)> visited = [];
+        string partySideId = EncounterPartySideResolver.Resolve(
+            state,
+            WatchtowerCombatSessionMapper.GetEncounter(state));
 
         while (true)
         {
@@ -54,7 +57,7 @@ internal static class WatchtowerAutomaticTurnProcessor
 
             if (string.Equals(
                     active.SideId,
-                    WatchtowerSignalEncounter.PartySideId,
+                    partySideId,
                     StringComparison.Ordinal)
                 && active.Combatant.LifecycleState
                     == CombatantLifecycleState.Conscious
@@ -82,15 +85,23 @@ internal static class WatchtowerAutomaticTurnProcessor
                 continue;
             }
 
-            if (string.Equals(
+            // Anything conscious and not on the party's side is opposition,
+            // whatever the scenario calls it — a raider here, a chapel
+            // guardian elsewhere. Two-sided combat is all this engine
+            // resolves, so "not the party" already means "the opposition".
+            if (!string.Equals(
                 active.SideId,
-                WatchtowerSignalEncounter.RaiderSideId,
+                partySideId,
                 StringComparison.Ordinal))
             {
                 state = ResolveRaiderTurn(state, steps);
                 continue;
             }
 
+            // Unreachable given the branches above: a conscious party
+            // combatant returned early, and everything else is either dying,
+            // stable, or opposition. Left as a defensive fallback rather than
+            // removed without mutation-testing confirmation.
             state = SkipTurn(
                 state,
                 steps,
@@ -170,8 +181,8 @@ internal static class WatchtowerAutomaticTurnProcessor
         EncounterState encounter =
             WatchtowerCombatSessionMapper.GetEncounter(state);
         string actorId = encounter.ActiveCombatantId;
-        WatchtowerRaiderTurnPlan plan =
-            WatchtowerRaiderTurnPlanner.Plan(
+        EncounterTacticsTurnPlan plan =
+            EncounterTacticsTurnPlanner.Plan(
                 encounter,
                 state.Party);
 

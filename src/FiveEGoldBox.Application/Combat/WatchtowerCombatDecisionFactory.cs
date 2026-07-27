@@ -33,11 +33,13 @@ internal static class WatchtowerCombatDecisionFactory
 
         EncounterParticipantState activeParticipant =
             FindParticipant(encounter, encounter.ActiveCombatantId);
+        string partySideId =
+            EncounterPartySideResolver.Resolve(state, encounter);
 
         bool isConsciousPartyParticipant =
             string.Equals(
                 activeParticipant.SideId,
-                WatchtowerSignalEncounter.PartySideId,
+                partySideId,
                 StringComparison.Ordinal)
             && activeParticipant.Combatant.LifecycleState
                 == CombatantLifecycleState.Conscious

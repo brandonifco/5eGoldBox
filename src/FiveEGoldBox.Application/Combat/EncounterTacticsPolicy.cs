@@ -1,11 +1,21 @@
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
 
-internal static class WatchtowerRaiderPolicy
+/// How an opposing combatant picks a target — one shape for whichever
+/// scenario is fighting, decided by what the combatant is rather than who it
+/// is.
+///
+/// Used to be named for the Watchtower raiders and to single one of them out
+/// by combatant ID. Two chapel guardians proved that was never really about
+/// being a raider: it was always "a melee combatant closes distance and
+/// attacks; a ranged one holds position and attacks in range", read off the
+/// weapon the combatant already carries.
+internal static class EncounterTacticsPolicy
 {
     internal static EncounterParticipantState? SelectTarget(
         EncounterState encounter,
@@ -20,7 +30,7 @@ internal static class WatchtowerRaiderPolicy
             WatchtowerCombatDecisionFactory.GetFixedWeapon(raider);
 
         IEnumerable<EncounterParticipantState> legalTargets =
-            GetConsciousTargets(encounter)
+            GetOpposingTargets(encounter, raider)
                 .Where(target => CanAttack(
                     encounter,
                     raider,
@@ -34,6 +44,8 @@ internal static class WatchtowerRaiderPolicy
             .FirstOrDefault();
     }
 
+    /// With no attackable target, a melee combatant still closes on whoever
+    /// it could eventually reach. A ranged one holds position instead.
     internal static EncounterParticipantState? SelectProgressTarget(
         EncounterState encounter,
         PartyState party,
@@ -43,19 +55,16 @@ internal static class WatchtowerRaiderPolicy
         ArgumentNullException.ThrowIfNull(party);
         ArgumentNullException.ThrowIfNull(raider);
 
-        if (!string.Equals(
-            raider.Combatant.CombatantId,
-            WatchtowerSignalEncounter.MeleeRaiderId,
-            StringComparison.Ordinal))
+        WeaponAttack weapon =
+            WatchtowerCombatDecisionFactory.GetFixedWeapon(raider);
+
+        if (weapon.AttackKind != WeaponAttackKind.Melee)
         {
             return null;
         }
 
-        WeaponAttack weapon =
-            WatchtowerCombatDecisionFactory.GetFixedWeapon(raider);
-
         IEnumerable<EncounterParticipantState> progressTargets =
-            GetConsciousTargets(encounter)
+            GetOpposingTargets(encounter, raider)
                 .Where(target =>
                     WatchtowerCombatPathSearch.FindMovement(
                         encounter,
@@ -94,10 +103,7 @@ internal static class WatchtowerRaiderPolicy
             return true;
         }
 
-        if (!string.Equals(
-            actorId,
-            WatchtowerSignalEncounter.MeleeRaiderId,
-            StringComparison.Ordinal))
+        if (weapon.AttackKind != WeaponAttackKind.Melee)
         {
             return false;
         }
@@ -121,15 +127,19 @@ internal static class WatchtowerRaiderPolicy
             weapon.WeaponId).IsLegal;
     }
 
+    /// Conscious combatants on any side but the actor's own. Correct for
+    /// whichever two sides are actually fighting, without needing to know
+    /// which one the content calls "the party".
     private static IEnumerable<EncounterParticipantState>
-        GetConsciousTargets(
-            EncounterState encounter)
+        GetOpposingTargets(
+            EncounterState encounter,
+            EncounterParticipantState raider)
     {
         return encounter.Participants
             .Where(participant =>
-                string.Equals(
+                !string.Equals(
                     participant.SideId,
-                    WatchtowerSignalEncounter.PartySideId,
+                    raider.SideId,
                     StringComparison.Ordinal)
                 && participant.Combatant.LifecycleState
                     == CombatantLifecycleState.Conscious);

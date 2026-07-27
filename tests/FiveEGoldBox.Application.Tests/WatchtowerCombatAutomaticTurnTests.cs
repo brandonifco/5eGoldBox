@@ -597,7 +597,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
 
         int cursorBeforeSelection = source.RandomValuesConsumed;
         EncounterParticipantState? selected =
-            WatchtowerRaiderPolicy.SelectTarget(
+            EncounterTacticsPolicy.SelectTarget(
                 encounter,
                 source.Party,
                 WatchtowerCombatTestData.GetParticipant(
