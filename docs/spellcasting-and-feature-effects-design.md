@@ -1,8 +1,13 @@
 # Spellcasting and Feature Effects — Design
 
-**Status:** adopted 2026-07-26. **Governs:** the Phase 10 work the Scope Matrix commits
-("mechanics get built when authored content needs them"). **Supersedes nothing** — it is
-the design for a phase the plans describe but do not specify.
+**Status:** adopted 2026-07-26; **all six sequenced steps built 2026-07-26** (PRs #131–#140)
+— see CLAUDE.md's Phase 10 entry for what each one cost and what was deliberately left.
+**Governs:** the Phase 10 work the Scope Matrix commits ("mechanics get built when
+authored content needs them"). **Supersedes nothing** — it is the design for a phase the
+plans describe but do not specify.
+
+The sequencing below is kept as written rather than ticked off, because it is the
+reasoning for the order, and that reasoning is what the next mechanic should follow.
 
 ## The governing decision
 
