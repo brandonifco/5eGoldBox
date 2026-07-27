@@ -82,7 +82,7 @@ public sealed class CombatOperationsTests
         Assert.Equal(encounter.TurnState.RoundNumber, first.RoundNumber);
         Assert.Equal(encounter.ActiveCombatantId, first.ActiveCombatantId);
         Assert.Equal(EncounterLifecycleState.Active, first.LifecycleState);
-        Assert.Equal(5, first.Combatants.Count);
+        Assert.Equal(6, first.Combatants.Count);
         Assert.Equal(
             encounter.Participants.Select(
                 participant => participant.Combatant.CombatantId),

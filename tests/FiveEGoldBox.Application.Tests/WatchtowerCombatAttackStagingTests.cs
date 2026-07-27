@@ -15,27 +15,27 @@ public sealed class WatchtowerCombatAttackStagingTests
         ApplicationSessionState source =
             WatchtowerCombatTestData.AdvanceToCombatant(
                 WatchtowerCombatTestData.CreatePlayerDecisionSession(),
-                "party-member.ranger");
-        EncounterParticipantState ranger =
+                "party-member.rogue");
+        EncounterParticipantState archer =
             WatchtowerCombatTestData.GetParticipant(
                 source,
-                "party-member.ranger") with
+                "party-member.rogue") with
             {
                 Position = new GridPosition(2, 2)
             };
         source = WatchtowerCombatTestData.ReplaceParticipant(
             source,
-            ranger);
+            archer);
 
         EncounterState encounter =
             WatchtowerCombatTestData.GetEncounter(source);
         WeaponAttack weapon = Assert.Single(
-            ranger.CombatProfile.WeaponAttacks);
+            archer.CombatProfile.WeaponAttacks);
 
         WatchtowerCombatAttackAvailability availability =
             WatchtowerCombatAttackStaging.EvaluateAvailability(
                 encounter,
-                ranger.Combatant.CombatantId,
+                archer.Combatant.CombatantId,
                 "combatant.watchtower-raider.melee",
                 weapon.WeaponId);
 
@@ -161,25 +161,25 @@ public sealed class WatchtowerCombatAttackStagingTests
         ApplicationSessionState source =
             WatchtowerCombatTestData.AdvanceToCombatant(
                 WatchtowerCombatTestData.CreatePlayerDecisionSession(),
-                "party-member.ranger");
-        EncounterParticipantState ranger =
+                "party-member.rogue");
+        EncounterParticipantState archer =
             WatchtowerCombatTestData.GetParticipant(
                 source,
-                "party-member.ranger");
+                "party-member.rogue");
         WeaponAttack weapon = Assert.Single(
-            ranger.CombatProfile.WeaponAttacks);
+            archer.CombatProfile.WeaponAttacks);
 
         ApplicationSessionState priorSource =
             WatchtowerCombatTestData.ReplaceParticipant(
                 source,
-                ranger with
+                archer with
                 {
                     Position = new GridPosition(2, 2)
                 });
         WatchtowerCombatAttackAvailability priorAvailability =
             WatchtowerCombatAttackStaging.EvaluateAvailability(
                 WatchtowerCombatTestData.GetEncounter(priorSource),
-                ranger.Combatant.CombatantId,
+                archer.Combatant.CombatantId,
                 "combatant.watchtower-raider.melee",
                 weapon.WeaponId);
 
@@ -191,7 +191,7 @@ public sealed class WatchtowerCombatAttackStagingTests
         ApplicationSessionState currentSource =
             WatchtowerCombatTestData.ReplaceParticipant(
                 source,
-                ranger with
+                archer with
                 {
                     Position = new GridPosition(0, 3)
                 });
@@ -204,7 +204,7 @@ public sealed class WatchtowerCombatAttackStagingTests
                 currentEncounter,
                 currentSource.RandomSeed,
                 cursorBefore,
-                ranger.Combatant.CombatantId,
+                archer.Combatant.CombatantId,
                 "combatant.watchtower-raider.melee",
                 weapon.WeaponId);
 
@@ -238,24 +238,27 @@ public sealed class WatchtowerCombatAttackStagingTests
         ApplicationSessionState source =
             WatchtowerCombatTestData.AdvanceToCombatant(
                 WatchtowerCombatTestData.CreatePlayerDecisionSession(),
-                "party-member.ranger");
-        EncounterParticipantState ranger =
+                "party-member.rogue");
+        EncounterParticipantState archer =
             WatchtowerCombatTestData.GetParticipant(
                 source,
-                "party-member.ranger");
+                "party-member.rogue");
         WeaponAttack weapon = Assert.Single(
-            ranger.CombatProfile.WeaponAttacks);
+            archer.CombatProfile.WeaponAttacks);
 
         source = WatchtowerCombatTestData.ReplaceParticipant(
             source,
-            ranger with
+            archer with
             {
+                // Out of the melee raider's reach, so the shot is a plain one
+                // and the only extra die is the blessing's.
+                Position = new GridPosition(0, 3),
                 ActiveEffects =
                 [
                     new ActiveEffect
                     {
                         EffectId = "effect.bless",
-                        SourceCombatantId = "party-member.ranger",
+                        SourceCombatantId = "party-member.rogue",
                         RemainingRounds = 10,
                         RequiresConcentration = true,
                         Contributions =
@@ -282,7 +285,7 @@ public sealed class WatchtowerCombatAttackStagingTests
         WatchtowerCombatAttackAvailability availability =
             WatchtowerCombatAttackStaging.EvaluateAvailability(
                 encounter,
-                ranger.Combatant.CombatantId,
+                archer.Combatant.CombatantId,
                 "combatant.watchtower-raider.melee",
                 weapon.WeaponId);
 
@@ -295,7 +298,7 @@ public sealed class WatchtowerCombatAttackStagingTests
                 encounter,
                 source.RandomSeed,
                 cursorBefore,
-                ranger.Combatant.CombatantId,
+                archer.Combatant.CombatantId,
                 "combatant.watchtower-raider.melee",
                 weapon.WeaponId);
 
@@ -340,19 +343,22 @@ public sealed class WatchtowerCombatAttackStagingTests
         ApplicationSessionState source =
             WatchtowerCombatTestData.AdvanceToCombatant(
                 WatchtowerCombatTestData.CreatePlayerDecisionSession(),
-                "party-member.ranger");
-        EncounterParticipantState ranger =
+                "party-member.rogue");
+        EncounterParticipantState archer =
             WatchtowerCombatTestData.GetParticipant(
                 source,
-                "party-member.ranger");
+                "party-member.rogue");
         WeaponAttack weapon = Assert.Single(
-            ranger.CombatProfile.WeaponAttacks);
+            archer.CombatProfile.WeaponAttacks);
 
         source = WatchtowerCombatTestData.ReplaceParticipant(
             source,
-            ranger with
+            archer with
             {
-                CombatProfile = ranger.CombatProfile with
+                // Out of the melee raider's reach, so the shot is a plain one
+                // and the only extra die is the blessing's.
+                Position = new GridPosition(0, 3),
+                CombatProfile = archer.CombatProfile with
                 {
                     Contributions =
                     [
@@ -399,7 +405,7 @@ public sealed class WatchtowerCombatAttackStagingTests
                 encounter,
                 source.RandomSeed,
                 cursorBefore,
-                ranger.Combatant.CombatantId,
+                archer.Combatant.CombatantId,
                 "combatant.watchtower-raider.melee",
                 weapon.WeaponId);
 

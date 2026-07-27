@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using FiveEGoldBox.Application.Campaigns;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Persistence;
@@ -24,14 +25,27 @@ public sealed class CharacterResourceTests
             SpellSlotResources.ForLevel(0));
     }
 
-    /// Nobody on the current roster casts, so nobody carries a slot. The
-    /// mechanism is proven against a caster below rather than by pretending
-    /// the Fighter has one.
+    /// Two of the four cast and two do not, which is the whole point of
+    /// resources being granted by class rather than handed to everybody.
     [Fact]
-    public void TheCurrentPartyCarriesNoResources()
+    public void OnlyTheCastersInThePartyCarrySlots()
     {
+        IReadOnlyList<PartyMemberState> members =
+            CampaignPartyFactory.CreateStartingParty(Campaign())
+                .Members;
+
+        Assert.Equal(
+            2,
+            members.Count(member => member.Resources.Count > 0));
         Assert.All(
-            CampaignPartyFactory.CreateStartingParty(Campaign()).Members,
+            members.Where(member => member.Resources.Count > 0),
+            member => Assert.Equal(
+                SpellSlotResources.ForLevel(1),
+                Assert.Single(member.Resources).ResourceId));
+        Assert.All(
+            members.Where(member =>
+                member.ClassId == "class.fighter"
+                || member.ClassId == "class.rogue"),
             member => Assert.Empty(member.Resources));
     }
 
@@ -68,7 +82,7 @@ public sealed class CharacterResourceTests
         Assert.Equal(2, cleric.SpellSlotsByLevel[1]);
         Assert.Equal(2, wizard.SpellSlotsByLevel[1]);
 
-        // The classes already on the roster cast nothing.
+        // Every other class casts nothing.
         Assert.All(
             classes.Where(candidate =>
                 candidate.Id != CampaignRulesetContent.ClericClassId
@@ -170,25 +184,37 @@ public sealed class CharacterResourceTests
             party with { Members = Array.AsReadOnly(members) });
     }
 
-    /// The save format gained resources after it was written. A document from
-    /// before omits the property entirely, and must still load.
+    /// The save format has always treated `Resources` as optional, and it
+    /// still parses a document without it. What has changed is that such a
+    /// document no longer describes a *valid* session: two of the four
+    /// characters are casters, and a caster without the slots its class grants
+    /// is not a party this campaign could have raised.
+    ///
+    /// Well-formed data describing an invalid session, which is the same call
+    /// PR #107 made for an unrecognised progress marker.
     [Fact]
-    public void Deserialize_ASaveWrittenBeforeResourcesExisted_StillLoads()
+    public void Deserialize_ASaveWrittenBeforeResourcesExisted_IsNowInvalid()
     {
+        // Written by stripping the field out of a real save, because the
+        // serializer will no longer produce a caster without slots.
         string saved = ManualSaveSerializer.Serialize(
             ScenarioSessionFactory.CreateNew(
                 WatchtowerScenarioContent.ScenarioId,
                 randomSeed: 9));
+        string withoutResources = Regex.Replace(
+            saved,
+            "\"Resources\"\\s*:\\s*\\[[^\\]]*\\]",
+            "\"Resources\":[]");
 
-        Assert.DoesNotContain("\"Resources\": [", saved);
+        Assert.DoesNotContain("\"ResourceId\"", withoutResources);
 
         ManualSaveLoadResult result =
-            ManualSaveSerializer.Deserialize(saved);
+            ManualSaveSerializer.Deserialize(withoutResources);
 
-        Assert.True(result.IsSuccess);
-        Assert.All(
-            result.Session!.Party.Members,
-            member => Assert.Empty(member.Resources));
+        Assert.False(result.IsSuccess);
+        Assert.Equal(
+            ManualSaveLoadFailureReason.InvalidSessionState,
+            result.FailureReason);
     }
 
     private static ApplicationSessionState WithResources(

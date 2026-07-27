@@ -29,8 +29,8 @@ public sealed class WatchtowerEncounterConstructionTests
             EncounterLifecycleState.Active,
             encounter.LifecycleState);
         Assert.Null(encounter.WinningSideId);
-        Assert.Equal(5, encounter.Participants.Count);
-        Assert.Equal(5, encounter.InitiativeOrder.Count);
+        Assert.Equal(6, encounter.Participants.Count);
+        Assert.Equal(6, encounter.InitiativeOrder.Count);
         Assert.Contains(
             encounter.Participants,
             participant => string.Equals(
@@ -79,7 +79,7 @@ public sealed class WatchtowerEncounterConstructionTests
                 .SideId);
 
         Assert.Equal(
-            5,
+            6,
             encounter.Participants
                 .Select(participant => participant.Position)
                 .Distinct()
@@ -99,6 +99,11 @@ public sealed class WatchtowerEncounterConstructionTests
             FindParticipant(
                 encounter,
                 expectedPartyIds[2]).Position);
+        Assert.Equal(
+            new GridPosition(0, 1),
+            FindParticipant(
+                encounter,
+                expectedPartyIds[3]).Position);
         Assert.Equal(
             new GridPosition(2, 1),
             FindParticipant(
@@ -291,28 +296,25 @@ public sealed class WatchtowerEncounterConstructionTests
     }
 
     [Fact]
-    public void WatchtowerEncounter_MapsRangerAmmunition()
+    public void WatchtowerEncounter_MapsArcherAmmunition()
     {
         ApplicationSessionState state =
             WatchtowerSignalTestData.CreateEncounterSession();
-        PartyMemberState ranger = state.Party.Members.Single(
-            member => string.Equals(
-                member.ClassId,
-                "class.ranger",
-                StringComparison.Ordinal));
+        PartyMemberState archer = state.Party.Members.Single(
+            member => member.Ammunition is not null);
         EncounterParticipantState participant =
             FindParticipant(
                 GetEncounter(state),
-                ranger.PartyMemberId);
+                archer.PartyMemberId);
         WeaponAttack weapon =
             Assert.Single(
                 participant.CombatProfile
                     .WeaponAttacks);
 
-        Assert.Equal("weapon.longbow", weapon.WeaponId);
+        Assert.Equal("weapon.shortbow", weapon.WeaponId);
         Assert.Equal("item.arrow", weapon.AmmunitionItemId);
         Assert.Equal(
-            ranger.Ammunition!.RemainingQuantity,
+            archer.Ammunition!.RemainingQuantity,
             weapon.AmmunitionQuantityAvailable);
     }
 
@@ -514,7 +516,7 @@ public sealed class WatchtowerEncounterConstructionTests
                 source,
                 ruleset);
         EncounterState encounter = GetEncounter(result);
-        int[] expectedRolls = Enumerable.Range(0, 5)
+        int[] expectedRolls = Enumerable.Range(0, 6)
             .Select(index => GenerateExpectedDie(
                 source.RandomSeed,
                 randomValuesConsumed + index,
@@ -542,18 +544,20 @@ public sealed class WatchtowerEncounterConstructionTests
                 0 =>
                 [
                     "combatant.watchtower-raider.ranged",
+                    "combatant.watchtower-raider.melee",
                     source.Party.Members[2].PartyMemberId,
                     source.Party.Members[0].PartyMemberId,
                     source.Party.Members[1].PartyMemberId,
-                    "combatant.watchtower-raider.melee"
+                    source.Party.Members[3].PartyMemberId
                 ],
                 12 =>
                 [
                     source.Party.Members[0].PartyMemberId,
                     source.Party.Members[1].PartyMemberId,
+                    source.Party.Members[3].PartyMemberId,
                     "combatant.watchtower-raider.melee",
-                    source.Party.Members[2].PartyMemberId,
-                    "combatant.watchtower-raider.ranged"
+                    "combatant.watchtower-raider.ranged",
+                    source.Party.Members[2].PartyMemberId
                 ],
                 _ => throw new InvalidOperationException(
                     "The test random-sequence position is unsupported.")
@@ -588,32 +592,12 @@ public sealed class WatchtowerEncounterConstructionTests
                 .Select(entry => entry.CombatantId)
                 .ToArray());
 
-        if (randomValuesConsumed == 12)
-        {
-            InitiativeOrderEntry ranger =
-                encounter.InitiativeOrder.Single(
-                    entry => string.Equals(
-                        entry.CombatantId,
-                        source.Party.Members[2]
-                            .PartyMemberId,
-                        StringComparison.Ordinal));
-            InitiativeOrderEntry rangedRaider =
-                encounter.InitiativeOrder.Single(
-                    entry => string.Equals(
-                        entry.CombatantId,
-                        "combatant.watchtower-raider.ranged",
-                        StringComparison.Ordinal));
-
-            Assert.Equal(7, ranger.Initiative.Total);
-            Assert.Equal(
-                ranger.Initiative.Total,
-                rangedRaider.Initiative.Total);
-            Assert.True(ranger.HasTiedInitiative);
-            Assert.True(rangedRaider.HasTiedInitiative);
-            Assert.True(
-                ranger.Position
-                    < rangedRaider.Position);
-        }
+        // The old three-character party happened to tie the ranger with the
+        // ranged raider at this cursor, and this asserted the tie broke the
+        // party's way. The four-character party ties nobody here, and an
+        // incidental tie is a poor place to pin that rule anyway —
+        // InitiativeOrderRulesTests.ResolveOrder_WithTiedInitiativeTotals_
+        // PreservesInputOrderAndMarksTies covers it directly.
     }
 
     [Fact]

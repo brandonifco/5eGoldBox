@@ -68,8 +68,8 @@ internal static class SunkenChapelScenarioDefinitionProvider
             Progress = CreateProgress(),
             PartyRequirement = new PartyRequirementDefinition
             {
-                MinimumMembers = 3,
-                MaximumMembers = 3,
+                MinimumMembers = 4,
+                MaximumMembers = 4,
                 MinimumConsciousMembers = 1
             },
             Locations =
@@ -246,7 +246,8 @@ internal static class SunkenChapelScenarioDefinitionProvider
             [
                 new GridPosition(0, 1),
                 new GridPosition(0, 2),
-                new GridPosition(1, 1)
+                new GridPosition(1, 1),
+                new GridPosition(1, 2)
             ],
             Combatants =
             [

@@ -323,19 +323,19 @@ public sealed class WatchtowerCombatDecisionTests
         ApplicationSessionState source =
             WatchtowerCombatTestData.AdvanceToCombatant(
                 WatchtowerCombatTestData.CreatePlayerDecisionSession(),
-                "party-member.ranger");
-        EncounterParticipantState ranger =
+                "party-member.rogue");
+        EncounterParticipantState archer =
             WatchtowerCombatTestData.GetParticipant(
                 source,
-                "party-member.ranger") with
+                "party-member.rogue") with
             {
                 Position = new GridPosition(2, 2)
             };
         source = WatchtowerCombatTestData.ReplaceParticipant(
             source,
-            ranger);
+            archer);
         WeaponAttack expectedWeapon = Assert.Single(
-            ranger.CombatProfile.WeaponAttacks);
+            archer.CombatProfile.WeaponAttacks);
 
         WatchtowerCombatDecision decision =
             WatchtowerCombatRules.AdvanceToDecision(source)
@@ -436,16 +436,18 @@ public sealed class WatchtowerCombatDecisionTests
     {
         ApplicationSessionState source =
             WatchtowerCombatTestData.CreatePlayerDecisionSession();
-        string rangerId = source.Party.Members[2].PartyMemberId;
+        string archerId = source.Party
+            .Members[CampaignTestParty.ArcherIndex()]
+            .PartyMemberId;
         source = WatchtowerCombatTestData.AdvanceToCombatant(
             source,
-            rangerId);
-        EncounterParticipantState ranger =
-            WatchtowerCombatTestData.GetParticipant(source, rangerId);
-        WeaponAttack weapon = Assert.Single(ranger.CombatProfile.WeaponAttacks);
-        ranger = ranger with
+            archerId);
+        EncounterParticipantState archer =
+            WatchtowerCombatTestData.GetParticipant(source, archerId);
+        WeaponAttack weapon = Assert.Single(archer.CombatProfile.WeaponAttacks);
+        archer = archer with
         {
-            CombatProfile = ranger.CombatProfile with
+            CombatProfile = archer.CombatProfile with
             {
                 WeaponAttacks =
                 [
@@ -456,7 +458,7 @@ public sealed class WatchtowerCombatDecisionTests
                 ]
             }
         };
-        source = WatchtowerCombatTestData.ReplaceParticipant(source, ranger);
+        source = WatchtowerCombatTestData.ReplaceParticipant(source, archer);
 
         WatchtowerCombatDecision decision =
             WatchtowerCombatRules.AdvanceToDecision(source)

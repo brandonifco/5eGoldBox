@@ -53,32 +53,42 @@ public sealed class ScenarioSessionFactoryTests
                 ammunition: null),
             member => AssertMember(
                 member,
-                partyMemberId:
-                    "party-member.barbarian",
+                partyMemberId: "party-member.rogue",
                 characterDefinitionId:
-                    "character.barbarian",
-                displayName: "Barbarian",
-                classId: "class.barbarian",
-                maximumHitPoints: 14,
-                currentHitPoints: 14,
+                    "character.rogue",
+                displayName: "Rogue",
+                classId: "class.rogue",
+                maximumHitPoints: 10,
+                currentHitPoints: 10,
+                temporaryHitPoints: 0,
+                ammunition: new AmmunitionState
+                {
+                    WeaponId = "weapon.shortbow",
+                    AmmunitionItemId = "item.arrow",
+                    RemainingQuantity = 12
+                }),
+            member => AssertMember(
+                member,
+                partyMemberId: "party-member.cleric",
+                characterDefinitionId:
+                    "character.cleric",
+                displayName: "Cleric",
+                classId: "class.cleric",
+                maximumHitPoints: 10,
+                currentHitPoints: 10,
                 temporaryHitPoints: 0,
                 ammunition: null),
             member => AssertMember(
                 member,
-                partyMemberId: "party-member.ranger",
+                partyMemberId: "party-member.wizard",
                 characterDefinitionId:
-                    "character.ranger",
-                displayName: "Ranger",
-                classId: "class.ranger",
-                maximumHitPoints: 11,
-                currentHitPoints: 11,
+                    "character.wizard",
+                displayName: "Wizard",
+                classId: "class.wizard",
+                maximumHitPoints: 7,
+                currentHitPoints: 7,
                 temporaryHitPoints: 0,
-                ammunition: new AmmunitionState
-                {
-                    WeaponId = "weapon.longbow",
-                    AmmunitionItemId = "item.arrow",
-                    RemainingQuantity = 7
-                }));
+                ammunition: null));
 
         ApplicationSessionRules.Validate(state);
     }
@@ -138,8 +148,10 @@ public sealed class ScenarioSessionFactoryTests
         }
 
         Assert.NotSame(
-            first.Party.Members[2].Ammunition,
-            second.Party.Members[2].Ammunition);
+            first.Party.Members[CampaignTestParty.ArcherIndex()]
+                .Ammunition,
+            second.Party.Members[CampaignTestParty.ArcherIndex()]
+                .Ammunition);
 
         PartyMemberState[] changedMembers =
             first.Party.Members.ToArray();
@@ -277,8 +289,27 @@ public sealed class ScenarioSessionFactoryTests
         Assert.Equal(
             expected.Party.PartyId,
             actual.Party.PartyId);
+
+        // A member's Resources is an IReadOnlyList, which record equality
+        // compares by reference — two separately built parties never match on
+        // it once anybody carries a spell slot. Compare what a member is
+        // instead of the instance holding it.
         Assert.Equal(
-            expected.Party.Members,
-            actual.Party.Members);
+            expected.Party.Members.Count,
+            actual.Party.Members.Count);
+        Assert.Equal(
+            expected.Party.Members.Select(member => member with
+            {
+                Resources = Array.Empty<CharacterResourceState>()
+            }),
+            actual.Party.Members.Select(member => member with
+            {
+                Resources = Array.Empty<CharacterResourceState>()
+            }));
+        Assert.Equal(
+            expected.Party.Members.SelectMany(
+                member => member.Resources),
+            actual.Party.Members.SelectMany(
+                member => member.Resources));
     }
 }

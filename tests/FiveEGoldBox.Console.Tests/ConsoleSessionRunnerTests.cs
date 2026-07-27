@@ -715,16 +715,20 @@ public sealed class ConsoleSessionRunnerTests
         int fighterIndex = output.IndexOf(
             "Name: Fighter",
             StringComparison.Ordinal);
-        int barbarianIndex = output.IndexOf(
-            "Name: Barbarian",
+        int rogueIndex = output.IndexOf(
+            "Name: Rogue",
             StringComparison.Ordinal);
-        int rangerIndex = output.IndexOf(
-            "Name: Ranger",
+        int clericIndex = output.IndexOf(
+            "Name: Cleric",
+            StringComparison.Ordinal);
+        int wizardIndex = output.IndexOf(
+            "Name: Wizard",
             StringComparison.Ordinal);
 
         Assert.True(fighterIndex >= 0);
-        Assert.True(barbarianIndex > fighterIndex);
-        Assert.True(rangerIndex > barbarianIndex);
+        Assert.True(rogueIndex > fighterIndex);
+        Assert.True(clericIndex > rogueIndex);
+        Assert.True(wizardIndex > clericIndex);
     }
 
     [Fact]
@@ -746,14 +750,14 @@ public sealed class ConsoleSessionRunnerTests
     }
 
     [Fact]
-    public void RenderParty_DisplaysRangerAmmunition()
+    public void RenderParty_DisplaysTheArchersAmmunition()
     {
         string output = RenderParty(
             CreateOutpostSession());
 
-        Assert.Contains("Weapon ID: weapon.longbow", output);
+        Assert.Contains("Weapon ID: weapon.shortbow", output);
         Assert.Contains("Ammunition Item ID: item.arrow", output);
-        Assert.Contains("Ammunition Remaining: 7", output);
+        Assert.Contains("Ammunition Remaining: 12", output);
     }
 
     [Fact]

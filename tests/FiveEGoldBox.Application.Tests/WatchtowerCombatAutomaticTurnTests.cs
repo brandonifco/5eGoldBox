@@ -483,12 +483,13 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.AdvanceToDecision(source);
 
+        // Both raiders now act before the next player decision, so the step
+        // under test is picked by its actor rather than by being the only one.
         WatchtowerCombatStepResult attack = Assert.Single(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.WeaponAttack);
-        Assert.Equal(
-            "combatant.watchtower-raider.melee",
-            attack.ActorCombatantId);
+            step => step.Kind == WatchtowerCombatStepKind.WeaponAttack
+                && step.ActorCombatantId
+                    == "combatant.watchtower-raider.melee");
         Assert.Equal(expectedTarget, attack.TargetCombatantId);
         Assert.NotNull(attack.WeaponAttack);
         Assert.Equal(encounter.Revision, source.ActiveEncounter!.Encounter.Revision);
@@ -508,11 +509,11 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             new GridPosition(0, 0));
         source = SetPosition(
             source,
-            "party-member.barbarian",
+            "party-member.cleric",
             new GridPosition(0, 2));
         source = SetPosition(
             source,
-            "party-member.ranger",
+            "party-member.rogue",
             new GridPosition(4, 3));
         source = SetPosition(
             source,
@@ -526,7 +527,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         EncounterParticipantState barbarian =
             WatchtowerCombatTestData.GetParticipant(
                 source,
-                "party-member.barbarian");
+                "party-member.cleric");
         barbarian = barbarian with
         {
             Combatant = barbarian.Combatant with
@@ -541,6 +542,13 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         source = WatchtowerCombatTestData.ReplaceParticipant(
             source,
             barbarian);
+
+        // The party's fourth deployment square is one of the ones this test
+        // blocks off, so its occupant moves clear first.
+        source = SetPosition(
+            source,
+            "party-member.wizard",
+            new GridPosition(3, 3));
 
         EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
         encounter = encounter with
@@ -574,7 +582,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             WatchtowerCombatPathSearch.FindMovement(
                 encounter,
                 "combatant.watchtower-raider.melee",
-                "party-member.ranger",
+                "party-member.rogue",
                 "weapon.watchtower-raider.scimitar");
 
         Assert.False(nearestPrerequisites.IsLegal);
@@ -584,7 +592,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             WatchtowerCombatAttackStaging.EvaluateAvailability(
                 fartherMovement.State,
                 "combatant.watchtower-raider.melee",
-                "party-member.ranger",
+                "party-member.rogue",
                 "weapon.watchtower-raider.scimitar").IsLegal);
 
         int cursorBeforeSelection = source.RandomValuesConsumed;
@@ -598,7 +606,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
 
         Assert.NotNull(selected);
         Assert.Equal(
-            "party-member.ranger",
+            "party-member.rogue",
             selected.Combatant.CombatantId);
         Assert.Equal(
             cursorBeforeSelection,
@@ -617,12 +625,12 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             step => step.Kind == WatchtowerCombatStepKind.WeaponAttack
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.melee");
-        Assert.Equal("party-member.ranger", attack.TargetCombatantId);
+        Assert.Equal("party-member.rogue", attack.TargetCombatantId);
         Assert.True(
             WatchtowerCombatAttackStaging.EvaluateAvailability(
                 movement.Movement!.State,
                 "combatant.watchtower-raider.melee",
-                "party-member.ranger",
+                "party-member.rogue",
                 "weapon.watchtower-raider.scimitar").IsLegal);
         Assert.Empty(movement.Dice);
     }
@@ -641,11 +649,11 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             new GridPosition(0, 0));
         source = SetPosition(
             source,
-            "party-member.barbarian",
+            "party-member.cleric",
             new GridPosition(0, 3));
         source = SetPosition(
             source,
-            "party-member.ranger",
+            "party-member.rogue",
             new GridPosition(1, 3));
         source = SetPosition(
             source,
@@ -656,10 +664,13 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             "combatant.watchtower-raider.ranged",
             new GridPosition(4, 0));
 
+        // Everyone but the distant fighter is down, which is what leaves the
+        // raider with nobody it can reach.
         foreach (string combatantId in new[]
         {
-            "party-member.barbarian",
-            "party-member.ranger"
+            "party-member.cleric",
+            "party-member.rogue",
+            "party-member.wizard"
         })
         {
             EncounterParticipantState participant =
@@ -681,6 +692,13 @@ public sealed class WatchtowerCombatAutomaticTurnTests
                 source,
                 participant);
         }
+
+        // The party's fourth deployment square is one of the ones this test
+        // blocks off, so its occupant moves clear first.
+        source = SetPosition(
+            source,
+            "party-member.wizard",
+            new GridPosition(2, 3));
 
         EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
         encounter = encounter with

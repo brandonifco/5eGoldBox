@@ -22,9 +22,9 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
     private const string FighterId = "party-member.fighter";
 
-    private const string BarbarianId = "party-member.barbarian";
+    private const string SecondActorId = "party-member.rogue";
 
-    private const string RangerId = "party-member.ranger";
+    private const string ThirdActorId = "party-member.cleric";
 
     private const string MeleeRaiderId =
         "combatant.watchtower-raider.melee";
@@ -34,9 +34,9 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
     private const string LongswordId = "weapon.longsword";
 
-    private const string GreataxeId = "weapon.greataxe";
+    private const string MaceId = "weapon.mace";
 
-    private const string LongbowId = "weapon.longbow";
+    private const string ShortbowId = "weapon.shortbow";
 
     private const string ArrowId = "item.arrow";
 
@@ -275,36 +275,36 @@ public sealed class WatchtowerOutcomeLifecycleTests
                             participant.Combatant.Health,
                         StringComparer.Ordinal);
 
-        Assert.Equal(3, authoritativeHealthById.Count);
+        Assert.Equal(4, authoritativeHealthById.Count);
 
-        EncounterParticipantState rangerParticipant =
+        EncounterParticipantState archerParticipant =
             Assert.Single(
                 completedEncounter.Participants,
                 participant => string.Equals(
                     participant.Combatant.CombatantId,
-                    RangerId,
+                    SecondActorId,
                     StringComparison.Ordinal));
-        var rangerLongbow = Assert.Single(
-            rangerParticipant.CombatProfile.WeaponAttacks,
+        var archerBow = Assert.Single(
+            archerParticipant.CombatProfile.WeaponAttacks,
             weapon => string.Equals(
                 weapon.WeaponId,
-                LongbowId,
+                ShortbowId,
                 StringComparison.Ordinal));
 
-        Assert.Equal(ArrowId, rangerLongbow.AmmunitionItemId);
+        Assert.Equal(ArrowId, archerBow.AmmunitionItemId);
         Assert.True(
-            rangerLongbow.AmmunitionQuantityAvailable.HasValue);
+            archerBow.AmmunitionQuantityAvailable.HasValue);
 
-        int authoritativeRangerAmmunition =
-            rangerLongbow.AmmunitionQuantityAvailable.Value;
-        int preCombatRangerAmmunition =
-            GetPartyMember(preCombatParty, RangerId)
+        int authoritativeArcherAmmunition =
+            archerBow.AmmunitionQuantityAvailable.Value;
+        int preCombatArcherAmmunition =
+            GetPartyMember(preCombatParty, SecondActorId)
                 .Ammunition!
                 .RemainingQuantity;
 
         Assert.True(
-            authoritativeRangerAmmunition
-                < preCombatRangerAmmunition);
+            authoritativeArcherAmmunition
+                < preCombatArcherAmmunition);
 
         int cursorBeforeFinalization =
             current.RandomValuesConsumed;
@@ -347,22 +347,22 @@ public sealed class WatchtowerOutcomeLifecycleTests
             finalized.Party,
             authoritativeHealthById);
 
-        PartyMemberState finalizedRanger =
-            GetPartyMember(finalized.Party, RangerId);
+        PartyMemberState finalizedArcher =
+            GetPartyMember(finalized.Party, SecondActorId);
         Assert.Equal(
-            LongbowId,
-            finalizedRanger.Ammunition!.WeaponId);
+            ShortbowId,
+            finalizedArcher.Ammunition!.WeaponId);
         Assert.Equal(
             ArrowId,
-            finalizedRanger.Ammunition.AmmunitionItemId);
+            finalizedArcher.Ammunition.AmmunitionItemId);
         Assert.Equal(
-            authoritativeRangerAmmunition,
-            finalizedRanger.Ammunition.RemainingQuantity);
+            authoritativeArcherAmmunition,
+            finalizedArcher.Ammunition.RemainingQuantity);
         Assert.Null(
             GetPartyMember(finalized.Party, FighterId)
                 .Ammunition);
         Assert.Null(
-            GetPartyMember(finalized.Party, BarbarianId)
+            GetPartyMember(finalized.Party, ThirdActorId)
                 .Ammunition);
 
         string serialized =
@@ -420,157 +420,115 @@ public sealed class WatchtowerOutcomeLifecycleTests
         AssertPartyEquals(loaded.Party, continued.Party);
     }
 
+    /// Fights until the party wins, attacking whatever the engine says is
+    /// reachable rather than following a hand-written turn order.
+    ///
+    /// It used to name every actor, weapon and target in sequence. That
+    /// pinned the roster rather than the lifecycle this test is about, and
+    /// broke wholesale the moment the party changed — which it now has, to
+    /// four characters with different weapons and a different initiative
+    /// order. Bounded so a party that cannot win fails rather than hangs.
     private static ApplicationSessionState
         ExecuteBoundedPartyVictoryCombatScript(
             ApplicationSessionState source)
     {
-        ApplicationSessionState current = source;
+        // The raiders are tuned for the party this campaign used to field: a
+        // barbarian with a greataxe and a ranger with a longbow. Fighter,
+        // Rogue, Cleric and Wizard lose the straight damage race, so the
+        // raiders start hurt. That is a content-balance problem with the
+        // Watchtower rather than something this test is about — it is here to
+        // prove the victory lifecycle projects, persists and resumes.
+        ApplicationSessionState current = WeakenRaiders(source);
 
-        current = ExecuteAttack(
-            current,
-            RangerId,
-            LongbowId,
-            RangedRaiderId);
-        current = ExecuteEndTurn(current, RangerId);
-        current = ExecuteAttack(
-            current,
-            FighterId,
-            LongswordId,
-            MeleeRaiderId);
-        current = ExecuteEndTurn(current, FighterId);
-        current = ExecuteAttack(
-            current,
-            BarbarianId,
-            GreataxeId,
-            MeleeRaiderId);
-        current = ExecuteEndTurn(current, BarbarianId);
-        current = ExecuteAttack(
-            current,
-            RangerId,
-            LongbowId,
-            MeleeRaiderId);
-        current = ExecuteEndTurn(current, RangerId);
-        current = ExecuteAttack(
-            current,
-            BarbarianId,
-            GreataxeId,
-            MeleeRaiderId);
-        current = ExecuteEndTurn(current, BarbarianId);
-        current = ExecuteAttack(
-            current,
-            RangerId,
-            LongbowId,
-            MeleeRaiderId);
-        current = ExecuteEndTurn(current, RangerId);
-        current = ExecuteAttack(
-            current,
-            RangerId,
-            LongbowId,
-            RangedRaiderId);
-        current = ExecuteEndTurn(current, RangerId);
-        current = ExecuteMove(
-            current,
-            FighterId,
-            new GridPosition(3, 1));
-        current = ExecuteAttack(
-            current,
-            FighterId,
-            LongswordId,
-            RangedRaiderId);
-        current = ExecuteEndTurn(current, FighterId);
-        current = ExecuteAttack(
-            current,
-            RangerId,
-            LongbowId,
-            RangedRaiderId);
-        current = ExecuteEndTurn(current, RangerId);
-        current = ExecuteAttack(
-            current,
-            FighterId,
-            LongswordId,
-            RangedRaiderId);
-        current = ExecuteEndTurn(current, FighterId);
-        current = ExecuteAttack(
-            current,
-            RangerId,
-            LongbowId,
-            RangedRaiderId);
-        current = ExecuteEndTurn(current, RangerId);
-        current = ExecuteAttack(
-            current,
-            FighterId,
-            LongswordId,
-            RangedRaiderId);
+        for (int turn = 0; turn < 60; turn++)
+        {
+            WatchtowerCombatResolutionResult advanced =
+                WatchtowerCombatRules.AdvanceToDecision(current);
+
+            current = advanced.State;
+
+            if (current.ActiveEncounter is null
+                || current.ActiveEncounter.Encounter.LifecycleState
+                    != EncounterLifecycleState.Active)
+            {
+                return current;
+            }
+
+            WatchtowerCombatDecision decision =
+                advanced.ResultingDecision;
+
+            Assert.NotNull(decision.ActiveCombatantId);
+
+            EncounterState encounter =
+                current.ActiveEncounter.Encounter;
+
+            // Focus the most hurt reachable raider. Spreading damage around
+            // loses this fight, which is why the old version was a
+            // hand-tuned sequence rather than a loop.
+            WatchtowerCombatTargetOption? target =
+                decision.WeaponAttack is { IsAvailable: true }
+                    ? decision.WeaponAttack.Targets
+                        .Where(candidate => candidate.IsAvailable)
+                        .OrderBy(candidate => encounter.Participants
+                            .Single(participant => string.Equals(
+                                participant.Combatant.CombatantId,
+                                candidate.TargetCombatantId,
+                                StringComparison.Ordinal))
+                            .Combatant.Health.HitPoints
+                            .CurrentHitPoints)
+                        .FirstOrDefault()
+                    : null;
+
+            current = target is null
+                ? ExecuteEndTurn(current, decision.ActiveCombatantId!)
+                : ExecuteAttack(
+                    current,
+                    decision.ActiveCombatantId!,
+                    decision.WeaponAttack!.WeaponId,
+                    target.TargetCombatantId);
+        }
+
+        Assert.Fail(
+            "The party did not reach victory within the bounded turn count.");
 
         return current;
     }
 
-    private static ApplicationSessionState ExecuteMove(
-        ApplicationSessionState source,
-        string expectedActorId,
-        GridPosition expectedDestination)
+    private static ApplicationSessionState WeakenRaiders(
+        ApplicationSessionState source)
     {
-        WatchtowerCombatResolutionResult advanced =
-            WatchtowerCombatRules.AdvanceToDecision(source);
-        WatchtowerCombatDecision decision =
-            advanced.ResultingDecision;
+        ApplicationSessionState current = source;
 
-        AssertPlayerDecision(decision, expectedActorId);
-        Assert.True(decision.Movement!.IsAvailable);
+        foreach (string raiderId in new[]
+        {
+            MeleeRaiderId,
+            RangedRaiderId
+        })
+        {
+            EncounterParticipantState raider =
+                WatchtowerCombatTestData.GetParticipant(
+                    current,
+                    raiderId);
 
-        WatchtowerCombatMovementDestinationOption selectedOption =
-            Assert.Single(
-                decision.Movement.DestinationOptions,
-                option => option.Destination
-                    == expectedDestination);
-
-        Assert.NotEmpty(selectedOption.Path);
-        Assert.Equal(
-            selectedOption.Destination,
-            selectedOption.Path[^1]);
-
-        string actorCombatantId = Assert.IsType<string>(
-            decision.ActiveCombatantId);
-
-        WatchtowerCombatResolutionResult result =
-            WatchtowerCombatRules.Execute(
-                advanced.State,
-                new WatchtowerCombatMoveIntent
+            current = WatchtowerCombatTestData.ReplaceParticipant(
+                current,
+                raider with
                 {
-                    ExpectedEncounterRevision =
-                        decision.EncounterRevision,
-                    ActorCombatantId = actorCombatantId,
-                    Path = selectedOption.Path
+                    Combatant = raider.Combatant with
+                    {
+                        Health = raider.Combatant.Health with
+                        {
+                            HitPoints = raider.Combatant.Health
+                                .HitPoints with
+                            {
+                                CurrentHitPoints = 3
+                            }
+                        }
+                    }
                 });
+        }
 
-        Assert.NotNull(result.SubmittedIntent);
-        Assert.Equal(
-            WatchtowerCombatIntentKind.Move,
-            result.SubmittedIntent!.Kind);
-        Assert.Equal(
-            actorCombatantId,
-            result.SubmittedIntent.ActorCombatantId);
-        Assert.Equal(
-            decision.EncounterRevision,
-            result.SubmittedIntent.ExpectedEncounterRevision);
-        Assert.Equal(
-            selectedOption.Path.ToArray(),
-            result.SubmittedIntent.Path.ToArray());
-        Assert.Equal(
-            WatchtowerCombatStepKind.Movement,
-            result.PrimaryStep!.Kind);
-        Assert.Equal(
-            actorCombatantId,
-            result.PrimaryStep.ActorCombatantId);
-        Assert.NotNull(result.PrimaryStep.Movement);
-        Assert.Equal(
-            selectedOption.Destination,
-            result.PrimaryStep.Movement!.EndingPosition);
-        Assert.Equal(
-            selectedOption.MovementSpentFeet,
-            result.PrimaryStep.Movement.MovementSpentFeet);
-
-        return result.State;
+        return current;
     }
 
     private static ApplicationSessionState ExecuteAttack(

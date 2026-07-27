@@ -258,17 +258,17 @@ WatchtowerScenarioProgress
         ApplicationSessionState state =
             WatchtowerCombatOutcomeTestData
                 .CreatePartyVictorySession();
-        PartyMemberState barbarian =
+        PartyMemberState cleric =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 state,
-                "class.barbarian");
+                "class.cleric");
         state = WatchtowerCombatOutcomeTestData
             .ReplaceParticipantHealth(
                 state,
-                barbarian.PartyMemberId,
+                cleric.PartyMemberId,
                 WatchtowerCombatOutcomeTestData
                     .CreateDyingHealth(
-                        barbarian.Health.HitPoints
+                        cleric.Health.HitPoints
                             .MaximumHitPoints));
 
         Assert.Throws<ArgumentException>(() =>

@@ -198,8 +198,9 @@ public sealed class ManualSaveSerializerTests
             new[]
             {
                 "class.fighter",
-                "class.barbarian",
-                "class.ranger"
+                "class.rogue",
+                "class.cleric",
+                "class.wizard"
             },
             loaded.Party.Members.Select(
                 member => member.ClassId));
@@ -215,8 +216,9 @@ public sealed class ManualSaveSerializerTests
             new[]
             {
                 "party-member.fighter",
-                "party-member.barbarian",
-                "party-member.ranger"
+                "party-member.rogue",
+                "party-member.cleric",
+                "party-member.wizard"
             },
             loaded.Party.Members.Select(
                 member => member.PartyMemberId));
@@ -224,37 +226,37 @@ public sealed class ManualSaveSerializerTests
             new[]
             {
                 "character.fighter",
-                "character.barbarian",
-                "character.ranger"
+                "character.rogue",
+                "character.cleric",
+                "character.wizard"
             },
             loaded.Party.Members.Select(
                 member => member.CharacterDefinitionId));
     }
 
+    /// The round trip puts the last member down and rolling death saves, and
+    /// all of that has to survive the file.
     [Fact]
     public void SerializeAndDeserialize_PreservesHealth()
     {
         ApplicationSessionState loaded =
             AssertLoadedSession(RoundTrip());
 
-        CombatantHealthState barbarianHealth =
-            loaded.Party.Members[1].Health;
+        CombatantHealthState downedHealth =
+            loaded.Party.Members[^1].Health;
 
         Assert.Equal(
-            14,
-            barbarianHealth.HitPoints.MaximumHitPoints);
-        Assert.Equal(
             0,
-            barbarianHealth.HitPoints.CurrentHitPoints);
+            downedHealth.HitPoints.CurrentHitPoints);
         Assert.Equal(
             1,
-            barbarianHealth.DeathSavingThrows.SuccessCount);
+            downedHealth.DeathSavingThrows.SuccessCount);
         Assert.Equal(
             1,
-            barbarianHealth.DeathSavingThrows.FailureCount);
+            downedHealth.DeathSavingThrows.FailureCount);
         Assert.False(
-            barbarianHealth.DeathSavingThrows.IsStable);
-        Assert.False(barbarianHealth.IsInstantlyDead);
+            downedHealth.DeathSavingThrows.IsStable);
+        Assert.False(downedHealth.IsInstantlyDead);
     }
 
     [Fact]
@@ -270,17 +272,18 @@ public sealed class ManualSaveSerializerTests
     }
 
     [Fact]
-    public void SerializeAndDeserialize_PreservesRangerAmmunition()
+    public void SerializeAndDeserialize_PreservesTheArchersAmmunition()
     {
         ApplicationSessionState loaded =
             AssertLoadedSession(RoundTrip());
 
-        AmmunitionState? ammunition =
-            loaded.Party.Members[2].Ammunition;
+        AmmunitionState? ammunition = loaded.Party
+            .Members[CampaignTestParty.ArcherIndex()]
+            .Ammunition;
 
         Assert.NotNull(ammunition);
         Assert.Equal(
-            "weapon.longbow",
+            "weapon.shortbow",
             ammunition.WeaponId);
         Assert.Equal(
             "item.arrow",
@@ -1252,14 +1255,17 @@ WatchtowerScenarioProgress
             }
         };
 
-        members[1] = members[1] with
+        // Somebody down and rolling death saves, so a round trip has both to
+        // preserve. The last member rather than a named one, because which
+        // character sits where is the roster's business.
+        members[^1] = members[^1] with
         {
             Health = CombatantHealthRules.Create(
-                maximumHitPoints: 14) with
+                maximumHitPoints: members[^1]
+                    .Health.HitPoints.MaximumHitPoints) with
             {
-                HitPoints = new HitPointState
+                HitPoints = members[^1].Health.HitPoints with
                 {
-                    MaximumHitPoints = 14,
                     CurrentHitPoints = 0,
                     TemporaryHitPoints = 0
                 },
@@ -1272,12 +1278,12 @@ WatchtowerScenarioProgress
             }
         };
 
-        members[2] = members[2] with
+        int archer = CampaignTestParty.ArcherIndex();
+
+        members[archer] = members[archer] with
         {
-            Ammunition = new AmmunitionState
+            Ammunition = members[archer].Ammunition! with
             {
-                WeaponId = "weapon.longbow",
-                AmmunitionItemId = "item.arrow",
                 RemainingQuantity = 7
             }
         };
@@ -1305,41 +1311,7 @@ WatchtowerScenarioProgress
     private static PartyMemberState[]
         CreateValidMembers()
     {
-        return
-        [
-            CreateMember(
-                partyMemberId:
-                    "party-member.fighter",
-                characterDefinitionId:
-                    "character.fighter",
-                displayName: "Fighter",
-                classId: "class.fighter",
-                maximumHitPoints: 12),
-            CreateMember(
-                partyMemberId:
-                    "party-member.barbarian",
-                characterDefinitionId:
-                    "character.barbarian",
-                displayName: "Barbarian",
-                classId: "class.barbarian",
-                maximumHitPoints: 14),
-            CreateMember(
-                partyMemberId:
-                    "party-member.ranger",
-                characterDefinitionId:
-                    "character.ranger",
-                displayName: "Ranger",
-                classId: "class.ranger",
-                maximumHitPoints: 11) with
-            {
-                Ammunition = new AmmunitionState
-                {
-                    WeaponId = "weapon.longbow",
-                    AmmunitionItemId = "item.arrow",
-                    RemainingQuantity = 18
-                }
-            }
-        ];
+        return CampaignTestParty.CreateMembers();
     }
 
     private static PartyMemberState CreateMember(

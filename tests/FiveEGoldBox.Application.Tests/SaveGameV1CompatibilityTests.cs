@@ -8,13 +8,25 @@ namespace FiveEGoldBox.Application.Tests;
 public sealed class SaveGameV1CompatibilityTests
 {
     private const string OutpostFixture =
-        "v1-outpost-mission-not-accepted.json";
+        "v1-outpost-four-character-party.json";
 
     private const string ExplorationFixture =
-        "v1-exploration-upper-floor.json";
+        "v1-exploration-four-character-party.json";
 
     private const string ScenarioConclusionFixture =
-        "v1-scenario-conclusion-party-defeated.json";
+        "v1-scenario-conclusion-four-character-party.json";
+
+    /// Written when the campaign fielded Fighter, Barbarian and Ranger. Kept
+    /// rather than regenerated: they are the only evidence a V1 document
+    /// written by an older build still parses, and that is what they still
+    /// prove — they now get as far as session validation and are turned away
+    /// there, rather than failing to be read at all.
+    private static readonly string[] ThreeCharacterPartyFixtures =
+    [
+        "v1-outpost-mission-not-accepted.json",
+        "v1-exploration-upper-floor.json",
+        "v1-scenario-conclusion-party-defeated.json"
+    ];
 
     private const string MalformedFixture =
         "v1-malformed-negative-hit-points.json";
@@ -35,7 +47,7 @@ public sealed class SaveGameV1CompatibilityTests
             WatchtowerScenarioProgress.MissionNotAccepted,
             WatchtowerScenario.ProgressOf(loaded));
         Assert.Equal(424242, loaded.RandomSeed);
-        Assert.Equal(3, loaded.Party.Members.Count);
+        Assert.Equal(4, loaded.Party.Members.Count);
         Assert.Null(loaded.Exploration);
         Assert.Null(loaded.RegionalTravel);
         Assert.Null(loaded.ActiveEncounter);
@@ -130,6 +142,29 @@ public sealed class SaveGameV1CompatibilityTests
         Assert.Equal(first.RegionalTravel, second.RegionalTravel);
         Assert.Equal(first.Exploration, second.Exploration);
         Assert.Equal(first.ActiveEncounter, second.ActiveEncounter);
+    }
+
+    /// The roster changed, and a save naming a party this campaign no longer
+    /// fields is well-formed data describing an invalid session — the same
+    /// call PR #107 made for an unrecognised progress marker. That it fails
+    /// here rather than while being read is the part worth pinning: the V1
+    /// format itself is untouched.
+    [Fact]
+    public void Deserialize_AThreeCharacterPartySave_ParsesAndIsRejected()
+    {
+        Assert.All(
+            ThreeCharacterPartyFixtures,
+            fixtureFileName =>
+            {
+                ManualSaveLoadResult result =
+                    LoadRawFixture(fixtureFileName);
+
+                Assert.False(result.IsSuccess);
+                Assert.Null(result.Session);
+                Assert.Equal(
+                    ManualSaveLoadFailureReason.InvalidSessionState,
+                    result.FailureReason);
+            });
     }
 
     [Fact]
