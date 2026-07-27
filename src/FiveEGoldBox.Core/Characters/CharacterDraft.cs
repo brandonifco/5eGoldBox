@@ -29,6 +29,11 @@ public sealed record CharacterDraft
 
     public string? EquippedShieldId { get; init; }
 
+    /// Spells this character has ready to cast. A choice its player made,
+    /// so it belongs to the character rather than the class.
+    public IReadOnlyList<string> PreparedSpellIds { get; init; }
+        = Array.Empty<string>();
+
     public IReadOnlyList<string> EquippedWeaponIds { get; init; }
         = Array.Empty<string>();
 

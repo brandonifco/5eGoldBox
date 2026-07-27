@@ -94,8 +94,10 @@ internal static class PartyEncounterMapper
             {
                 ArmorClass = armorClass,
                 WeaponAttacks = snapshot.WeaponAttacks,
+                SpellAttacks = snapshot.SpellAttacks,
                 Contributions =
                     snapshot.Contributions,
+                Resources = ToCombatantResources(member),
                 SavingThrowBonuses =
                     snapshot.SavingThrowBonuses,
                 DamageResponses =
@@ -111,6 +113,23 @@ internal static class PartyEncounterMapper
             Setup = setup,
             InitiativeBonus = snapshot.InitiativeBonus
         };
+    }
+
+    /// What the character persistently holds becomes what the encounter may
+    /// spend, exactly as ammunition does — and what is left comes back out
+    /// afterwards. A caster who never reaches the battlefield with its slots
+    /// has spell slots only in the sense that a save file says so.
+    private static IReadOnlyList<CombatantResource> ToCombatantResources(
+        PartyMemberState member)
+    {
+        return member.Resources
+            .Select(resource => new CombatantResource
+            {
+                ResourceId = resource.ResourceId,
+                Remaining = resource.Remaining,
+                Maximum = resource.Maximum
+            })
+            .ToArray();
     }
 }
 
