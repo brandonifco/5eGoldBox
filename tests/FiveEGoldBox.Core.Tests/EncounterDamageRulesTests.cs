@@ -1,3 +1,5 @@
+using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -5,6 +7,234 @@ namespace FiveEGoldBox.Core.Tests;
 
 public sealed class EncounterDamageRulesTests
 {
+    [Fact]
+    public void Resolve_WhenConcentratingCombatantTakesDamageAndSaveSucceeds_KeepsEffectAndConcentration()
+    {
+        EncounterState state = CreateEncounter();
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.hero",
+            participant => WithConcentratingOnBless(participant));
+
+        EncounterDamageResult result =
+            EncounterDamageRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    targetCombatantId: "combatant.hero",
+                    damageAmount: 3)
+                with
+                {
+                    ConcentrationSavingThrowRoll = 20
+                });
+
+        Assert.NotNull(result.ConcentrationCheck);
+        Assert.False(
+            result.ConcentrationCheck!.BrokenByIncapacitation);
+        Assert.False(result.ConcentrationCheck.EffectDropped);
+        Assert.Equal(
+            D20TestOutcome.Success,
+            result.ConcentrationCheck.SavingThrow!
+                .SavingThrow!.Test.Outcome);
+
+        EncounterParticipantState resolvedHero =
+            FindParticipant(result.State, "combatant.hero");
+
+        Assert.Single(resolvedHero.ActiveEffects);
+        Assert.Equal(
+            "effect.bless",
+            resolvedHero.ConcentratingOnEffectId);
+    }
+
+    [Fact]
+    public void Resolve_WhenConcentratingCombatantTakesDamageAndSaveFails_DropsEffectAndClearsConcentration()
+    {
+        EncounterState state = CreateEncounter();
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.hero",
+            participant => WithConcentratingOnBless(participant));
+
+        EncounterDamageResult result =
+            EncounterDamageRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    targetCombatantId: "combatant.hero",
+                    damageAmount: 3)
+                with
+                {
+                    ConcentrationSavingThrowRoll = 1
+                });
+
+        Assert.False(
+            result.ConcentrationCheck!.BrokenByIncapacitation);
+        Assert.True(result.ConcentrationCheck.EffectDropped);
+
+        EncounterParticipantState resolvedHero =
+            FindParticipant(result.State, "combatant.hero");
+
+        Assert.Empty(resolvedHero.ActiveEffects);
+        Assert.Null(resolvedHero.ConcentratingOnEffectId);
+    }
+
+    [Fact]
+    public void Resolve_WhenDamageIncapacitatesAConcentratingCombatant_BreaksConcentrationWithoutARoll()
+    {
+        EncounterState state = CreateEncounter();
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.hero",
+            participant => WithConcentratingOnBless(participant));
+
+        EncounterDamageResult result =
+            EncounterDamageRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    targetCombatantId: "combatant.hero",
+                    damageAmount: 10));
+
+        Assert.NotNull(result.ConcentrationCheck);
+        Assert.True(
+            result.ConcentrationCheck!.BrokenByIncapacitation);
+        Assert.Null(result.ConcentrationCheck.SavingThrow);
+        Assert.True(result.ConcentrationCheck.EffectDropped);
+
+        EncounterParticipantState resolvedHero =
+            FindParticipant(result.State, "combatant.hero");
+
+        Assert.Empty(resolvedHero.ActiveEffects);
+        Assert.Null(resolvedHero.ConcentratingOnEffectId);
+    }
+
+    [Fact]
+    public void Resolve_WhenConcentratingCombatantTakesDamageWithoutASavingThrowRoll_Throws()
+    {
+        EncounterState state = CreateEncounter();
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.hero",
+            participant => WithConcentratingOnBless(participant));
+
+        Assert.Throws<ArgumentException>(() =>
+            EncounterDamageRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    targetCombatantId: "combatant.hero",
+                    damageAmount: 1)));
+    }
+
+    [Fact]
+    public void Resolve_WhenConcentratingCombatantFailsCheck_DropsEveryCopyOfTheEffect()
+    {
+        EncounterState state = CreateEncounter();
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.hero",
+            participant => WithConcentratingOnBless(participant));
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.enemy",
+            participant => participant with
+            {
+                ActiveEffects =
+                [
+                    CreateActiveEffect(
+                        "effect.bless",
+                        "combatant.hero",
+                        remainingRounds: 5)
+                ]
+            });
+
+        EncounterDamageResult result =
+            EncounterDamageRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    targetCombatantId: "combatant.hero",
+                    damageAmount: 3)
+                with
+                {
+                    ConcentrationSavingThrowRoll = 1
+                });
+
+        Assert.True(result.ConcentrationCheck!.EffectDropped);
+        Assert.Empty(
+            FindParticipant(result.State, "combatant.hero")
+                .ActiveEffects);
+        Assert.Empty(
+            FindParticipant(result.State, "combatant.enemy")
+                .ActiveEffects);
+    }
+
+    [Fact]
+    public void Resolve_WhenTargetHasASavingThrowContribution_IncludesItInTheCheck()
+    {
+        EncounterState state = CreateEncounter();
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.hero",
+            participant =>
+            {
+                EncounterParticipantState concentrating =
+                    WithConcentratingOnBless(participant);
+
+                return concentrating with
+                {
+                    CombatProfile =
+                        concentrating.CombatProfile with
+                        {
+                            Contributions =
+                            [
+                                new RollContributionDefinition
+                                {
+                                    Target =
+                                        RollContributionTarget
+                                            .SavingThrow,
+                                    Dice = new DamageDice
+                                    {
+                                        Count = 1,
+                                        Die = DieType.D4
+                                    }
+                                }
+                            ]
+                        }
+                };
+            });
+
+        EncounterDamageResult result =
+            EncounterDamageRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    targetCombatantId: "combatant.hero",
+                    damageAmount: 3)
+                with
+                {
+                    ConcentrationSavingThrowRoll = 6,
+                    ConcentrationSavingThrowContributionRolls = [4]
+                });
+
+        Assert.False(result.ConcentrationCheck!.EffectDropped);
+        Assert.Equal(
+            4,
+            result.ConcentrationCheck.SavingThrow!
+                .CombinedSavingThrowBonus);
+        Assert.Equal(
+            D20TestOutcome.Success,
+            result.ConcentrationCheck.SavingThrow
+                .SavingThrow!.Test.Outcome);
+    }
+
     [Fact]
     public void Resolve_WhenConsciousCombatantTakesDamage_AppliesDamageWithoutSpendingResources()
     {
@@ -1003,6 +1233,51 @@ public sealed class EncounterDamageRulesTests
         {
             Participants =
                 Array.AsReadOnly(participants)
+        };
+    }
+
+    private static EncounterParticipantState
+        WithConcentratingOnBless(
+            EncounterParticipantState participant)
+    {
+        return participant with
+        {
+            CombatProfile = participant.CombatProfile with
+            {
+                SavingThrowBonuses =
+                [
+                    new SavingThrowBonus
+                    {
+                        Ability = Ability.Constitution,
+                        AbilityModifier = 0,
+                        IsProficient = false,
+                        ProficiencyBonus = 0,
+                        TotalBonus = 0
+                    }
+                ]
+            },
+            ActiveEffects =
+            [
+                CreateActiveEffect(
+                    "effect.bless",
+                    participant.Combatant.CombatantId,
+                    remainingRounds: 5)
+            ],
+            ConcentratingOnEffectId = "effect.bless"
+        };
+    }
+
+    private static ActiveEffect CreateActiveEffect(
+        string effectId,
+        string sourceCombatantId,
+        int remainingRounds)
+    {
+        return new ActiveEffect
+        {
+            EffectId = effectId,
+            SourceCombatantId = sourceCombatantId,
+            RemainingRounds = remainingRounds,
+            RequiresConcentration = true
         };
     }
 

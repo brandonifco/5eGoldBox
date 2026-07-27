@@ -116,6 +116,7 @@ public static class EncounterWeaponAttackRules
         };
 
         CombatantDamageResult? targetDamage = null;
+        EncounterConcentrationCheckResult? concentrationCheck = null;
 
         EncounterState resolvedState;
 
@@ -142,11 +143,19 @@ public static class EncounterWeaponAttackRules
                             attackDamage.FinalDamage,
                         IsCriticalHit =
                             evaluation.AttackRoll.Outcome
-                                == AttackRollOutcome.CriticalHit
+                                == AttackRollOutcome.CriticalHit,
+                        ConcentrationSavingThrowRoll =
+                            command
+                                .ConcentrationSavingThrowRoll,
+                        ConcentrationSavingThrowContributionRolls =
+                            command
+                                .ConcentrationSavingThrowContributionRolls
                     });
 
             targetDamage =
                 damageResult.CombatantDamage;
+            concentrationCheck =
+                damageResult.ConcentrationCheck;
 
             resolvedState =
                 damageResult.State;
@@ -169,6 +178,7 @@ public static class EncounterWeaponAttackRules
             Cover = evaluation.Prerequisites.Cover,
             Attack = attack,
             TargetDamage = targetDamage,
+            ConcentrationCheck = concentrationCheck,
             State = resolvedState
         };
     }

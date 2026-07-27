@@ -38,4 +38,14 @@ public sealed record EncounterSpellCastCommand
     /// The spell's own dice, already rolled. The caller owns randomness, the
     /// same way it does for a weapon attack.
     public required IReadOnlyList<int> EffectRolls { get; init; }
+
+    /// The target's Constitution saving throw against losing concentration —
+    /// unrelated to SavingThrowRoll above, which is the spell's own save.
+    /// Required when the target has a ConcentratingOnEffectId and this cast
+    /// deals damage that leaves it conscious; ignored otherwise.
+    public int? ConcentrationSavingThrowRoll { get; init; }
+
+    /// The dice the target's own effects added to that saving throw.
+    public IReadOnlyList<int> ConcentrationSavingThrowContributionRolls
+    { get; init; } = Array.Empty<int>();
 }

@@ -146,6 +146,62 @@ public sealed class EncounterSpellEffectTests
     }
 
     [Fact]
+    public void Cast_DamagingAConcentratingTarget_SurfacesTheConcentrationCheck()
+    {
+        EncounterState state = SpellTestData.CreateEncounter();
+
+        EncounterParticipantState[] participants =
+            state.Participants.ToArray();
+        int enemyIndex = Array.FindIndex(
+            participants,
+            participant => participant.Combatant.CombatantId
+                == "combatant.enemy");
+
+        participants[enemyIndex] = participants[enemyIndex] with
+        {
+            ActiveEffects =
+            [
+                new ActiveEffect
+                {
+                    EffectId = SpellTestData.BlessEffect,
+                    SourceCombatantId = "combatant.enemy",
+                    RemainingRounds = 5,
+                    RequiresConcentration = true
+                }
+            ],
+            ConcentratingOnEffectId = SpellTestData.BlessEffect
+        };
+
+        state = state with
+        {
+            Participants = Array.AsReadOnly(participants)
+        };
+
+        EncounterSpellCastResult result =
+            EncounterSpellRules.Resolve(
+                state,
+                new EncounterSpellCastCommand
+                {
+                    ExpectedRevision = state.Revision,
+                    ActorCombatantId = "combatant.caster",
+                    TargetCombatantId = "combatant.enemy",
+                    SpellId = SpellTestData.FireBolt,
+                    FirstAttackRoll = 7,
+                    EffectRolls = [6],
+                    ConcentrationSavingThrowRoll = 1
+                });
+
+        Assert.NotNull(result.ConcentrationCheck);
+        Assert.True(result.ConcentrationCheck!.EffectDropped);
+        Assert.Empty(
+            Find(result.State, "combatant.enemy")
+                .ActiveEffects);
+        Assert.Null(
+            Find(result.State, "combatant.enemy")
+                .ConcentratingOnEffectId);
+    }
+
+    [Fact]
     public void Cast_ASpellWithNoEffect_LeavesNothingBehind()
     {
         EncounterState state = SpellTestData.CreateEncounter();

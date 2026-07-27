@@ -8,6 +8,67 @@ namespace FiveEGoldBox.Core.Tests;
 public sealed class EncounterWeaponAttackRulesTests
 {
     [Fact]
+    public void Resolve_WhenDamagedTargetIsConcentrating_SurfacesTheConcentrationCheck()
+    {
+        EncounterState state = CreateEncounter();
+
+        EncounterParticipantState enemy =
+            FindParticipant(state, "combatant.enemy");
+
+        state = ReplaceParticipant(
+            state,
+            enemy with
+            {
+                CombatProfile = enemy.CombatProfile with
+                {
+                    SavingThrowBonuses =
+                    [
+                        new SavingThrowBonus
+                        {
+                            Ability = Ability.Constitution,
+                            AbilityModifier = 0,
+                            IsProficient = false,
+                            ProficiencyBonus = 0,
+                            TotalBonus = 0
+                        }
+                    ]
+                },
+                ActiveEffects =
+                [
+                    new ActiveEffect
+                    {
+                        EffectId = "effect.bless",
+                        SourceCombatantId = "combatant.enemy",
+                        RemainingRounds = 5,
+                        RequiresConcentration = true
+                    }
+                ],
+                ConcentratingOnEffectId = "effect.bless"
+            });
+
+        EncounterWeaponAttackResult result =
+            EncounterWeaponAttackRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    firstAttackRoll: 12,
+                    damageRolls: [4])
+                with
+                {
+                    ConcentrationSavingThrowRoll = 1
+                });
+
+        Assert.NotNull(result.ConcentrationCheck);
+        Assert.True(result.ConcentrationCheck!.EffectDropped);
+        Assert.Empty(
+            FindParticipant(result.State, "combatant.enemy")
+                .ActiveEffects);
+        Assert.Null(
+            FindParticipant(result.State, "combatant.enemy")
+                .ConcentratingOnEffectId);
+    }
+
+    [Fact]
     public void Resolve_WhenAttackHits_AppliesDamageAndSpendsAction()
     {
         EncounterState state = CreateEncounter();
