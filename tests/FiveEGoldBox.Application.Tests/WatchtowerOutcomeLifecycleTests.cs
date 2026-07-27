@@ -428,17 +428,19 @@ public sealed class WatchtowerOutcomeLifecycleTests
     /// broke wholesale the moment the party changed — which it now has, to
     /// four characters with different weapons and a different initiative
     /// order. Bounded so a party that cannot win fails rather than hangs.
+    ///
+    /// Full-strength raiders, no nerf. This used to start them at 3 hit
+    /// points on the theory that the baseline party loses the straight damage
+    /// race against them — it does not. What actually made the fight
+    /// unwinnable was this driver: it only ever attacked or ended a turn, so
+    /// a party member with no target in reach simply passed forever while the
+    /// raiders (whose own AI does move) closed in and picked characters off.
+    /// Chasing the nearest reachable target, below, is the fix.
     private static ApplicationSessionState
         ExecuteBoundedPartyVictoryCombatScript(
             ApplicationSessionState source)
     {
-        // The raiders are tuned for the party this campaign used to field: a
-        // barbarian with a greataxe and a ranger with a longbow. Fighter,
-        // Rogue, Cleric and Wizard lose the straight damage race, so the
-        // raiders start hurt. That is a content-balance problem with the
-        // Watchtower rather than something this test is about — it is here to
-        // prove the victory lifecycle projects, persists and resumes.
-        ApplicationSessionState current = WeakenRaiders(source);
+        ApplicationSessionState current = source;
 
         for (int turn = 0; turn < 60; turn++)
         {
@@ -479,54 +481,42 @@ public sealed class WatchtowerOutcomeLifecycleTests
                         .FirstOrDefault()
                     : null;
 
-            current = target is null
-                ? ExecuteEndTurn(current, decision.ActiveCombatantId!)
-                : ExecuteAttack(
+            if (target is not null)
+            {
+                current = ExecuteAttack(
                     current,
                     decision.ActiveCombatantId!,
                     decision.WeaponAttack!.WeaponId,
                     target.TargetCombatantId);
+                continue;
+            }
+
+            string? unreachableTargetId = decision.WeaponAttack
+                ?.Targets
+                .Where(candidate => candidate.UnavailabilityReason
+                    == EncounterActionUnavailabilityReason.TargetOutOfRange)
+                .OrderBy(candidate => candidate.DistanceFeet)
+                .ThenBy(candidate => candidate.TargetCombatantId)
+                .FirstOrDefault()
+                ?.TargetCombatantId;
+            EncounterMovementResult? movement = unreachableTargetId is null
+                ? null
+                : WatchtowerCombatPathSearch.FindMovement(
+                    encounter,
+                    decision.ActiveCombatantId!,
+                    unreachableTargetId,
+                    decision.WeaponAttack!.WeaponId);
+
+            current = movement is null
+                ? ExecuteEndTurn(current, decision.ActiveCombatantId!)
+                : ExecuteMove(
+                    current,
+                    decision.ActiveCombatantId!,
+                    movement.Path);
         }
 
         Assert.Fail(
             "The party did not reach victory within the bounded turn count.");
-
-        return current;
-    }
-
-    private static ApplicationSessionState WeakenRaiders(
-        ApplicationSessionState source)
-    {
-        ApplicationSessionState current = source;
-
-        foreach (string raiderId in new[]
-        {
-            MeleeRaiderId,
-            RangedRaiderId
-        })
-        {
-            EncounterParticipantState raider =
-                WatchtowerCombatTestData.GetParticipant(
-                    current,
-                    raiderId);
-
-            current = WatchtowerCombatTestData.ReplaceParticipant(
-                current,
-                raider with
-                {
-                    Combatant = raider.Combatant with
-                    {
-                        Health = raider.Combatant.Health with
-                        {
-                            HitPoints = raider.Combatant.Health
-                                .HitPoints with
-                            {
-                                CurrentHitPoints = 3
-                            }
-                        }
-                    }
-                });
-        }
 
         return current;
     }
@@ -631,6 +621,33 @@ public sealed class WatchtowerOutcomeLifecycleTests
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.PlayerEndTurn,
             result.PrimaryStep.TurnAdvanceReason);
+
+        return result.State;
+    }
+
+    private static ApplicationSessionState ExecuteMove(
+        ApplicationSessionState source,
+        string expectedActorId,
+        IReadOnlyList<GridPosition> path)
+    {
+        WatchtowerCombatResolutionResult advanced =
+            WatchtowerCombatRules.AdvanceToDecision(source);
+        WatchtowerCombatDecision decision =
+            advanced.ResultingDecision;
+
+        AssertPlayerDecision(decision, expectedActorId);
+        Assert.True(decision.Movement!.IsAvailable);
+
+        WatchtowerCombatResolutionResult result =
+            WatchtowerCombatRules.Execute(
+                advanced.State,
+                new WatchtowerCombatMoveIntent
+                {
+                    ExpectedEncounterRevision =
+                        decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    Path = path
+                });
 
         return result.State;
     }
