@@ -36,13 +36,9 @@ internal static class WatchtowerCombatResultMapper
     private static CombatDecision ToCombatDecision(
         WatchtowerCombatDecision source)
     {
-        // The generic contract carries a weapon collection because a combatant
-        // may eventually wield more than one. The Watchtower pipeline authors a
-        // single fixed weapon, so the collection holds at most one entry.
-        CombatWeaponAttackOption[] weaponAttacks =
-            source.WeaponAttack is null
-                ? []
-                : [ToCombatWeaponAttackOption(source.WeaponAttack)];
+        CombatWeaponAttackOption[] weaponAttacks = source.WeaponAttacks
+            .Select(ToCombatWeaponAttackOption)
+            .ToArray();
 
         return new CombatDecision(
             ToCombatDecisionState(source.State),

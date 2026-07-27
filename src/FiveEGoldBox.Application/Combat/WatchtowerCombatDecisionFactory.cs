@@ -25,7 +25,7 @@ internal static class WatchtowerCombatDecisionFactory
                 ActiveCombatantId = null,
                 PendingDeathSavingThrowCombatantId = null,
                 Movement = null,
-                WeaponAttack = null,
+                WeaponAttacks = Array.Empty<WatchtowerCombatWeaponAttackOption>(),
                 EndTurn = null,
                 WinningSideId = encounter.WinningSideId
             };
@@ -55,32 +55,19 @@ internal static class WatchtowerCombatDecisionFactory
                 PendingDeathSavingThrowCombatantId =
                     encounter.PendingDeathSavingThrowCombatantId,
                 Movement = null,
-                WeaponAttack = null,
+                WeaponAttacks = Array.Empty<WatchtowerCombatWeaponAttackOption>(),
                 EndTurn = null,
                 WinningSideId = null
             };
         }
 
-        WeaponAttack weapon = GetFixedWeapon(activeParticipant);
-        WatchtowerCombatTargetOption[] targets =
-            encounter.Participants
-                .Where(participant => !string.Equals(
-                    participant.SideId,
-                    activeParticipant.SideId,
-                    StringComparison.Ordinal))
-                .Select(participant => CreateTargetOption(
+        WatchtowerCombatWeaponAttackOption[] weaponAttacks =
+            GetWeapons(activeParticipant)
+                .Select(weapon => CreateWeaponAttackOption(
                     encounter,
                     activeParticipant,
-                    participant,
                     weapon))
                 .ToArray();
-
-        bool hasLegalTarget = targets.Any(target => target.IsAvailable);
-        EncounterActionUnavailabilityReason weaponReason =
-            hasLegalTarget
-                ? EncounterActionUnavailabilityReason.None
-                : targets.FirstOrDefault()?.UnavailabilityReason
-                    ?? EncounterActionUnavailabilityReason.TargetNotParticipant;
 
         int movementRemaining =
             activeParticipant.TurnResources.MovementRemainingFeet;
@@ -106,13 +93,7 @@ internal static class WatchtowerCombatDecisionFactory
                     : EncounterActionUnavailabilityReason.MovementUnavailable,
                 DestinationOptions = movementDestinations
             },
-            WeaponAttack = new WatchtowerCombatWeaponAttackOption
-            {
-                WeaponId = weapon.WeaponId,
-                IsAvailable = hasLegalTarget,
-                UnavailabilityReason = weaponReason,
-                Targets = Array.AsReadOnly(targets)
-            },
+            WeaponAttacks = Array.AsReadOnly(weaponAttacks),
             EndTurn = new WatchtowerCombatEndTurnOption
             {
                 IsAvailable = true,
@@ -151,6 +132,45 @@ internal static class WatchtowerCombatDecisionFactory
         return Array.AsReadOnly(options);
     }
 
+    /// One weapon's whole offer: every opposing combatant it could name as a
+    /// target, and whether any of them is actually reachable right now.
+    /// Called once per weapon a combatant carries, so a character with a bow
+    /// and a dagger is offered both rather than whichever GetFixedWeapon used
+    /// to pick for it.
+    private static WatchtowerCombatWeaponAttackOption CreateWeaponAttackOption(
+        EncounterState encounter,
+        EncounterParticipantState actor,
+        WeaponAttack weapon)
+    {
+        WatchtowerCombatTargetOption[] targets =
+            encounter.Participants
+                .Where(participant => !string.Equals(
+                    participant.SideId,
+                    actor.SideId,
+                    StringComparison.Ordinal))
+                .Select(participant => CreateTargetOption(
+                    encounter,
+                    actor,
+                    participant,
+                    weapon))
+                .ToArray();
+
+        bool hasLegalTarget = targets.Any(target => target.IsAvailable);
+        EncounterActionUnavailabilityReason weaponReason =
+            hasLegalTarget
+                ? EncounterActionUnavailabilityReason.None
+                : targets.FirstOrDefault()?.UnavailabilityReason
+                    ?? EncounterActionUnavailabilityReason.TargetNotParticipant;
+
+        return new WatchtowerCombatWeaponAttackOption
+        {
+            WeaponId = weapon.WeaponId,
+            IsAvailable = hasLegalTarget,
+            UnavailabilityReason = weaponReason,
+            Targets = Array.AsReadOnly(targets)
+        };
+    }
+
     private static WatchtowerCombatTargetOption CreateTargetOption(
         EncounterState encounter,
         EncounterParticipantState actor,
@@ -185,6 +205,9 @@ internal static class WatchtowerCombatDecisionFactory
                 StringComparison.Ordinal));
     }
 
+    /// The one weapon an NPC fights with. Tactics never has to choose between
+    /// weapons — nothing authored carries more than one — so this stays exact
+    /// rather than falling back to "the first one" if that ever changes.
     internal static WeaponAttack GetFixedWeapon(
         EncounterParticipantState participant)
     {
@@ -195,5 +218,32 @@ internal static class WatchtowerCombatDecisionFactory
         }
 
         return participant.CombatProfile.WeaponAttacks[0];
+    }
+
+    /// Every weapon a combatant carries, for building the decision a player
+    /// actually gets to choose from.
+    internal static IReadOnlyList<WeaponAttack> GetWeapons(
+        EncounterParticipantState participant)
+    {
+        return participant.CombatProfile.WeaponAttacks;
+    }
+
+    /// One specific weapon, named by ID rather than assumed. For a caller
+    /// that already knows which weapon it means — a submitted attack, a
+    /// movement search toward a target with a particular weapon in mind — and
+    /// needs the mismatch caught rather than silently resolved against
+    /// whichever weapon happens to be first.
+    internal static WeaponAttack FindWeaponAttack(
+        EncounterParticipantState participant,
+        string weaponId)
+    {
+        return participant.CombatProfile.WeaponAttacks
+            .SingleOrDefault(weapon => string.Equals(
+                weapon.WeaponId,
+                weaponId,
+                StringComparison.Ordinal))
+            ?? throw new ArgumentException(
+                $"Weapon '{weaponId}' is not carried by combatant '{participant.Combatant.CombatantId}'.",
+                nameof(weaponId));
     }
 }

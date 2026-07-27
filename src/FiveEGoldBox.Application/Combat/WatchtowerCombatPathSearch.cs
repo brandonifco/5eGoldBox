@@ -33,18 +33,11 @@ internal static class WatchtowerCombatPathSearch
             WatchtowerCombatDecisionFactory.FindParticipant(
                 state,
                 targetCombatantId);
-        WeaponAttack weapon =
-            WatchtowerCombatDecisionFactory.GetFixedWeapon(actor);
 
-        if (!string.Equals(
-            weapon.WeaponId,
-            weaponId,
-            StringComparison.Ordinal))
-        {
-            throw new ArgumentException(
-                $"Weapon '{weaponId}' is not the authored weapon for actor '{actorCombatantId}'.",
-                nameof(weaponId));
-        }
+        // Confirms the actor actually carries this weapon and throws
+        // otherwise — the same guard the old fixed-weapon check gave, without
+        // assuming there is only one to compare against.
+        WatchtowerCombatDecisionFactory.FindWeaponAttack(actor, weaponId);
 
         List<EncounterMovementResult> attackEnabled = [];
         List<EncounterMovementResult> progress = [];

@@ -29,7 +29,7 @@ public sealed class WatchtowerCombatDecisionTests
             result.ResultingDecision.State);
         Assert.NotNull(result.ResultingDecision.ActiveCombatantId);
         Assert.NotNull(result.ResultingDecision.Movement);
-        Assert.NotNull(result.ResultingDecision.WeaponAttack);
+        Assert.NotEmpty(result.ResultingDecision.WeaponAttacks);
         Assert.NotNull(result.ResultingDecision.EndTurn);
         Assert.True(result.ResultingDecision.EndTurn.IsAvailable);
         Assert.Empty(result.AutomaticSteps);
@@ -146,7 +146,7 @@ public sealed class WatchtowerCombatDecisionTests
             }
         }
 
-        Assert.NotNull(decision.WeaponAttack);
+        Assert.NotEmpty(decision.WeaponAttacks);
         Assert.NotNull(decision.EndTurn);
         Assert.True(decision.EndTurn.IsAvailable);
     }
@@ -335,14 +335,17 @@ public sealed class WatchtowerCombatDecisionTests
             source,
             archer);
         WeaponAttack expectedWeapon = Assert.Single(
-            archer.CombatProfile.WeaponAttacks);
+            archer.CombatProfile.WeaponAttacks,
+            candidate => candidate.WeaponId == "weapon.shortbow");
 
         WatchtowerCombatDecision decision =
             WatchtowerCombatRules.AdvanceToDecision(source)
                 .ResultingDecision;
         WatchtowerCombatWeaponAttackOption attack =
-            Assert.IsType<WatchtowerCombatWeaponAttackOption>(
-                decision.WeaponAttack);
+            Assert.Single(
+                decision.WeaponAttacks,
+                candidate => candidate.WeaponId
+                    == expectedWeapon.WeaponId);
 
         Assert.Equal(expectedWeapon.WeaponId, attack.WeaponId);
         Assert.Equal(2, attack.Targets.Count);
@@ -444,18 +447,27 @@ public sealed class WatchtowerCombatDecisionTests
             archerId);
         EncounterParticipantState archer =
             WatchtowerCombatTestData.GetParticipant(source, archerId);
-        WeaponAttack weapon = Assert.Single(archer.CombatProfile.WeaponAttacks);
+        WeaponAttack bow = Assert.Single(
+            archer.CombatProfile.WeaponAttacks,
+            candidate => candidate.WeaponId == "weapon.shortbow");
+
+        // Empties only the bow. The archer's other weapon — a dagger, with no
+        // ammunition to run out of — must stay unaffected by this.
         archer = archer with
         {
             CombatProfile = archer.CombatProfile with
             {
-                WeaponAttacks =
-                [
-                    weapon with
-                    {
-                        AmmunitionQuantityAvailable = 0
-                    }
-                ]
+                WeaponAttacks = archer.CombatProfile.WeaponAttacks
+                    .Select(candidate => string.Equals(
+                        candidate.WeaponId,
+                        bow.WeaponId,
+                        StringComparison.Ordinal)
+                        ? candidate with
+                        {
+                            AmmunitionQuantityAvailable = 0
+                        }
+                        : candidate)
+                    .ToArray()
             }
         };
         source = WatchtowerCombatTestData.ReplaceParticipant(source, archer);
@@ -463,10 +475,13 @@ public sealed class WatchtowerCombatDecisionTests
         WatchtowerCombatDecision decision =
             WatchtowerCombatRules.AdvanceToDecision(source)
                 .ResultingDecision;
+        WatchtowerCombatWeaponAttackOption bowOption = Assert.Single(
+            decision.WeaponAttacks,
+            candidate => candidate.WeaponId == bow.WeaponId);
 
-        Assert.False(decision.WeaponAttack!.IsAvailable);
+        Assert.False(bowOption.IsAvailable);
         Assert.All(
-            decision.WeaponAttack.Targets,
+            bowOption.Targets,
             target => Assert.Equal(
                 EncounterActionUnavailabilityReason.AmmunitionUnavailable,
                 target.UnavailabilityReason));
@@ -487,7 +502,7 @@ public sealed class WatchtowerCombatDecisionTests
             WatchtowerCombatRules.AdvanceToDecision(activeSource)
                 .ResultingDecision;
         WatchtowerCombatTargetOption target =
-            activeDecision.WeaponAttack!.Targets.First(
+            activeDecision.WeaponAttacks.Single().Targets.First(
                 candidate => candidate.IsAvailable);
         EncounterState activeEncounter =
             WatchtowerCombatTestData.GetEncounter(activeSource);
@@ -541,7 +556,7 @@ public sealed class WatchtowerCombatDecisionTests
                     {
                         ExpectedEncounterRevision = completedBefore.Revision,
                         ActorCombatantId = activeDecision.ActiveCombatantId!,
-                        WeaponId = activeDecision.WeaponAttack.WeaponId,
+                        WeaponId = activeDecision.WeaponAttacks.Single().WeaponId,
                         TargetCombatantId = target.TargetCombatantId
                     });
             },

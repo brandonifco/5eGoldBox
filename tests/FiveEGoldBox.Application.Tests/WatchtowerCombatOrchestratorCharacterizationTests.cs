@@ -77,7 +77,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
             WatchtowerCombatRules.AdvanceToDecision(state).ResultingDecision;
         string actorId = Assert.IsType<string>(decision.ActiveCombatantId);
         WatchtowerCombatWeaponAttackOption weapon =
-            Assert.IsType<WatchtowerCombatWeaponAttackOption>(decision.WeaponAttack);
+            decision.WeaponAttacks.Single();
         WatchtowerCombatTargetOption target = Assert.Single(
             weapon.Targets,
             candidate => candidate.IsAvailable);
@@ -341,13 +341,37 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
     {
         string actorId = Assert.IsType<string>(decision.ActiveCombatantId);
 
-        WatchtowerCombatTargetOption? target =
-            aggressive
-                && decision.WeaponAttack is { IsAvailable: true } weapon
-                ? weapon.Targets.FirstOrDefault(candidate => candidate.IsAvailable)
-                : null;
+        // The first weapon (in the order the decision offers them) with an
+        // available target, and that weapon's first available target. A
+        // combatant carrying one weapon behaves exactly as before; a
+        // combatant carrying more than one tries them in the order equipped
+        // rather than picking whichever looks best.
+        (string WeaponId, WatchtowerCombatTargetOption Target)? attackChoice =
+            null;
 
-        if (target is not null && decision.WeaponAttack is not null)
+        if (aggressive)
+        {
+            foreach (WatchtowerCombatWeaponAttackOption weapon
+                in decision.WeaponAttacks)
+            {
+                if (!weapon.IsAvailable)
+                {
+                    continue;
+                }
+
+                WatchtowerCombatTargetOption? target =
+                    weapon.Targets.FirstOrDefault(
+                        candidate => candidate.IsAvailable);
+
+                if (target is not null)
+                {
+                    attackChoice = (weapon.WeaponId, target);
+                    break;
+                }
+            }
+        }
+
+        if (attackChoice is not null)
         {
             WatchtowerCombatResolutionResult attack =
                 WatchtowerCombatRules.Execute(
@@ -356,8 +380,9 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
                     {
                         ExpectedEncounterRevision = decision.EncounterRevision,
                         ActorCombatantId = actorId,
-                        WeaponId = decision.WeaponAttack.WeaponId,
-                        TargetCombatantId = target.TargetCombatantId
+                        WeaponId = attackChoice.Value.WeaponId,
+                        TargetCombatantId =
+                            attackChoice.Value.Target.TargetCombatantId
                     });
 
             AppendOperation(lines, "Attack", attack);

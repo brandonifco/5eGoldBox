@@ -89,10 +89,10 @@ public sealed class ConsoleSessionRunnerCombatTests
             $"Movement Unavailability Reason: {decision.Movement.UnavailabilityReason}",
             text);
         Assert.Contains(
-            $"Weapon ID: {decision.WeaponAttacks[0].WeaponId}",
+            $"Weapon 1 ID: {decision.WeaponAttacks[0].WeaponId}",
             text);
         Assert.Contains(
-            $"Weapon Attack Unavailability Reason: {decision.WeaponAttacks[0].UnavailabilityReason}",
+            $"Weapon 1 Attack Unavailability Reason: {decision.WeaponAttacks[0].UnavailabilityReason}",
             text);
         Assert.Contains(
             $"End Turn Unavailability Reason: {decision.EndTurn!.UnavailabilityReason}",
@@ -186,9 +186,8 @@ public sealed class ConsoleSessionRunnerCombatTests
                 attackReady.Session);
         WatchtowerCombatDecision decision =
             normalized.ResultingDecision;
-        WatchtowerCombatTargetOption target =
-            decision.WeaponAttack!.Targets
-                .First(candidate => candidate.IsAvailable);
+        (string WeaponId, WatchtowerCombatTargetOption Target) chosen =
+            GetAvailableWeaponTargetPairs(decision).First();
         WatchtowerCombatResolutionResult expected =
             WatchtowerCombatRules.Execute(
                 normalized.State,
@@ -198,12 +197,12 @@ public sealed class ConsoleSessionRunnerCombatTests
                         decision.EncounterRevision,
                     ActorCombatantId =
                         decision.ActiveCombatantId!,
-                    WeaponId = decision.WeaponAttack.WeaponId,
-                    TargetCombatantId = target.TargetCombatantId
+                    WeaponId = chosen.WeaponId,
+                    TargetCombatantId = chosen.Target.TargetCombatantId
                 });
         int selection = GetMovementCount(decision)
-            + GetAvailableTargets(decision).ToList()
-                .IndexOf(target)
+            + GetAvailableWeaponTargetPairs(decision).ToList()
+                .IndexOf(chosen)
             + 1;
 
         string output = RunSession(
@@ -215,10 +214,10 @@ public sealed class ConsoleSessionRunnerCombatTests
             "Submitted Intent Kind: WeaponAttack",
             output);
         Assert.Contains(
-            $"Weapon ID: {decision.WeaponAttack.WeaponId}",
+            $"Weapon ID: {chosen.WeaponId}",
             output);
         Assert.Contains(
-            $"Target ID: {target.TargetCombatantId}",
+            $"Target ID: {chosen.Target.TargetCombatantId}",
             output);
         Assert.Contains("Attack Roll Mode:", output);
         Assert.Contains("Attack Outcome:", output);
@@ -245,9 +244,8 @@ public sealed class ConsoleSessionRunnerCombatTests
                 attackReady.Session);
         WatchtowerCombatDecision decision =
             normalized.ResultingDecision;
-        WatchtowerCombatTargetOption target =
-            decision.WeaponAttack!.Targets
-                .First(candidate => candidate.IsAvailable);
+        (string WeaponId, WatchtowerCombatTargetOption Target) chosen =
+            GetAvailableWeaponTargetPairs(decision).First();
         WatchtowerCombatResolutionResult expected =
             WatchtowerCombatRules.Execute(
                 normalized.State,
@@ -257,12 +255,12 @@ public sealed class ConsoleSessionRunnerCombatTests
                         decision.EncounterRevision,
                     ActorCombatantId =
                         decision.ActiveCombatantId!,
-                    WeaponId = decision.WeaponAttack.WeaponId,
-                    TargetCombatantId = target.TargetCombatantId
+                    WeaponId = chosen.WeaponId,
+                    TargetCombatantId = chosen.Target.TargetCombatantId
                 });
         int selection = GetMovementCount(decision)
-            + GetAvailableTargets(decision).ToList()
-                .IndexOf(target)
+            + GetAvailableWeaponTargetPairs(decision).ToList()
+                .IndexOf(chosen)
             + 1;
 
         string output = RunSession(
@@ -857,23 +855,27 @@ public sealed class ConsoleSessionRunnerCombatTests
 
             IReadOnlyList<WatchtowerCombatMovementDestinationOption>
                 movements = GetAvailableMovements(decision);
-            IReadOnlyList<WatchtowerCombatTargetOption> targets =
-                GetAvailableTargets(decision);
+            IReadOnlyList<(string WeaponId, WatchtowerCombatTargetOption Target)>
+                pairs = GetAvailableWeaponTargetPairs(decision);
 
             if (strategy == CombatStrategy.AttackWhenPossible
-                && targets.Count > 0)
+                && pairs.Count > 0)
             {
-                WatchtowerCombatTargetOption target = targets
-                    .OrderBy(candidate =>
-                        GetParticipantCurrentHitPoints(
-                            state,
-                            candidate.TargetCombatantId))
-                    .ThenBy(candidate =>
-                        candidate.TargetCombatantId,
-                        StringComparer.Ordinal)
-                    .First();
-                int targetIndex = targets.ToList().IndexOf(target);
-                int selection = movements.Count + targetIndex + 1;
+                (string WeaponId, WatchtowerCombatTargetOption Target)
+                    chosen = pairs
+                        .OrderBy(pair =>
+                            GetParticipantCurrentHitPoints(
+                                state,
+                                pair.Target.TargetCombatantId))
+                        .ThenBy(pair =>
+                            pair.Target.TargetCombatantId,
+                            StringComparer.Ordinal)
+                        .ThenBy(pair =>
+                            pair.WeaponId,
+                            StringComparer.Ordinal)
+                        .First();
+                int pairIndex = pairs.ToList().IndexOf(chosen);
+                int selection = movements.Count + pairIndex + 1;
                 selections.Add(selection.ToString());
                 result = WatchtowerCombatRules.Execute(
                     state,
@@ -883,10 +885,9 @@ public sealed class ConsoleSessionRunnerCombatTests
                             decision.EncounterRevision,
                         ActorCombatantId =
                             decision.ActiveCombatantId!,
-                        WeaponId =
-                            decision.WeaponAttack!.WeaponId,
+                        WeaponId = chosen.WeaponId,
                         TargetCombatantId =
-                            target.TargetCombatantId
+                            chosen.Target.TargetCombatantId
                     });
             }
             else if (strategy
@@ -943,7 +944,8 @@ public sealed class ConsoleSessionRunnerCombatTests
                 movements)
     {
         WatchtowerCombatTargetOption target =
-            decision.WeaponAttack!.Targets
+            decision.WeaponAttacks
+                .SelectMany(weapon => weapon.Targets)
                 .OrderBy(candidate =>
                     candidate.DistanceFeet ?? int.MaxValue)
                 .ThenBy(candidate =>
@@ -996,8 +998,9 @@ public sealed class ConsoleSessionRunnerCombatTests
                         Path = movement.Path
                     });
 
-            if (moved.ResultingDecision.WeaponAttack!
-                .Targets.Any(target => target.IsAvailable))
+            if (moved.ResultingDecision.WeaponAttacks
+                .Any(weapon => weapon.Targets
+                    .Any(target => target.IsAvailable)))
             {
                 return new AttackReadyState(moved.State);
             }
@@ -1019,11 +1022,11 @@ public sealed class ConsoleSessionRunnerCombatTests
                 $"Move to ({movement.Destination.X}, {movement.Destination.Y}) - {movement.MovementSpentFeet} ft");
         }
 
-        foreach (WatchtowerCombatTargetOption target
-            in GetAvailableTargets(decision))
+        foreach ((string weaponId, WatchtowerCombatTargetOption target)
+            in GetAvailableWeaponTargetPairs(decision))
         {
             string label =
-                $"Attack {target.TargetCombatantId} with {decision.WeaponAttack!.WeaponId}";
+                $"Attack {target.TargetCombatantId} with {weaponId}";
 
             if (target.DistanceFeet is not null)
             {
@@ -1059,15 +1062,25 @@ public sealed class ConsoleSessionRunnerCombatTests
             : Array.Empty<WatchtowerCombatMovementDestinationOption>();
     }
 
+    private static IReadOnlyList<(string WeaponId, WatchtowerCombatTargetOption Target)>
+        GetAvailableWeaponTargetPairs(
+            WatchtowerCombatDecision decision)
+    {
+        return decision.WeaponAttacks
+            .Where(weapon => weapon.IsAvailable)
+            .SelectMany(weapon => weapon.Targets
+                .Where(target => target.IsAvailable)
+                .Select(target => (weapon.WeaponId, Target: target)))
+            .ToArray();
+    }
+
     private static IReadOnlyList<WatchtowerCombatTargetOption>
         GetAvailableTargets(
             WatchtowerCombatDecision decision)
     {
-        return decision.WeaponAttack!.IsAvailable
-            ? decision.WeaponAttack.Targets
-                .Where(target => target.IsAvailable)
-                .ToArray()
-            : Array.Empty<WatchtowerCombatTargetOption>();
+        return GetAvailableWeaponTargetPairs(decision)
+            .Select(pair => pair.Target)
+            .ToArray();
     }
 
     private static int GetMovementCount(

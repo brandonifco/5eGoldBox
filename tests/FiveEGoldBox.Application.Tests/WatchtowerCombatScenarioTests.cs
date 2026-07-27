@@ -53,7 +53,8 @@ public sealed class WatchtowerCombatScenarioTests
                 WatchtowerCombatTestData.GetParticipant(
                     completed,
                     "party-member.rogue")
-                .CombatProfile.WeaponAttacks)
+                .CombatProfile.WeaponAttacks,
+                candidate => candidate.WeaponId == "weapon.shortbow")
             .AmmunitionQuantityAvailable!.Value
                 < persistentParty.Members[CampaignTestParty.ArcherIndex()]
                     .Ammunition!.RemainingQuantity);
@@ -177,20 +178,24 @@ public sealed class WatchtowerCombatScenarioTests
             WatchtowerCombatDecision decision =
                 advanced.ResultingDecision;
 
-            if (attackWhenPossible
-                && decision.WeaponAttack!.IsAvailable)
-            {
-                WatchtowerCombatTargetOption target =
-                    decision.WeaponAttack.Targets
-                        .Where(candidate => candidate.IsAvailable)
-                        .OrderBy(candidate =>
-                            WatchtowerCombatTestData.GetParticipant(
-                                state,
-                                candidate.TargetCombatantId)
-                            .Combatant.Health.HitPoints.CurrentHitPoints)
-                        .ThenBy(candidate => candidate.TargetCombatantId)
-                        .First();
+            // Every carried weapon offers its own targets, so the driver
+            // picks across all of them rather than assuming one — an archer
+            // with a bow and a dagger is exactly the case this has to cover.
+            var attacks = decision.WeaponAttacks
+                .Where(weapon => weapon.IsAvailable)
+                .SelectMany(weapon => weapon.Targets
+                    .Where(candidate => candidate.IsAvailable)
+                    .Select(candidate => (weapon.WeaponId, Target: candidate)))
+                .OrderBy(candidate =>
+                    WatchtowerCombatTestData.GetParticipant(
+                        state,
+                        candidate.Target.TargetCombatantId)
+                    .Combatant.Health.HitPoints.CurrentHitPoints)
+                .ThenBy(candidate => candidate.Target.TargetCombatantId)
+                .ToArray();
 
+            if (attackWhenPossible && attacks.Length > 0)
+            {
                 WatchtowerCombatResolutionResult attacked =
                     WatchtowerCombatRules.Execute(
                         state,
@@ -198,19 +203,30 @@ public sealed class WatchtowerCombatScenarioTests
                         {
                             ExpectedEncounterRevision = decision.EncounterRevision,
                             ActorCombatantId = decision.ActiveCombatantId!,
-                            WeaponId = decision.WeaponAttack.WeaponId,
-                            TargetCombatantId = target.TargetCombatantId
+                            WeaponId = attacks[0].WeaponId,
+                            TargetCombatantId =
+                                attacks[0].Target.TargetCombatantId
                         });
                 metrics.Record(attacked);
                 state = attacked.State;
                 continue;
             }
 
+            var outOfRange = decision.WeaponAttacks
+                .SelectMany(weapon => weapon.Targets
+                    .Where(candidate => candidate.UnavailabilityReason
+                        == EncounterActionUnavailabilityReason
+                            .TargetOutOfRange)
+                    .Select(candidate =>
+                        (weapon.WeaponId, candidate.TargetCombatantId,
+                            candidate.DistanceFeet)))
+                .OrderBy(candidate => candidate.DistanceFeet)
+                .ThenBy(candidate => candidate.TargetCombatantId)
+                .ToArray();
+
             if (attackWhenPossible
                 && decision.Movement!.IsAvailable
-                && decision.WeaponAttack!.Targets.Any(target =>
-                    target.UnavailabilityReason
-                        == EncounterActionUnavailabilityReason.TargetOutOfRange))
+                && outOfRange.Length > 0)
             {
                 EncounterState encounter =
                     WatchtowerCombatTestData.GetEncounter(state);
@@ -218,19 +234,12 @@ public sealed class WatchtowerCombatScenarioTests
                     WatchtowerCombatTestData.GetParticipant(
                         state,
                         decision.ActiveCombatantId!);
-                string targetId = decision.WeaponAttack.Targets
-                    .Where(target => target.UnavailabilityReason
-                        == EncounterActionUnavailabilityReason.TargetOutOfRange)
-                    .OrderBy(target => target.DistanceFeet)
-                    .ThenBy(target => target.TargetCombatantId)
-                    .First()
-                    .TargetCombatantId;
                 EncounterMovementResult? movement =
                     WatchtowerCombatPathSearch.FindMovement(
                         encounter,
                         actor.Combatant.CombatantId,
-                        targetId,
-                        decision.WeaponAttack.WeaponId);
+                        outOfRange[0].TargetCombatantId,
+                        outOfRange[0].WeaponId);
 
                 if (movement is not null)
                 {

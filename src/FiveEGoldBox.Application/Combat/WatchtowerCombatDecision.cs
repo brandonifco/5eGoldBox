@@ -12,7 +12,11 @@ internal sealed record WatchtowerCombatDecision
 
     public WatchtowerCombatMovementOption? Movement { get; init; }
 
-    public WatchtowerCombatWeaponAttackOption? WeaponAttack { get; init; }
+    /// One entry per weapon the active combatant carries. A party member with
+    /// a bow and a dagger sees both; every NPC in current content has exactly
+    /// one, so this is a single-element list for them.
+    public IReadOnlyList<WatchtowerCombatWeaponAttackOption> WeaponAttacks
+    { get; init; } = Array.Empty<WatchtowerCombatWeaponAttackOption>();
 
     public WatchtowerCombatEndTurnOption? EndTurn { get; init; }
 

@@ -308,8 +308,8 @@ public sealed class WatchtowerEncounterConstructionTests
                 archer.PartyMemberId);
         WeaponAttack weapon =
             Assert.Single(
-                participant.CombatProfile
-                    .WeaponAttacks);
+                participant.CombatProfile.WeaponAttacks,
+                candidate => candidate.WeaponId == "weapon.shortbow");
 
         Assert.Equal("weapon.shortbow", weapon.WeaponId);
         Assert.Equal("item.arrow", weapon.AmmunitionItemId);

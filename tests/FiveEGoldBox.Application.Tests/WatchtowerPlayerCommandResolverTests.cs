@@ -78,8 +78,7 @@ public sealed class WatchtowerPlayerCommandResolverTests
     {
         Fixture fixture = Fixture.Create();
         WatchtowerCombatWeaponAttackOption weapon =
-            Assert.IsType<WatchtowerCombatWeaponAttackOption>(
-                fixture.Decision.WeaponAttack);
+            fixture.Decision.WeaponAttacks.Single();
         WatchtowerCombatTargetOption target = Assert.Single(
             weapon.Targets,
             candidate => candidate.IsAvailable);
