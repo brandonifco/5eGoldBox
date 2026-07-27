@@ -326,6 +326,73 @@ internal static partial class CampaignRulesetContent
                     CampaignRulesetContent
                         .RangerAmmunitionItemId
             },
+            // The rest of the baseline party's gear. A shortbow rather
+            // than a longbow because 5e makes it a simple weapon and the
+            // longbow martial — and because it is the first ammunition
+            // weapon in the ruleset that no ranger owns, which is what
+            // the generic ammunition projection has been waiting for.
+            new WeaponDefinition
+            {
+                Id = RogueWeaponId,
+                Name = "Shortbow",
+                Category = WeaponCategory.Simple,
+                AttackKind = WeaponAttackKind.Ranged,
+                Damage = new DamageDice
+                {
+                    Count = 1,
+                    Die = DieType.D6
+                },
+                DamageType = "damage.piercing",
+                Properties =
+                [
+                    RuleIds.WeaponProperties
+                        .Ammunition,
+                    RuleIds.WeaponProperties
+                        .TwoHanded
+                ],
+                NormalRangeFeet = 80,
+                LongRangeFeet = 320,
+                AmmunitionItemId =
+                    CampaignRulesetContent
+                        .RangerAmmunitionItemId
+            },
+
+            // Finesse, so a rogue's Sneak Attack reaches it in melee as
+            // well as at range.
+            new WeaponDefinition
+            {
+                Id = RogueSidearmWeaponId,
+                Name = "Dagger",
+                Category = WeaponCategory.Simple,
+                AttackKind = WeaponAttackKind.Melee,
+                Damage = new DamageDice
+                {
+                    Count = 1,
+                    Die = DieType.D4
+                },
+                DamageType = "damage.piercing",
+                Properties =
+                [
+                    RuleIds.WeaponProperties.Finesse
+                ],
+                ReachFeet = 5
+            },
+
+            new WeaponDefinition
+            {
+                Id = ClericWeaponId,
+                Name = "Mace",
+                Category = WeaponCategory.Simple,
+                AttackKind = WeaponAttackKind.Melee,
+                Damage = new DamageDice
+                {
+                    Count = 1,
+                    Die = DieType.D6
+                },
+                DamageType = "damage.bludgeoning",
+                ReachFeet = 5
+            },
+
             // The raiders' gear. It lives in the ruleset like everyone
             // else's now that the scenario's combatants resolve their
             // weapons from it rather than carrying hand-built profiles.

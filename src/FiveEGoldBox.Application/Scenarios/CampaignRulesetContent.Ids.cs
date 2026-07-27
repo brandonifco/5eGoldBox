@@ -44,4 +44,13 @@ internal static partial class CampaignRulesetContent
     internal const string RangerAmmunitionItemId =
         "item.arrow";
 
+    internal const string RogueWeaponId =
+        "weapon.shortbow";
+
+    internal const string RogueSidearmWeaponId =
+        "weapon.dagger";
+
+    internal const string ClericWeaponId =
+        "weapon.mace";
+
 }
