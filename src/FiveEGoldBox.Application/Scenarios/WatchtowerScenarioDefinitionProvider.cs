@@ -30,8 +30,8 @@ internal static class WatchtowerScenarioDefinitionProvider
             Progress = CreateProgress(),
             PartyRequirement = new PartyRequirementDefinition
             {
-                MinimumMembers = 3,
-                MaximumMembers = 3,
+                MinimumMembers = 4,
+                MaximumMembers = 4,
                 MinimumConsciousMembers = 1
             },
             Locations =

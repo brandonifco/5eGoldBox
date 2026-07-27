@@ -277,34 +277,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
         CreateMissionNotAcceptedSession()
     {
         PartyMemberState[] members =
-        [
-            CreateMember(
-                "party-member.fighter",
-                "character.fighter",
-                "Fighter",
-                "class.fighter",
-                12),
-            CreateMember(
-                "party-member.barbarian",
-                "character.barbarian",
-                "Barbarian",
-                "class.barbarian",
-                14),
-            CreateMember(
-                "party-member.ranger",
-                "character.ranger",
-                "Ranger",
-                "class.ranger",
-                11) with
-            {
-                Ammunition = new AmmunitionState
-                {
-                    WeaponId = "weapon.longbow",
-                    AmmunitionItemId = "item.arrow",
-                    RemainingQuantity = 7
-                }
-            }
-        ];
+            CampaignTestParty.CreateMembers();
 
         return ApplicationSessionRules.CreateNew(
             scenarioId: "scenario.watchtower",

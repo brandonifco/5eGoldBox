@@ -16,7 +16,7 @@ public sealed class CombatOutcomePersistenceTests
             CombatOutcomeRules.Finalize(
                 WatchtowerCombatOutcomeTestData
                     .CreatePartyVictorySession(
-                        rangerAmmunition: 2))
+                        archerAmmunition: 2))
                 .State;
 
         ApplicationSessionState loaded = RoundTrip(source);
@@ -39,7 +39,7 @@ public sealed class CombatOutcomePersistenceTests
             CombatOutcomeRules.Finalize(
                 WatchtowerCombatOutcomeTestData
                     .CreateRaiderVictorySession(
-                        rangerAmmunition: 1))
+                        archerAmmunition: 1))
                 .State;
 
         ApplicationSessionState loaded = RoundTrip(source);

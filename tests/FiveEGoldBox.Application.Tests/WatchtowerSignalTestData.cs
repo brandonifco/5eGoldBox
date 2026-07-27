@@ -1,3 +1,4 @@
+using FiveEGoldBox.Application.Campaigns;
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
@@ -62,7 +63,8 @@ internal static class WatchtowerSignalTestData
             {
                 HitPoints = new HitPointState
                 {
-                    MaximumHitPoints = 12,
+                    MaximumHitPoints = members[0]
+                        .Health.HitPoints.MaximumHitPoints,
                     CurrentHitPoints = 0,
                     TemporaryHitPoints = 0
                 },
@@ -82,7 +84,8 @@ internal static class WatchtowerSignalTestData
             {
                 HitPoints = new HitPointState
                 {
-                    MaximumHitPoints = 14,
+                    MaximumHitPoints = members[1]
+                        .Health.HitPoints.MaximumHitPoints,
                     CurrentHitPoints = 0,
                     TemporaryHitPoints = 0
                 },
@@ -149,19 +152,19 @@ internal static class WatchtowerSignalTestData
     /// Derived from the authored ruleset rather than rebuilt, so content added
     /// to the scenario cannot go missing here.
     internal static ValidatedRuleset CreateRuleset(
-        bool includeLongbow = true)
+        bool includeBow = true)
     {
         RulesetDefinition definition =
             CampaignRulesetContent.CreateRulesetDefinition();
 
-        if (!includeLongbow)
+        if (!includeBow)
         {
             definition = definition with
             {
                 Weapons = definition.Weapons
                     .Where(weapon => !string.Equals(
                         weapon.Id,
-                        CampaignRulesetContent.RangerWeaponId,
+                        CampaignRulesetContent.RogueWeaponId,
                         StringComparison.Ordinal))
                     .ToArray()
             };
@@ -170,72 +173,52 @@ internal static class WatchtowerSignalTestData
         return CampaignRulesetContent.Load(definition);
     }
 
+    /// The draft the mapper should have produced for this member, built from
+    /// the roster entry rather than from a copy of its numbers. Restating each
+    /// character's scores here meant every roster change broke this file; what
+    /// the test is actually pinning is the mapping, not the build.
     internal static CharacterDraft CreateExpectedDraft(
         PartyMemberState member)
     {
-        return member.CharacterDefinitionId switch
+        CampaignCharacterDefinition character =
+            CampaignRegistry.Resolve(
+                FrontierCampaignContent.CampaignId)
+                .Roster
+                .Single(candidate => string.Equals(
+                    candidate.CharacterDefinitionId,
+                    member.CharacterDefinitionId,
+                    StringComparison.Ordinal));
+
+        return new CharacterDraft
         {
-            "character.fighter" => CreateExpectedDraft(
-                member,
-                "class.fighter",
-                "weapon.longsword",
-                new Dictionary<Ability, int>
-                {
-                    [Ability.Strength] = 15,
-                    [Ability.Dexterity] = 11,
-                    [Ability.Constitution] = 13,
-                    [Ability.Intelligence] = 7,
-                    [Ability.Wisdom] = 9,
-                    [Ability.Charisma] = 12
-                },
-                ["skill.athletics", "skill.perception"],
-                Array.Empty<InventoryItemDraft>()),
-            "character.barbarian" => CreateExpectedDraft(
-                member,
-                "class.barbarian",
-                "weapon.greataxe",
-                new Dictionary<Ability, int>
-                {
-                    [Ability.Strength] = 15,
-                    [Ability.Dexterity] = 13,
-                    [Ability.Constitution] = 13,
-                    [Ability.Intelligence] = 7,
-                    [Ability.Wisdom] = 11,
-                    [Ability.Charisma] = 9
-                },
-                ["skill.athletics", "skill.survival"],
-                Array.Empty<InventoryItemDraft>()),
-            "character.ranger" => CreateExpectedDraft(
-                member,
-                "class.ranger",
-                "weapon.longbow",
-                new Dictionary<Ability, int>
-                {
-                    [Ability.Strength] = 11,
-                    [Ability.Dexterity] = 15,
-                    [Ability.Constitution] = 11,
-                    [Ability.Intelligence] = 9,
-                    [Ability.Wisdom] = 15,
-                    [Ability.Charisma] = 7
-                },
-                [
-                    "skill.perception",
-                    "skill.stealth",
-                    "skill.survival"
-                ],
-                member.Ammunition!.RemainingQuantity == 0
+            Name = member.DisplayName,
+            Level = 1,
+            RaceId = character.RaceId,
+            ClassId = character.ClassId,
+            BackgroundId = character.BackgroundId,
+            AbilityScoreGenerationMethod =
+                AbilityScoreGenerationMethod.Manual,
+            BaseAbilityScores = character.AbilityScores,
+            SelectedSkillIds = character.SelectedSkillIds,
+            EquippedWeaponIds = character.EquippedWeaponIds,
+            PreparedSpellIds = character.PreparedSpellIds,
+
+            // Ammunition is carried as inventory, and what is left is play
+            // rather than what the campaign started them with.
+            InventoryItems =
+                member.Ammunition is null
+                    || member.Ammunition.RemainingQuantity == 0
                     ? Array.Empty<InventoryItemDraft>()
                     :
                     [
                         new InventoryItemDraft
                         {
-                            ItemId = "item.arrow",
+                            ItemId = member.Ammunition
+                                .AmmunitionItemId,
                             Quantity = member.Ammunition
                                 .RemainingQuantity
                         }
-                    ]),
-            _ => throw new InvalidOperationException(
-                "Unsupported test character definition.")
+                    ]
         };
     }
 
@@ -256,58 +239,19 @@ internal static class WatchtowerSignalTestData
         return current;
     }
 
+    /// Built from the campaign rather than restated here. This used to be
+    /// fifty lines of literals duplicating the roster, which is why every
+    /// roster change broke it — the party a scenario starts with is the
+    /// campaign's answer, not this file's.
     private static ApplicationSessionState
         CreateMissionNotAcceptedSession()
     {
-        PartyMemberState[] members =
-        [
-            CreateMember(
-                "party-member.fighter",
-                "character.fighter",
-                "Fighter",
-                "class.fighter",
-                maximumHitPoints: 12) with
-            {
-                Health = CombatantHealthRules.Create(12) with
-                {
-                    HitPoints = new HitPointState
-                    {
-                        MaximumHitPoints = 12,
-                        CurrentHitPoints = 8,
-                        TemporaryHitPoints = 2
-                    }
-                }
-            },
-            CreateMember(
-                "party-member.barbarian",
-                "character.barbarian",
-                "Barbarian",
-                "class.barbarian",
-                maximumHitPoints: 14),
-            CreateMember(
-                "party-member.ranger",
-                "character.ranger",
-                "Ranger",
-                "class.ranger",
-                maximumHitPoints: 11) with
-            {
-                Ammunition = new AmmunitionState
-                {
-                    WeaponId = "weapon.longbow",
-                    AmmunitionItemId = "item.arrow",
-                    RemainingQuantity = 7
-                }
-            }
-        ];
-
         return ApplicationSessionRules.CreateNew(
             scenarioId: "scenario.watchtower",
             currentLocationId: "location.outpost",
-            party: new PartyState
-            {
-                PartyId = "party.player",
-                Members = members
-            },
+            party: CampaignPartyFactory.CreateStartingParty(
+                CampaignRegistry.Resolve(
+                    FrontierCampaignContent.CampaignId)),
             randomSeed: 8675309);
     }
 

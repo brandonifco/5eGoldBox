@@ -44,7 +44,8 @@ internal static class WatchtowerSignalEncounter
         [
             new GridPosition(1, 1),
             new GridPosition(1, 2),
-            new GridPosition(0, 2)
+            new GridPosition(0, 2),
+            new GridPosition(0, 1)
         ];
 
     internal static readonly GridPosition

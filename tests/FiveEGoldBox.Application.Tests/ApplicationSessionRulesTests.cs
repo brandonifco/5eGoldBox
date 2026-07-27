@@ -50,8 +50,9 @@ public sealed class ApplicationSessionRulesTests
             new[]
             {
                 "party-member.fighter",
-                "party-member.barbarian",
-                "party-member.ranger"
+                "party-member.rogue",
+                "party-member.cleric",
+                "party-member.wizard"
             },
             state.Party.Members.Select(
                 member => member.PartyMemberId));
@@ -85,22 +86,23 @@ public sealed class ApplicationSessionRulesTests
     }
 
     [Fact]
-    public void CreateNew_PreservesRangerAmmunition()
+    public void CreateNew_PreservesTheArchersAmmunition()
     {
         ApplicationSessionState state = CreateValidSession();
 
-        AmmunitionState? ammunition =
-            state.Party.Members[2].Ammunition;
+        AmmunitionState? ammunition = state.Party
+            .Members[CampaignTestParty.ArcherIndex()]
+            .Ammunition;
 
         Assert.NotNull(ammunition);
         Assert.Equal(
-            "weapon.longbow",
+            "weapon.shortbow",
             ammunition.WeaponId);
         Assert.Equal(
             "item.arrow",
             ammunition.AmmunitionItemId);
         Assert.Equal(
-            18,
+            12,
             ammunition.RemainingQuantity);
     }
 
@@ -294,8 +296,7 @@ public sealed class ApplicationSessionRulesTests
             CreateValidMembers();
         members[0] = members[0] with
         {
-            ClassId = "class.ranger",
-            Ammunition = CreateAmmunition()
+            ClassId = "class.rogue"
         };
 
         Assert.Throws<ArgumentException>(() =>
@@ -303,11 +304,11 @@ public sealed class ApplicationSessionRulesTests
     }
 
     [Fact]
-    public void CreateNew_WithoutBarbarian_Throws()
+    public void CreateNew_WithAMemberMiscastAsAnotherClass_Throws()
     {
         PartyMemberState[] members =
             CreateValidMembers();
-        members[1] = members[1] with
+        members[2] = members[2] with
         {
             ClassId = "class.fighter"
         };
@@ -317,15 +318,15 @@ public sealed class ApplicationSessionRulesTests
     }
 
     [Fact]
-    public void CreateNew_WithoutRanger_Throws()
+    public void CreateNew_WithTheArcherMiscast_Throws()
     {
         PartyMemberState[] members =
             CreateValidMembers();
-        members[2] = members[2] with
-        {
-            ClassId = "class.barbarian",
-            Ammunition = null
-        };
+        members[CampaignTestParty.ArcherIndex()] =
+            members[CampaignTestParty.ArcherIndex()] with
+            {
+                ClassId = "class.cleric"
+            };
 
         Assert.Throws<ArgumentException>(() =>
             CreateSession(CreateParty(members)));
@@ -719,21 +720,22 @@ public sealed class ApplicationSessionRulesTests
     }
 
     [Fact]
-    public void CreateNew_WithoutRangerAmmunition_Throws()
+    public void CreateNew_WithoutTheArchersAmmunition_Throws()
     {
         PartyMemberState[] members =
             CreateValidMembers();
-        members[2] = members[2] with
-        {
-            Ammunition = null
-        };
+        members[CampaignTestParty.ArcherIndex()] =
+            members[CampaignTestParty.ArcherIndex()] with
+            {
+                Ammunition = null
+            };
 
         Assert.Throws<ArgumentException>(() =>
             CreateSession(CreateParty(members)));
     }
 
     [Fact]
-    public void CreateNew_WithAmmunitionOnNonRanger_Throws()
+    public void CreateNew_WithAmmunitionOnSomebodyWhoCarriesNone_Throws()
     {
         PartyMemberState[] members =
             CreateValidMembers();
@@ -877,10 +879,11 @@ public sealed class ApplicationSessionRulesTests
     {
         PartyMemberState[] members =
             CreateValidMembers();
+        int archer = CampaignTestParty.ArcherIndex();
         AmmunitionState ammunition =
             Assert.IsType<AmmunitionState>(
-                members[2].Ammunition);
-        members[2] = members[2] with
+                members[archer].Ammunition);
+        members[archer] = members[archer] with
         {
             Ammunition = changeAmmunition(ammunition)
         };
@@ -931,39 +934,17 @@ public sealed class ApplicationSessionRulesTests
                 }
             };
 
-        return
-        [
-            CreateMember(
-                partyMemberId:
-                    "party-member.fighter",
-                characterDefinitionId:
-                    "character.fighter",
-                displayName: "Fighter",
-                classId: "class.fighter",
-                maximumHitPoints: 12) with
-            {
-                Health = fighterHealth
-            },
-            CreateMember(
-                partyMemberId:
-                    "party-member.barbarian",
-                characterDefinitionId:
-                    "character.barbarian",
-                displayName: "Barbarian",
-                classId: "class.barbarian",
-                maximumHitPoints: 14),
-            CreateMember(
-                partyMemberId:
-                    "party-member.ranger",
-                characterDefinitionId:
-                    "character.ranger",
-                displayName: "Ranger",
-                classId: "class.ranger",
-                maximumHitPoints: 11) with
-            {
-                Ammunition = CreateAmmunition()
-            }
-        ];
+        // The campaign's own party, with the fighter's health nudged so the
+        // tests that care about temporary hit points still have some.
+        PartyMemberState[] members =
+            CampaignTestParty.CreateMembers();
+
+        members[0] = members[0] with
+        {
+            Health = fighterHealth
+        };
+
+        return members;
     }
 
     private static PartyMemberState CreateMember(

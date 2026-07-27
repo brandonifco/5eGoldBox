@@ -1,30 +1,58 @@
-== AdvanceToDecision rev 1->1 cursor 17->17 next=PlayerDecisionRequired
-== Attack rev 1->2 cursor 17->18 next=PlayerDecisionRequired
-   primary   WeaponAttack|actor=party-member.fighter|target=combatant.watchtower-raider.melee|reason=-|dice=#18d20=4:AttackRoll|rev=1->2|winner=-
-== Move rev 2->3 cursor 18->18 next=PlayerDecisionRequired
+== AdvanceToDecision rev 1->1 cursor 18->18 next=PlayerDecisionRequired
+== Attack rev 1->2 cursor 18->20 next=PlayerDecisionRequired
+   primary   WeaponAttack|actor=party-member.fighter|target=combatant.watchtower-raider.melee|reason=-|dice=#19d20=9:AttackRoll;#20d8=4:DamageRoll|rev=1->2|winner=-
+== Move rev 2->3 cursor 20->20 next=PlayerDecisionRequired
    primary   Movement|actor=party-member.fighter|target=-|reason=-|dice=-|rev=2->3|winner=-
-== Move rev 3->4 cursor 18->18 next=PlayerDecisionRequired
+== Move rev 3->4 cursor 20->20 next=PlayerDecisionRequired
    primary   Movement|actor=party-member.fighter|target=-|reason=-|dice=-|rev=3->4|winner=-
-== Move rev 4->5 cursor 18->18 next=PlayerDecisionRequired
+== Move rev 4->5 cursor 20->20 next=PlayerDecisionRequired
    primary   Movement|actor=party-member.fighter|target=-|reason=-|dice=-|rev=4->5|winner=-
-== Move rev 5->6 cursor 18->18 next=PlayerDecisionRequired
+== Move rev 5->6 cursor 20->20 next=PlayerDecisionRequired
    primary   Movement|actor=party-member.fighter|target=-|reason=-|dice=-|rev=5->6|winner=-
-== Move rev 6->7 cursor 18->18 next=PlayerDecisionRequired
+== Move rev 6->7 cursor 20->20 next=PlayerDecisionRequired
    primary   Movement|actor=party-member.fighter|target=-|reason=-|dice=-|rev=6->7|winner=-
-== Move rev 7->8 cursor 18->18 next=PlayerDecisionRequired
+== Move rev 7->8 cursor 20->20 next=PlayerDecisionRequired
    primary   Movement|actor=party-member.fighter|target=-|reason=-|dice=-|rev=7->8|winner=-
-== EndTurn rev 8->9 cursor 18->18 next=PlayerDecisionRequired
+== EndTurn rev 8->9 cursor 20->20 next=PlayerDecisionRequired
    primary   TurnAdvanced|actor=party-member.fighter|target=-|reason=PlayerEndTurn|dice=-|rev=8->9|winner=-
-== Attack rev 9->10 cursor 18->20 next=PlayerDecisionRequired
-   primary   WeaponAttack|actor=party-member.barbarian|target=combatant.watchtower-raider.melee|reason=-|dice=#19d20=9:AttackRoll;#20d12=8:DamageRoll|rev=9->10|winner=-
-== Move rev 10->11 cursor 20->20 next=PlayerDecisionRequired
-   primary   Movement|actor=party-member.barbarian|target=-|reason=-|dice=-|rev=10->11|winner=-
-== Move rev 11->12 cursor 20->20 next=PlayerDecisionRequired
-   primary   Movement|actor=party-member.barbarian|target=-|reason=-|dice=-|rev=11->12|winner=-
-== Move rev 12->13 cursor 20->20 next=PlayerDecisionRequired
-   primary   Movement|actor=party-member.barbarian|target=-|reason=-|dice=-|rev=12->13|winner=-
-== EndTurn rev 13->14 cursor 20->20 next=PlayerDecisionRequired
-   primary   TurnAdvanced|actor=party-member.barbarian|target=-|reason=PlayerEndTurn|dice=-|rev=13->14|winner=-
-== Attack rev 14->15 cursor 20->22 next=CombatCompleted
-   primary   WeaponAttack|actor=party-member.ranger|target=combatant.watchtower-raider.ranged|reason=-|dice=#21d20=17:AttackRoll;#22d8=5:DamageRoll|rev=14->15|winner=side.party
-   automatic CombatCompleted|actor=-|target=-|reason=-|dice=-|rev=15->15|winner=side.party
+== Attack rev 9->10 cursor 20->22 next=PlayerDecisionRequired
+   primary   WeaponAttack|actor=party-member.rogue|target=combatant.watchtower-raider.melee|reason=-|dice=#21d20=17:AttackRoll;#22d20=1:AttackRoll|rev=9->10|winner=-
+== Move rev 10->11 cursor 22->22 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.rogue|target=-|reason=-|dice=-|rev=10->11|winner=-
+== Move rev 11->12 cursor 22->22 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.rogue|target=-|reason=-|dice=-|rev=11->12|winner=-
+== Move rev 12->13 cursor 22->22 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.rogue|target=-|reason=-|dice=-|rev=12->13|winner=-
+== EndTurn rev 13->14 cursor 22->22 next=PlayerDecisionRequired
+   primary   TurnAdvanced|actor=party-member.rogue|target=-|reason=PlayerEndTurn|dice=-|rev=13->14|winner=-
+== Move rev 14->15 cursor 22->22 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.wizard|target=-|reason=-|dice=-|rev=14->15|winner=-
+== Attack rev 15->16 cursor 22->24 next=PlayerDecisionRequired
+   primary   WeaponAttack|actor=party-member.wizard|target=combatant.watchtower-raider.melee|reason=-|dice=#23d20=11:AttackRoll;#24d4=2:DamageRoll|rev=15->16|winner=-
+== Move rev 16->17 cursor 24->24 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.wizard|target=-|reason=-|dice=-|rev=16->17|winner=-
+== Move rev 17->18 cursor 24->24 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.wizard|target=-|reason=-|dice=-|rev=17->18|winner=-
+== Move rev 18->19 cursor 24->24 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.wizard|target=-|reason=-|dice=-|rev=18->19|winner=-
+== Move rev 19->20 cursor 24->24 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.wizard|target=-|reason=-|dice=-|rev=19->20|winner=-
+== EndTurn rev 20->23 cursor 24->26 next=PlayerDecisionRequired
+   primary   TurnAdvanced|actor=party-member.wizard|target=-|reason=PlayerEndTurn|dice=-|rev=20->21|winner=-
+   automatic WeaponAttack|actor=combatant.watchtower-raider.ranged|target=party-member.wizard|reason=-|dice=#25d20=16:AttackRoll;#26d6=2:DamageRoll|rev=21->22|winner=-
+   automatic TurnAdvanced|actor=combatant.watchtower-raider.ranged|target=-|reason=RaiderTurnCompleted|dice=-|rev=22->23|winner=-
+== Move rev 23->24 cursor 26->26 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.cleric|target=-|reason=-|dice=-|rev=23->24|winner=-
+== Move rev 24->25 cursor 26->26 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.cleric|target=-|reason=-|dice=-|rev=24->25|winner=-
+== Move rev 25->26 cursor 26->26 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.cleric|target=-|reason=-|dice=-|rev=25->26|winner=-
+== EndTurn rev 26->27 cursor 26->26 next=PlayerDecisionRequired
+   primary   TurnAdvanced|actor=party-member.cleric|target=-|reason=PlayerEndTurn|dice=-|rev=26->27|winner=-
+== Move rev 27->28 cursor 26->26 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.fighter|target=-|reason=-|dice=-|rev=27->28|winner=-
+== Move rev 28->29 cursor 26->26 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.fighter|target=-|reason=-|dice=-|rev=28->29|winner=-
+== Attack rev 29->30 cursor 26->28 next=CombatCompleted
+   primary   WeaponAttack|actor=party-member.fighter|target=combatant.watchtower-raider.ranged|reason=-|dice=#27d20=11:AttackRoll;#28d8=5:DamageRoll|rev=29->30|winner=side.party
+   automatic CombatCompleted|actor=-|target=-|reason=-|dice=-|rev=30->30|winner=side.party

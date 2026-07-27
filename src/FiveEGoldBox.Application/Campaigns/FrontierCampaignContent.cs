@@ -11,10 +11,12 @@ namespace FiveEGoldBox.Application.Campaigns;
 /// what changed is that a roster is now something a campaign declares rather
 /// than something the first adventure happened to own.
 ///
-/// The roster is three characters because that is what exists. The scope
-/// baseline commits to four active plus a reserve, and moving to it is a
-/// content edit here rather than a code change anywhere — which was the point
-/// of writing it down this way.
+/// The roster is the scope baseline's four active characters, with the two
+/// this campaign started life with kept on as reserve. It became a content
+/// edit rather than a code change the moment the campaign concept landed,
+/// which was the point of writing it down this way — what it still costs is
+/// the two frozen combat transcripts, because a different party rolls
+/// different dice in a different order.
 internal static class FrontierCampaignContent
 {
     internal const string CampaignId = "campaign.frontier";
@@ -34,10 +36,17 @@ internal static class FrontierCampaignContent
             CampaignId = CampaignId,
             DisplayName = "The Frontier Commission",
             RulesetId = RulesetRegistry.CampaignRulesetId,
-            ActivePartySize = 3,
+            ActivePartySize = 4,
+
+            // The first four take the field; the rest are reserve. Nothing
+            // swaps them yet, and the distinction is the campaign's to make
+            // rather than a scenario's.
             Roster =
             [
                 CreateFighter(),
+                CreateRogue(),
+                CreateCleric(),
+                CreateWizard(),
                 CreateBarbarian(),
                 CreateRanger()
             ],
@@ -82,6 +91,147 @@ internal static class FrontierCampaignContent
         };
     }
 
+    /// Carries the campaign's second bow, which is what finally makes the
+    /// post-combat ammunition projection testable: it has been generic since
+    /// PR #102 and until now the only bow belonged to the only character who
+    /// could hold one.
+    ///
+    /// The bow only, for now: `WatchtowerCombatDecisionFactory` offers a
+    /// combatant its one weapon and throws on a second, so carrying a sidearm
+    /// as well needs weapon choice in the decision surface — a feature, not a
+    /// roster edit. Sneak Attack does not mind, since a ranged weapon
+    /// satisfies it exactly as a finesse one does.
+    private static CampaignCharacterDefinition CreateRogue()
+    {
+        return new CampaignCharacterDefinition
+        {
+            PartyMemberId = "party-member.rogue",
+            CharacterDefinitionId = "character.rogue",
+            DisplayName = "Rogue",
+            RaceId = HumanRaceId,
+            ClassId = CampaignRulesetContent.RogueClassId,
+            BackgroundId = SoldierBackgroundId,
+            AbilityScores = new Dictionary<Ability, int>
+            {
+                [Ability.Strength] = 9,
+                [Ability.Dexterity] = 15,
+                [Ability.Constitution] = 13,
+                [Ability.Intelligence] = 12,
+                [Ability.Wisdom] = 11,
+                [Ability.Charisma] = 7
+            },
+            SelectedSkillIds =
+            [
+                "skill.perception",
+                "skill.stealth"
+            ],
+            EquippedWeaponIds =
+            [
+                CampaignRulesetContent.RogueWeaponId
+            ],
+            ZeroHitPointPolicy =
+                CombatantZeroHitPointPolicy.DeathSavingThrows,
+            MaximumHitPoints = 10,
+            CurrentHitPoints = 10,
+            Ammunition = new CampaignAmmunitionDefinition
+            {
+                WeaponId = CampaignRulesetContent.RogueWeaponId,
+                AmmunitionItemId = "item.arrow",
+                Quantity = 12
+            }
+        };
+    }
+
+    /// Prepares one of each thing a cleric is for: something to do at will,
+    /// two ways to put hit points back, and the blessing that made the
+    /// roll-contribution seam necessary.
+    private static CampaignCharacterDefinition CreateCleric()
+    {
+        return new CampaignCharacterDefinition
+        {
+            PartyMemberId = "party-member.cleric",
+            CharacterDefinitionId = "character.cleric",
+            DisplayName = "Cleric",
+            RaceId = HumanRaceId,
+            ClassId = CampaignRulesetContent.ClericClassId,
+            BackgroundId = SoldierBackgroundId,
+            AbilityScores = new Dictionary<Ability, int>
+            {
+                [Ability.Strength] = 11,
+                [Ability.Dexterity] = 9,
+                [Ability.Constitution] = 13,
+                [Ability.Intelligence] = 7,
+                [Ability.Wisdom] = 15,
+                [Ability.Charisma] = 12
+            },
+            SelectedSkillIds =
+            [
+                "skill.perception",
+                "skill.survival"
+            ],
+            EquippedWeaponIds =
+            [
+                CampaignRulesetContent.ClericWeaponId
+            ],
+            ZeroHitPointPolicy =
+                CombatantZeroHitPointPolicy.DeathSavingThrows,
+            MaximumHitPoints = 10,
+            CurrentHitPoints = 10,
+            PreparedSpellIds =
+            [
+                CampaignRulesetContent.SacredFlameId,
+                CampaignRulesetContent.CureWoundsId,
+                CampaignRulesetContent.HealingWordId,
+                CampaignRulesetContent.BlessId
+            ]
+        };
+    }
+
+    /// Fewest hit points and the only character who would rather never be
+    /// reached, which is the whole reason the party has a front line.
+    private static CampaignCharacterDefinition CreateWizard()
+    {
+        return new CampaignCharacterDefinition
+        {
+            PartyMemberId = "party-member.wizard",
+            CharacterDefinitionId = "character.wizard",
+            DisplayName = "Wizard",
+            RaceId = HumanRaceId,
+            ClassId = CampaignRulesetContent.WizardClassId,
+            BackgroundId = SoldierBackgroundId,
+            AbilityScores = new Dictionary<Ability, int>
+            {
+                [Ability.Strength] = 7,
+                [Ability.Dexterity] = 13,
+                [Ability.Constitution] = 11,
+                [Ability.Intelligence] = 15,
+                [Ability.Wisdom] = 12,
+                [Ability.Charisma] = 9
+            },
+            SelectedSkillIds =
+            [
+                "skill.perception",
+                "skill.stealth"
+            ],
+            EquippedWeaponIds =
+            [
+                CampaignRulesetContent.RogueSidearmWeaponId
+            ],
+            ZeroHitPointPolicy =
+                CombatantZeroHitPointPolicy.DeathSavingThrows,
+            MaximumHitPoints = 7,
+            CurrentHitPoints = 7,
+            PreparedSpellIds =
+            [
+                CampaignRulesetContent.FireBoltId,
+                CampaignRulesetContent.MagicMissileId
+            ]
+        };
+    }
+
+    /// Reserve from here down. These two were the campaign's original party;
+    /// they keep their builds so a save naming them still describes somebody
+    /// the campaign knows.
     private static CampaignCharacterDefinition CreateBarbarian()
     {
         return new CampaignCharacterDefinition

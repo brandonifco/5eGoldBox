@@ -66,7 +66,7 @@ public sealed class WatchtowerCombatRaiderPolicyTests
 
         Assert.NotNull(target);
         Assert.Equal(
-            "party-member.barbarian",
+            "party-member.rogue",
             target.Combatant.CombatantId);
         Assert.NotEqual(
             CombatantLifecycleState.Conscious,
@@ -238,7 +238,7 @@ public sealed class WatchtowerCombatRaiderPolicyTests
 
         Assert.NotNull(target);
         Assert.Equal(
-            "party-member.barbarian",
+            "party-member.fighter",
             target.Combatant.CombatantId);
     }
 
@@ -482,11 +482,11 @@ public sealed class WatchtowerCombatRaiderPolicyTests
             new GridPosition(0, 0));
         source = SetPosition(
             source,
-            "party-member.barbarian",
+            "party-member.cleric",
             new GridPosition(0, 3));
         source = SetPosition(
             source,
-            "party-member.ranger",
+            "party-member.rogue",
             new GridPosition(1, 3));
         source = SetPosition(
             source,

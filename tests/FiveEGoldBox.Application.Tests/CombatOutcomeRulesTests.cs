@@ -67,19 +67,19 @@ public sealed class CombatOutcomeRulesTests
         ApplicationSessionState source =
             WatchtowerCombatOutcomeTestData
                 .CreatePartyVictorySession();
-        PartyMemberState barbarian =
+        PartyMemberState cleric =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 source,
-                "class.barbarian");
+                "class.cleric");
         CombatantHealthState original =
-            barbarian.Health;
+            cleric.Health;
         source = WatchtowerCombatOutcomeTestData
             .ReplaceParticipantHealth(
                 source,
-                barbarian.PartyMemberId,
+                cleric.PartyMemberId,
                 WatchtowerCombatOutcomeTestData
                     .CreateDyingHealth(
-                        barbarian.Health.HitPoints
+                        cleric.Health.HitPoints
                             .MaximumHitPoints));
         ActiveEncounterState active =
             Assert.IsType<ActiveEncounterState>(
@@ -89,7 +89,7 @@ public sealed class CombatOutcomeRulesTests
             CombatOutcomeRules.Finalize(source));
 
         Assert.Same(active, source.ActiveEncounter);
-        Assert.Same(original, barbarian.Health);
+        Assert.Same(original, cleric.Health);
         Assert.Equal(37, source.RandomValuesConsumed);
     }
 
@@ -150,10 +150,10 @@ public sealed class CombatOutcomeRulesTests
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 source,
                 "class.fighter");
-        PartyMemberState barbarian =
+        PartyMemberState cleric =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 source,
-                "class.barbarian");
+                "class.cleric");
         int fighterIndex = Array.FindIndex(
             participants,
             participant => participant.Combatant.CombatantId
@@ -161,7 +161,7 @@ public sealed class CombatOutcomeRulesTests
         int barbarianIndex = Array.FindIndex(
             participants,
             participant => participant.Combatant.CombatantId
-                == barbarian.PartyMemberId);
+                == cleric.PartyMemberId);
 
         participants[fighterIndex] = failure switch
         {
@@ -178,7 +178,7 @@ public sealed class CombatOutcomeRulesTests
                 Combatant = participants[fighterIndex]
                     .Combatant with
                 {
-                    CombatantId = barbarian.PartyMemberId
+                    CombatantId = cleric.PartyMemberId
                 }
             },
             "missing" => participants.Where((_, index) =>
@@ -251,47 +251,47 @@ public sealed class CombatOutcomeRulesTests
             WatchtowerCombatOutcomeTestData
                 .CreatePartyVictorySession();
 
-        PartyMemberState barbarian =
+        PartyMemberState cleric =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 CombatOutcomeRules.Finalize(source)
                     .State,
-                "class.barbarian");
+                "class.cleric");
 
-        Assert.Equal(0, barbarian.Health.HitPoints.CurrentHitPoints);
-        Assert.True(barbarian.Health.DeathSavingThrows.IsStable);
-        Assert.False(barbarian.Health.IsDead);
+        Assert.Equal(0, cleric.Health.HitPoints.CurrentHitPoints);
+        Assert.True(cleric.Health.DeathSavingThrows.IsStable);
+        Assert.False(cleric.Health.IsDead);
     }
 
     [Fact]
     public void Finalize_PartyVictory_PreservesFailedDeathSaveDeath()
     {
-        PartyMemberState ranger =
+        PartyMemberState casualty =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 CombatOutcomeRules.Finalize(
                     WatchtowerCombatOutcomeTestData
                         .CreatePartyVictorySession())
                     .State,
-                "class.ranger");
+                "class.wizard");
 
-        Assert.Equal(3, ranger.Health.DeathSavingThrows.FailureCount);
-        Assert.True(ranger.Health.IsDead);
-        Assert.False(ranger.Health.IsInstantlyDead);
+        Assert.Equal(3, casualty.Health.DeathSavingThrows.FailureCount);
+        Assert.True(casualty.Health.IsDead);
+        Assert.False(casualty.Health.IsInstantlyDead);
     }
 
     [Fact]
     public void Finalize_RaiderVictory_PreservesInstantDeath()
     {
-        PartyMemberState ranger =
+        PartyMemberState casualty =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 CombatOutcomeRules.Finalize(
                     WatchtowerCombatOutcomeTestData
                         .CreateRaiderVictorySession())
                     .State,
-                "class.ranger");
+                "class.wizard");
 
-        Assert.True(ranger.Health.IsInstantlyDead);
-        Assert.Equal(0, ranger.Health.DeathSavingThrows.FailureCount);
-        Assert.False(ranger.Health.DeathSavingThrows.IsStable);
+        Assert.True(casualty.Health.IsInstantlyDead);
+        Assert.Equal(0, casualty.Health.DeathSavingThrows.FailureCount);
+        Assert.False(casualty.Health.DeathSavingThrows.IsStable);
     }
 
     [Theory]
@@ -341,43 +341,43 @@ public sealed class CombatOutcomeRulesTests
     }
 
     [Fact]
-    public void Finalize_PartyVictory_ProjectsRangerAmmunitionExactly()
+    public void Finalize_PartyVictory_ProjectsArcherAmmunitionExactly()
     {
         ApplicationSessionState source =
             WatchtowerCombatOutcomeTestData
                 .CreatePartyVictorySession(
-                    rangerAmmunition: 2);
+                    archerAmmunition: 2);
         int persistentBefore =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 source,
-                "class.ranger")
+                "class.rogue")
                 .Ammunition!.RemainingQuantity;
 
-        PartyMemberState ranger =
+        PartyMemberState archer =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 CombatOutcomeRules.Finalize(source)
                     .State,
-                "class.ranger");
+                "class.rogue");
 
         Assert.NotEqual(2, persistentBefore);
-        Assert.Equal(2, ranger.Ammunition!.RemainingQuantity);
-        Assert.Equal("weapon.longbow", ranger.Ammunition.WeaponId);
-        Assert.Equal("item.arrow", ranger.Ammunition.AmmunitionItemId);
+        Assert.Equal(2, archer.Ammunition!.RemainingQuantity);
+        Assert.Equal("weapon.shortbow", archer.Ammunition.WeaponId);
+        Assert.Equal("item.arrow", archer.Ammunition.AmmunitionItemId);
     }
 
     [Fact]
-    public void Finalize_PartyVictory_ProjectsZeroRangerAmmunition()
+    public void Finalize_PartyVictory_ProjectsZeroArcherAmmunition()
     {
-        PartyMemberState ranger =
+        PartyMemberState archer =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 CombatOutcomeRules.Finalize(
                     WatchtowerCombatOutcomeTestData
                         .CreatePartyVictorySession(
-                            rangerAmmunition: 0))
+                            archerAmmunition: 0))
                     .State,
-                "class.ranger");
+                "class.rogue");
 
-        Assert.Equal(0, ranger.Ammunition!.RemainingQuantity);
+        Assert.Equal(0, archer.Ammunition!.RemainingQuantity);
     }
 
     [Theory]
@@ -387,23 +387,23 @@ public sealed class CombatOutcomeRulesTests
     [InlineData("negative-quantity")]
     [InlineData("wrong-weapon")]
     [InlineData("wrong-item")]
-    public void Finalize_WhenRangerAmmunitionAuthorityIsInvalid_ThrowsAndPreservesInput(
+    public void Finalize_WhenArcherAmmunitionAuthorityIsInvalid_ThrowsAndPreservesInput(
         string failure)
     {
         ApplicationSessionState source =
             WatchtowerCombatOutcomeTestData
                 .CreatePartyVictorySession();
-        PartyMemberState ranger =
+        PartyMemberState archer =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 source,
-                "class.ranger");
+                "class.rogue");
         EncounterParticipantState participant =
             WatchtowerCombatOutcomeTestData.GetParticipant(
                 source,
-                ranger.PartyMemberId);
+                archer.PartyMemberId);
         WeaponAttack longbow = Assert.Single(
             participant.CombatProfile.WeaponAttacks,
-            weapon => weapon.WeaponId == "weapon.longbow");
+            weapon => weapon.WeaponId == "weapon.shortbow");
         IReadOnlyList<WeaponAttack> weapons = failure switch
         {
             "missing" => Array.Empty<WeaponAttack>(),
@@ -438,12 +438,12 @@ public sealed class CombatOutcomeRulesTests
             weapons,
             WatchtowerCombatOutcomeTestData.GetParticipant(
                 source,
-                ranger.PartyMemberId)
+                archer.PartyMemberId)
                 .CombatProfile.WeaponAttacks);
     }
 
     [Fact]
-    public void Finalize_DoesNotCreateOrAlterNonRangerAmmunition()
+    public void Finalize_DoesNotCreateOrAlterNonArcherAmmunition()
     {
         ApplicationSessionState result =
             CombatOutcomeRules.Finalize(
@@ -458,11 +458,11 @@ public sealed class CombatOutcomeRulesTests
         Assert.Null(
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 result,
-                "class.barbarian").Ammunition);
+                "class.cleric").Ammunition);
         Assert.NotNull(
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 result,
-                "class.ranger").Ammunition);
+                "class.rogue").Ammunition);
     }
 
     [Fact]
@@ -563,17 +563,17 @@ public sealed class CombatOutcomeRulesTests
         ApplicationSessionState source =
             WatchtowerCombatOutcomeTestData
                 .CreatePartyVictorySession();
-        PartyMemberState ranger =
+        PartyMemberState archer =
             WatchtowerCombatOutcomeTestData.GetPartyMember(
                 source,
-                "class.ranger");
+                "class.rogue");
         EncounterParticipantState participant =
             WatchtowerCombatOutcomeTestData.GetParticipant(
                 source,
-                ranger.PartyMemberId);
+                archer.PartyMemberId);
         WeaponAttack longbow = Assert.Single(
             participant.CombatProfile.WeaponAttacks,
-            weapon => weapon.WeaponId == "weapon.longbow");
+            weapon => weapon.WeaponId == "weapon.shortbow");
         source = WatchtowerCombatOutcomeTestData.ReplaceParticipant(
             source,
             participant with

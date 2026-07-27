@@ -258,21 +258,22 @@ public sealed class WatchtowerCombatExecutionTests
     }
 
     [Fact]
-    public void Execute_RangerAttack_ConsumesCoreAmmunitionWithoutProjectingPartyState()
+    public void Execute_ArcherAttack_ConsumesCoreAmmunitionWithoutProjectingPartyState()
     {
         ApplicationSessionState source =
             WatchtowerCombatTestData.AdvanceToCombatant(
                 WatchtowerCombatTestData.CreatePlayerDecisionSession(),
-                "party-member.ranger");
+                "party-member.rogue");
         WatchtowerCombatDecision decision = GetDecision(source);
         WatchtowerCombatTargetOption target =
             decision.WeaponAttack!.Targets.First(candidate => candidate.IsAvailable);
         int persistentAmmunition =
-            source.Party.Members[2].Ammunition!.RemainingQuantity;
+            source.Party.Members[CampaignTestParty.ArcherIndex()]
+                .Ammunition!.RemainingQuantity;
         int encounterAmmunition = Assert.Single(
             WatchtowerCombatTestData.GetParticipant(
                 source,
-                "party-member.ranger")
+                "party-member.rogue")
             .CombatProfile.WeaponAttacks)
             .AmmunitionQuantityAvailable!.Value;
 
@@ -291,29 +292,31 @@ public sealed class WatchtowerCombatExecutionTests
             encounterAmmunition - 1,
             Assert.Single(WatchtowerCombatTestData.GetParticipant(
                 result.State,
-                "party-member.ranger")
+                "party-member.rogue")
             .CombatProfile.WeaponAttacks)
             .AmmunitionQuantityAvailable);
         Assert.Equal(
             persistentAmmunition,
-            result.State.Party.Members[2].Ammunition!.RemainingQuantity);
+            result.State.Party
+                .Members[CampaignTestParty.ArcherIndex()]
+                .Ammunition!.RemainingQuantity);
     }
 
     [Fact]
-    public void Execute_AdjacentRangerAttack_ConsumesTwoDisadvantageD20s()
+    public void Execute_AdjacentArcherAttack_ConsumesTwoDisadvantageD20s()
     {
         ApplicationSessionState source =
             WatchtowerCombatTestData.AdvanceToCombatant(
                 WatchtowerCombatTestData.CreatePlayerDecisionSession(),
-                "party-member.ranger");
-        EncounterParticipantState ranger =
+                "party-member.rogue");
+        EncounterParticipantState archer =
             WatchtowerCombatTestData.GetParticipant(
                 source,
-                "party-member.ranger") with
+                "party-member.rogue") with
             {
                 Position = new GridPosition(2, 2)
             };
-        source = WatchtowerCombatTestData.ReplaceParticipant(source, ranger);
+        source = WatchtowerCombatTestData.ReplaceParticipant(source, archer);
         WatchtowerCombatDecision decision = GetDecision(source);
         WatchtowerCombatTargetOption target = Assert.Single(
             decision.WeaponAttack!.Targets,
@@ -657,16 +660,16 @@ public sealed class WatchtowerCombatExecutionTests
         ApplicationSessionState source =
             WatchtowerCombatTestData.AdvanceToCombatant(
                 WatchtowerCombatTestData.CreatePlayerDecisionSession(),
-                "party-member.ranger");
-        EncounterParticipantState ranger =
+                "party-member.rogue");
+        EncounterParticipantState archer =
             WatchtowerCombatTestData.GetParticipant(
                 source,
-                "party-member.ranger");
+                "party-member.rogue");
         WeaponAttack weapon = Assert.Single(
-            ranger.CombatProfile.WeaponAttacks);
-        ranger = ranger with
+            archer.CombatProfile.WeaponAttacks);
+        archer = archer with
         {
-            CombatProfile = ranger.CombatProfile with
+            CombatProfile = archer.CombatProfile with
             {
                 WeaponAttacks =
                 [
@@ -677,7 +680,7 @@ public sealed class WatchtowerCombatExecutionTests
                 ]
             }
         };
-        source = WatchtowerCombatTestData.ReplaceParticipant(source, ranger);
+        source = WatchtowerCombatTestData.ReplaceParticipant(source, archer);
         WatchtowerCombatDecision decision = GetDecision(source);
         WatchtowerCombatTargetOption target = decision.WeaponAttack!.Targets[0];
         RejectedOperationSnapshot snapshot = CaptureRejectedOperation(source);
@@ -698,16 +701,16 @@ public sealed class WatchtowerCombatExecutionTests
         Assert.False(afterRejection.WeaponAttack!.IsAvailable);
         Assert.True(afterRejection.Movement!.IsAvailable);
         Assert.True(afterRejection.EndTurn!.IsAvailable);
-        EncounterParticipantState unchangedRanger =
+        EncounterParticipantState unchangedArcher =
             WatchtowerCombatTestData.GetParticipant(
                 source,
-                "party-member.ranger");
+                "party-member.rogue");
         Assert.Equal(
             0,
-            Assert.Single(unchangedRanger.CombatProfile.WeaponAttacks)
+            Assert.Single(unchangedArcher.CombatProfile.WeaponAttacks)
                 .AmmunitionQuantityAvailable);
-        Assert.True(unchangedRanger.TurnResources.HasActionAvailable);
-        Assert.Equal(0, unchangedRanger.TurnResources.MovementSpentFeet);
+        Assert.True(unchangedArcher.TurnResources.HasActionAvailable);
+        Assert.Equal(0, unchangedArcher.TurnResources.MovementSpentFeet);
     }
 
     [Fact]

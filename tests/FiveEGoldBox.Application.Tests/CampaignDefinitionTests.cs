@@ -127,8 +127,10 @@ public sealed class CampaignDefinitionTests
     public void Validate_RejectsAmmunitionForAWeaponNotWielded()
     {
         CampaignDefinition campaign = Base();
+        // More than one character on the roster carries a bow now, and any of
+        // them proves the rule.
         CampaignCharacterDefinition archer = campaign.Roster
-            .Single(character => character.Ammunition is not null);
+            .First(character => character.Ammunition is not null);
 
         Assert.Throws<ArgumentException>(() =>
             CampaignDefinitionValidator.Validate(

@@ -69,16 +69,18 @@ public sealed class CampaignFeatureContentTests
             rogue.FeaturesByLevel[1]);
     }
 
-    /// Nobody is a rogue yet, deliberately. The roster moves to the baseline's
-    /// four once, with the real party — the same position Cleric and Wizard
-    /// were in while spellcasting was built.
+    /// The rogue takes the field now, which is what the whole of step 6 was
+    /// for — Sneak Attack stops being content nobody carries.
     [Fact]
-    public void NobodyInTheRosterIsARogue()
+    public void TheRosterFieldsARogue()
     {
-        Assert.DoesNotContain(
+        Assert.Contains(
             CampaignRegistry.Resolve(
                 FrontierCampaignContent.CampaignId)
-                .Roster,
+                .Roster
+                .Take(CampaignRegistry.Resolve(
+                    FrontierCampaignContent.CampaignId)
+                    .ActivePartySize),
             character => character.ClassId
                 == CampaignRulesetContent.RogueClassId);
     }

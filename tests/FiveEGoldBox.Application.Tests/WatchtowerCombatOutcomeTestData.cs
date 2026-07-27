@@ -22,19 +22,19 @@ internal static class WatchtowerCombatOutcomeTestData
 
     internal static ApplicationSessionState
         CreatePartyVictorySession(
-            int rangerAmmunition = 2)
+            int archerAmmunition = 2)
     {
         ApplicationSessionState source =
             CreateSourceSession();
         PartyMemberState fighter = GetPartyMember(
             source,
             "class.fighter");
-        PartyMemberState barbarian = GetPartyMember(
+        PartyMemberState stableMember = GetPartyMember(
             source,
-            "class.barbarian");
-        PartyMemberState ranger = GetPartyMember(
+            "class.cleric");
+        PartyMemberState downedMember = GetPartyMember(
             source,
-            "class.ranger");
+            "class.wizard");
 
         source = ReplaceParticipantHealth(
             source,
@@ -45,14 +45,14 @@ internal static class WatchtowerCombatOutcomeTestData
                 temporaryHitPoints: 3));
         source = ReplaceParticipantHealth(
             source,
-            barbarian.PartyMemberId,
+            stableMember.PartyMemberId,
             CreateStableHealth(
-                barbarian.Health.HitPoints.MaximumHitPoints));
+                stableMember.Health.HitPoints.MaximumHitPoints));
         source = ReplaceParticipantHealth(
             source,
-            ranger.PartyMemberId,
+            downedMember.PartyMemberId,
             CreateFailedSaveDeathHealth(
-                ranger.Health.HitPoints.MaximumHitPoints));
+                downedMember.Health.HitPoints.MaximumHitPoints));
         source = ReplaceParticipantHealth(
             source,
             MeleeRaiderId,
@@ -65,11 +65,11 @@ internal static class WatchtowerCombatOutcomeTestData
             CreateDefeatedHealth(
                 GetParticipant(source, RangedRaiderId)
                     .Combatant.Health.HitPoints.MaximumHitPoints));
-        source = ReplaceRangerWeapon(
+        source = ReplaceArcherWeapon(
             source,
             weapon => weapon with
             {
-                AmmunitionQuantityAvailable = rangerAmmunition
+                AmmunitionQuantityAvailable = archerAmmunition
             });
 
         return Complete(source, PartySideId);
@@ -77,19 +77,19 @@ internal static class WatchtowerCombatOutcomeTestData
 
     internal static ApplicationSessionState
         CreateRaiderVictorySession(
-            int rangerAmmunition = 1)
+            int archerAmmunition = 1)
     {
         ApplicationSessionState source =
             CreateSourceSession();
         PartyMemberState fighter = GetPartyMember(
             source,
             "class.fighter");
-        PartyMemberState barbarian = GetPartyMember(
+        PartyMemberState stableMember = GetPartyMember(
             source,
-            "class.barbarian");
-        PartyMemberState ranger = GetPartyMember(
+            "class.cleric");
+        PartyMemberState downedMember = GetPartyMember(
             source,
-            "class.ranger");
+            "class.wizard");
 
         source = ReplaceParticipantHealth(
             source,
@@ -98,14 +98,14 @@ internal static class WatchtowerCombatOutcomeTestData
                 fighter.Health.HitPoints.MaximumHitPoints));
         source = ReplaceParticipantHealth(
             source,
-            barbarian.PartyMemberId,
+            stableMember.PartyMemberId,
             CreateFailedSaveDeathHealth(
-                barbarian.Health.HitPoints.MaximumHitPoints));
+                stableMember.Health.HitPoints.MaximumHitPoints));
         source = ReplaceParticipantHealth(
             source,
-            ranger.PartyMemberId,
+            downedMember.PartyMemberId,
             CreateInstantDeathHealth(
-                ranger.Health.HitPoints.MaximumHitPoints));
+                downedMember.Health.HitPoints.MaximumHitPoints));
         source = ReplaceParticipantHealth(
             source,
             MeleeRaiderId,
@@ -120,11 +120,11 @@ internal static class WatchtowerCombatOutcomeTestData
             CreateDefeatedHealth(
                 GetParticipant(source, RangedRaiderId)
                     .Combatant.Health.HitPoints.MaximumHitPoints));
-        source = ReplaceRangerWeapon(
+        source = ReplaceArcherWeapon(
             source,
             weapon => weapon with
             {
-                AmmunitionQuantityAvailable = rangerAmmunition
+                AmmunitionQuantityAvailable = archerAmmunition
             });
 
         return Complete(source, RaiderSideId);
@@ -210,20 +210,21 @@ internal static class WatchtowerCombatOutcomeTestData
             });
     }
 
-    internal static ApplicationSessionState ReplaceRangerWeapon(
+    /// Whoever is carrying the bow, found by the ammunition rather than by
+    /// class — which character that is has changed once already.
+    internal static ApplicationSessionState ReplaceArcherWeapon(
         ApplicationSessionState source,
         Func<WeaponAttack, WeaponAttack> replaceWeapon)
     {
-        PartyMemberState ranger = GetPartyMember(
-            source,
-            "class.ranger");
+        PartyMemberState archer = source.Party.Members
+            .Single(member => member.Ammunition is not null);
         EncounterParticipantState participant =
-            GetParticipant(source, ranger.PartyMemberId);
+            GetParticipant(source, archer.PartyMemberId);
         WeaponAttack[] weapons = participant
             .CombatProfile.WeaponAttacks
             .Select(weapon => string.Equals(
                 weapon.WeaponId,
-                "weapon.longbow",
+                archer.Ammunition!.WeaponId,
                 StringComparison.Ordinal)
                 ? replaceWeapon(weapon)
                 : weapon)

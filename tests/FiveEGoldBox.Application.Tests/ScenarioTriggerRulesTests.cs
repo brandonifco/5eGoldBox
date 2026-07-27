@@ -141,7 +141,7 @@ public sealed class ScenarioTriggerRulesTests
             source.RandomSeed,
             result.RandomSeed);
         Assert.Equal(
-            source.RandomValuesConsumed + 5,
+            source.RandomValuesConsumed + 6,
             result.RandomValuesConsumed);
         AssertPartyEquivalent(
             source.Party,
@@ -401,17 +401,18 @@ WatchtowerScenarioProgress.RaidersDefeated)
     }
 
     [Fact]
-    public void Activate_WithRangerAmmunitionWeaponMismatch_Throws()
+    public void Activate_WithArcherAmmunitionWeaponMismatch_Throws()
     {
         ApplicationSessionState state =
             WatchtowerSignalTestData.CreateSignalReadySession();
         PartyMemberState[] members =
             state.Party.Members.ToArray();
+        int archer = CampaignTestParty.ArcherIndex();
         AmmunitionState ammunition =
             Assert.IsType<AmmunitionState>(
-                members[2].Ammunition);
+                members[archer].Ammunition);
 
-        members[2] = members[2] with
+        members[archer] = members[archer] with
         {
             Ammunition = ammunition with
             {
@@ -436,17 +437,18 @@ WatchtowerScenarioProgress.RaidersDefeated)
     }
 
     [Fact]
-    public void Activate_WithRangerAmmunitionItemMismatch_Throws()
+    public void Activate_WithArcherAmmunitionItemMismatch_Throws()
     {
         ApplicationSessionState state =
             WatchtowerSignalTestData.CreateSignalReadySession();
         PartyMemberState[] members =
             state.Party.Members.ToArray();
+        int archer = CampaignTestParty.ArcherIndex();
         AmmunitionState ammunition =
             Assert.IsType<AmmunitionState>(
-                members[2].Ammunition);
+                members[archer].Ammunition);
 
-        members[2] = members[2] with
+        members[archer] = members[archer] with
         {
             Ammunition = ammunition with
             {
@@ -476,7 +478,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
         Assert.Throws<InvalidOperationException>(() =>
             ScenarioTriggerRules.Activate(
                 WatchtowerSignalTestData.CreateSignalReadySession(),
-                WatchtowerSignalTestData.CreateRuleset(includeLongbow: false)));
+                WatchtowerSignalTestData.CreateRuleset(includeBow: false)));
     }
 
     [Fact]
@@ -501,7 +503,7 @@ WatchtowerScenarioProgress.RaidersDefeated)
         Assert.Null(result.RegionalTravel);
         Assert.Equal(source.RandomSeed, result.RandomSeed);
         Assert.Equal(
-            source.RandomValuesConsumed + 5,
+            source.RandomValuesConsumed + 6,
             result.RandomValuesConsumed);
         AssertPartyEquivalent(source.Party, result.Party);
 
