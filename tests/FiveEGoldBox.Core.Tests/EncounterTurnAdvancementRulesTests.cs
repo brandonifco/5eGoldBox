@@ -144,6 +144,160 @@ public sealed class EncounterTurnAdvancementRulesTests
     }
 
     [Fact]
+    public void Resolve_WhenNewRoundStartsAndEffectHasRoundsRemaining_DecrementsRemainingRounds()
+    {
+        EncounterState state = CreateEncounter();
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.hero",
+            participant => participant with
+            {
+                ActiveEffects =
+                [
+                    CreateActiveEffect(
+                        effectId: "effect.bless",
+                        sourceCombatantId: "combatant.enemy",
+                        remainingRounds: 3)
+                ]
+            });
+
+        state = state with
+        {
+            TurnState =
+                CombatTurnRules.AdvanceTurn(
+                    state.TurnState)
+        };
+
+        EncounterTurnAdvancementResult result =
+            EncounterTurnAdvancementRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    "combatant.enemy"));
+
+        Assert.True(result.StartedNewRound);
+        ActiveEffect remaining = Assert.Single(
+            result.State.Participants[0].ActiveEffects);
+        Assert.Equal(2, remaining.RemainingRounds);
+    }
+
+    [Fact]
+    public void Resolve_WhenNewRoundStartsAndEffectExpires_RemovesEffect()
+    {
+        EncounterState state = CreateEncounter();
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.hero",
+            participant => participant with
+            {
+                ActiveEffects =
+                [
+                    CreateActiveEffect(
+                        effectId: "effect.bless",
+                        sourceCombatantId: "combatant.enemy",
+                        remainingRounds: 1)
+                ]
+            });
+
+        state = state with
+        {
+            TurnState =
+                CombatTurnRules.AdvanceTurn(
+                    state.TurnState)
+        };
+
+        EncounterTurnAdvancementResult result =
+            EncounterTurnAdvancementRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    "combatant.enemy"));
+
+        Assert.True(result.StartedNewRound);
+        Assert.Empty(
+            result.State.Participants[0].ActiveEffects);
+    }
+
+    [Fact]
+    public void Resolve_WhenExpiringEffectWasBeingConcentratedOn_ClearsConcentration()
+    {
+        EncounterState state = CreateEncounter();
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.hero",
+            participant => participant with
+            {
+                ActiveEffects =
+                [
+                    CreateActiveEffect(
+                        effectId: "effect.bless",
+                        sourceCombatantId: "combatant.enemy",
+                        remainingRounds: 1)
+                ]
+            });
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.enemy",
+            participant => participant with
+            {
+                ConcentratingOnEffectId = "effect.bless"
+            });
+
+        state = state with
+        {
+            TurnState =
+                CombatTurnRules.AdvanceTurn(
+                    state.TurnState)
+        };
+
+        EncounterTurnAdvancementResult result =
+            EncounterTurnAdvancementRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    "combatant.enemy"));
+
+        Assert.Null(
+            result.State.Participants[1]
+                .ConcentratingOnEffectId);
+    }
+
+    [Fact]
+    public void Resolve_WhenTurnAdvancesWithoutStartingNewRound_LeavesActiveEffectsUnchanged()
+    {
+        EncounterState state = CreateEncounter();
+
+        ActiveEffect effect = CreateActiveEffect(
+            effectId: "effect.bless",
+            sourceCombatantId: "combatant.hero",
+            remainingRounds: 3);
+
+        state = ReplaceParticipant(
+            state,
+            "combatant.enemy",
+            participant => participant with
+            {
+                ActiveEffects = [effect]
+            });
+
+        EncounterTurnAdvancementResult result =
+            EncounterTurnAdvancementRules.Resolve(
+                state,
+                CreateCommand(
+                    state,
+                    "combatant.hero"));
+
+        Assert.False(result.StartedNewRound);
+        ActiveEffect unchanged = Assert.Single(
+            result.State.Participants[1].ActiveEffects);
+        Assert.Equal(effect, unchanged);
+    }
+
+    [Fact]
     public void Resolve_WhenNextCombatantIsTerminal_SkipsCombatant()
     {
         EncounterState state =
@@ -735,6 +889,20 @@ public sealed class EncounterTurnAdvancementRulesTests
         {
             Participants =
                 Array.AsReadOnly(participants)
+        };
+    }
+
+    private static ActiveEffect CreateActiveEffect(
+        string effectId,
+        string sourceCombatantId,
+        int remainingRounds)
+    {
+        return new ActiveEffect
+        {
+            EffectId = effectId,
+            SourceCombatantId = sourceCombatantId,
+            RemainingRounds = remainingRounds,
+            RequiresConcentration = true
         };
     }
 
