@@ -14,4 +14,9 @@ internal sealed record WatchtowerCombatTargetOption
     public D20RollMode? AttackRollMode { get; init; }
 
     public int? DistanceFeet { get; init; }
+
+    /// Set only for a spell target resolved by a saving throw.
+    public Ability? SaveAbility { get; init; }
+
+    public int? SaveDc { get; init; }
 }

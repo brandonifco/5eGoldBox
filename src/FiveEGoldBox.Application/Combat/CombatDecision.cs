@@ -9,13 +9,17 @@ public sealed record CombatDecision
         string? pendingDeathSavingThrowCombatantId,
         CombatMovementOption? movement,
         IReadOnlyList<CombatWeaponAttackOption> weaponAttacks,
+        IReadOnlyList<CombatSpellAttackOption> spellAttacks,
         CombatEndTurnOption? endTurn,
         string? winningSideId)
     {
         ArgumentNullException.ThrowIfNull(weaponAttacks);
+        ArgumentNullException.ThrowIfNull(spellAttacks);
 
         CombatWeaponAttackOption[] protectedWeaponAttacks =
             weaponAttacks.ToArray();
+        CombatSpellAttackOption[] protectedSpellAttacks =
+            spellAttacks.ToArray();
 
         ValidateShape(
             state,
@@ -23,6 +27,7 @@ public sealed record CombatDecision
             pendingDeathSavingThrowCombatantId,
             movement,
             protectedWeaponAttacks,
+            protectedSpellAttacks,
             endTurn,
             winningSideId);
 
@@ -33,6 +38,7 @@ public sealed record CombatDecision
             pendingDeathSavingThrowCombatantId;
         Movement = movement;
         WeaponAttacks = Array.AsReadOnly(protectedWeaponAttacks);
+        SpellAttacks = Array.AsReadOnly(protectedSpellAttacks);
         EndTurn = endTurn;
         WinningSideId = winningSideId;
     }
@@ -49,6 +55,8 @@ public sealed record CombatDecision
 
     public IReadOnlyList<CombatWeaponAttackOption> WeaponAttacks { get; }
 
+    public IReadOnlyList<CombatSpellAttackOption> SpellAttacks { get; }
+
     public CombatEndTurnOption? EndTurn { get; }
 
     public string? WinningSideId { get; }
@@ -59,6 +67,7 @@ public sealed record CombatDecision
         string? pendingDeathSavingThrowCombatantId,
         CombatMovementOption? movement,
         IReadOnlyList<CombatWeaponAttackOption> weaponAttacks,
+        IReadOnlyList<CombatSpellAttackOption> spellAttacks,
         CombatEndTurnOption? endTurn,
         string? winningSideId)
     {
@@ -81,6 +90,7 @@ public sealed record CombatDecision
                 if (string.IsNullOrWhiteSpace(activeCombatantId)
                     || movement is not null
                     || weaponAttacks.Count != 0
+                    || spellAttacks.Count != 0
                     || endTurn is not null
                     || winningSideId is not null)
                 {
@@ -95,6 +105,7 @@ public sealed record CombatDecision
                     || pendingDeathSavingThrowCombatantId is not null
                     || movement is not null
                     || weaponAttacks.Count != 0
+                    || spellAttacks.Count != 0
                     || endTurn is not null)
                 {
                     throw new ArgumentException(

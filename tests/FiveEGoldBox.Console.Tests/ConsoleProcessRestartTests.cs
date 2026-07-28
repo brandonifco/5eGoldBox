@@ -882,7 +882,7 @@ public sealed class ConsoleProcessRestartTests
                 }
 
                 int selection = movements.Count
-                    + pairs.Count
+                    + GetAvailableTargets(decision).Count
                     + 1;
                 selections.Add(ToSelection(selection));
                 result = WatchtowerCombatRules.Execute(
@@ -964,12 +964,28 @@ public sealed class ConsoleProcessRestartTests
             .ToArray();
     }
 
+    private static IReadOnlyList<(string SpellId, WatchtowerCombatTargetOption Target)>
+        GetAvailableSpellTargetPairs(
+            WatchtowerCombatDecision decision)
+    {
+        return decision.SpellAttacks
+            .Where(spell => spell.IsAvailable)
+            .SelectMany(spell => spell.Targets
+                .Where(target => target.IsAvailable)
+                .Select(target => (spell.SpellId, Target: target)))
+            .ToArray();
+    }
+
+    /// Every menu row an attack or a cast could occupy, weapons first then
+    /// spells — the same order the real menu builds them in.
     private static IReadOnlyList<WatchtowerCombatTargetOption>
         GetAvailableTargets(
             WatchtowerCombatDecision decision)
     {
         return GetAvailableWeaponTargetPairs(decision)
             .Select(pair => pair.Target)
+            .Concat(GetAvailableSpellTargetPairs(decision)
+                .Select(pair => pair.Target))
             .ToArray();
     }
 

@@ -109,6 +109,7 @@ public sealed class ConsoleSessionRunnerCombatTests
             pendingDeathSavingThrowCombatantId: null,
             movement: null,
             weaponAttacks: [],
+            spellAttacks: [],
             endTurn: null,
             winningSideId: null);
         ConsoleSessionRunner runner = new();
@@ -1043,6 +1044,36 @@ public sealed class ConsoleSessionRunnerCombatTests
             labels.Add(label);
         }
 
+        foreach ((string spellId, WatchtowerCombatTargetOption target)
+            in GetAvailableSpellTargetPairs(decision))
+        {
+            string label =
+                $"Cast {spellId} on {target.TargetCombatantId}";
+
+            if (target.DistanceFeet is not null)
+            {
+                label += $" - {target.DistanceFeet} ft";
+            }
+
+            if (target.AttackRollMode is not null)
+            {
+                label += target.DistanceFeet is null
+                    ? $" - {target.AttackRollMode}"
+                    : $", {target.AttackRollMode}";
+            }
+            else if (target.SaveAbility is not null)
+            {
+                string saveClause =
+                    $"DC {target.SaveDc} {target.SaveAbility} save";
+
+                label += target.DistanceFeet is null
+                    ? $" - {saveClause}"
+                    : $", {saveClause}";
+            }
+
+            labels.Add(label);
+        }
+
         if (decision.EndTurn!.IsAvailable)
         {
             labels.Add("End Turn");
@@ -1074,12 +1105,30 @@ public sealed class ConsoleSessionRunnerCombatTests
             .ToArray();
     }
 
+    private static IReadOnlyList<(string SpellId, WatchtowerCombatTargetOption Target)>
+        GetAvailableSpellTargetPairs(
+            WatchtowerCombatDecision decision)
+    {
+        return decision.SpellAttacks
+            .Where(spell => spell.IsAvailable)
+            .SelectMany(spell => spell.Targets
+                .Where(target => target.IsAvailable)
+                .Select(target => (spell.SpellId, Target: target)))
+            .ToArray();
+    }
+
+    /// Every menu row an attack or a cast could occupy, weapons first then
+    /// spells — the same order the real menu builds them in — so a
+    /// selection index computed from this count lands on End Turn rather
+    /// than a spell the driver never asked for.
     private static IReadOnlyList<WatchtowerCombatTargetOption>
         GetAvailableTargets(
             WatchtowerCombatDecision decision)
     {
         return GetAvailableWeaponTargetPairs(decision)
             .Select(pair => pair.Target)
+            .Concat(GetAvailableSpellTargetPairs(decision)
+                .Select(pair => pair.Target))
             .ToArray();
     }
 

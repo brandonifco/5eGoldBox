@@ -4,5 +4,8 @@ public enum CombatDiePurpose
 {
     AttackRoll,
     DamageRoll,
-    DeathSavingThrow
+    DeathSavingThrow,
+    SavingThrow,
+    EffectRoll,
+    ConcentrationSavingThrow
 }

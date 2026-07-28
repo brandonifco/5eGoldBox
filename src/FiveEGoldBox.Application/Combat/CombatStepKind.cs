@@ -4,6 +4,7 @@ public enum CombatStepKind
 {
     Movement,
     WeaponAttack,
+    SpellAttack,
     DeathSavingThrow,
     TurnAdvanced,
     CombatCompleted

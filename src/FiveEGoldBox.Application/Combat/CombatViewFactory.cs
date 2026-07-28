@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
@@ -85,6 +86,7 @@ internal static class CombatViewFactory
                 null,
                 null,
                 Array.Empty<CombatWeaponAttackOption>(),
+                Array.Empty<CombatSpellAttackOption>(),
                 null,
                 winningSideId);
         }
@@ -107,6 +109,7 @@ internal static class CombatViewFactory
                 pendingDeathSavingThrowCombatantId,
                 null,
                 Array.Empty<CombatWeaponAttackOption>(),
+                Array.Empty<CombatSpellAttackOption>(),
                 null,
                 null);
         }
@@ -116,6 +119,10 @@ internal static class CombatViewFactory
             activeParticipant);
         IReadOnlyList<CombatWeaponAttackOption> weaponAttacks =
             CreateWeaponAttackOptions(
+                encounter,
+                activeParticipant);
+        IReadOnlyList<CombatSpellAttackOption> spellAttacks =
+            CreateSpellAttackOptions(
                 encounter,
                 activeParticipant);
         CombatEndTurnOption endTurn = new(
@@ -129,6 +136,7 @@ internal static class CombatViewFactory
             null,
             movement,
             weaponAttacks,
+            spellAttacks,
             endTurn,
             null);
     }
@@ -221,6 +229,65 @@ internal static class CombatViewFactory
         }
 
         return Array.AsReadOnly(weaponOptions.ToArray());
+    }
+
+    /// Every other participant is offered as a candidate, including the
+    /// caster — an ally-only spell like Bless can land on the caster alone,
+    /// which a hostile-only candidate list (as weapons use) would rule out
+    /// before the prerequisite evaluation ever got the chance to say so.
+    private static IReadOnlyList<CombatSpellAttackOption>
+        CreateSpellAttackOptions(
+            EncounterState encounter,
+            EncounterParticipantState activeParticipant)
+    {
+        List<CombatSpellAttackOption> spellOptions = [];
+
+        foreach (SpellAttack spell
+            in activeParticipant.CombatProfile.SpellAttacks)
+        {
+            CombatTargetOption[] targets =
+                new CombatTargetOption[encounter.Participants.Count];
+
+            for (int index = 0;
+                index < encounter.Participants.Count;
+                index++)
+            {
+                EncounterParticipantState target =
+                    encounter.Participants[index];
+                CombatSpellAttackAvailability evaluation =
+                    CombatSpellAttackStaging.EvaluateAvailability(
+                        encounter,
+                        activeParticipant.Combatant.CombatantId,
+                        target.Combatant.CombatantId,
+                        spell.SpellId);
+
+                targets[index] = new CombatTargetOption(
+                    target.Combatant.CombatantId,
+                    evaluation.IsLegal,
+                    evaluation.UnavailabilityReason,
+                    evaluation.AttackRollMode,
+                    evaluation.DistanceFeet,
+                    spell.SaveAbility,
+                    spell.Resolution == SpellResolutionKind.SavingThrow
+                        ? spell.SaveDc
+                        : null);
+            }
+
+            bool hasLegalTarget = targets.Any(target => target.IsAvailable);
+
+            spellOptions.Add(
+                new CombatSpellAttackOption(
+                    spell.SpellId,
+                    hasLegalTarget,
+                    hasLegalTarget
+                        ? EncounterActionUnavailabilityReason.None
+                        : targets.FirstOrDefault()?.UnavailabilityReason
+                            ?? EncounterActionUnavailabilityReason
+                                .TargetNotParticipant,
+                    targets));
+        }
+
+        return Array.AsReadOnly(spellOptions.ToArray());
     }
 
     private static EncounterParticipantState FindParticipant(

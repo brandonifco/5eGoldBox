@@ -39,6 +39,9 @@ internal static class WatchtowerCombatResultMapper
         CombatWeaponAttackOption[] weaponAttacks = source.WeaponAttacks
             .Select(ToCombatWeaponAttackOption)
             .ToArray();
+        CombatSpellAttackOption[] spellAttacks = source.SpellAttacks
+            .Select(ToCombatSpellAttackOption)
+            .ToArray();
 
         return new CombatDecision(
             ToCombatDecisionState(source.State),
@@ -49,6 +52,7 @@ internal static class WatchtowerCombatResultMapper
                 ? null
                 : ToCombatMovementOption(source.Movement),
             weaponAttacks,
+            spellAttacks,
             source.EndTurn is null
                 ? null
                 : new CombatEndTurnOption(
@@ -80,13 +84,33 @@ internal static class WatchtowerCombatResultMapper
             source.IsAvailable,
             source.UnavailabilityReason,
             source.Targets
-                .Select(target => new CombatTargetOption(
-                    target.TargetCombatantId,
-                    target.IsAvailable,
-                    target.UnavailabilityReason,
-                    target.AttackRollMode,
-                    target.DistanceFeet))
+                .Select(ToCombatTargetOption)
                 .ToArray());
+    }
+
+    private static CombatSpellAttackOption ToCombatSpellAttackOption(
+        WatchtowerCombatSpellAttackOption source)
+    {
+        return new CombatSpellAttackOption(
+            source.SpellId,
+            source.IsAvailable,
+            source.UnavailabilityReason,
+            source.Targets
+                .Select(ToCombatTargetOption)
+                .ToArray());
+    }
+
+    private static CombatTargetOption ToCombatTargetOption(
+        WatchtowerCombatTargetOption target)
+    {
+        return new CombatTargetOption(
+            target.TargetCombatantId,
+            target.IsAvailable,
+            target.UnavailabilityReason,
+            target.AttackRollMode,
+            target.DistanceFeet,
+            target.SaveAbility,
+            target.SaveDc);
     }
 
     private static CombatStepResult ToCombatStepResult(
@@ -111,6 +135,12 @@ internal static class WatchtowerCombatResultMapper
             source.WeaponAttack is null
                 ? null
                 : ToWeaponAttackDetail(source.WeaponAttack),
+            source.SpellAttack is null
+                ? null
+                : ToSpellAttackDetail(source.SpellAttack),
+            source.ConcentrationCheck is null
+                ? null
+                : ToConcentrationCheckDetail(source.ConcentrationCheck),
             source.DeathSavingThrow is null
                 ? null
                 : ToDeathSavingThrowDetail(source.DeathSavingThrow),
@@ -156,6 +186,54 @@ internal static class WatchtowerCombatResultMapper
             source.TargetDamage is null
                 ? null
                 : ToDamagedTargetDetail(source.TargetDamage));
+    }
+
+    private static CombatSpellAttackStepDetail ToSpellAttackDetail(
+        EncounterSpellCastResult source)
+    {
+        AttackRollResult? attackRoll = source.AttackRoll;
+        SavingThrowResult? savingThrow = source.SavingThrow;
+
+        return new CombatSpellAttackStepDetail(
+            source.SpellId,
+            source.DistanceFeet,
+            attackRoll?.RollMode,
+            attackRoll?.FirstRoll,
+            attackRoll?.SecondRoll,
+            attackRoll?.NaturalRoll,
+            attackRoll?.AttackBonus,
+            attackRoll?.Total,
+            attackRoll?.TargetArmorClass,
+            attackRoll?.Outcome,
+            savingThrow?.Ability,
+            savingThrow?.Test.FirstRoll,
+            savingThrow?.Test.Bonus,
+            savingThrow?.Test.DifficultyClass,
+            savingThrow?.Test.Outcome,
+            source.TookEffect,
+            source.DamageDealt,
+            source.HealingDone,
+            source.TargetDamage is null
+                ? null
+                : ToDamagedTargetDetail(source.TargetDamage));
+    }
+
+    private static CombatConcentrationCheckStepDetail
+        ToConcentrationCheckDetail(
+            EncounterConcentrationCheckResult source)
+    {
+        EncounterSavingThrowResult? savingThrow = source.SavingThrow;
+
+        return new CombatConcentrationCheckStepDetail(
+            source.CombatantId,
+            source.EffectId,
+            source.BrokenByIncapacitation,
+            savingThrow?.SavingThrow?.Test.FirstRoll,
+            savingThrow?.CombinedSavingThrowBonus,
+            savingThrow?.SavingThrow?.Test.Total,
+            savingThrow?.SavingThrow?.Test.DifficultyClass,
+            savingThrow?.SavingThrow?.Test.Outcome,
+            source.EffectDropped);
     }
 
     private static CombatDamagedTargetDetail ToDamagedTargetDetail(
@@ -212,6 +290,7 @@ internal static class WatchtowerCombatResultMapper
             source.ActorCombatantId,
             source.Path,
             source.WeaponId,
+            source.SpellId,
             source.TargetCombatantId);
     }
 
@@ -240,6 +319,7 @@ internal static class WatchtowerCombatResultMapper
         {
             WatchtowerCombatStepKind.Movement => CombatStepKind.Movement,
             WatchtowerCombatStepKind.WeaponAttack => CombatStepKind.WeaponAttack,
+            WatchtowerCombatStepKind.SpellAttack => CombatStepKind.SpellAttack,
             WatchtowerCombatStepKind.DeathSavingThrow =>
                 CombatStepKind.DeathSavingThrow,
             WatchtowerCombatStepKind.TurnAdvanced => CombatStepKind.TurnAdvanced,
@@ -261,6 +341,12 @@ internal static class WatchtowerCombatResultMapper
             WatchtowerCombatDiePurpose.DamageRoll => CombatDiePurpose.DamageRoll,
             WatchtowerCombatDiePurpose.DeathSavingThrow =>
                 CombatDiePurpose.DeathSavingThrow,
+            WatchtowerCombatDiePurpose.SavingThrow =>
+                CombatDiePurpose.SavingThrow,
+            WatchtowerCombatDiePurpose.EffectRoll =>
+                CombatDiePurpose.EffectRoll,
+            WatchtowerCombatDiePurpose.ConcentrationSavingThrow =>
+                CombatDiePurpose.ConcentrationSavingThrow,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(source),
                 source,
@@ -276,6 +362,8 @@ internal static class WatchtowerCombatResultMapper
             WatchtowerCombatIntentKind.Move => CombatIntentKind.Move,
             WatchtowerCombatIntentKind.WeaponAttack =>
                 CombatIntentKind.WeaponAttack,
+            WatchtowerCombatIntentKind.SpellAttack =>
+                CombatIntentKind.SpellAttack,
             WatchtowerCombatIntentKind.EndTurn => CombatIntentKind.EndTurn,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(source),

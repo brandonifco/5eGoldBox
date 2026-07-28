@@ -26,6 +26,13 @@ internal static class WatchtowerCombatRules
 
     public static WatchtowerCombatResolutionResult Execute(
         ApplicationSessionState session,
+        WatchtowerCombatSpellAttackIntent intent)
+    {
+        return WatchtowerCombatOrchestrator.Execute(session, intent);
+    }
+
+    public static WatchtowerCombatResolutionResult Execute(
+        ApplicationSessionState session,
         WatchtowerCombatEndTurnIntent intent)
     {
         return WatchtowerCombatOrchestrator.Execute(session, intent);

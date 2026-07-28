@@ -118,6 +118,34 @@ internal sealed partial class ConsoleSessionRunner
                     session = attackResult.State;
                     decision = attackResult.ResultingDecision;
                     break;
+                case CombatMenuAction.SpellAttack:
+                    CombatSpellAttackOption spellAttack =
+                        selectedOption.SpellAttack
+                        ?? throw new InvalidOperationException(
+                            "A spell-attack menu option did not contain a spell option.");
+                    CombatTargetOption spellTarget =
+                        selectedOption.Target
+                        ?? throw new InvalidOperationException(
+                            "A spell-attack menu option did not contain a target option.");
+
+                    CombatResolutionResult castResult =
+                        CombatOperations.Execute(
+                            session,
+                            new CombatSpellAttackIntent
+                            {
+                                ExpectedEncounterRevision =
+                                    decision.EncounterRevision,
+                                ActorCombatantId =
+                                    decision.ActiveCombatantId!,
+                                SpellId = spellAttack.SpellId,
+                                TargetCombatantId =
+                                    spellTarget.TargetCombatantId
+                            });
+
+                    RenderCombatResolution(output, castResult);
+                    session = castResult.State;
+                    decision = castResult.ResultingDecision;
+                    break;
                 case CombatMenuAction.EndTurn:
                     CombatResolutionResult endTurnResult =
                         CombatOperations.Execute(
@@ -202,6 +230,24 @@ internal sealed partial class ConsoleSessionRunner
                 $"Weapon {index + 1} Attack Unavailability Reason: {weaponAttack.UnavailabilityReason}");
             output.WriteLine(
                 $"Weapon {index + 1} Legal Attack Target Count: {(weaponAttack.IsAvailable ? weaponAttack.Targets.Count(target => target.IsAvailable) : 0)}");
+        }
+
+        // One block per spell prepared, the same way weapons get one block
+        // each rather than a single fixed slot.
+        for (int index = 0;
+            index < decision.SpellAttacks.Count;
+            index++)
+        {
+            CombatSpellAttackOption spellAttack =
+                decision.SpellAttacks[index];
+
+            output.WriteLine($"Spell {index + 1} ID: {spellAttack.SpellId}");
+            output.WriteLine(
+                $"Spell {index + 1} Cast Available: {FormatBoolean(spellAttack.IsAvailable)}");
+            output.WriteLine(
+                $"Spell {index + 1} Cast Unavailability Reason: {spellAttack.UnavailabilityReason}");
+            output.WriteLine(
+                $"Spell {index + 1} Legal Cast Target Count: {(spellAttack.IsAvailable ? spellAttack.Targets.Count(target => target.IsAvailable) : 0)}");
         }
 
         output.WriteLine(
@@ -321,6 +367,31 @@ internal sealed partial class ConsoleSessionRunner
             }
         }
 
+        // One menu row per (spell, target) pair, the same shape as weapons —
+        // a spell that can land on three legal targets offers three rows.
+        foreach (CombatSpellAttackOption spellAttack
+            in decision.SpellAttacks)
+        {
+            if (!spellAttack.IsAvailable)
+            {
+                continue;
+            }
+
+            foreach (CombatTargetOption target
+                in spellAttack.Targets.Where(target =>
+                    target.IsAvailable))
+            {
+                options.Add(
+                    new CombatMenuOption(
+                        CreateSpellAttackLabel(
+                            spellAttack,
+                            target),
+                        CombatMenuAction.SpellAttack,
+                        SpellAttack: spellAttack,
+                        Target: target));
+            }
+        }
+
         if (decision.EndTurn!.IsAvailable)
         {
             options.Add(
@@ -362,6 +433,37 @@ internal sealed partial class ConsoleSessionRunner
         if (target.AttackRollMode is not null)
         {
             return $"{label} - {target.AttackRollMode}";
+        }
+
+        return label;
+    }
+
+    private static string CreateSpellAttackLabel(
+        CombatSpellAttackOption spellAttack,
+        CombatTargetOption target)
+    {
+        string label =
+            $"Cast {spellAttack.SpellId} on {target.TargetCombatantId}";
+
+        if (target.DistanceFeet is not null)
+        {
+            label += $" - {target.DistanceFeet} ft";
+        }
+
+        if (target.AttackRollMode is not null)
+        {
+            label += target.DistanceFeet is null
+                ? $" - {target.AttackRollMode}"
+                : $", {target.AttackRollMode}";
+        }
+        else if (target.SaveAbility is not null)
+        {
+            string saveClause =
+                $"DC {target.SaveDc} {target.SaveAbility} save";
+
+            label += target.DistanceFeet is null
+                ? $" - {saveClause}"
+                : $", {saveClause}";
         }
 
         return label;
@@ -470,6 +572,9 @@ internal sealed partial class ConsoleSessionRunner
             case CombatStepKind.WeaponAttack:
                 RenderWeaponAttackStep(output, step);
                 break;
+            case CombatStepKind.SpellAttack:
+                RenderSpellAttackStep(output, step);
+                break;
             case CombatStepKind.DeathSavingThrow:
                 RenderDeathSavingThrowStep(output, step);
                 break;
@@ -487,6 +592,13 @@ internal sealed partial class ConsoleSessionRunner
             default:
                 throw new InvalidOperationException(
                     "The combat step kind is unsupported by the console client.");
+        }
+
+        // Either a weapon attack or a spell cast can trigger this, so it is
+        // rendered once here rather than duplicated in both step renderers.
+        if (step.ConcentrationCheck is not null)
+        {
+            RenderConcentrationCheck(output, step.ConcentrationCheck);
         }
     }
 
@@ -561,6 +673,103 @@ internal sealed partial class ConsoleSessionRunner
             $"Resulting Target Temporary Hit Points: {damagedTarget.TemporaryHitPoints}");
         output.WriteLine(
             $"Resulting Target Lifecycle: {damagedTarget.LifecycleState}");
+    }
+
+    private static void RenderSpellAttackStep(
+        TextWriter output,
+        CombatStepResult step)
+    {
+        var spellAttack = step.SpellAttack
+            ?? throw new InvalidOperationException(
+                "A spell-attack step did not contain a spell-attack result.");
+        output.WriteLine($"Spell ID: {spellAttack.SpellId}");
+        output.WriteLine(
+            $"Distance Feet: {spellAttack.DistanceFeet}");
+
+        if (spellAttack.AttackRollMode is not null)
+        {
+            output.WriteLine(
+                $"Attack Roll Mode: {spellAttack.AttackRollMode}");
+            output.WriteLine(
+                $"First Roll: {spellAttack.FirstAttackRoll}");
+
+            if (spellAttack.SecondAttackRoll is not null)
+            {
+                output.WriteLine(
+                    $"Second Roll: {spellAttack.SecondAttackRoll}");
+            }
+
+            output.WriteLine(
+                $"Natural Roll: {spellAttack.AttackNaturalRoll}");
+            output.WriteLine(
+                $"Attack Bonus: {spellAttack.AttackBonus}");
+            output.WriteLine(
+                $"Attack Total: {spellAttack.AttackTotal}");
+            output.WriteLine(
+                $"Target Armor Class: {spellAttack.TargetArmorClass}");
+            output.WriteLine(
+                $"Attack Outcome: {spellAttack.AttackOutcome}");
+        }
+        else if (spellAttack.SaveAbility is not null)
+        {
+            output.WriteLine(
+                $"Save Ability: {spellAttack.SaveAbility}");
+            output.WriteLine(
+                $"Save First Roll: {spellAttack.SaveFirstRoll}");
+            output.WriteLine(
+                $"Combined Saving Throw Bonus: {spellAttack.CombinedSavingThrowBonus}");
+            output.WriteLine(
+                $"Save Difficulty Class: {spellAttack.SaveDifficultyClass}");
+            output.WriteLine(
+                $"Save Outcome: {spellAttack.SaveOutcome}");
+        }
+
+        output.WriteLine($"Took Effect: {FormatBoolean(spellAttack.TookEffect)}");
+        output.WriteLine($"Damage Dealt: {spellAttack.DamageDealt}");
+        output.WriteLine($"Healing Done: {spellAttack.HealingDone}");
+
+        if (spellAttack.DamagedTarget is null)
+        {
+            return;
+        }
+
+        var damagedTarget = spellAttack.DamagedTarget;
+
+        output.WriteLine(
+            $"Resulting Target Hit Points: {damagedTarget.CurrentHitPoints} / {damagedTarget.MaximumHitPoints}");
+        output.WriteLine(
+            $"Resulting Target Temporary Hit Points: {damagedTarget.TemporaryHitPoints}");
+        output.WriteLine(
+            $"Resulting Target Lifecycle: {damagedTarget.LifecycleState}");
+    }
+
+    private static void RenderConcentrationCheck(
+        TextWriter output,
+        CombatConcentrationCheckStepDetail concentrationCheck)
+    {
+        output.WriteLine();
+        output.WriteLine("Concentration Check");
+        output.WriteLine(
+            $"Combatant ID: {concentrationCheck.CombatantId}");
+        output.WriteLine(
+            $"Effect ID: {concentrationCheck.EffectId}");
+        output.WriteLine(
+            $"Broken By Incapacitation: {FormatBoolean(concentrationCheck.BrokenByIncapacitation)}");
+
+        if (!concentrationCheck.BrokenByIncapacitation)
+        {
+            output.WriteLine(
+                $"First Roll: {concentrationCheck.FirstRoll}");
+            output.WriteLine(
+                $"Combined Saving Throw Bonus: {concentrationCheck.CombinedSavingThrowBonus}");
+            output.WriteLine($"Total: {concentrationCheck.Total}");
+            output.WriteLine(
+                $"Difficulty Class: {concentrationCheck.DifficultyClass}");
+            output.WriteLine($"Outcome: {concentrationCheck.Outcome}");
+        }
+
+        output.WriteLine(
+            $"Effect Dropped: {FormatBoolean(concentrationCheck.EffectDropped)}");
     }
 
     private static void RenderDeathSavingThrowStep(
@@ -682,6 +891,7 @@ internal sealed partial class ConsoleSessionRunner
         CombatMovementDestinationOption?
             MovementDestination = null,
         CombatWeaponAttackOption? WeaponAttack = null,
+        CombatSpellAttackOption? SpellAttack = null,
         CombatTargetOption? Target = null);
 
     private sealed record CombatSessionRunResult(
@@ -692,6 +902,7 @@ internal sealed partial class ConsoleSessionRunner
     {
         Move,
         WeaponAttack,
+        SpellAttack,
         EndTurn,
         InspectEncounter,
         Exit

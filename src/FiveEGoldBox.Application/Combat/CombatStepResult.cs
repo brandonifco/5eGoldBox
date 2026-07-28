@@ -14,6 +14,8 @@ public sealed record CombatStepResult
         IReadOnlyList<CombatDieRoll> dice,
         CombatMovementStepDetail? movement,
         CombatWeaponAttackStepDetail? weaponAttack,
+        CombatSpellAttackStepDetail? spellAttack,
+        CombatConcentrationCheckStepDetail? concentrationCheck,
         CombatDeathSavingThrowStepDetail? deathSavingThrow,
         CombatTurnAdvancementStepDetail? turnAdvancement,
         CombatTurnAdvanceReason? turnAdvanceReason,
@@ -29,6 +31,8 @@ public sealed record CombatStepResult
         Dice = Array.AsReadOnly(dice.ToArray());
         Movement = movement;
         WeaponAttack = weaponAttack;
+        SpellAttack = spellAttack;
+        ConcentrationCheck = concentrationCheck;
         DeathSavingThrow = deathSavingThrow;
         TurnAdvancement = turnAdvancement;
         TurnAdvanceReason = turnAdvanceReason;
@@ -52,6 +56,12 @@ public sealed record CombatStepResult
     public CombatMovementStepDetail? Movement { get; }
 
     public CombatWeaponAttackStepDetail? WeaponAttack { get; }
+
+    public CombatSpellAttackStepDetail? SpellAttack { get; }
+
+    /// Set whenever this step damaged a combatant who was concentrating on
+    /// something, whichever kind of step did it.
+    public CombatConcentrationCheckStepDetail? ConcentrationCheck { get; }
 
     public CombatDeathSavingThrowStepDetail? DeathSavingThrow { get; }
 

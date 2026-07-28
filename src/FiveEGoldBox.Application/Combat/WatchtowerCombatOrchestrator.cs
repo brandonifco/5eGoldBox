@@ -79,6 +79,24 @@ internal static class WatchtowerCombatOrchestrator
 
     internal static WatchtowerCombatResolutionResult Execute(
         ApplicationSessionState source,
+        WatchtowerCombatSpellAttackIntent intent)
+    {
+        ArgumentNullException.ThrowIfNull(intent);
+
+        return ExecutePlayerCommand(
+            source,
+            intent.ExpectedEncounterRevision,
+            intent.ActorCombatantId,
+            (encounter, randomSeed, cursorBefore) =>
+                WatchtowerPlayerCommandResolver.Resolve(
+                    encounter,
+                    randomSeed,
+                    cursorBefore,
+                    intent));
+    }
+
+    internal static WatchtowerCombatResolutionResult Execute(
+        ApplicationSessionState source,
         WatchtowerCombatEndTurnIntent intent)
     {
         ArgumentNullException.ThrowIfNull(intent);

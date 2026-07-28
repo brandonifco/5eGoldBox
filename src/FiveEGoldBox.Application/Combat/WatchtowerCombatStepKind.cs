@@ -4,6 +4,7 @@ internal enum WatchtowerCombatStepKind
 {
     Movement,
     WeaponAttack,
+    SpellAttack,
     DeathSavingThrow,
     TurnAdvanced,
     CombatCompleted

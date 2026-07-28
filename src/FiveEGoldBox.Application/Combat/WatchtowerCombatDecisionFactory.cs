@@ -1,6 +1,7 @@
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
@@ -26,6 +27,7 @@ internal static class WatchtowerCombatDecisionFactory
                 PendingDeathSavingThrowCombatantId = null,
                 Movement = null,
                 WeaponAttacks = Array.Empty<WatchtowerCombatWeaponAttackOption>(),
+                SpellAttacks = Array.Empty<WatchtowerCombatSpellAttackOption>(),
                 EndTurn = null,
                 WinningSideId = encounter.WinningSideId
             };
@@ -56,6 +58,7 @@ internal static class WatchtowerCombatDecisionFactory
                     encounter.PendingDeathSavingThrowCombatantId,
                 Movement = null,
                 WeaponAttacks = Array.Empty<WatchtowerCombatWeaponAttackOption>(),
+                SpellAttacks = Array.Empty<WatchtowerCombatSpellAttackOption>(),
                 EndTurn = null,
                 WinningSideId = null
             };
@@ -67,6 +70,14 @@ internal static class WatchtowerCombatDecisionFactory
                     encounter,
                     activeParticipant,
                     weapon))
+                .ToArray();
+
+        WatchtowerCombatSpellAttackOption[] spellAttacks =
+            activeParticipant.CombatProfile.SpellAttacks
+                .Select(spell => CreateSpellAttackOption(
+                    encounter,
+                    activeParticipant,
+                    spell))
                 .ToArray();
 
         int movementRemaining =
@@ -94,6 +105,7 @@ internal static class WatchtowerCombatDecisionFactory
                 DestinationOptions = movementDestinations
             },
             WeaponAttacks = Array.AsReadOnly(weaponAttacks),
+            SpellAttacks = Array.AsReadOnly(spellAttacks),
             EndTurn = new WatchtowerCombatEndTurnOption
             {
                 IsAvailable = true,
@@ -191,6 +203,68 @@ internal static class WatchtowerCombatDecisionFactory
             UnavailabilityReason = evaluation.UnavailabilityReason,
             AttackRollMode = evaluation.AttackRollMode,
             DistanceFeet = evaluation.DistanceFeet
+        };
+    }
+
+    /// One spell's whole offer: every other participant it could name as a
+    /// target — an ally-only spell and an enemy-only one both offer the same
+    /// candidates, and the prerequisite evaluation is what actually tells
+    /// each apart. A caster is offered as its own candidate too, since a
+    /// spell like Bless can land on the caster alone.
+    private static WatchtowerCombatSpellAttackOption CreateSpellAttackOption(
+        EncounterState encounter,
+        EncounterParticipantState actor,
+        SpellAttack spell)
+    {
+        WatchtowerCombatTargetOption[] targets =
+            encounter.Participants
+                .Select(participant => CreateSpellTargetOption(
+                    encounter,
+                    actor,
+                    participant,
+                    spell))
+                .ToArray();
+
+        bool hasLegalTarget = targets.Any(target => target.IsAvailable);
+        EncounterActionUnavailabilityReason spellReason =
+            hasLegalTarget
+                ? EncounterActionUnavailabilityReason.None
+                : targets.FirstOrDefault()?.UnavailabilityReason
+                    ?? EncounterActionUnavailabilityReason.TargetNotParticipant;
+
+        return new WatchtowerCombatSpellAttackOption
+        {
+            SpellId = spell.SpellId,
+            IsAvailable = hasLegalTarget,
+            UnavailabilityReason = spellReason,
+            Targets = Array.AsReadOnly(targets)
+        };
+    }
+
+    private static WatchtowerCombatTargetOption CreateSpellTargetOption(
+        EncounterState encounter,
+        EncounterParticipantState actor,
+        EncounterParticipantState target,
+        SpellAttack spell)
+    {
+        WatchtowerCombatSpellAttackAvailability evaluation =
+            WatchtowerCombatSpellAttackStaging.EvaluateAvailability(
+                encounter,
+                actor.Combatant.CombatantId,
+                target.Combatant.CombatantId,
+                spell.SpellId);
+
+        return new WatchtowerCombatTargetOption
+        {
+            TargetCombatantId = target.Combatant.CombatantId,
+            IsAvailable = evaluation.IsLegal,
+            UnavailabilityReason = evaluation.UnavailabilityReason,
+            AttackRollMode = evaluation.AttackRollMode,
+            DistanceFeet = evaluation.DistanceFeet,
+            SaveAbility = spell.SaveAbility,
+            SaveDc = spell.Resolution == SpellResolutionKind.SavingThrow
+                ? spell.SaveDc
+                : null
         };
     }
 

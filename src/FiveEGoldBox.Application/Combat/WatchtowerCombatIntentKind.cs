@@ -4,5 +4,6 @@ internal enum WatchtowerCombatIntentKind
 {
     Move,
     WeaponAttack,
+    SpellAttack,
     EndTurn
 }

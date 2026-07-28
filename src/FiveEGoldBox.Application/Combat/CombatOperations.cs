@@ -85,6 +85,25 @@ public static class CombatOperations
 
     public static CombatResolutionResult Execute(
         ApplicationSessionState session,
+        CombatSpellAttackIntent intent)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(intent);
+
+        return WatchtowerCombatResultMapper.ToCombatResolutionResult(
+            WatchtowerCombatOrchestrator.Execute(
+                session,
+                new WatchtowerCombatSpellAttackIntent
+                {
+                    ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
+                    ActorCombatantId = intent.ActorCombatantId,
+                    SpellId = intent.SpellId,
+                    TargetCombatantId = intent.TargetCombatantId
+                }));
+    }
+
+    public static CombatResolutionResult Execute(
+        ApplicationSessionState session,
         CombatEndTurnIntent intent)
     {
         ArgumentNullException.ThrowIfNull(session);

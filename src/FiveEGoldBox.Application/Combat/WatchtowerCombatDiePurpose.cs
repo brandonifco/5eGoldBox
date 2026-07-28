@@ -4,5 +4,8 @@ internal enum WatchtowerCombatDiePurpose
 {
     AttackRoll,
     DamageRoll,
-    DeathSavingThrow
+    DeathSavingThrow,
+    SavingThrow,
+    EffectRoll,
+    ConcentrationSavingThrow
 }
