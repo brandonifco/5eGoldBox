@@ -69,10 +69,10 @@ Numbered menus throughout; save and load are available from the main menu.
 
 | Document | Purpose |
 |---|---|
-| [docs/priority-1-development-plan.md](docs/priority-1-development-plan.md) | Phases 1–8. Public API stabilization, versioned persistence, session validation, combat decomposition. Phases 1–4 complete. |
-| [CLAUDE.md](CLAUDE.md) | Working conventions, current phase status, and repo hygiene notes — now the authoritative source for Priority 2 (Phases 9–12) status, since `docs/priority-2-development-plan.md` was removed. |
+| [docs/priority-1-development-plan.md](docs/priority-1-development-plan.md) | Phases 1–8: public API stabilization, versioned persistence, session validation, combat decomposition. All eight complete. |
+| [CLAUDE.md](CLAUDE.md) | Working conventions, current phase status, and repo hygiene notes — the authoritative source for what's actually in progress now (Priority 2, Phases 9–12), since `docs/priority-2-development-plan.md` was removed. |
 
-The single most important upcoming change is **Phase 6**: making the engine loadable with *any* scenario. Today `ApplicationSessionState` is typed directly to Watchtower's scenario state and party shape, so a second adventure cannot be added without changing the center of the object graph. Phase 5 (decomposing the combat orchestrator) comes first and unblocks it.
+Phases 1–8 are done: the engine is loadable with any scenario, proven by a second one (the Sunken Chapel) that shares nothing with the first. See CLAUDE.md for what's in progress now.
 
 ## License
 
