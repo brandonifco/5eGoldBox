@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 
 internal sealed class ShellCommandBarController : IShellCommandBar
@@ -26,6 +27,8 @@ internal sealed class ShellCommandBarController : IShellCommandBar
 
 	public void ShowCommands(params CommandDefinition[] commands)
 	{
+		ValidateUniqueShortcuts(commands);
+
 		_showingMovementPrompt = false;
 		_currentCommands = commands;
 		Refresh();
@@ -100,6 +103,23 @@ internal sealed class ShellCommandBarController : IShellCommandBar
 			enableShortcut);
 
 		return button;
+	}
+
+	private static void ValidateUniqueShortcuts(CommandDefinition[] commands)
+	{
+		HashSet<Key> seenShortcuts = new();
+
+		foreach (CommandDefinition command in commands)
+		{
+			if (!seenShortcuts.Add(command.ShortcutKey))
+			{
+				throw new ArgumentException(
+					$"Command '{command.Name}' reuses shortcut " +
+						$"'{command.ShortcutKey}' within the same active " +
+						"command set.",
+					nameof(commands));
+			}
+		}
 	}
 
 	private static void RenderMovementPrompt(
