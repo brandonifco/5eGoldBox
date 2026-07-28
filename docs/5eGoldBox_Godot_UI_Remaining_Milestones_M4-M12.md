@@ -4,6 +4,14 @@
 
 This is a concise proposed execution-stage breakdown derived from the creator-approved Godot UI Pre-Integration Governing Plan v1.1. Lettered stages organize implementation; they do not change the governing milestone scope or acceptance gates.
 
+**2026-07-28, out of milestone order — real backend integration landed (PR #170, from the FiveEGoldBox.Application side).** The creator asked for the two lines to stop developing separately; this doesn't renumber or complete any M6-M12 letter above. `RealGameSession` (`ui/integration/`) is now what `AppShell` runs by default for outpost decisions, exploration, and regional travel — a real `ApplicationSessionState` driven through `SessionView`/`SessionAction` and the rule facades, projected into this doc's own `CommandSetViewModel`/`CommandViewModel` types rather than a second, UI-invented shape. `MockExplorationCommandContent`, the mock catalog, `MockScriptedSession`, and the F-key dev shortcuts are all untouched and still work for QA — this sits alongside them, not instead of them.
+
+Two things worth knowing before touching M6f onward:
+- **A real session's exploration command set is not the seven move/view/cast/area/encamp/search/look commands `MockExplorationCommandContent` invented.** The real engine only offers `MoveForward`/`TurnLeft`/`TurnRight`/`UseStairs`/`ActivateTrigger` today — no cast, no rest, no search, no detailed views. `RealGameSession` shows exactly what `SessionView` reports as legal and nothing else; the other five stay real for the *mock* catalog (representing where the UI is headed) but should not be assumed available against a real session until Application actually grows those actions.
+- **`RealGameSession` renders every real command as a flat command-bar entry**, including movement — it does not (yet) route through the existing `DirectMovement`/arrow-key movement-mode UX M4 built. Reconciling those two is real follow-up work, not done here.
+
+Combat is not wired — every one of the three real scenarios eventually reaches `Encounter` mode, and `ShellInteractionController.ShowRealSession` shows that state honestly ("combat is not connected to the real engine yet") rather than faking a fight. That's the real boundary M8 will need to cross, not a gap in this pass.
+
 ## M4 — Input Router, Focus, and Interaction-State Framework
 
 **Objective:** Make player input deterministic, context-aware, and consistent across the entire UI.
