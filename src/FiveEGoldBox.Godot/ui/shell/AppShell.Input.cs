@@ -11,10 +11,7 @@ public partial class AppShell
 			return;
 		}
 
-		if (_inputRouter.Handle(
-			keyEvent.Keycode,
-			keyEvent.CtrlPressed,
-			keyEvent.AltPressed))
+		if (_inputRouter.Handle(keyEvent))
 		{
 			GetViewport().SetInputAsHandled();
 		}

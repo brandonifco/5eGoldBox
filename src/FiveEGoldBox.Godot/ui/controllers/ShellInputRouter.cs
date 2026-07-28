@@ -35,103 +35,100 @@ internal sealed class ShellInputRouter
 		_reportMovement = reportMovement;
 	}
 
-	public bool Handle(
-		Key keycode,
-		bool ctrlPressed,
-		bool altPressed)
+	public bool Handle(InputEventKey keyEvent)
 	{
-		if (keycode == Key.F11)
+		if (keyEvent.IsActionPressed(PlayerInputActions.ToggleImmersiveMode))
 		{
 			_toggleImmersiveMode();
 			return true;
 		}
 
-		if (HandleDeveloperShortcut(
-			keycode,
-			ctrlPressed,
-			altPressed))
+		if (HandleDeveloperShortcut(keyEvent))
 		{
 			return true;
 		}
 
 		return _interactionState.CurrentMode ==
 				InteractionMode.ExplorationMovement &&
-			HandleExplorationMovementInput(keycode);
+			HandleExplorationMovementInput(keyEvent);
 	}
 
-	private bool HandleDeveloperShortcut(
-		Key keycode,
-		bool ctrlPressed,
-		bool altPressed)
+	private bool HandleDeveloperShortcut(InputEventKey keyEvent)
 	{
 #if DEBUG
-		if (ctrlPressed && altPressed)
+		if (keyEvent.IsActionPressed(
+			PlayerInputActions.DevToggleHighContrastTheme))
 		{
-			switch (keycode)
-			{
-				case Key.H:
-					_toggleHighContrastTheme();
-					return true;
-
-				case Key.M:
-					_toggleReducedMotion();
-					return true;
-			}
+			_toggleHighContrastTheme();
+			return true;
 		}
 
-		switch (keycode)
+		if (keyEvent.IsActionPressed(
+			PlayerInputActions.DevToggleReducedMotion))
 		{
-			case Key.F1:
-				_showExplorationView();
-				return true;
-
-			case Key.F2:
-				_showRegionalMapView();
-				return true;
-
-			case Key.F3:
-				_showCombatView();
-				return true;
-
-			default:
-				return false;
+			_toggleReducedMotion();
+			return true;
 		}
+
+		if (keyEvent.IsActionPressed(
+			PlayerInputActions.DevShowExplorationView))
+		{
+			_showExplorationView();
+			return true;
+		}
+
+		if (keyEvent.IsActionPressed(
+			PlayerInputActions.DevShowRegionalMapView))
+		{
+			_showRegionalMapView();
+			return true;
+		}
+
+		if (keyEvent.IsActionPressed(PlayerInputActions.DevShowCombatView))
+		{
+			_showCombatView();
+			return true;
+		}
+
+		return false;
 #else
 		return false;
 #endif
 	}
 
-	private bool HandleExplorationMovementInput(Key keycode)
+	private bool HandleExplorationMovementInput(InputEventKey keyEvent)
 	{
-		switch (keycode)
+		if (keyEvent.IsActionPressed(PlayerInputActions.UiCancel) ||
+			keyEvent.IsActionPressed(PlayerInputActions.ExitMovementMode))
 		{
-			case Key.Escape:
-			case Key.Space:
-				_exitExplorationMovementMode();
-				return true;
-
-			case Key.Up:
-			case Key.Kp8:
-				_reportMovement("Step forward");
-				return true;
-
-			case Key.Down:
-			case Key.Kp2:
-				_reportMovement("Step backward");
-				return true;
-
-			case Key.Left:
-			case Key.Kp4:
-				_reportMovement("Turn left");
-				return true;
-
-			case Key.Right:
-			case Key.Kp6:
-				_reportMovement("Turn right");
-				return true;
-
-			default:
-				return false;
+			_exitExplorationMovementMode();
+			return true;
 		}
+
+		if (keyEvent.IsActionPressed(PlayerInputActions.MoveForward))
+		{
+			_reportMovement("Step forward");
+			return true;
+		}
+
+		if (keyEvent.IsActionPressed(PlayerInputActions.MoveBackward))
+		{
+			_reportMovement("Step backward");
+			return true;
+		}
+
+		if (keyEvent.IsActionPressed(PlayerInputActions.TurnLeft))
+		{
+			_reportMovement("Turn left");
+			return true;
+		}
+
+		if (keyEvent.IsActionPressed(PlayerInputActions.TurnRight))
+		{
+			_reportMovement("Turn right");
+			return true;
+		}
+
+		return false;
 	}
 }

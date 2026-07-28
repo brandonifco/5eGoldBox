@@ -26,20 +26,38 @@ public partial class SelectionList
 			return;
 		}
 
-		int targetIndex = keyEvent.Keycode switch
-		{
-			Key.Up => FindEnabledIndex(index - 1, -1),
-			Key.Down => FindEnabledIndex(index + 1, 1),
-			Key.Home => FindEnabledIndex(0, 1),
-			Key.End => FindEnabledIndex(_entries.Count - 1, -1),
-			_ => -1,
-		};
+		int targetIndex = FindTargetIndex(keyEvent, index);
 
 		if (targetIndex >= 0)
 		{
 			SelectIndex(targetIndex, grabFocus: true);
 			AcceptEvent();
 		}
+	}
+
+	private int FindTargetIndex(InputEventKey keyEvent, int index)
+	{
+		if (keyEvent.IsActionPressed(PlayerInputActions.UiUp))
+		{
+			return FindEnabledIndex(index - 1, -1);
+		}
+
+		if (keyEvent.IsActionPressed(PlayerInputActions.UiDown))
+		{
+			return FindEnabledIndex(index + 1, 1);
+		}
+
+		if (keyEvent.IsActionPressed(PlayerInputActions.ListSelectFirst))
+		{
+			return FindEnabledIndex(0, 1);
+		}
+
+		if (keyEvent.IsActionPressed(PlayerInputActions.ListSelectLast))
+		{
+			return FindEnabledIndex(_entries.Count - 1, -1);
+		}
+
+		return -1;
 	}
 
 	private int FindEnabledIndex(

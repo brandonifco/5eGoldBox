@@ -1,6 +1,6 @@
 # 5eGoldBox Godot UI — Remaining Milestones (M4–M12)
 
-**Status:** M0–M3 complete; nine milestones remain.
+**Status:** M0–M3 complete; M4 in progress (a done); eight milestones remain after M4.
 
 This is a concise proposed execution-stage breakdown derived from the creator-approved Godot UI Pre-Integration Governing Plan v1.1. Lettered stages organize implementation; they do not change the governing milestone scope or acceptance gates.
 
@@ -8,13 +8,15 @@ This is a concise proposed execution-stage breakdown derived from the creator-ap
 
 **Objective:** Make player input deterministic, context-aware, and consistent across the entire UI.
 
-- a. Define the complete player InputMap action inventory and migrate raw player-key handling.
-- b. Formalize interaction and focus contexts for commands, movement, lists, targeting, modals, and dialogs.
-- c. Centralize Escape/cancel priority and modal-stack routing.
-- d. Implement deterministic keyboard focus traversal and unmistakable focus presentation.
-- e. Validate active-command hotkey uniqueness and prevent inactive contexts from consuming input.
-- f. Preserve direct MOVE behavior and add optional gamepad-navigation scaffolding.
-- g. Complete keyboard/mouse parity, cancel-priority, context-isolation, and movement-mode verification.
+- [x] a. Define the complete player InputMap action inventory and migrate raw player-key handling. `ui/input/PlayerInputActions.cs` registers every fixed player/system/dev-shortcut binding as a named Godot InputMap action in code (compiler-checked `Key` values, not a hand-authored `project.godot` resource block). `ShellInputRouter`, `AppShell.Input.cs`, and `SelectionList.Input.cs` now check `keyEvent.IsActionPressed(...)` against those names instead of comparing raw `Key` values; `ShellInputRouter.Handle` takes the `InputEventKey` itself rather than a decomposed keycode/ctrl/alt triple. Godot's own built-ins (`ui_cancel`, `ui_up`, `ui_down`) are referenced by name rather than reimplemented. Verified: `dotnet build` clean (0 warnings/errors), grep confirms zero remaining raw `Key.*` comparisons in the touched files, all files still ≤250 lines.
+  - **Deliberately deferred to c/d, not done here:** `ModalBackdrop`'s Tab-cycle and Escape-dismiss handling still compare raw `Key.Tab`/`Key.Escape` directly. Its focus-traversal and cancel-routing logic is getting restructured in M4c/M4d anyway, so converting only the detection mechanism now would be low-value churn ahead of that redesign.
+  - **Deliberately left alone:** the per-command hotkeys in `CommandDefinition`/`HotkeyCommandButton` (e.g. `T` for Travel, `M` for Move) — these are content-driven, differ per active command set, and already ride Godot's own `Shortcut` mechanism correctly; InputMap actions are for fixed global bindings, not per-screen dynamic ones. Their unique-per-active-set validation is M4e's job. Dev-tool `Key.H` checks in `ui/dev/*Demo.cs` (help toggles in QA scaffolding, not player controls) were left as-is too.
+- [ ] b. Formalize interaction and focus contexts for commands, movement, lists, targeting, modals, and dialogs.
+- [ ] c. Centralize Escape/cancel priority and modal-stack routing.
+- [ ] d. Implement deterministic keyboard focus traversal and unmistakable focus presentation.
+- [ ] e. Validate active-command hotkey uniqueness and prevent inactive contexts from consuming input.
+- [ ] f. Preserve direct MOVE behavior and add optional gamepad-navigation scaffolding.
+- [ ] g. Complete keyboard/mouse parity, cancel-priority, context-isolation, and movement-mode verification.
 
 ## M5 — Mock Gateway and Scenario Laboratory
 

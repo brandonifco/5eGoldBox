@@ -15,6 +15,8 @@ public partial class AppShell : Control
 
 	public override void _Ready()
 	{
+		PlayerInputActions.EnsureRegistered();
+
 		_standardLayout = GetNode<StandardLayout>("%StandardLayout");
 		_immersiveLayout = GetNode<ImmersiveLayout>("%ImmersiveLayout");
 
