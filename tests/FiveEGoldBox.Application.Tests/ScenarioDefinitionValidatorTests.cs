@@ -41,7 +41,7 @@ public sealed class ScenarioDefinitionValidatorTests
     [InlineData("scenario.map.position_out_of_bounds")]
     [InlineData("scenario.map.stair_destination_impassable")]
     [InlineData("scenario.routes.circular")]
-    [InlineData("scenario.routes.multiple_routes_unsupported")]
+    [InlineData("scenario.routes.origin_unreachable")]
     [InlineData("scenario.triggers.resulting_progress_unknown")]
     [InlineData("scenario.triggers.encounter_unknown")]
     [InlineData("scenario.triggers.position_impassable")]
@@ -61,6 +61,36 @@ public sealed class ScenarioDefinitionValidatorTests
         Assert.Contains(
             result.Issues,
             issue => issue.Code == expectedCode);
+    }
+
+    /// A second route from the same origin as the first — a choice of two
+    /// roads to the same place — is exactly what RegionalTravelRules can now
+    /// run, and carries none of the reachability problem a return route has.
+    [Fact]
+    public void Validate_AcceptsASecondRouteFromTheSameOrigin()
+    {
+        ScenarioDefinition definition = Mutate(
+            ScenarioDefinitionModelTests.CreateWatchtowerDefinition(),
+            source => source with
+            {
+                Routes =
+                [
+                    .. source.Routes,
+                    source.Routes[0] with
+                    {
+                        RouteId = source.Routes[0].RouteId + ".shortcut",
+                        FinalStepIndex =
+                            source.Routes[0].FinalStepIndex - 1
+                    }
+                ]
+            });
+
+        ValidationResult result = ScenarioDefinitionValidator.Validate(
+            definition);
+
+        Assert.DoesNotContain(
+            result.Issues,
+            issue => issue.Severity == ValidationSeverity.Error);
     }
 
     /// Every issue is collected, so an author sees the whole list rather than
@@ -205,9 +235,11 @@ public sealed class ScenarioDefinitionValidatorTests
                 ]
             });
 
-        // A second, otherwise-well-formed route (the reverse of the first,
-        // like a return journey) trips only this rule.
-        Add(breakages, "scenario.routes.multiple_routes_unsupported",
+        // A second, otherwise-well-formed route back the way the party came
+        // is legal shape-wise (RegionalTravelRules can run more than one
+        // route now), but nothing transitions the party back into outpost
+        // mode at the destination to ever attempt it from there.
+        Add(breakages, "scenario.routes.origin_unreachable",
             source => source with
             {
                 Routes =
