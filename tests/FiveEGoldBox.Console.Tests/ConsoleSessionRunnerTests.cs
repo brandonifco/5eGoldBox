@@ -420,22 +420,6 @@ public sealed class ConsoleSessionRunnerTests
     }
 
     [Fact]
-    public void RunSession_SaveIsNotOfferedInRegionalTravel()
-    {
-        using TemporaryDirectory temporary = new();
-
-        string output = RunSession(
-            string.Empty,
-            temporary.SavePath,
-            CreateRegionalTravelSession());
-
-        Assert.DoesNotContain("Save", GetSessionMenu(output));
-        Assert.Contains("1. Travel onward", output);
-        Assert.Contains("2. Inspect Party", output);
-        Assert.Contains("3. Exit", output);
-    }
-
-    [Fact]
     public void RunSession_SaveIsNotOfferedInEncounter()
     {
         using TemporaryDirectory temporary = new();
@@ -818,7 +802,7 @@ public sealed class ConsoleSessionRunnerTests
     }
 
     [Fact]
-    public void RunSession_UnsaveableMenuNumberingIsStable()
+    public void RunSession_TravelMenuNumberingIsStable()
     {
         using TemporaryDirectory temporary = new();
 
@@ -829,8 +813,9 @@ public sealed class ConsoleSessionRunnerTests
 
         Assert.Contains("1. Travel onward", output);
         Assert.Contains("2. Inspect Party", output);
-        Assert.Contains("3. Exit", output);
-        Assert.DoesNotContain("4. Exit", output);
+        Assert.Contains("3. Save", output);
+        Assert.Contains("4. Exit", output);
+        Assert.DoesNotContain("5. Exit", output);
     }
 
     [Fact]

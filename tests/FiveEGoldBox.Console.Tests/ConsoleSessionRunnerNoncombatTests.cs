@@ -180,7 +180,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
     }
 
     [Fact]
-    public void RunSession_IncompleteTravelMenuIsExactAndUnsaveable()
+    public void RunSession_IncompleteTravelMenuIsExactAndSaveable()
     {
         using TemporaryDirectory temporary = new();
 
@@ -194,8 +194,8 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             menu,
             "1. Travel onward",
             "2. Inspect Party",
-            "3. Exit");
-        Assert.DoesNotContain("Save", menu);
+            "3. Save",
+            "4. Exit");
         Assert.DoesNotContain("Enter Ruined Watchtower", menu);
     }
 
@@ -257,7 +257,8 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             GetLastSessionMenu(output),
             "1. Enter Ruined Watchtower",
             "2. Inspect Party",
-            "3. Exit");
+            "3. Save",
+            "4. Exit");
     }
 
     [Fact]
@@ -623,10 +624,10 @@ public sealed class ConsoleSessionRunnerNoncombatTests
     }
 
     [Theory]
-    [InlineData("0\n3\n")]
-    [InlineData("-1\n3\n")]
-    [InlineData("text\n3\n")]
-    [InlineData("9\n3\n")]
+    [InlineData("0\n4\n")]
+    [InlineData("-1\n4\n")]
+    [InlineData("text\n4\n")]
+    [InlineData("9\n4\n")]
     public void RunSession_InvalidTravelSelectionDoesNotAdvance(
         string input)
     {
