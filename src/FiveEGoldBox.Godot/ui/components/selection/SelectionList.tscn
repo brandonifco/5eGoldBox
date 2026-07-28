@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://g9r3t6w8y2b5d"]
+
+[ext_resource type="Script" uid="uid://g1r4u7x9z3c6e" path="res://ui/components/selection/SelectionList.cs" id="1_selection_list"]
+
+[node name="SelectionList" type="PanelContainer"]
+custom_minimum_size = Vector2(280, 240)
+theme_type_variation = &"ShellPanel"
+script = ExtResource("1_selection_list")
+
+[node name="ContentMargin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="ContentLayout" type="VBoxContainer" parent="ContentMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="TitleLabel" type="Label" parent="ContentMargin/ContentLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "Selection"
+
+[node name="EmptyLabel" type="Label" parent="ContentMargin/ContentLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_type_variation = &"ShellMutedLabel"
+text = "No entries available."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ItemScroll" type="ScrollContainer" parent="ContentMargin/ContentLayout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="ItemList" type="VBoxContainer" parent="ContentMargin/ContentLayout/ItemScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ShellListStack"

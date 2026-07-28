@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://e4m7p9r2t5w8y"]
+
+[ext_resource type="Script" uid="uid://e7q3s6v9x2z5b" path="res://ui/components/shell/HeaderBar.cs" id="1_header_bar"]
+
+[node name="HeaderBar" type="PanelContainer"]
+theme_type_variation = &"ShellHeaderPanel"
+script = ExtResource("1_header_bar")
+
+[node name="HeaderMargin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"ShellCompactMargin"
+
+[node name="HeaderLabel" type="Label" parent="HeaderMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellHeaderLabel"
+text = "Location: Outpost | Mode: Exploration"

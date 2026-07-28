@@ -1,0 +1,76 @@
+[gd_scene load_steps=5 format=3 uid="uid://k4u7x1b3d6g9j"]
+
+[ext_resource type="Script" uid="uid://j3t6w9z2c5f8h" path="res://ui/dev/SelectionListDemo.cs" id="1_demo"]
+[ext_resource type="Theme" path="res://ui/themes/GameUiTheme.tres" id="2_standard_theme"]
+[ext_resource type="Theme" path="res://ui/themes/GameUiHighContrastTheme.tres" id="3_high_contrast_theme"]
+[ext_resource type="PackedScene" uid="uid://g9r3t6w8y2b5d" path="res://ui/components/selection/SelectionList.tscn" id="4_selection_list"]
+
+[node name="SelectionListDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_standard_theme")
+script = ExtResource("1_demo")
+StandardTheme = ExtResource("2_standard_theme")
+HighContrastTheme = ExtResource("3_high_contrast_theme")
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"ShellSafeArea"
+
+[node name="DemoLayout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_type_variation = &"ShellMainStack"
+
+[node name="Title" type="Label" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellHeaderLabel"
+text = "SelectionList Component Verification"
+
+[node name="Instructions" type="Label" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Mouse: click rows. Keyboard: Up/Down/Home/End, then Enter or Space. Ctrl+Alt+H toggles high contrast. The disabled row must be skipped."
+autowrap_mode = 2
+
+[node name="ListRow" type="HBoxContainer" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_type_variation = &"ShellCommandRow"
+
+[node name="DemoSelectionList" parent="SafeArea/DemoLayout/ListRow" instance=ExtResource("4_selection_list")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+TitleText = "Populated and overflowing"
+
+[node name="EmptySelectionList" parent="SafeArea/DemoLayout/ListRow" instance=ExtResource("4_selection_list")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+TitleText = "Empty state"
+EmptyText = "No choices are currently available."
+
+[node name="StatusPanel" type="PanelContainer" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellHeaderPanel"
+
+[node name="StatusMargin" type="MarginContainer" parent="SafeArea/DemoLayout/StatusPanel"]
+layout_mode = 2
+theme_type_variation = &"ShellCompactMargin"
+
+[node name="StatusLabel" type="Label" parent="SafeArea/DemoLayout/StatusPanel/StatusMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Ready"

@@ -1,0 +1,109 @@
+[gd_scene load_steps=6 format=3 uid="uid://s5w8z2c4f7j1m"]
+
+[ext_resource type="Script" uid="uid://t6x9b3d5g8k2n" path="res://ui/dev/ModalBackdropDemo.cs" id="1_demo"]
+[ext_resource type="Theme" path="res://ui/themes/GameUiTheme.tres" id="2_standard_theme"]
+[ext_resource type="Theme" path="res://ui/themes/GameUiHighContrastTheme.tres" id="3_high_contrast_theme"]
+[ext_resource type="PackedScene" uid="uid://p2s5v8y1b4e7h" path="res://ui/components/modals/ModalBackdrop.tscn" id="4_modal_backdrop"]
+[ext_resource type="PackedScene" uid="uid://r4v7y1b3e6h9k" path="res://ui/dev/ModalBackdropDemoCard.tscn" id="5_demo_card"]
+
+[node name="ModalBackdropDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_standard_theme")
+script = ExtResource("1_demo")
+StandardTheme = ExtResource("2_standard_theme")
+HighContrastTheme = ExtResource("3_high_contrast_theme")
+ModalCardScene = ExtResource("5_demo_card")
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"ShellSafeArea"
+
+[node name="DemoLayout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_type_variation = &"ShellMainStack"
+
+[node name="Title" type="Label" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellHeaderLabel"
+text = "ModalBackdrop Verification"
+
+[node name="Instructions" type="Label" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Use the background action before and during the modal. Open the modal, test focus trapping, backdrop interception, Escape interception, close behavior, and Ctrl+Alt+H high contrast."
+autowrap_mode = 2
+
+[node name="BackgroundPanel" type="PanelContainer" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_type_variation = &"ShellPanel"
+
+[node name="BackgroundMargin" type="MarginContainer" parent="SafeArea/DemoLayout/BackgroundPanel"]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="BackgroundLayout" type="VBoxContainer" parent="SafeArea/DemoLayout/BackgroundPanel/BackgroundMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="BackgroundTitle" type="Label" parent="SafeArea/DemoLayout/BackgroundPanel/BackgroundMargin/BackgroundLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "Background interaction surface"
+
+[node name="BackgroundDescription" type="Label" parent="SafeArea/DemoLayout/BackgroundPanel/BackgroundMargin/BackgroundLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "The counter button works while no modal is open and must be unreachable by pointer or Tab navigation while the modal is visible."
+autowrap_mode = 2
+
+[node name="BackgroundActionButton" type="Button" parent="SafeArea/DemoLayout/BackgroundPanel/BackgroundMargin/BackgroundLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 2
+theme_type_variation = &"ShellCommandButton"
+text = "Increment background counter"
+
+[node name="BackgroundCountLabel" type="Label" parent="SafeArea/DemoLayout/BackgroundPanel/BackgroundMargin/BackgroundLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Background count: 0"
+
+[node name="OpenModalButton" type="Button" parent="SafeArea/DemoLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 2
+theme_type_variation = &"ShellConfirmButton"
+text = "Open modal"
+
+[node name="StatusPanel" type="PanelContainer" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellPanel"
+
+[node name="StatusMargin" type="MarginContainer" parent="SafeArea/DemoLayout/StatusPanel"]
+layout_mode = 2
+theme_type_variation = &"ShellCompactMargin"
+
+[node name="StatusLabel" type="Label" parent="SafeArea/DemoLayout/StatusPanel/StatusMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellSmallStatus"
+text = "Ready."
+autowrap_mode = 2
+
+[node name="DemoModalBackdrop" parent="." instance=ExtResource("4_modal_backdrop")]
+unique_name_in_owner = true
+layout_mode = 1
+DismissOnBackdropPressed = false
+DismissOnEscape = false

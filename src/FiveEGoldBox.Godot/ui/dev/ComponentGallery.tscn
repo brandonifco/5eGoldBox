@@ -1,0 +1,393 @@
+[gd_scene load_steps=16 format=3 uid="uid://r6u9x2a4d7g1j"]
+
+[ext_resource type="Script" uid="uid://s7v1y3b5e8h2k" path="res://ui/dev/ComponentGallery.cs" id="1_gallery"]
+[ext_resource type="Theme" path="res://ui/themes/GameUiTheme.tres" id="2_standard_theme"]
+[ext_resource type="Theme" path="res://ui/themes/GameUiHighContrastTheme.tres" id="3_high_contrast_theme"]
+[ext_resource type="PackedScene" uid="uid://e4m7p9r2t5w8y" path="res://ui/components/shell/HeaderBar.tscn" id="4_header_bar"]
+[ext_resource type="PackedScene" uid="uid://f8q2s5v7x1z4b" path="res://ui/components/party/PartySidebar.tscn" id="5_party_sidebar"]
+[ext_resource type="PackedScene" uid="uid://b7j3m5q8r2t6v" path="res://ui/components/party/PartyMemberRow.tscn" id="6_party_member_row"]
+[ext_resource type="PackedScene" uid="uid://c9p5r3t7w1y4a" path="res://ui/components/messages/MessageLog.tscn" id="7_message_log"]
+[ext_resource type="PackedScene" uid="uid://d3k6m8p1r4t7x" path="res://ui/components/commands/CommandBar.tscn" id="8_command_bar"]
+[ext_resource type="PackedScene" uid="uid://c8m4p2r6v9y1w" path="res://ui/components/commands/HotkeyCommandButton.tscn" id="9_hotkey_button"]
+[ext_resource type="PackedScene" uid="uid://g9r3t6w8y2b5d" path="res://ui/components/selection/SelectionList.tscn" id="10_selection_list"]
+[ext_resource type="PackedScene" uid="uid://h4s7v9y2b5d8f" path="res://ui/components/status/StatusBadge.tscn" id="11_status_badge"]
+[ext_resource type="PackedScene" uid="uid://k7v1y3c5f8h2m" path="res://ui/components/tooltips/TooltipPanel.tscn" id="12_tooltip_panel"]
+[ext_resource type="PackedScene" uid="uid://p2s5v8y1b4e7h" path="res://ui/components/modals/ModalBackdrop.tscn" id="13_modal_backdrop"]
+[ext_resource type="PackedScene" uid="uid://x4a7d1g3k6n9q" path="res://ui/components/modals/ConfirmationDialog.tscn" id="14_confirmation_dialog"]
+[ext_resource type="PackedScene" uid="uid://v1y4c6f8h2m5p" path="res://ui/dev/ComponentGalleryModalCard.tscn" id="15_modal_card"]
+
+[node name="ComponentGallery" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_standard_theme")
+script = ExtResource("1_gallery")
+StandardTheme = ExtResource("2_standard_theme")
+HighContrastTheme = ExtResource("3_high_contrast_theme")
+HotkeyCommandButtonScene = ExtResource("9_hotkey_button")
+ModalCardScene = ExtResource("15_modal_card")
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"ShellSafeArea"
+
+[node name="MainLayout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_type_variation = &"ShellMainStack"
+
+[node name="Title" type="Label" parent="SafeArea/MainLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellHeaderLabel"
+text = "M3 Reusable Component Gallery"
+
+[node name="Instructions" type="Label" parent="SafeArea/MainLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Scroll to inspect every reusable component. Use mouse and keyboard controls. Ctrl+Alt+H toggles high contrast. Open the modal examples near the bottom."
+autowrap_mode = 2
+
+[node name="Toolbar" type="HBoxContainer" parent="SafeArea/MainLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellCommandRow"
+
+[node name="ThemeToggleButton" type="Button" parent="SafeArea/MainLayout/Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellCommandButton"
+text = "Toggle high contrast (Ctrl+Alt+H)"
+
+[node name="BoundaryLabel" type="Label" parent="SafeArea/MainLayout/Toolbar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ShellMutedLabel"
+text = "UI-only values and intent; no gameplay validation"
+horizontal_alignment = 2
+
+[node name="GalleryScroll" type="ScrollContainer" parent="SafeArea/MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="GalleryContent" type="VBoxContainer" parent="SafeArea/MainLayout/GalleryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ShellMainStack"
+
+[node name="StandardSection" type="PanelContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent"]
+layout_mode = 2
+theme_type_variation = &"ShellPanel"
+
+[node name="StandardMargin" type="MarginContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StandardSection"]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="StandardLayout" type="VBoxContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StandardSection/StandardMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="StandardTitle" type="Label" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StandardSection/StandardMargin/StandardLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "Standard component variants"
+
+[node name="StandardHeader" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StandardSection/StandardMargin/StandardLayout" instance=ExtResource("4_header_bar")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="StandardParty" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StandardSection/StandardMargin/StandardLayout" instance=ExtResource("5_party_sidebar")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 210)
+layout_mode = 2
+
+[node name="StandardMessage" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StandardSection/StandardMargin/StandardLayout" instance=ExtResource("7_message_log")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 108)
+layout_mode = 2
+TitleText = "Normal MessageLog"
+
+[node name="StandardCommands" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StandardSection/StandardMargin/StandardLayout" instance=ExtResource("8_command_bar")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ImmersiveSection" type="PanelContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent"]
+layout_mode = 2
+theme_type_variation = &"ShellPanel"
+
+[node name="ImmersiveMargin" type="MarginContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ImmersiveSection"]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="ImmersiveLayout" type="VBoxContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ImmersiveSection/ImmersiveMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="ImmersiveTitle" type="Label" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ImmersiveSection/ImmersiveMargin/ImmersiveLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "Immersive variants driven by the same component contracts"
+
+[node name="ImmersiveHeader" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ImmersiveSection/ImmersiveMargin/ImmersiveLayout" instance=ExtResource("4_header_bar")]
+unique_name_in_owner = true
+layout_mode = 2
+Immersive = true
+
+[node name="ImmersiveParty" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ImmersiveSection/ImmersiveMargin/ImmersiveLayout" instance=ExtResource("5_party_sidebar")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 210)
+layout_mode = 2
+Immersive = true
+
+[node name="ImmersiveMessage" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ImmersiveSection/ImmersiveMargin/ImmersiveLayout" instance=ExtResource("7_message_log")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+theme_type_variation = &"ImmersiveOverlayPanel"
+TitleText = "Scrollable stress MessageLog"
+Scrollable = true
+
+[node name="ImmersiveCommands" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ImmersiveSection/ImmersiveMargin/ImmersiveLayout" instance=ExtResource("8_command_bar")]
+unique_name_in_owner = true
+layout_mode = 2
+Immersive = true
+
+[node name="RowsAndSelectionSection" type="PanelContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent"]
+layout_mode = 2
+theme_type_variation = &"ShellPanel"
+
+[node name="RowsAndSelectionMargin" type="MarginContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/RowsAndSelectionSection"]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="RowsAndSelectionLayout" type="VBoxContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/RowsAndSelectionSection/RowsAndSelectionMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="RowsAndSelectionTitle" type="Label" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/RowsAndSelectionSection/RowsAndSelectionMargin/RowsAndSelectionLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "PartyMemberRow and SelectionList states"
+
+[node name="StandalonePartyRow" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/RowsAndSelectionSection/RowsAndSelectionMargin/RowsAndSelectionLayout" instance=ExtResource("6_party_member_row")]
+layout_mode = 2
+MemberName = "Standalone row with an exceptionally long adventurer name"
+HealthText = "123 / 123 — multiple UI-only statuses"
+
+[node name="GallerySelectionList" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/RowsAndSelectionSection/RowsAndSelectionMargin/RowsAndSelectionLayout" instance=ExtResource("10_selection_list")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 330)
+layout_mode = 2
+TitleText = "Normal, selected, disabled, long-label, and overflow states"
+
+[node name="StatusSection" type="PanelContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent"]
+layout_mode = 2
+theme_type_variation = &"ShellPanel"
+
+[node name="StatusMargin" type="MarginContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection"]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="StatusLayout" type="VBoxContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection/StatusMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="StatusTitle" type="Label" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection/StatusMargin/StatusLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "StatusBadge semantic states"
+
+[node name="StatusGrid" type="GridContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection/StatusMargin/StatusLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellBadgeGrid"
+columns = 4
+
+[node name="NeutralBadge" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection/StatusMargin/StatusLayout/StatusGrid" instance=ExtResource("11_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Neutral"
+
+[node name="HealthyBadge" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection/StatusMargin/StatusLayout/StatusGrid" instance=ExtResource("11_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Healthy"
+Kind = 1
+
+[node name="WoundedBadge" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection/StatusMargin/StatusLayout/StatusGrid" instance=ExtResource("11_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Wounded"
+Kind = 2
+
+[node name="CriticalBadge" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection/StatusMargin/StatusLayout/StatusGrid" instance=ExtResource("11_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Critical"
+Kind = 3
+
+[node name="IncapacitatedBadge" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection/StatusMargin/StatusLayout/StatusGrid" instance=ExtResource("11_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Incapacitated"
+Kind = 4
+
+[node name="RemovedBadge" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection/StatusMargin/StatusLayout/StatusGrid" instance=ExtResource("11_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Removed"
+Kind = 5
+
+[node name="PositiveBadge" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection/StatusMargin/StatusLayout/StatusGrid" instance=ExtResource("11_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Blessed"
+Kind = 6
+
+[node name="NegativeBadge" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/StatusSection/StatusMargin/StatusLayout/StatusGrid" instance=ExtResource("11_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Poisoned"
+Kind = 7
+
+[node name="TooltipSection" type="PanelContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent"]
+layout_mode = 2
+theme_type_variation = &"ShellPanel"
+
+[node name="TooltipMargin" type="MarginContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/TooltipSection"]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="TooltipLayout" type="VBoxContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/TooltipSection/TooltipMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="TooltipTitle" type="Label" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/TooltipSection/TooltipMargin/TooltipLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "TooltipPanel persistent and interactive states"
+
+[node name="PersistentTooltip" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/TooltipSection/TooltipMargin/TooltipLayout" instance=ExtResource("12_tooltip_panel")]
+custom_minimum_size = Vector2(0, 0)
+layout_mode = 2
+TitleText = "Persistent stress tooltip"
+BodyText = "Long tooltip body text remains visible for rapid inspection and wraps inside the available width without horizontal scrolling or overlap."
+
+[node name="TooltipTrigger" type="Button" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/TooltipSection/TooltipMargin/TooltipLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellCommandButton"
+text = "Hover, focus, or activate this tooltip trigger"
+
+[node name="InteractiveTooltip" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/TooltipSection/TooltipMargin/TooltipLayout" instance=ExtResource("12_tooltip_panel")]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 0)
+layout_mode = 2
+
+[node name="ModalSection" type="PanelContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent"]
+layout_mode = 2
+theme_type_variation = &"ShellPanel"
+
+[node name="ModalMargin" type="MarginContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ModalSection"]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="ModalLayout" type="VBoxContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ModalSection/ModalMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="ModalTitle" type="Label" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ModalSection/ModalMargin/ModalLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "ModalBackdrop and ConfirmationDialog states"
+
+[node name="ModalInstructions" type="Label" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ModalSection/ModalMargin/ModalLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Open each modal to inspect focus trapping, background blocking, safe focus defaults, dangerous styling, disabled confirmation, and long-message stress."
+autowrap_mode = 2
+
+[node name="ModalButtons" type="HBoxContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ModalSection/ModalMargin/ModalLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellCommandRow"
+
+[node name="OpenModalButton" type="Button" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ModalSection/ModalMargin/ModalLayout/ModalButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ShellCommandButton"
+text = "ModalBackdrop"
+
+[node name="StandardConfirmationButton" type="Button" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ModalSection/ModalMargin/ModalLayout/ModalButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ShellConfirmButton"
+text = "Standard confirm"
+
+[node name="DangerousConfirmationButton" type="Button" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ModalSection/ModalMargin/ModalLayout/ModalButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ShellDangerousButton"
+text = "Dangerous confirm"
+
+[node name="DisabledConfirmationButton" type="Button" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ModalSection/ModalMargin/ModalLayout/ModalButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ShellCommandButton"
+text = "Disabled confirm"
+
+[node name="ContractSection" type="PanelContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent"]
+layout_mode = 2
+theme_type_variation = &"ShellHeaderPanel"
+
+[node name="ContractMargin" type="MarginContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ContractSection"]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="ContractLayout" type="VBoxContainer" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ContractSection/ContractMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="ContractTitle" type="Label" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ContractSection/ContractMargin/ContractLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "Component contract boundary"
+
+[node name="ContractText" type="Label" parent="SafeArea/MainLayout/GalleryScroll/GalleryContent/ContractSection/ContractMargin/ContractLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Inputs are UI-local display values, availability flags, callbacks, and UI-only enums. Updates are explicit component methods. Outputs are callbacks or signals. Components own their internal visual children and never calculate gameplay legality or rules outcomes. Full contracts: ui/components/README.md."
+autowrap_mode = 2
+
+[node name="StatusPanel" type="PanelContainer" parent="SafeArea/MainLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellHeaderPanel"
+
+[node name="StatusMargin" type="MarginContainer" parent="SafeArea/MainLayout/StatusPanel"]
+layout_mode = 2
+theme_type_variation = &"ShellCompactMargin"
+
+[node name="StatusLabel" type="Label" parent="SafeArea/MainLayout/StatusPanel/StatusMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Gallery loading"
+autowrap_mode = 2
+
+[node name="GalleryModalBackdrop" parent="." instance=ExtResource("13_modal_backdrop")]
+unique_name_in_owner = true
+DismissOnBackdropPressed = false
+DismissOnEscape = false
+
+[node name="GalleryConfirmationDialog" parent="." instance=ExtResource("14_confirmation_dialog")]
+unique_name_in_owner = true

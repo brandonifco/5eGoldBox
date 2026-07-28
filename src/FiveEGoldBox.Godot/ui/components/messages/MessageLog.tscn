@@ -1,0 +1,27 @@
+[gd_scene load_steps=2 format=3 uid="uid://c9p5r3t7w1y4a"]
+
+[ext_resource type="Script" uid="uid://d6n2q8s4v7x1z" path="res://ui/components/messages/MessageLog.cs" id="1_message_log"]
+
+[node name="MessageLog" type="PanelContainer"]
+theme_type_variation = &"ShellPanel"
+script = ExtResource("1_message_log")
+
+[node name="MessageMargin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"ShellCompactMargin"
+
+[node name="MessageLayout" type="VBoxContainer" parent="MessageMargin"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MessageMargin/MessageLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellMutedLabel"
+text = "Messages"
+
+[node name="MessageTextLabel" type="RichTextLabel" parent="MessageMargin/MessageLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellBodyRichText"
+text = "Message"
+fit_content = true

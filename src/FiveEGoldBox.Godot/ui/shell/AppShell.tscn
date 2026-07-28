@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://lwjkqa8t33h7"]
+
+[ext_resource type="Script" uid="uid://c21sgbpi3ycb8" path="res://ui/shell/AppShell.cs" id="1_ryprp"]
+
+[ext_resource type="Theme" path="res://ui/themes/GameUiTheme.tres" id="Theme_game_ui"]
+
+[ext_resource type="PackedScene" uid="uid://n4q7t1w3z6c9f" path="res://ui/layouts/StandardLayout.tscn" id="PackedScene_standard_layout"]
+
+[ext_resource type="PackedScene" uid="uid://q5t8w1z3c6f9j" path="res://ui/layouts/ImmersiveLayout.tscn" id="PackedScene_immersive_layout"]
+
+[node name="AppShell" type="Control" unique_id=701235117]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ryprp")
+theme = ExtResource("Theme_game_ui")
+
+[node name="StandardLayout" parent="." instance=ExtResource("PackedScene_standard_layout")]
+unique_name_in_owner = true
+
+[node name="ImmersiveLayout" parent="." instance=ExtResource("PackedScene_immersive_layout")]
+unique_name_in_owner = true
