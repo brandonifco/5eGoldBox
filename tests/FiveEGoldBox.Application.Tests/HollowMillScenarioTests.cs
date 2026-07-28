@@ -239,6 +239,64 @@ public sealed class HollowMillScenarioTests
         Assert.Equal(ApplicationMode.ScenarioConclusion, session.CurrentMode);
     }
 
+    /// The vehicle for proving multi-route travel with real, registered
+    /// content: two roads out of the village, same destination, different
+    /// lengths. Once the commission is accepted, both are open at once and
+    /// the party — not the engine — picks between them.
+    [Fact]
+    public void MultiRoute_OffersBothRoads_AndTheShortcutArrivesFaster()
+    {
+        ApplicationSessionState session = CreateSession();
+        session = OutpostMissionRules.Resolve(
+            session,
+            OutpostMissionChoice.AcceptMission)
+            .State;
+
+        IReadOnlyList<TravelRouteDefinition> available =
+            RegionalTravelRules.GetAvailableRoutes(session);
+
+        Assert.Equal(2, available.Count);
+        Assert.Contains(
+            available,
+            route => route.RouteId
+                == HollowMillScenarioDefinitionProvider.RouteId);
+        Assert.Contains(
+            available,
+            route => route.RouteId
+                == HollowMillScenarioDefinitionProvider.ShortcutRouteId);
+
+        // Ambiguous without a route ID now that more than one road is open.
+        Assert.Throws<InvalidOperationException>(() =>
+            RegionalTravelRules.BeginJourney(session));
+
+        ApplicationSessionState shortcut = RegionalTravelRules.BeginJourney(
+            session,
+            HollowMillScenarioDefinitionProvider.ShortcutRouteId);
+
+        Assert.Equal(
+            HollowMillScenarioDefinitionProvider.ShortcutRouteId,
+            shortcut.RegionalTravel!.RouteId);
+        Assert.Equal(
+            HollowMillScenarioDefinitionProvider.MillLocationId,
+            shortcut.RegionalTravel!.DestinationLocationId);
+        Assert.True(
+            shortcut.RegionalTravel!.FinalStepIndex
+                < RegionalTravelRules
+                    .GetAvailableRoutes(session)
+                    .Single(route => route.RouteId
+                        == HollowMillScenarioDefinitionProvider.RouteId)
+                    .FinalStepIndex);
+
+        while (RegionalTravelRules.CanAdvance(shortcut))
+        {
+            shortcut = RegionalTravelRules.Advance(shortcut).State;
+        }
+
+        Assert.Equal(
+            HollowMillScenarioDefinitionProvider.MillLocationId,
+            shortcut.CurrentLocationId);
+    }
+
     [Fact]
     public void Registry_ResolvesTheScenario()
     {
@@ -273,7 +331,12 @@ public sealed class HollowMillScenarioTests
         ApplicationSessionState session)
     {
         Assert.True(RegionalTravelRules.CanBeginJourney(session));
-        session = RegionalTravelRules.BeginJourney(session);
+
+        // Two routes are open here (see MultiRoute_OffersBothRoads below);
+        // the cart track is the one every branch test before this one walks.
+        session = RegionalTravelRules.BeginJourney(
+            session,
+            HollowMillScenarioDefinitionProvider.RouteId);
 
         while (RegionalTravelRules.CanAdvance(session))
         {

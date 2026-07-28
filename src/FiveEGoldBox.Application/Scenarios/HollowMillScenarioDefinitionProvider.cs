@@ -29,6 +29,13 @@ internal static class HollowMillScenarioDefinitionProvider
 
     internal const string RouteId = "route.village-to-mill";
 
+    /// A second, faster road to the same place — the vehicle for proving
+    /// multi-route travel with real content rather than a mock. The cart
+    /// track is the safe default every test before this one walks; the
+    /// shortcut is the same destination in fewer steps, for whichever test
+    /// wants to prove the party can choose between them.
+    internal const string ShortcutRouteId = "route.village-to-mill.shortcut";
+
     /// This scenario's own vocabulary.
     internal const string RumorHeard = "mill.rumor-heard";
 
@@ -100,7 +107,7 @@ internal static class HollowMillScenarioDefinitionProvider
                     ]
                 }
             ],
-            Routes = [CreateRoute()],
+            Routes = [CreateRoute(), CreateShortcutRoute()],
             Encounters = [CreateInformedEncounter(), CreateBlindEncounter()],
             Triggers =
             [
@@ -155,6 +162,18 @@ internal static class HollowMillScenarioDefinitionProvider
             OriginLocationId = VillageLocationId,
             DestinationLocationId = MillLocationId,
             FinalStepIndex = 2,
+            RequiredProgressIds = [CommissionAccepted]
+        };
+    }
+
+    private static TravelRouteDefinition CreateShortcutRoute()
+    {
+        return new TravelRouteDefinition
+        {
+            RouteId = ShortcutRouteId,
+            OriginLocationId = VillageLocationId,
+            DestinationLocationId = MillLocationId,
+            FinalStepIndex = 1,
             RequiredProgressIds = [CommissionAccepted]
         };
     }

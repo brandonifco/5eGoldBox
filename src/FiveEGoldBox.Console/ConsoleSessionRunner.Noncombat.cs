@@ -73,7 +73,7 @@ internal sealed partial class ConsoleSessionRunner
                     break;
                 case SessionMenuAction.BeginJourney:
                     session = RegionalTravelRules
-                        .BeginJourney(session);
+                        .BeginJourney(session, selectedOption.RouteId);
                     output.WriteLine(
                         "Journey begun.");
                     break;
@@ -155,7 +155,8 @@ internal sealed partial class ConsoleSessionRunner
             options.Add(new SessionMenuOption(
                 action.DisplayName,
                 ToMenuAction(action.Kind),
-                action.MissionChoice));
+                action.MissionChoice,
+                action.RouteId));
         }
 
         options.Add(
@@ -268,7 +269,8 @@ internal sealed partial class ConsoleSessionRunner
     private sealed record SessionMenuOption(
         string Label,
         SessionMenuAction Action,
-        OutpostMissionChoice? MissionChoice = null);
+        OutpostMissionChoice? MissionChoice = null,
+        string? RouteId = null);
 
     private enum SessionMenuAction
     {
