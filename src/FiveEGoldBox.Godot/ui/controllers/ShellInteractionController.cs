@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FiveEGoldBox.Application.Sessions;
 using Godot;
 
 internal sealed class ShellInteractionController : IShellInteractionState
@@ -27,6 +28,97 @@ internal sealed class ShellInteractionController : IShellInteractionState
 		ResetContext();
 		_presentationController.ShowExploration();
 		ShowExplorationCommands();
+	}
+
+	// The real integration seam. Renders whatever RealGameSession.Describe()
+	// reports, rather than the mock content ShowExploration()/ShowCombat()
+	// otherwise fall back to. overrideMessage carries a just-submitted
+	// command's real result text (e.g. "Moved forward.") so re-rendering
+	// after an action doesn't immediately clobber it with the generic
+	// status line.
+	//
+	// Combat and scenario conclusion are shown honestly rather than faked:
+	// this scope is outpost decisions, exploration, and regional travel
+	// only (see RealGameSession's own header comment for why).
+	public void ShowRealSession(
+		RealGameSession session,
+		string? overrideMessage = null)
+	{
+		ResetContext();
+
+		RealSessionSnapshot snapshot = session.Describe();
+
+		switch (snapshot.Mode)
+		{
+			case ApplicationMode.Encounter:
+				ShowCombat();
+				_presentationController.SetHeader(
+					snapshot.LocationDisplayName,
+					"Combat");
+				_presentationController.SetMessage(
+					overrideMessage
+						?? "A fight has begun. Combat is not connected " +
+							"to the real engine yet.");
+				return;
+			case ApplicationMode.ScenarioConclusion:
+				_presentationController.ShowExploration(
+					ExplorationSceneKeys.OutpostEntrance,
+					snapshot.LocationDisplayName,
+					"Conclusion",
+					overrideMessage ?? snapshot.StatusMessage);
+				_commandBarController.ShowCommands();
+				return;
+			case ApplicationMode.RegionalTravel:
+				_presentationController.ShowRegionalMap();
+				_presentationController.SetHeader(
+					snapshot.LocationDisplayName,
+					snapshot.ModeLabel);
+				_presentationController.SetMessage(
+					overrideMessage ?? snapshot.StatusMessage);
+				break;
+			case ApplicationMode.Outpost:
+				_presentationController.ShowExploration(
+					ExplorationSceneKeys.OutpostEntrance,
+					snapshot.LocationDisplayName,
+					snapshot.ModeLabel,
+					overrideMessage ?? snapshot.StatusMessage);
+				break;
+			default:
+				_presentationController.ShowExploration(
+					ExplorationSceneKeys.DungeonCorridor,
+					snapshot.LocationDisplayName,
+					snapshot.ModeLabel,
+					overrideMessage ?? snapshot.StatusMessage);
+				break;
+		}
+
+		ShowRealCommands(session, snapshot);
+	}
+
+	private void ShowRealCommands(
+		RealGameSession session,
+		RealSessionSnapshot snapshot)
+	{
+		List<CommandDefinition> commands = new();
+
+		foreach (CommandViewModel commandViewModel in
+			snapshot.Commands.Commands)
+		{
+			string commandId = commandViewModel.CommandId;
+
+			commands.Add(CommandViewModelTranslator.ToCommandDefinition(
+				commandViewModel,
+				() => SubmitRealCommand(session, commandId)));
+		}
+
+		_commandBarController.ShowCommands(commands.ToArray());
+	}
+
+	private void SubmitRealCommand(RealGameSession session, string commandId)
+	{
+		string message = session.Submit(commandId);
+
+		ShowRealSession(session, message);
 	}
 
 	public void ShowRegionalMap()

@@ -58,6 +58,23 @@ internal sealed class ShellPresentationController : IShellPresentation
 		SetMessage("You stand at the entrance to the outpost.");
 	}
 
+	public void ShowExploration(
+		string sceneKey,
+		string location,
+		string mode,
+		string message)
+	{
+		CurrentMode = PresentationMode.Exploration;
+
+		_explorationView.Show();
+		_regionalMapView.Hide();
+		_combatView.Hide();
+
+		_explorationView.Configure(new ExplorationViewModel(sceneKey));
+		SetHeader(location, mode);
+		SetMessage(message);
+	}
+
 	public void ShowRegionalMap()
 	{
 		CurrentMode = PresentationMode.RegionalMap;
@@ -99,7 +116,7 @@ internal sealed class ShellPresentationController : IShellPresentation
 		_immersiveMessageLog.SetMessage(message);
 	}
 
-	private void SetHeader(string location, string mode)
+	public void SetHeader(string location, string mode)
 	{
 		_headerBar.SetLocationAndMode(location, mode);
 		_immersiveHeaderBar.SetLocationAndMode(location, mode);
