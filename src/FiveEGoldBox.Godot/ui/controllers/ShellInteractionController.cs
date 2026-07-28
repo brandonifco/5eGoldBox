@@ -177,6 +177,13 @@ internal sealed class ShellInteractionController : IShellInteractionState
 		_contextStack.Push(ShellInteractionContext.CommandMenu);
 	}
 
+	// Cancel priority is Godot's own unhandled-input order (deepest node
+	// first, SetInputAsHandled stops it going further) — a modal already
+	// wins over ShellInputRouter's exploration-movement Escape handling
+	// for that reason alone. This stack exists so CurrentContext reports
+	// the same priority explicitly: whoever captures a cancel key this
+	// way must Push/Pop their context here too, or CurrentContext goes
+	// stale while they hold input.
 	private void PushContext(ShellInteractionContext context)
 	{
 		_contextStack.Push(context);

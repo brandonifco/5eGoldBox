@@ -39,7 +39,7 @@ public partial class ModalBackdrop : Control
 			inputEvent is not InputEventKey keyEvent ||
 			!keyEvent.Pressed ||
 			keyEvent.Echo ||
-			keyEvent.Keycode != Key.Tab)
+			!IsFocusCycleKey(keyEvent))
 		{
 			return;
 		}
@@ -58,7 +58,7 @@ public partial class ModalBackdrop : Control
 			return;
 		}
 
-		if (keyEvent.Keycode == Key.Escape)
+		if (keyEvent.IsActionPressed(PlayerInputActions.UiCancel))
 		{
 			EmitSignal(SignalName.DismissRequested);
 
@@ -69,6 +69,16 @@ public partial class ModalBackdrop : Control
 		}
 
 		GetViewport().SetInputAsHandled();
+	}
+
+	private static bool IsFocusCycleKey(InputEventKey keyEvent)
+	{
+		return keyEvent.IsActionPressed(
+				PlayerInputActions.UiFocusNext,
+				exactMatch: true) ||
+			keyEvent.IsActionPressed(
+				PlayerInputActions.UiFocusPrev,
+				exactMatch: true);
 	}
 
 	public Control? GetModalContent()

@@ -7,6 +7,8 @@ internal static class PlayerInputActions
 	public const string UiCancel = "ui_cancel";
 	public const string UiUp = "ui_up";
 	public const string UiDown = "ui_down";
+	public const string UiFocusNext = "ui_focus_next";
+	public const string UiFocusPrev = "ui_focus_prev";
 
 	public const string ToggleImmersiveMode = "shell_toggle_immersive_mode";
 	public const string ExitMovementMode = "shell_exit_movement_mode";
