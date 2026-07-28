@@ -10,7 +10,7 @@
 
 [ext_resource type="PackedScene" uid="uid://d3k6m8p1r4t7x" path="res://ui/components/commands/CommandBar.tscn" id="5_command_bar"]
 
-[ext_resource type="Texture2D" path="res://images/outpost_north_gate01.png" id="6_exploration"]
+[ext_resource type="PackedScene" path="res://ui/presentation/ExplorationView.tscn" id="6_exploration_view"]
 
 [ext_resource type="Texture2D" path="res://images/regional_map_01.png" id="7_regional_map"]
 
@@ -60,39 +60,9 @@ theme_type_variation = &"PresentationSurface"
 [node name="PresentationContent" type="Control" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface"]
 layout_mode = 2
 
-[node name="ExplorationView" type="Control" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent"]
+[node name="ExplorationView" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("6_exploration_view")]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="ExplorationCenter" type="CenterContainer" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/ExplorationView"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="ExplorationLabel" type="Label" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/ExplorationView/ExplorationCenter"]
-layout_mode = 2
-text = "Exploration View"
-
-[node name="ExplorationImage" type="TextureRect" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/ExplorationView"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture_filter = 1
-texture = ExtResource("6_exploration")
-expand_mode = 1
-stretch_mode = 0
 
 [node name="RegionalMapView" type="Control" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent"]
 unique_name_in_owner = true

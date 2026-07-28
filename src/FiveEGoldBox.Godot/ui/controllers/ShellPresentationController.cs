@@ -2,7 +2,7 @@ using Godot;
 
 internal sealed class ShellPresentationController : IShellPresentation
 {
-	private readonly Control _explorationView;
+	private readonly ExplorationView _explorationView;
 	private readonly Control _regionalMapView;
 	private readonly Control _combatView;
 	private readonly HeaderBar _headerBar;
@@ -11,7 +11,7 @@ internal sealed class ShellPresentationController : IShellPresentation
 	private readonly MessageLog _immersiveMessageLog;
 
 	public ShellPresentationController(
-		Control explorationView,
+		ExplorationView explorationView,
 		Control regionalMapView,
 		Control combatView,
 		HeaderBar headerBar,
@@ -38,6 +38,7 @@ internal sealed class ShellPresentationController : IShellPresentation
 		_regionalMapView.Hide();
 		_combatView.Hide();
 
+		_explorationView.Configure(new ExplorationViewModel("outpost-entrance"));
 		SetHeader("Outpost", "Exploration");
 		SetMessage("You stand at the entrance to the outpost.");
 	}

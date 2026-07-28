@@ -1,6 +1,6 @@
 # 5eGoldBox Godot UI — Remaining Milestones (M4–M12)
 
-**Status:** M0–M5 complete; seven milestones remain (M6–M12).
+**Status:** M0–M5 complete; M6 in progress (a done); six milestones remain after M6.
 
 This is a concise proposed execution-stage breakdown derived from the creator-approved Godot UI Pre-Integration Governing Plan v1.1. Lettered stages organize implementation; they do not change the governing milestone scope or acceptance gates.
 
@@ -104,8 +104,13 @@ This is a concise proposed execution-stage breakdown derived from the creator-ap
 
 **Objective:** Complete the mock-driven local exploration experience.
 
-- a. Build the reusable ExplorationView presentation scene.
-- b. Add building, town, dungeon, and cavern visual mock variants.
+- [x] a. Build the reusable ExplorationView presentation scene. Extracted the inline `CenterContainer`/`Label`/`TextureRect` nodes that lived directly in `StandardLayout.tscn` into their own `ui/presentation/ExplorationView.tscn` + `.cs`, matching the governing plan's §6.2 directory sketch (`presentation/ExplorationView.tscn`). `StandardLayout` now instances that scene instead of owning its internals directly; `StandardLayout.ExplorationView` and `ShellPresentationController`'s field are both typed `ExplorationView` now (was `Control`).
+  - **No standard/immersive duplication to fix** — turned out `ImmersiveLayout` never had its own copy in the first place; the single `PresentationSurface` (which `ExplorationView` lives inside) is reparented between the two layouts at runtime (§6.5's existing pattern). So this was a pure single-copy extraction, not a de-duplication.
+  - **Visual appearance deliberately unchanged** — exact same image, exact same (already-invisible, covered-by-the-opaque-image) debug label, same node order. This was scoped as a structural move, not a redesign, especially since the creator was reviewing screenshots for the first time this session and a visual diff wasn't something to introduce alongside a refactor.
+  - **`Configure(ExplorationViewModel model)` is real, not dead API** — `internal` (a `public` method can't take an `internal`-record parameter; `ExplorationView` itself has to stay `public` like every other Godot-script class in this project). Wired to a genuine caller: `ShellPresentationController.ShowExploration()` now calls it with `new ExplorationViewModel("outpost-entrance")` before showing the view. Per-scene-key art (M6b) and facing/compass/overlay-prompt display (M6f, which the plan itself already gates behind creator approval) are deliberately not wired here — the model only touches the still-invisible debug label for now, proof of wiring rather than a new visible feature.
+  - **First `.tscn` edit of the whole M4-M6 stretch, so it got extra scrutiny beyond the usual build+headless-boot check:** re-read `HeaderBar.tscn` first to match this project's existing scene-authoring conventions exactly (unique_name_in_owner, ext_resource id numbering), confirmed plain `path=`-only `ext_resource` declarations (no `uid=`) are already used elsewhere in this exact file (the texture resources) before using that form for the new scene reference — avoids hand-inventing a `uid://` value that could silently collide with something. Grep confirms zero leftover references to the old inline node names (`ExplorationLabel`/`ExplorationCenter`/`ExplorationImage`) anywhere in `StandardLayout.tscn`.
+  - Verified: build clean, headless boot exit 0 with empty stderr (a `.tscn` load failure or a bad `GetNode<ExplorationView>` cast would have shown up there), all touched files ≤250 lines (max 81).
+- [ ] b. Add building, town, dungeon, and cavern visual mock variants.
 - c. Drive the exploration command bar from data rather than fixed scene layout.
 - d. Route MOVE arrows/numpad through movement intents; restore commands with Escape or Space.
 - e. Add View, Cast, Area, Encamp, Search, Look, and local-interaction shells.
