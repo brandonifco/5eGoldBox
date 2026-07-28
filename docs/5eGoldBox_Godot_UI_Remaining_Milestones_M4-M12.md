@@ -1,6 +1,6 @@
 # 5eGoldBox Godot UI — Remaining Milestones (M4–M12)
 
-**Status:** M0–M5 complete; M6 in progress (a-c done); six milestones remain after M6.
+**Status:** M0–M5 complete; M6 in progress (a-d done); six milestones remain after M6.
 
 This is a concise proposed execution-stage breakdown derived from the creator-approved Godot UI Pre-Integration Governing Plan v1.1. Lettered stages organize implementation; they do not change the governing milestone scope or acceptance gates.
 
@@ -123,7 +123,12 @@ This is a concise proposed execution-stage breakdown derived from the creator-ap
   - **Behavior is verified byte-for-byte identical, not just "didn't crash":** traced `FormatLabel` by hand for all seven commands (Move/View/Cast/Area/Encamp/Search/Look) against the original hardcoded strings — every one produces the exact same `"[b]X[/b]..."` output, same `Name`, same `Key`, same handler. RegionalMap and Combat command bars are untouched on purpose — driving them from data the same way is their own milestone's (M7/M8) job, not bundled in here.
   - **Why this specific chain is meaningful to have exercised cleanly:** the live `_Ready()` → `ShowExplorationView()` path now runs `MockExplorationCommandContent.Current()` → `CommandViewModelTranslator.ToCommandDefinition` (×7, including `Enum.Parse`) → `ShellCommandBarController.ShowCommands` (which runs the M4e hotkey-uniqueness validator) every time the app starts. A headless boot exercising all of that without throwing is real evidence the translation layer is sound, not just that it compiles.
   - Verified: build clean, headless boot exit 0 empty stderr, all touched files ≤250 lines (max 194).
-- d. Route MOVE arrows/numpad through movement intents; restore commands with Escape or Space.
+- [x] d. Route MOVE arrows/numpad through movement intents; restore commands with Escape or Space.
+  - **The first real player keypress to construct an actual `UiCommandIntent`, not just mock content.** `ShellInputRouter.HandleExplorationMovementInput` now builds `new UiCommandIntent(ExplorationMovementCommandIds.MoveForward)` (etc.) instead of passing a raw display string through `Action<string> _reportMovement`; the delegate is now `Action<UiCommandIntent>` end to end (`AppShell.Presentation.cs` → `ShellInteractionController.ReportMovement`). Every prior use of `UiCommandIntent` (M5's scripted session, scenario picker) was mock-authored data — this is the first one built from something the player actually did.
+  - **New `ExplorationMovementCommandIds`** (`ui/models/`) — `move-forward`/`move-backward`/`turn-left`/`turn-right` — mirrors `ExplorationSceneKeys`'s role from M6b: one shared source instead of matching string literals living in two places.
+  - **Behavior verified identical by hand**, same technique as M6c (a keypress-injecting headless test isn't possible in this environment — `--quit-after` doesn't simulate input): `ReportMovement`'s new `DescribeMovement` switch maps each of the four command IDs back to the exact original strings ("Step forward", "Step backward", "Turn left", "Turn right"), so the displayed message text is unchanged.
+  - **"Restore commands with Escape or Space" needed no code change** — `ExitExplorationMovementMode` already did this correctly since M0-M3 and was re-verified (not rebuilt) as part of M4's own cancel-priority work. Re-confirmed here only that nothing in this step's plumbing change touched it.
+  - Verified: build clean, headless boot exit 0 empty stderr, all files ≤250 lines (`ShellInteractionController.cs` now at 210 — worth watching against the governing plan's own 250-line review threshold as M7/M8 add their own content, though not near it yet).
 - e. Add View, Cast, Area, Encamp, Search, Look, and local-interaction shells.
 - f. Add facing, compass, and local-status presentation if creator-approved.
 - g. Verify the full exploration loop in both layouts, including long-text and six-member stress cases.

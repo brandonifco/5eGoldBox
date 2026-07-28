@@ -15,8 +15,8 @@ public partial class AppShell
 		_interactionController.ShowCombat();
 	}
 
-	private void ReportMovement(string movement)
+	private void ReportMovement(UiCommandIntent intent)
 	{
-		_interactionController.ReportMovement(movement);
+		_interactionController.ReportMovement(intent);
 	}
 }

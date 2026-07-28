@@ -11,7 +11,7 @@ internal sealed class ShellInputRouter
 	private readonly Action _toggleHighContrastTheme;
 	private readonly Action _toggleReducedMotion;
 	private readonly Action _exitExplorationMovementMode;
-	private readonly Action<string> _reportMovement;
+	private readonly Action<UiCommandIntent> _reportMovement;
 	private readonly Action _showNextMockScenario;
 	private readonly Action _showPreviousMockScenario;
 	private readonly Action _cycleResolutionPreset;
@@ -27,7 +27,7 @@ internal sealed class ShellInputRouter
 		Action toggleHighContrastTheme,
 		Action toggleReducedMotion,
 		Action exitExplorationMovementMode,
-		Action<string> reportMovement,
+		Action<UiCommandIntent> reportMovement,
 		Action showNextMockScenario,
 		Action showPreviousMockScenario,
 		Action cycleResolutionPreset,
@@ -161,25 +161,29 @@ internal sealed class ShellInputRouter
 
 		if (inputEvent.IsActionPressed(PlayerInputActions.MoveForward))
 		{
-			_reportMovement("Step forward");
+			_reportMovement(
+				new UiCommandIntent(ExplorationMovementCommandIds.MoveForward));
 			return true;
 		}
 
 		if (inputEvent.IsActionPressed(PlayerInputActions.MoveBackward))
 		{
-			_reportMovement("Step backward");
+			_reportMovement(
+				new UiCommandIntent(ExplorationMovementCommandIds.MoveBackward));
 			return true;
 		}
 
 		if (inputEvent.IsActionPressed(PlayerInputActions.TurnLeft))
 		{
-			_reportMovement("Turn left");
+			_reportMovement(
+				new UiCommandIntent(ExplorationMovementCommandIds.TurnLeft));
 			return true;
 		}
 
 		if (inputEvent.IsActionPressed(PlayerInputActions.TurnRight))
 		{
-			_reportMovement("Turn right");
+			_reportMovement(
+				new UiCommandIntent(ExplorationMovementCommandIds.TurnRight));
 			return true;
 		}
 

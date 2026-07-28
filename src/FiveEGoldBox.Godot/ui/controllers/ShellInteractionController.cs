@@ -110,10 +110,26 @@ internal sealed class ShellInteractionController : IShellInteractionState
 		ShowExplorationCommands();
 	}
 
-	public void ReportMovement(string movement)
+	// M6d: takes the real UiCommandIntent a keypress now constructs
+	// (ShellInputRouter) instead of a raw display string — the first real
+	// player action to reach a UiCommandIntent, not just mock content.
+	public void ReportMovement(UiCommandIntent intent)
 	{
 		_presentationController.SetMessage(
-			$"{movement}. Backend movement is not connected yet.");
+			$"{DescribeMovement(intent.CommandId)}. " +
+				"Backend movement is not connected yet.");
+	}
+
+	private static string DescribeMovement(string commandId)
+	{
+		return commandId switch
+		{
+			ExplorationMovementCommandIds.MoveForward => "Step forward",
+			ExplorationMovementCommandIds.MoveBackward => "Step backward",
+			ExplorationMovementCommandIds.TurnLeft => "Turn left",
+			ExplorationMovementCommandIds.TurnRight => "Turn right",
+			_ => commandId,
+		};
 	}
 
 	// M6c: driven from CommandSetViewModel data instead of hardcoded
