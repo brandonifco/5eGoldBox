@@ -314,9 +314,9 @@ public sealed class AtomicManualSaveFileWriterTests
         ApplicationSessionState session =
             ScenarioSessionFactory.CreateNew("scenario.watchtower", RandomSeed);
         ApplicationSessionState accepted =
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 session,
-                OutpostMissionChoice.AcceptMission)
+                "AcceptMission")
             .State;
 
         return RegionalTravelRules.BeginJourney(

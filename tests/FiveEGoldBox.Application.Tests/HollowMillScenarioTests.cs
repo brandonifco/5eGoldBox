@@ -7,6 +7,7 @@ using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
+using FiveEGoldBox.Application.Views;
 using FiveEGoldBox.Core.Runtime;
 using FiveEGoldBox.Core.Validation;
 
@@ -80,9 +81,9 @@ public sealed class HollowMillScenarioTests
     {
         ApplicationSessionState session = CreateSession();
 
-        session = OutpostMissionRules.Resolve(
+        session = OutpostDecisionRules.Resolve(
             session,
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
             .State;
         Assert.Equal(
             HollowMillScenarioDefinitionProvider.CommissionAccepted,
@@ -174,9 +175,9 @@ public sealed class HollowMillScenarioTests
     {
         ApplicationSessionState session = CreateSession();
 
-        session = OutpostMissionRules.Resolve(
+        session = OutpostDecisionRules.Resolve(
             session,
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
             .State;
         session = TravelToTheMill(session);
         session = ExplorationRules.EnterDestination(session);
@@ -247,9 +248,9 @@ public sealed class HollowMillScenarioTests
     public void MultiRoute_OffersBothRoads_AndTheShortcutArrivesFaster()
     {
         ApplicationSessionState session = CreateSession();
-        session = OutpostMissionRules.Resolve(
+        session = OutpostDecisionRules.Resolve(
             session,
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
             .State;
 
         IReadOnlyList<TravelRouteDefinition> available =
@@ -295,6 +296,57 @@ public sealed class HollowMillScenarioTests
         Assert.Equal(
             HollowMillScenarioDefinitionProvider.MillLocationId,
             shortcut.CurrentLocationId);
+    }
+
+    /// The vehicle for proving a decision can offer more than the old fixed
+    /// accept/decline shape with real, registered content. Three options,
+    /// each resolved purely by its own string ID — no enum, no built-in
+    /// ceiling on how many a decision can carry.
+    [Fact]
+    public void MultiOptionDecision_OffersAllThree_AndEachResolvesByItsOwnId()
+    {
+        ApplicationSessionState session = CreateSession();
+
+        IReadOnlyList<SessionAction> decisionActions = SessionView
+            .Describe(session)
+            .Actions
+            .Where(action => action.Kind
+                == SessionActionKind.ResolveOutpostDecision)
+            .ToArray();
+
+        Assert.Equal(3, decisionActions.Count);
+        Assert.Contains(
+            decisionActions,
+            action => action.DecisionOptionId == "AcceptMission");
+        Assert.Contains(
+            decisionActions,
+            action => action.DecisionOptionId == "AskAboutPay");
+        Assert.Contains(
+            decisionActions,
+            action => action.DecisionOptionId == "NotYet");
+
+        // A non-committal option, distinct from "Not yet", leaves the
+        // scenario exactly where it stands and the decision still on offer.
+        OutpostDecisionResult asked = OutpostDecisionRules.Resolve(
+            session,
+            "AskAboutPay");
+
+        Assert.False(asked.DidProgressChange);
+        Assert.Equal(
+            HollowMillScenarioDefinitionProvider.RumorHeard,
+            asked.State.Scenario.ProgressId);
+        Assert.Equal(
+            3,
+            OutpostDecisionRules.GetAvailableOptionIds(asked.State).Count);
+
+        OutpostDecisionResult accepted = OutpostDecisionRules.Resolve(
+            asked.State,
+            "AcceptMission");
+
+        Assert.True(accepted.DidProgressChange);
+        Assert.Equal(
+            HollowMillScenarioDefinitionProvider.CommissionAccepted,
+            accepted.State.Scenario.ProgressId);
     }
 
     [Fact]

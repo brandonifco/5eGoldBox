@@ -8,67 +8,66 @@ using FiveEGoldBox.Application.Travel;
 
 namespace FiveEGoldBox.Application.Tests;
 
-public sealed class OutpostMissionRulesTests
+public sealed class OutpostDecisionRulesTests
 {
+    private const string AcceptMission = "AcceptMission";
+
+    private const string NotYet = "NotYet";
+
     [Fact]
-    public void GetAvailableChoices_InCanonicalDecisionState_ReturnsStableOrderedChoices()
+    public void GetAvailableOptionIds_InCanonicalDecisionState_ReturnsStableOrderedOptions()
     {
         ApplicationSessionState session =
             CreateValidSession();
 
-        IReadOnlyList<OutpostMissionChoice> choices =
-            OutpostMissionRules.GetAvailableChoices(
+        IReadOnlyList<string> optionIds =
+            OutpostDecisionRules.GetAvailableOptionIds(
                 session);
 
-        OutpostMissionChoice[] expected =
-        [
-            OutpostMissionChoice.AcceptMission,
-            OutpostMissionChoice.NotYet
-        ];
+        string[] expected = [AcceptMission, NotYet];
 
-        Assert.Equal(expected, choices);
-        Assert.Equal(choices.Count, choices.Distinct().Count());
+        Assert.Equal(expected, optionIds);
+        Assert.Equal(optionIds.Count, optionIds.Distinct().Count());
     }
 
     [Fact]
-    public void GetAvailableChoices_ReturnsReadOnlyCollection()
+    public void GetAvailableOptionIds_ReturnsReadOnlyCollection()
     {
-        IReadOnlyList<OutpostMissionChoice> choices =
-            OutpostMissionRules.GetAvailableChoices(
+        IReadOnlyList<string> optionIds =
+            OutpostDecisionRules.GetAvailableOptionIds(
                 CreateValidSession());
-        IList<OutpostMissionChoice> mutableView =
-            Assert.IsAssignableFrom<IList<OutpostMissionChoice>>(
-                choices);
+        IList<string> mutableView =
+            Assert.IsAssignableFrom<IList<string>>(
+                optionIds);
 
         Assert.True(mutableView.IsReadOnly);
         Assert.Throws<NotSupportedException>(() =>
-            mutableView.Add(
-                OutpostMissionChoice.AcceptMission));
+            mutableView.Add(AcceptMission));
     }
 
     [Fact]
-    public void GetAvailableChoices_RepeatedDiscoveryIsValueEquivalent()
+    public void GetAvailableOptionIds_RepeatedDiscoveryIsValueEquivalent()
     {
         ApplicationSessionState session =
             CreateValidSession();
 
-        IReadOnlyList<OutpostMissionChoice> first =
-            OutpostMissionRules.GetAvailableChoices(
+        IReadOnlyList<string> first =
+            OutpostDecisionRules.GetAvailableOptionIds(
                 session);
-        IReadOnlyList<OutpostMissionChoice> second =
-            OutpostMissionRules.GetAvailableChoices(
+        IReadOnlyList<string> second =
+            OutpostDecisionRules.GetAvailableOptionIds(
                 session);
 
         Assert.Equal(first.ToArray(), second.ToArray());
     }
 
     [Fact]
-    public void GetAvailableChoices_DoesNotMutateOrConsumeRandomness()
+    public void GetAvailableOptionIds_DoesNotMutateOrConsumeRandomness()
     {
         ApplicationSessionState session =
             CreateValidSession();
 
-        _ = OutpostMissionRules.GetAvailableChoices(
+        _ = OutpostDecisionRules.GetAvailableOptionIds(
             session);
 
         Assert.Equal(ApplicationMode.Outpost, session.CurrentMode);
@@ -83,12 +82,12 @@ public sealed class OutpostMissionRulesTests
     }
 
     [Fact]
-    public void GetAvailableChoices_WhenDecisionIsUnavailable_ReturnsEmpty()
+    public void GetAvailableOptionIds_WhenDecisionIsUnavailable_ReturnsEmpty()
     {
         ApplicationSessionState accepted =
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 CreateValidSession(),
-                OutpostMissionChoice.AcceptMission)
+                AcceptMission)
                 .State;
         ApplicationSessionState traveling =
             RegionalTravelRules.BeginJourney(
@@ -118,27 +117,27 @@ public sealed class OutpostMissionRulesTests
             in unavailableStates)
         {
             Assert.Empty(
-                OutpostMissionRules
-                    .GetAvailableChoices(state));
+                OutpostDecisionRules
+                    .GetAvailableOptionIds(state));
         }
     }
 
     [Fact]
-    public void GetAvailableChoices_WithNullSession_Throws()
+    public void GetAvailableOptionIds_WithNullSession_Throws()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            OutpostMissionRules.GetAvailableChoices(
+            OutpostDecisionRules.GetAvailableOptionIds(
                 null!));
     }
 
     [Fact]
-    public void GetAvailableChoices_WithMalformedOutpostState_Throws()
+    public void GetAvailableOptionIds_WithMalformedOutpostState_Throws()
     {
         ApplicationSessionState traveling =
             RegionalTravelRules.BeginJourney(
-                OutpostMissionRules.Resolve(
+                OutpostDecisionRules.Resolve(
                     CreateValidSession(),
-                    OutpostMissionChoice.AcceptMission)
+                    AcceptMission)
                     .State);
         ApplicationSessionState malformed =
             CreateValidSession() with
@@ -147,7 +146,7 @@ public sealed class OutpostMissionRulesTests
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            OutpostMissionRules.GetAvailableChoices(
+            OutpostDecisionRules.GetAvailableOptionIds(
                 malformed));
     }
 
@@ -157,14 +156,12 @@ public sealed class OutpostMissionRulesTests
         ApplicationSessionState session =
             CreateValidSession();
 
-        OutpostMissionResult result =
-            OutpostMissionRules.Resolve(
+        OutpostDecisionResult result =
+            OutpostDecisionRules.Resolve(
                 session,
-                OutpostMissionChoice.AcceptMission);
+                AcceptMission);
 
-        Assert.Equal(
-            OutpostMissionChoice.AcceptMission,
-            result.Choice);
+        Assert.Equal(AcceptMission, result.OptionId);
         Assert.True(result.DidProgressChange);
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
@@ -181,9 +178,9 @@ public sealed class OutpostMissionRulesTests
             CreateValidSession();
 
         ApplicationSessionState accepted =
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 session,
-                OutpostMissionChoice.AcceptMission)
+                AcceptMission)
                 .State;
 
         Assert.Equal(session.ScenarioId, accepted.ScenarioId);
@@ -207,9 +204,9 @@ public sealed class OutpostMissionRulesTests
         ApplicationSessionState session =
             CreateValidSession();
 
-        _ = OutpostMissionRules.Resolve(
+        _ = OutpostDecisionRules.Resolve(
             session,
-            OutpostMissionChoice.AcceptMission);
+            AcceptMission);
 
         Assert.Equal(
             WatchtowerScenarioProgress
@@ -227,14 +224,12 @@ public sealed class OutpostMissionRulesTests
         ApplicationSessionState session =
             CreateValidSession();
 
-        OutpostMissionResult result =
-            OutpostMissionRules.Resolve(
+        OutpostDecisionResult result =
+            OutpostDecisionRules.Resolve(
                 session,
-                OutpostMissionChoice.NotYet);
+                NotYet);
 
-        Assert.Equal(
-            OutpostMissionChoice.NotYet,
-            result.Choice);
+        Assert.Equal(NotYet, result.OptionId);
         Assert.False(result.DidProgressChange);
         AssertSessionEquivalent(
             session,
@@ -247,15 +242,15 @@ public sealed class OutpostMissionRulesTests
         ApplicationSessionState session =
             CreateValidSession();
         ApplicationSessionState deferred =
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 session,
-                OutpostMissionChoice.NotYet)
+                NotYet)
                 .State;
 
-        OutpostMissionResult accepted =
-            OutpostMissionRules.Resolve(
+        OutpostDecisionResult accepted =
+            OutpostDecisionRules.Resolve(
                 deferred,
-                OutpostMissionChoice.AcceptMission);
+                AcceptMission);
 
         Assert.Equal(
             WatchtowerScenarioProgress.MissionAccepted,
@@ -267,21 +262,36 @@ public sealed class OutpostMissionRulesTests
     public void Resolve_WithNullSession_Throws()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 null!,
-                OutpostMissionChoice.AcceptMission));
+                AcceptMission));
     }
 
     [Fact]
-    public void Resolve_WithUndefinedChoice_Throws()
+    public void Resolve_WithNullOptionId_Throws()
     {
         ApplicationSessionState session =
             CreateValidSession();
 
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            OutpostMissionRules.Resolve(
+        Assert.Throws<ArgumentException>(() =>
+            OutpostDecisionRules.Resolve(
                 session,
-                (OutpostMissionChoice)999));
+                null!));
+    }
+
+    /// Not an enum with a closed set of members any more — an option ID that
+    /// simply isn't on offer right now is rejected the same way a route ID
+    /// nothing declared is: authoritatively, not by parsing.
+    [Fact]
+    public void Resolve_WithUnavailableOptionId_Throws()
+    {
+        ApplicationSessionState session =
+            CreateValidSession();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            OutpostDecisionRules.Resolve(
+                session,
+                "not-a-real-option"));
     }
 
     [Fact]
@@ -294,9 +304,9 @@ public sealed class OutpostMissionRulesTests
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 session,
-                OutpostMissionChoice.AcceptMission));
+                AcceptMission));
     }
 
     [Fact]
@@ -309,9 +319,9 @@ public sealed class OutpostMissionRulesTests
             };
 
         Assert.Throws<ArgumentNullException>(() =>
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 session,
-                OutpostMissionChoice.AcceptMission));
+                AcceptMission));
     }
 
     [Fact]
@@ -324,32 +334,20 @@ public sealed class OutpostMissionRulesTests
             };
 
         Assert.ThrowsAny<ArgumentException>(() =>
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 session,
-                OutpostMissionChoice.AcceptMission));
+                AcceptMission));
     }
 
     [Theory]
-    [InlineData(
-        OutpostMissionChoice.AcceptMission,
-        "MissionAccepted")]
-    [InlineData(
-        OutpostMissionChoice.AcceptMission,
-        "SignalActivated")]
-    [InlineData(
-        OutpostMissionChoice.AcceptMission,
-        "RaidersDefeated")]
-    [InlineData(
-        OutpostMissionChoice.NotYet,
-        "MissionAccepted")]
-    [InlineData(
-        OutpostMissionChoice.NotYet,
-        "SignalActivated")]
-    [InlineData(
-        OutpostMissionChoice.NotYet,
-        "RaidersDefeated")]
+    [InlineData(AcceptMission, "MissionAccepted")]
+    [InlineData(AcceptMission, "SignalActivated")]
+    [InlineData(AcceptMission, "RaidersDefeated")]
+    [InlineData(NotYet, "MissionAccepted")]
+    [InlineData(NotYet, "SignalActivated")]
+    [InlineData(NotYet, "RaidersDefeated")]
     public void Resolve_AfterMissionDecisionAvailability_Throws(
-        OutpostMissionChoice choice,
+        string optionId,
         string progressId)
     {
         ApplicationSessionState session =
@@ -362,9 +360,9 @@ public sealed class OutpostMissionRulesTests
             };
 
         Assert.Throws<InvalidOperationException>(() =>
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 session,
-                choice));
+                optionId));
     }
 
     private static void AssertSessionEquivalent(
@@ -447,9 +445,9 @@ public sealed class OutpostMissionRulesTests
     {
         ApplicationSessionState current =
             RegionalTravelRules.BeginJourney(
-                OutpostMissionRules.Resolve(
+                OutpostDecisionRules.Resolve(
                     CreateValidSession(),
-                    OutpostMissionChoice.AcceptMission)
+                    AcceptMission)
                     .State);
 
         while (!Assert.IsType<RegionalTravelState>(

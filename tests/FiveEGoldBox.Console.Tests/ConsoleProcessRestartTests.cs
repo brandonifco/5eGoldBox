@@ -651,9 +651,9 @@ public sealed class ConsoleProcessRestartTests
         return action switch
         {
             SessionAction.AcceptMission =>
-                OutpostMissionRules.Resolve(
+                OutpostDecisionRules.Resolve(
                     state,
-                    OutpostMissionChoice.AcceptMission).State,
+                    "AcceptMission").State,
             SessionAction.BeginJourney =>
                 RegionalTravelRules.BeginJourney(state),
             SessionAction.AdvanceTravel =>
@@ -703,15 +703,15 @@ public sealed class ConsoleProcessRestartTests
         switch (state.CurrentMode)
         {
             case ApplicationMode.Outpost:
-                foreach (OutpostMissionChoice choice
-                    in OutpostMissionRules.GetAvailableChoices(state))
+                foreach (string choice
+                    in OutpostDecisionRules.GetAvailableOptionIds(state))
                 {
                     actions.Add(
                         choice switch
                         {
-                            OutpostMissionChoice.AcceptMission =>
+                            "AcceptMission" =>
                                 SessionAction.AcceptMission,
-                            OutpostMissionChoice.NotYet =>
+                            "NotYet" =>
                                 SessionAction.DeferMission,
                             _ => throw new InvalidOperationException(
                                 "The public outpost choice is unsupported by the process-test script builder.")

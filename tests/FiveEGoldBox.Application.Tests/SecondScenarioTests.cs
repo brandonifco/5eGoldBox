@@ -63,12 +63,12 @@ public sealed class SecondScenarioTests
         ApplicationSessionState session = CreateSession();
 
         Assert.Equal(
-            [OutpostMissionChoice.AcceptMission, OutpostMissionChoice.NotYet],
-            OutpostMissionRules.GetAvailableChoices(session));
+            ["AcceptMission", "NotYet"],
+            OutpostDecisionRules.GetAvailableOptionIds(session));
 
-        session = OutpostMissionRules.Resolve(
+        session = OutpostDecisionRules.Resolve(
             session,
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
             .State;
         Assert.Equal(
             SunkenChapelScenarioDefinitionProvider.CharterSigned,
@@ -370,9 +370,9 @@ public sealed class SecondScenarioTests
             return session;
         }
 
-        session = OutpostMissionRules.Resolve(
+        session = OutpostDecisionRules.Resolve(
             session,
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
             .State;
         session = RegionalTravelRules.BeginJourney(session);
 

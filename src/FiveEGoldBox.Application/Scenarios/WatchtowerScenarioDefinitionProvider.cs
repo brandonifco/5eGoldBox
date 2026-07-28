@@ -116,14 +116,14 @@ internal static class WatchtowerScenarioDefinitionProvider
             [
                 new ScenarioDecisionOptionDefinition
                 {
-                    OptionId = OutpostMissionChoice.AcceptMission.ToString(),
+                    OptionId = "AcceptMission",
                     DisplayName = "Accept the commission",
                     ResultingProgressId = Progress(
                         WatchtowerScenarioProgress.MissionAccepted)
                 },
                 new ScenarioDecisionOptionDefinition
                 {
-                    OptionId = OutpostMissionChoice.NotYet.ToString(),
+                    OptionId = "NotYet",
                     DisplayName = "Not yet",
                     ResultingProgressId = null
                 }

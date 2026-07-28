@@ -32,13 +32,13 @@ public sealed class SessionViewTests
                 SessionActionKind.ResolveOutpostDecision,
                 action.Kind));
         Assert.All(view.Actions, action =>
-            Assert.NotNull(action.MissionChoice));
+            Assert.NotNull(action.DecisionOptionId));
         Assert.Contains(
             view.Actions,
-            action => action.MissionChoice == OutpostMissionChoice.AcceptMission);
+            action => action.DecisionOptionId == "AcceptMission");
         Assert.Contains(
             view.Actions,
-            action => action.MissionChoice == OutpostMissionChoice.NotYet);
+            action => action.DecisionOptionId == "NotYet");
     }
 
     /// The two scenarios describe the same moment in their own words, which is
@@ -151,9 +151,9 @@ public sealed class SessionViewTests
     private static ApplicationSessionState Accept(
         ApplicationSessionState session)
     {
-        return OutpostMissionRules.Resolve(
+        return OutpostDecisionRules.Resolve(
             session,
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
             .State;
     }
 

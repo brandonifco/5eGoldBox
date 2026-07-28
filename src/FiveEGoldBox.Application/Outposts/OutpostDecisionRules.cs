@@ -4,21 +4,28 @@ using FiveEGoldBox.Application.Sessions;
 
 namespace FiveEGoldBox.Application.Outposts;
 
-public static class OutpostMissionRules
+/// Resolves whatever decision a scenario offers at a hub — any number of
+/// options, named however the scenario names them.
+///
+/// This used to be a fixed accept/decline choice
+/// (<c>OutpostMissionChoice</c>), which was really just the shape of the
+/// first scenario's own opening decision leaking into the engine. A
+/// decision's real shape lives entirely in
+/// <see cref="ScenarioDecisionDefinition.Options"/> already; this class just
+/// needed to stop assuming there were exactly two of them.
+public static class OutpostDecisionRules
 {
-    private static readonly IReadOnlyList<OutpostMissionChoice>
-        NoAvailableChoices = Array.AsReadOnly(
-            Array.Empty<OutpostMissionChoice>());
+    private static readonly IReadOnlyList<string> NoAvailableOptions =
+        Array.AsReadOnly(Array.Empty<string>());
 
-    public static IReadOnlyList<OutpostMissionChoice>
-        GetAvailableChoices(
-            ApplicationSessionState session)
+    public static IReadOnlyList<string> GetAvailableOptionIds(
+        ApplicationSessionState session)
     {
         ArgumentNullException.ThrowIfNull(session);
 
         if (session.CurrentMode != ApplicationMode.Outpost)
         {
-            return NoAvailableChoices;
+            return NoAvailableOptions;
         }
 
         ApplicationSessionState canonicalSession =
@@ -26,28 +33,27 @@ public static class OutpostMissionRules
         ScenarioDecisionDefinition? decision =
             FindAvailableDecision(canonicalSession);
 
-        // The scenario authors both which choices exist and the order they are
-        // offered in.
+        // The scenario authors both which options exist and the order they
+        // are offered in.
         return decision is null
-            ? NoAvailableChoices
+            ? NoAvailableOptions
             : Array.AsReadOnly(
                 decision.Options
-                    .Select(ToChoice)
+                    .Select(option => option.OptionId)
                     .ToArray());
     }
 
-    public static OutpostMissionResult Resolve(
+    public static OutpostDecisionResult Resolve(
         ApplicationSessionState session,
-        OutpostMissionChoice choice)
+        string optionId)
     {
         ArgumentNullException.ThrowIfNull(session);
 
-        if (!Enum.IsDefined(choice))
+        if (string.IsNullOrWhiteSpace(optionId))
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(choice),
-                choice,
-                "Unsupported outpost mission choice.");
+            throw new ArgumentException(
+                "An option ID is required.",
+                nameof(optionId));
         }
 
         ApplicationSessionState canonicalSession =
@@ -58,19 +64,18 @@ public static class OutpostMissionRules
         if (decision is null)
         {
             throw new InvalidOperationException(
-                "The outpost mission decision is available only before the mission is accepted.");
+                "No decision is available here right now.");
         }
 
-        ScenarioDecisionOptionDefinition? option = decision.Options
-            .FirstOrDefault(candidate => ToChoice(candidate) == choice);
+        ScenarioDecisionOptionDefinition option = decision.Options
+            .FirstOrDefault(candidate => string.Equals(
+                candidate.OptionId,
+                optionId,
+                StringComparison.Ordinal))
+            ?? throw new InvalidOperationException(
+                $"Option '{optionId}' is not available on this decision.");
 
-        if (option is null)
-        {
-            throw new InvalidOperationException(
-                "The validated outpost mission choice could not be resolved.");
-        }
-
-        return Apply(canonicalSession, choice, option);
+        return Apply(canonicalSession, option);
     }
 
     /// A decision is on offer when the party is standing where the scenario
@@ -96,26 +101,26 @@ public static class OutpostMissionRules
                     StringComparer.Ordinal));
     }
 
-    /// An option that names no resulting progress leaves the scenario where it
-    /// stands, which is how declining is expressed.
-    private static OutpostMissionResult Apply(
+    /// An option that names no resulting progress leaves the scenario where
+    /// it stands, which is how declining — or any other non-committal
+    /// option — is expressed.
+    private static OutpostDecisionResult Apply(
         ApplicationSessionState session,
-        OutpostMissionChoice choice,
         ScenarioDecisionOptionDefinition option)
     {
         if (option.ResultingProgressId is null)
         {
-            return new OutpostMissionResult
+            return new OutpostDecisionResult
             {
-                Choice = choice,
+                OptionId = option.OptionId,
                 DidProgressChange = false,
                 State = session
             };
         }
 
-        return new OutpostMissionResult
+        return new OutpostDecisionResult
         {
-            Choice = choice,
+            OptionId = option.OptionId,
             DidProgressChange = true,
             State = ApplicationSessionRules.CreateCanonical(
                 session with
@@ -126,18 +131,5 @@ public static class OutpostMissionRules
                     }
                 })
         };
-    }
-
-    private static OutpostMissionChoice ToChoice(
-        ScenarioDecisionOptionDefinition option)
-    {
-        return Enum.TryParse(
-                option.OptionId,
-                ignoreCase: false,
-                out OutpostMissionChoice choice)
-            && Enum.IsDefined(choice)
-            ? choice
-            : throw new InvalidOperationException(
-                $"Decision option '{option.OptionId}' is not an outpost mission choice.");
     }
 }

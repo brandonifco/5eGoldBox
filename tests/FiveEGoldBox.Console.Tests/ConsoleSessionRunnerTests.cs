@@ -918,9 +918,9 @@ public sealed class ConsoleSessionRunnerTests
         CreateRegionalTravelSession()
     {
         ApplicationSessionState accepted =
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 CreateOutpostSession(),
-                OutpostMissionChoice.AcceptMission)
+                "AcceptMission")
             .State;
 
         return RegionalTravelRules.BeginJourney(

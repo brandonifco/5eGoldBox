@@ -2,9 +2,9 @@ using FiveEGoldBox.Application.Sessions;
 
 namespace FiveEGoldBox.Application.Outposts;
 
-public sealed record OutpostMissionResult
+public sealed record OutpostDecisionResult
 {
-    public required OutpostMissionChoice Choice { get; init; }
+    public required string OptionId { get; init; }
 
     public required bool DidProgressChange { get; init; }
 
