@@ -1,6 +1,6 @@
 # 5eGoldBox Godot UI — Remaining Milestones (M4–M12)
 
-**Status:** M0–M4 complete; M5 in progress (a, b done); seven milestones remain after M5.
+**Status:** M0–M4 complete; M5 in progress (a, b, c done); seven milestones remain after M5.
 
 This is a concise proposed execution-stage breakdown derived from the creator-approved Godot UI Pre-Integration Governing Plan v1.1. Lettered stages organize implementation; they do not change the governing milestone scope or acceptance gates.
 
@@ -65,11 +65,15 @@ This is a concise proposed execution-stage breakdown derived from the creator-ap
   - **Deliberately left out, and why:** no revision/sequence counter on the snapshot (§15.2 mentions one, "used only to reject stale UI responses") — the mock gateway is synchronous and single-threaded, so nothing can race a snapshot today; a real candidate for M5f, when latency simulation introduces an actual async gap a stale submit could land in. No wiring into the live `AppShell` — same boundary as M5a, M6's job.
   - **Real behavioral verification, not just a build check** — this is logic, not inert records like M5a. Copied the pure-C# files (gateway + the view models it depends on, zero Godot references in any of them) into an isolated scratch console project outside the repo and ran 12 checks: rejection when no handler is registered, accepted submit both returning `Accepted` and updating `CurrentSnapshot`, `SnapshotChanged` firing exactly once per accepted submit and zero times for a rejection or a `Busy` result, nested view-model data (a party member's `Selected` flag) surviving the round-trip, re-registering a handler correctly overwriting the previous one, and `ReplaceSnapshot` updating state and firing the event directly. All 12 passed.
   - Verified: build clean, headless boot exit 0, zero Godot references in `ui/mocks/`, 102 lines across 3 files, 12/12 scratch behavioral checks passed.
-- c. Build the named deterministic scenario catalog for normal, empty, long, disabled, error, and stress states.
-- d. Add the developer scenario picker plus layout and resolution controls.
-- e. Add scripted transitions among exploration, regional travel, combat, and modal screens.
-- f. Add latency, busy, recoverable-error, and success placeholders.
-- g. Verify every major UI state can be reached quickly without code edits or backend types.
+- [x] c. Build the named deterministic scenario catalog for normal, empty, long, disabled, error, and stress states. Built directly against §10.2's table, family by family, in `ui/mocks/scenarios/`: `MockPartyScenarios` (8 cases), `MockCommandScenarios` (8), `MockMessageScenarios` (6), `MockExplorationScenarios` (6), `MockRegionalMapScenarios` (5), `MockCombatScenarios` (7), `MockModalScenarios` (10) — 50 named scenarios total, one static factory method per case, named after the doc's own wording. `MockScenarioCatalog` aggregates them into one dictionary per family (`IReadOnlyDictionary<string, Func<T>>`, not a single `Dictionary<string, Func<object>>` — boxing every family behind `object` would be exactly the "generic object" §7.3's payload guidance separately warns against, applied here for the same reason), keyed by short hyphenated IDs (`"six-members"`, `"duplicate-hotkey-invalid"`) — this is the index M5d's picker enumerates, not something it needs to build its own version of.
+  - **"Layouts: every scenario in standard and immersive" and "Resolution stress" were deliberately not turned into more scenario content.** Both are cross-cutting *presentation* axes, not new data — the existing M0-M4 immersive toggle (`ShellLayoutController.Toggle`) and `UiResolutionPresets` already apply to whatever scenario is active. Building 2x/6x as many scenario variants to cover them would be duplicating content for axes the shell already handles orthogonally. M5d wires the actual toggles into the picker.
+  - **`MockCommandSetValidator.ValidateUniqueHotkeys`, new: a real, small validator, not a scenario.** Mirrors `ShellCommandBarController.ValidateUniqueShortcuts` (M4e) but operates on `CommandSetViewModel`'s string `Hotkey` rather than `CommandDefinition`'s `Godot.Key`, since M5's view-model layer is a separate, not-yet-wired contract from M4's live shell and needs its own instance of the same check. `MockCommandScenarios.DuplicateHotkeyInvalidCommandSet()` is the one catalog entry that isn't really "renderable" — it exists specifically to be fed into this validator and rejected, which is what §10.2's "duplicate-hotkey validation failure" case actually means (a check that fires, not a screen that displays).
+  - **Real verification, not just a build check** — extended the same isolated scratch-project technique from M5b (all these files are zero-Godot-reference pure C#). 65 checks: every one of the 50 catalog entries constructs without throwing, each family's count matches its expected §10.2 tally, the total is exactly 50, the duplicate-hotkey scenario is confirmed rejected by the validator, and — checking for a false positive, not just the true positive — a normal five-command scenario is confirmed to *pass* validation. All 65 passed.
+  - Verified: build clean, headless boot exit 0, all 9 new files ≤250 lines (max 131), 65/65 scratch checks passed.
+- [ ] d. Add the developer scenario picker plus layout and resolution controls.
+- [ ] e. Add scripted transitions among exploration, regional travel, combat, and modal screens.
+- [ ] f. Add latency, busy, recoverable-error, and success placeholders.
+- [ ] g. Verify every major UI state can be reached quickly without code edits or backend types.
 
 ## M6 — Exploration Experience Shell
 
