@@ -4,7 +4,7 @@ internal static class MockExplorationScenarios
 	public static ExplorationViewModel Building()
 	{
 		return new ExplorationViewModel(
-			"building-interior",
+			ExplorationSceneKeys.BuildingInterior,
 			"Facing North",
 			"N");
 	}
@@ -12,7 +12,7 @@ internal static class MockExplorationScenarios
 	public static ExplorationViewModel TownStreet()
 	{
 		return new ExplorationViewModel(
-			"town-street",
+			ExplorationSceneKeys.TownStreet,
 			"Facing East",
 			"E");
 	}
@@ -20,7 +20,7 @@ internal static class MockExplorationScenarios
 	public static ExplorationViewModel Cavern()
 	{
 		return new ExplorationViewModel(
-			"cavern",
+			ExplorationSceneKeys.Cavern,
 			"Facing South",
 			"S");
 	}
@@ -28,7 +28,7 @@ internal static class MockExplorationScenarios
 	public static ExplorationViewModel DungeonCorridor()
 	{
 		return new ExplorationViewModel(
-			"dungeon-corridor",
+			ExplorationSceneKeys.DungeonCorridor,
 			"Facing West",
 			"W");
 	}
@@ -36,7 +36,7 @@ internal static class MockExplorationScenarios
 	public static ExplorationViewModel InteractionPrompt()
 	{
 		return new ExplorationViewModel(
-			"dungeon-corridor",
+			ExplorationSceneKeys.DungeonCorridor,
 			"Facing North",
 			"N",
 			new[] { "Press Enter to open the door." });
@@ -45,7 +45,7 @@ internal static class MockExplorationScenarios
 	public static ExplorationViewModel MovementActive()
 	{
 		return new ExplorationViewModel(
-			"dungeon-corridor",
+			ExplorationSceneKeys.DungeonCorridor,
 			"Facing North",
 			"N",
 			new[] { "ARROWS/NUMPAD TO MOVE — ESC/SPACE TO EXIT" });

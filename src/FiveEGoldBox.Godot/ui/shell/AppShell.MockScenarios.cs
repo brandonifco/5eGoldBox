@@ -46,4 +46,13 @@ public partial class AppShell
 			$"[{commandId}] {result.Outcome}: {result.Message}\n" +
 				$"Mode now: {_scriptedSession.Gateway.CurrentSnapshot.Mode}");
 	}
+
+	// M6b: the one place a mock ExplorationViewModel actually renders
+	// through the real ExplorationView component, not just a text dump —
+	// so the four placeholder-color variants can be seen, not just read.
+	private void CycleExplorationVariant()
+	{
+		string sceneKey = _presentationController.CycleExplorationVariant();
+		_presentationController.SetMessage($"Exploration scene: {sceneKey}");
+	}
 }

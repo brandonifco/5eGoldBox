@@ -80,7 +80,8 @@ public partial class AppShell : Control
 			ShowNextMockScenario,
 			ShowPreviousMockScenario,
 			CycleResolutionPreset,
-			AdvanceScriptedSession);
+			AdvanceScriptedSession,
+			CycleExplorationVariant);
 
 		_themeController.Initialize();
 		_layoutController.Initialize();

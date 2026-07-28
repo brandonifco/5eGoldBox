@@ -2,6 +2,19 @@ using Godot;
 
 internal sealed class ShellPresentationController : IShellPresentation
 {
+	// M6b dev proof only: cycles ExplorationView through every scene key
+	// that has a distinct appearance, real image first. Not "the" list of
+	// exploration scenes — MockExplorationScenarios/MockScenarioCatalog
+	// remain the actual catalog.
+	private static readonly string[] ExplorationVariantSceneKeys =
+	{
+		ExplorationSceneKeys.OutpostEntrance,
+		ExplorationSceneKeys.BuildingInterior,
+		ExplorationSceneKeys.TownStreet,
+		ExplorationSceneKeys.Cavern,
+		ExplorationSceneKeys.DungeonCorridor,
+	};
+
 	private readonly ExplorationView _explorationView;
 	private readonly Control _regionalMapView;
 	private readonly Control _combatView;
@@ -9,6 +22,7 @@ internal sealed class ShellPresentationController : IShellPresentation
 	private readonly HeaderBar _immersiveHeaderBar;
 	private readonly MessageLog _messageLog;
 	private readonly MessageLog _immersiveMessageLog;
+	private int _explorationVariantIndex;
 
 	public ShellPresentationController(
 		ExplorationView explorationView,
@@ -38,7 +52,8 @@ internal sealed class ShellPresentationController : IShellPresentation
 		_regionalMapView.Hide();
 		_combatView.Hide();
 
-		_explorationView.Configure(new ExplorationViewModel("outpost-entrance"));
+		_explorationView.Configure(
+			new ExplorationViewModel(ExplorationSceneKeys.OutpostEntrance));
 		SetHeader("Outpost", "Exploration");
 		SetMessage("You stand at the entrance to the outpost.");
 	}
@@ -65,6 +80,17 @@ internal sealed class ShellPresentationController : IShellPresentation
 
 		SetHeader("Encounter", "Combat");
 		SetMessage("Combat has begun.");
+	}
+
+	public string CycleExplorationVariant()
+	{
+		_explorationVariantIndex =
+			(_explorationVariantIndex + 1) % ExplorationVariantSceneKeys.Length;
+		string sceneKey = ExplorationVariantSceneKeys[_explorationVariantIndex];
+
+		_explorationView.Configure(new ExplorationViewModel(sceneKey));
+
+		return sceneKey;
 	}
 
 	public void SetMessage(string message)

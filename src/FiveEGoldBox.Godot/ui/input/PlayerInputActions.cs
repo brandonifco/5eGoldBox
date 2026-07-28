@@ -34,6 +34,8 @@ internal static class PlayerInputActions
 		"shell_dev_cycle_resolution_preset";
 	public const string DevAdvanceScriptedSession =
 		"shell_dev_advance_scripted_session";
+	public const string DevCycleExplorationVariant =
+		"shell_dev_cycle_exploration_variant";
 
 	public static void EnsureRegistered()
 	{
@@ -109,6 +111,9 @@ internal static class PlayerInputActions
 		Register(
 			DevAdvanceScriptedSession,
 			new InputEventKey { Keycode = Key.F8 });
+		Register(
+			DevCycleExplorationVariant,
+			new InputEventKey { Keycode = Key.F9 });
 	}
 
 	private static void Register(string action, params InputEvent[] events)
