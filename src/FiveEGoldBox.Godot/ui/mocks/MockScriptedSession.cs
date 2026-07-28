@@ -11,6 +11,8 @@ internal sealed class MockScriptedSession
 	public const string FinishCombat = "mock.finish-combat";
 	public const string OpenInventory = "mock.open-inventory";
 	public const string CloseModal = "mock.close-modal";
+	public const string SlowCommand = "mock.slow-command";
+	public const string RiskyAction = "mock.risky-action";
 
 	public static readonly string[] ScriptOrder =
 	{
@@ -19,6 +21,10 @@ internal sealed class MockScriptedSession
 		FinishCombat,
 		OpenInventory,
 		CloseModal,
+		SlowCommand,
+		SlowCommand,
+		RiskyAction,
+		RiskyAction,
 	};
 
 	public MockUiGateway Gateway { get; }
@@ -55,5 +61,33 @@ internal sealed class MockScriptedSession
 		Gateway.RegisterHandler(CloseModal, _ => MockCommandResult.Accepted(
 			Gateway.CurrentSnapshot with { ActiveModal = null },
 			"Inventory closed."));
+
+		// Latency/busy and recoverable-error placeholders (M5f), both
+		// step-based rather than real-time: a wall-clock delay would make
+		// this nondeterministic, which §10.3 explicitly rules out. The
+		// attempt counters are plain captured locals — each is read only
+		// by the one handler closure it belongs to, so a field would add
+		// nothing.
+		int slowCommandAttempts = 0;
+		Gateway.RegisterHandler(SlowCommand, _ =>
+		{
+			slowCommandAttempts++;
+			return slowCommandAttempts < 2
+				? MockCommandResult.Busy("Still loading...")
+				: MockCommandResult.Accepted(
+					Gateway.CurrentSnapshot,
+					"Loaded.");
+		});
+
+		int riskyActionAttempts = 0;
+		Gateway.RegisterHandler(RiskyAction, _ =>
+		{
+			riskyActionAttempts++;
+			return riskyActionAttempts < 2
+				? MockCommandResult.Error("Connection lost. Try again.")
+				: MockCommandResult.Accepted(
+					Gateway.CurrentSnapshot,
+					"Action succeeded on retry.");
+		});
 	}
 }

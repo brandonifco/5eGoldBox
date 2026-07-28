@@ -1,6 +1,6 @@
 # 5eGoldBox Godot UI — Remaining Milestones (M4–M12)
 
-**Status:** M0–M4 complete; M5 in progress (a-e done); seven milestones remain after M5.
+**Status:** M0–M4 complete; M5 in progress (a-f done); seven milestones remain after M5.
 
 This is a concise proposed execution-stage breakdown derived from the creator-approved Godot UI Pre-Integration Governing Plan v1.1. Lettered stages organize implementation; they do not change the governing milestone scope or acceptance gates.
 
@@ -82,7 +82,15 @@ This is a concise proposed execution-stage breakdown derived from the creator-ap
   - **Reachable the same way M5d's static scenarios are:** a new dev-only `DevAdvanceScriptedSession` binding (F8) steps through `MockScriptedSession.ScriptOrder` one command at a time via `AppShell.AdvanceScriptedSession`, printing the outcome and resulting mode through the same live `MessageLog` M5d already uses. No new rendering pipeline, same reasoning as M5d.
   - **Real behavioral verification of the actual transition sequence**, extending the M5b-d scratch project: confirmed the session starts in `Exploration` with no modal open, that `Travel`/`EnterCombat`/`FinishCombat` move `Mode` through `RegionalMap`/`Combat` and back to `Exploration` in order, that `OpenInventory` sets `ActiveModal` (to the actual `Inventory` scenario, checked by title) *without* disturbing `Mode`, that `CloseModal` clears it again, that all five steps fired `SnapshotChanged` exactly once each, and that party data (6 members) survives every full-scenario swap. All 11 new checks passed (83/83 total across M5b-e).
   - Verified: build clean, headless boot exit 0, all touched/new files ≤250 lines (max 178).
-- [ ] f. Add latency, busy, recoverable-error, and success placeholders.
+- [x] f. Add latency, busy, recoverable-error, and success placeholders. Two more command IDs on the same `MockScriptedSession`, deliberately step-based rather than real-time: a wall-clock delay would make the mock nondeterministic, which §10.3 explicitly rules out ("mocks are deterministic and named").
+  - **`mock.slow-command`** — first `Submit` returns `Busy("Still loading...")`; a second `Submit` of the same intent returns `Accepted`. Represents "latency" as a discrete state a UI has to handle (show a busy indicator, don't re-render as if nothing's happening) rather than actual elapsed time.
+  - **`mock.risky-action`** — first `Submit` returns `Error("Connection lost. Try again.")`; a second `Submit` returns `Accepted`. This is the "recoverable" half of "recoverable-error": the error doesn't leave the session in a broken state, a retry through the exact same command succeeds.
+  - **"Success" isn't a separate placeholder** — every `Accepted` result already built across M5b/e (`Travel`, `EnterCombat`, the eventual resolution of both commands above, etc.) already demonstrates it repeatedly. Manufacturing one more command whose only job is "return Accepted" would have been redundant, not a real gap.
+  - Both new command IDs were appended to `ScriptOrder` (`SlowCommand` twice, `RiskyAction` twice, so stepping through via the existing `DevAdvanceScriptedSession` — F8 — actually walks each one from its first attempt to its eventual resolution) — no new dev-tooling binding needed.
+  - The attempt counters are plain `int` locals captured by each handler's closure, not instance fields — each is read only by the one handler it belongs to.
+  - **Real behavioral verification**, extending the same scratch project: the slow command's first attempt is `Busy` and does *not* fire `SnapshotChanged`; its second attempt is `Accepted` and *does* fire it; the risky action's first attempt is `Error` and doesn't touch the snapshot; its retry is `Accepted`. All 8 new checks passed (91/91 total across M5b-f).
+  - Verified: build clean, headless boot exit 0, file stays at 93 lines.
+- [ ] g. Verify every major UI state can be reached quickly without code edits or backend types.
 - [ ] g. Verify every major UI state can be reached quickly without code edits or backend types.
 
 ## M6 — Exploration Experience Shell
