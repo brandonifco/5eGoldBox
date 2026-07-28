@@ -252,6 +252,7 @@ public sealed class SecondScenarioTests
     /// it does not need to.
     [Theory]
     [InlineData(TraversalStage.Outpost)]
+    [InlineData(TraversalStage.Travelling)]
     [InlineData(TraversalStage.Exploring)]
     [InlineData(TraversalStage.SealBroken)]
     [InlineData(TraversalStage.Concluded)]
@@ -281,19 +282,6 @@ public sealed class SecondScenarioTests
             loaded.Scenario.ProgressId);
     }
 
-    /// Mid-journey saving is refused for every scenario alike — it is a limit
-    /// of this phase of the save format, not something the first scenario is
-    /// special about.
-    [Fact]
-    public void Save_WhileTravelling_IsRefused()
-    {
-        ApplicationSessionState travelling =
-            RunTo(TraversalStage.Travelling);
-
-        Assert.False(ManualSaveSerializer.CanSerialize(travelling));
-        Assert.ThrowsAny<ArgumentException>(() =>
-            ManualSaveSerializer.Serialize(travelling));
-    }
 
     /// Both scenarios resolve their own content from the same registry, and
     /// neither leaks into the other.

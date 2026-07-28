@@ -49,12 +49,12 @@ public sealed class ManualSaveSerializerTests
     }
 
     [Fact]
-    public void CanSerialize_ValidRegionalTravelSession_ReturnsFalse()
+    public void CanSerialize_ValidRegionalTravelSession_ReturnsTrue()
     {
         ApplicationSessionState session =
             CreateRegionalTravelSession();
 
-        Assert.False(
+        Assert.True(
             ManualSaveSerializer.CanSerialize(session));
     }
 
@@ -648,13 +648,37 @@ public sealed class ManualSaveSerializerTests
     }
 
     [Fact]
-    public void Serialize_WithRegionalTravelMode_Throws()
+    public void SerializeAndDeserialize_ValidRegionalTravel_PreservesState()
     {
-        ApplicationSessionState traveling =
-            CreateRegionalTravelSession();
+        ApplicationSessionState original =
+            RegionalTravelRules.Advance(
+                CreateRegionalTravelSession())
+                .State;
 
-        Assert.Throws<ArgumentException>(() =>
-            ManualSaveSerializer.Serialize(traveling));
+        ApplicationSessionState loaded =
+            AssertLoadedSession(
+                ManualSaveSerializer.Deserialize(
+                    ManualSaveSerializer.Serialize(
+                        original)));
+        RegionalTravelState travel =
+            Assert.IsType<RegionalTravelState>(
+                loaded.RegionalTravel);
+
+        Assert.Equal(
+            ApplicationMode.RegionalTravel,
+            loaded.CurrentMode);
+        Assert.Null(loaded.Exploration);
+        Assert.Equal(
+            "route.outpost-watchtower",
+            travel.RouteId);
+        Assert.Equal(
+            "location.outpost",
+            travel.OriginLocationId);
+        Assert.Equal(
+            "location.ruined-watchtower",
+            travel.DestinationLocationId);
+        Assert.Equal(1, travel.CurrentStepIndex);
+        Assert.False(travel.IsComplete);
     }
 
     [Fact]
@@ -706,8 +730,11 @@ public sealed class ManualSaveSerializerTests
                 .InvalidSessionState);
     }
 
+    /// A well-formed regional-travel save loads successfully — nothing
+    /// structural was ever wrong with this shape; the mode gate was the only
+    /// thing rejecting it.
     [Fact]
-    public void Deserialize_WithValidRegionalTravelState_ReturnsInvalidStateFailure()
+    public void Deserialize_WithValidRegionalTravelState_Succeeds()
     {
         ApplicationSessionState traveling =
             CreateRegionalTravelSession();
@@ -730,10 +757,15 @@ public sealed class ManualSaveSerializerTests
             ManualSaveSerializer.Deserialize(
                 save.ToJsonString());
 
-        AssertFailure(
-            result,
-            ManualSaveLoadFailureReason
-                .InvalidSessionState);
+        ApplicationSessionState loaded =
+            AssertLoadedSession(result);
+        Assert.Equal(
+            ApplicationMode.RegionalTravel,
+            loaded.CurrentMode);
+        Assert.Equal(
+            travel.RouteId,
+            Assert.IsType<RegionalTravelState>(
+                loaded.RegionalTravel).RouteId);
     }
 
     [Fact]

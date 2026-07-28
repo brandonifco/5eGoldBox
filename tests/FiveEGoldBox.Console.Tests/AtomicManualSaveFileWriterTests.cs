@@ -1,3 +1,4 @@
+using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Persistence;
 using FiveEGoldBox.Application.Scenarios;
@@ -168,7 +169,7 @@ public sealed class AtomicManualSaveFileWriterTests
     {
         using TemporaryDirectory temporary = new();
         ApplicationSessionState session =
-            CreateRegionalTravelSession();
+            CreateEncounterSession();
         byte[] originalContents = "existing valid save"u8.ToArray();
         File.WriteAllBytes(
             temporary.SavePath,
@@ -321,6 +322,45 @@ public sealed class AtomicManualSaveFileWriterTests
 
         return RegionalTravelRules.BeginJourney(
             accepted);
+    }
+
+    private static ApplicationSessionState
+        CreateEncounterSession()
+    {
+        ApplicationSessionState current =
+            CreateRegionalTravelSession();
+
+        while (!Assert.IsType<RegionalTravelState>(
+            current.RegionalTravel).IsComplete)
+        {
+            current = RegionalTravelRules.Advance(current)
+                .State;
+        }
+
+        current = ExplorationRules.EnterDestination(current);
+        current = ExplorationRules.MoveForward(current)
+            .State;
+        current = ExplorationRules.MoveForward(current)
+            .State;
+        current = ExplorationRules.UseStairs(current);
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Right);
+        current = ExplorationRules.MoveForward(current)
+            .State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Right);
+        current = ExplorationRules.MoveForward(current)
+            .State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Left);
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Left);
+
+        return ScenarioTriggerRules.Activate(current);
     }
 
     private sealed class TemporaryDirectory : IDisposable
