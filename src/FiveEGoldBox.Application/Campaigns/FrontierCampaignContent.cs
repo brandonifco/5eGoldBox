@@ -53,7 +53,8 @@ internal static class FrontierCampaignContent
             ScenarioIds =
             [
                 WatchtowerScenarioContent.ScenarioId,
-                SunkenChapelScenarioDefinitionProvider.ScenarioId
+                SunkenChapelScenarioDefinitionProvider.ScenarioId,
+                HollowMillScenarioDefinitionProvider.ScenarioId
             ]
         };
     }
