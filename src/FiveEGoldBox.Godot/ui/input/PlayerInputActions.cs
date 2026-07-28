@@ -96,24 +96,52 @@ internal static class PlayerInputActions
 				AltPressed = true,
 			});
 
-		// Three plain, unmodified keys rather than a Shift-modified pair —
-		// avoids the exact-match pitfall M4c had to handle for
-		// ModalBackdrop's Tab/Shift+Tab (a Shift+F5 press would otherwise
-		// also satisfy a plain-F5 action under IsActionPressed's default
-		// non-exact matching).
-		Register(DevNextMockScenario, new InputEventKey { Keycode = Key.F5 });
+		// Ctrl+Alt+<letter>, not F5-F9 (moved off them 2026-07-28) — Godot's
+		// own editor reserves F5 (Run), F6 (Run Scene), F7 (Pause), F8
+		// (Stop), and F9 (Toggle Breakpoint), so those keys could get
+		// intercepted by the editor instead of ever reaching the running
+		// game, depending on focus/embedding. Matches the existing
+		// DevToggleHighContrastTheme/DevToggleReducedMotion pattern below.
+		Register(
+			DevNextMockScenario,
+			new InputEventKey
+			{
+				Keycode = Key.N,
+				CtrlPressed = true,
+				AltPressed = true,
+			});
 		Register(
 			DevPreviousMockScenario,
-			new InputEventKey { Keycode = Key.F6 });
+			new InputEventKey
+			{
+				Keycode = Key.P,
+				CtrlPressed = true,
+				AltPressed = true,
+			});
 		Register(
 			DevCycleResolutionPreset,
-			new InputEventKey { Keycode = Key.F7 });
+			new InputEventKey
+			{
+				Keycode = Key.R,
+				CtrlPressed = true,
+				AltPressed = true,
+			});
 		Register(
 			DevAdvanceScriptedSession,
-			new InputEventKey { Keycode = Key.F8 });
+			new InputEventKey
+			{
+				Keycode = Key.S,
+				CtrlPressed = true,
+				AltPressed = true,
+			});
 		Register(
 			DevCycleExplorationVariant,
-			new InputEventKey { Keycode = Key.F9 });
+			new InputEventKey
+			{
+				Keycode = Key.E,
+				CtrlPressed = true,
+				AltPressed = true,
+			});
 	}
 
 	private static void Register(string action, params InputEvent[] events)
