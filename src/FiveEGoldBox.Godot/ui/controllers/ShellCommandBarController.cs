@@ -66,10 +66,22 @@ internal sealed class ShellCommandBarController : IShellCommandBar
 	{
 		commandBar.Clear();
 
+		HotkeyCommandButton? firstButton = null;
+
 		foreach (CommandDefinition command in commands)
 		{
-			commandBar.AddContent(
-				CreateCommandButton(command, enableShortcuts));
+			HotkeyCommandButton button =
+				CreateCommandButton(command, enableShortcuts);
+			commandBar.AddContent(button);
+			firstButton ??= button;
+		}
+
+		// enableShortcuts is true only for the currently visible layout's
+		// bar, so it also gates which bar gets deterministic initial
+		// focus — the hidden layout's bar must not steal it.
+		if (enableShortcuts)
+		{
+			firstButton?.CallDeferred(Control.MethodName.GrabFocus);
 		}
 	}
 
