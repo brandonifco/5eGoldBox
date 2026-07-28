@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 
@@ -115,44 +116,38 @@ internal sealed class ShellInteractionController : IShellInteractionState
 			$"{movement}. Backend movement is not connected yet.");
 	}
 
+	// M6c: driven from CommandSetViewModel data instead of hardcoded
+	// CommandDefinition construction — RegionalMap/Combat above stay
+	// hardcoded on purpose, that's M7/M8's own milestone to do the same.
 	private void ShowExplorationCommands()
 	{
-		_commandBarController.ShowCommands(
-			new CommandDefinition(
-				"Move",
-				"[b]M[/b]ove",
-				Key.M,
-				EnterExplorationMovementMode),
-			new CommandDefinition(
-				"View",
-				"[b]V[/b]iew",
-				Key.V,
-				() => ReportCommand("View")),
-			new CommandDefinition(
-				"Cast",
-				"[b]C[/b]ast",
-				Key.C,
-				() => ReportCommand("Cast")),
-			new CommandDefinition(
-				"Area",
-				"[b]A[/b]rea",
-				Key.A,
-				() => ReportCommand("Area")),
-			new CommandDefinition(
-				"Encamp",
-				"[b]E[/b]ncamp",
-				Key.E,
-				() => ReportCommand("Encamp")),
-			new CommandDefinition(
-				"Search",
-				"[b]S[/b]earch",
-				Key.S,
-				() => ReportCommand("Search")),
-			new CommandDefinition(
-				"Look",
-				"[b]L[/b]ook",
-				Key.L,
-				() => ReportCommand("Look")));
+		CommandSetViewModel commandSet = MockExplorationCommandContent.Current();
+		Dictionary<string, Action> handlers =
+			BuildExplorationCommandHandlers();
+		List<CommandDefinition> commands = new();
+
+		foreach (CommandViewModel commandViewModel in commandSet.Commands)
+		{
+			commands.Add(CommandViewModelTranslator.ToCommandDefinition(
+				commandViewModel,
+				handlers[commandViewModel.CommandId]));
+		}
+
+		_commandBarController.ShowCommands(commands.ToArray());
+	}
+
+	private Dictionary<string, Action> BuildExplorationCommandHandlers()
+	{
+		return new Dictionary<string, Action>
+		{
+			["move"] = EnterExplorationMovementMode,
+			["view"] = () => ReportCommand("View"),
+			["cast"] = () => ReportCommand("Cast"),
+			["area"] = () => ReportCommand("Area"),
+			["encamp"] = () => ReportCommand("Encamp"),
+			["search"] = () => ReportCommand("Search"),
+			["look"] = () => ReportCommand("Look"),
+		};
 	}
 
 	private void EnterExplorationMovementMode()
