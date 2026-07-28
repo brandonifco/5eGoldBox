@@ -267,9 +267,9 @@ WatchtowerScenarioProgress.RaidersDefeated)
     private static ApplicationSessionState
         CreateAcceptedSession()
     {
-        return OutpostMissionRules.Resolve(
+        return OutpostDecisionRules.Resolve(
             CreateMissionNotAcceptedSession(),
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
                 .State;
     }
 

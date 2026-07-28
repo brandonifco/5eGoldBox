@@ -1307,9 +1307,9 @@ public sealed class ConsoleSessionRunnerCombatTests
     {
         ApplicationSessionState current =
             ScenarioSessionFactory.CreateNew("scenario.watchtower", RandomSeed);
-        current = OutpostMissionRules.Resolve(
+        current = OutpostDecisionRules.Resolve(
             current,
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
         .State;
         current = RegionalTravelRules.BeginJourney(
             current);

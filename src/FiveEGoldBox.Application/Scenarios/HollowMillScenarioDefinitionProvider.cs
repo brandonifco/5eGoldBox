@@ -181,6 +181,12 @@ internal static class HollowMillScenarioDefinitionProvider
     /// The only decision the current outpost machinery can offer — take the
     /// commission or don't — same shape as the other two scenarios' hub
     /// decisions. The real branch lives inside the mill itself, below.
+    /// Three options, deliberately — the vehicle for proving a decision can
+    /// offer more than the old fixed accept/decline shape with real content
+    /// rather than a mock. "Ask what it pays" is a second, distinctly-worded
+    /// way to hold off that leaves the scenario exactly where "Not yet"
+    /// does; the point is that a third option resolves purely by its own ID,
+    /// with no built-in ceiling on how many a decision can carry.
     private static ScenarioDecisionDefinition CreateCommissionDecision()
     {
         return new ScenarioDecisionDefinition
@@ -193,13 +199,19 @@ internal static class HollowMillScenarioDefinitionProvider
             [
                 new ScenarioDecisionOptionDefinition
                 {
-                    OptionId = OutpostMissionChoice.AcceptMission.ToString(),
+                    OptionId = "AcceptMission",
                     DisplayName = "Take the commission",
                     ResultingProgressId = CommissionAccepted
                 },
                 new ScenarioDecisionOptionDefinition
                 {
-                    OptionId = OutpostMissionChoice.NotYet.ToString(),
+                    OptionId = "AskAboutPay",
+                    DisplayName = "Ask what it pays before deciding",
+                    ResultingProgressId = null
+                },
+                new ScenarioDecisionOptionDefinition
+                {
+                    OptionId = "NotYet",
                     DisplayName = "Not yet",
                     ResultingProgressId = null
                 }

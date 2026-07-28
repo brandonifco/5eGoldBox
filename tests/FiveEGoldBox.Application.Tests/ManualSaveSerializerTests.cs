@@ -320,9 +320,9 @@ public sealed class ManualSaveSerializerTests
         ApplicationSessionState initial =
             CreateMissionNotAcceptedSession();
         ApplicationSessionState accepted =
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 initial,
-                OutpostMissionChoice.AcceptMission)
+                "AcceptMission")
                 .State;
 
         ApplicationSessionState loaded =
@@ -1162,9 +1162,9 @@ public sealed class ManualSaveSerializerTests
         CreateRegionalTravelSession()
     {
         ApplicationSessionState accepted =
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 CreateMissionNotAcceptedSession(),
-                OutpostMissionChoice.AcceptMission)
+                "AcceptMission")
                 .State;
 
         return RegionalTravelRules

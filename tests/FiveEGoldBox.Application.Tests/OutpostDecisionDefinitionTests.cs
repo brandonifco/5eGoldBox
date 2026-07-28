@@ -16,14 +16,14 @@ public sealed class OutpostDecisionDefinitionTests
         ScenarioDecisionDefinition decision = Assert.Single(
             ScenarioDefinitionRegistry.Resolve(session).Decisions);
 
-        IReadOnlyList<OutpostMissionChoice> choices =
-            OutpostMissionRules.GetAvailableChoices(session);
+        IReadOnlyList<string> optionIds =
+            OutpostDecisionRules.GetAvailableOptionIds(session);
 
         Assert.Equal(
             decision.Options
-                .Select(option => Enum.Parse<OutpostMissionChoice>(option.OptionId))
+                .Select(option => option.OptionId)
                 .ToArray(),
-            choices.ToArray());
+            optionIds.ToArray());
     }
 
     /// Accepting moves the scenario to whatever marker the option names, rather
@@ -35,11 +35,11 @@ public sealed class OutpostDecisionDefinitionTests
         ScenarioDecisionOptionDefinition accept = Assert.Single(
             ScenarioDefinitionRegistry.Resolve(session).Decisions[0].Options,
             option => option.OptionId
-                == OutpostMissionChoice.AcceptMission.ToString());
+                == "AcceptMission");
 
-        OutpostMissionResult result = OutpostMissionRules.Resolve(
+        OutpostDecisionResult result = OutpostDecisionRules.Resolve(
             session,
-            OutpostMissionChoice.AcceptMission);
+            "AcceptMission");
 
         Assert.True(result.DidProgressChange);
         Assert.Equal(
@@ -54,9 +54,9 @@ public sealed class OutpostDecisionDefinitionTests
     {
         ApplicationSessionState session = CreateOutpostSession();
 
-        OutpostMissionResult result = OutpostMissionRules.Resolve(
+        OutpostDecisionResult result = OutpostDecisionRules.Resolve(
             session,
-            OutpostMissionChoice.NotYet);
+            "NotYet");
 
         Assert.False(result.DidProgressChange);
         Assert.Equal(
@@ -69,16 +69,16 @@ public sealed class OutpostDecisionDefinitionTests
     [Fact]
     public void Decision_StopsBeingOfferedOnceItHasBeenTaken()
     {
-        ApplicationSessionState accepted = OutpostMissionRules.Resolve(
+        ApplicationSessionState accepted = OutpostDecisionRules.Resolve(
             CreateOutpostSession(),
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
             .State;
 
-        Assert.Empty(OutpostMissionRules.GetAvailableChoices(accepted));
+        Assert.Empty(OutpostDecisionRules.GetAvailableOptionIds(accepted));
         Assert.Throws<InvalidOperationException>(() =>
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 accepted,
-                OutpostMissionChoice.AcceptMission));
+                "AcceptMission"));
     }
 
     private static ApplicationSessionState CreateOutpostSession()

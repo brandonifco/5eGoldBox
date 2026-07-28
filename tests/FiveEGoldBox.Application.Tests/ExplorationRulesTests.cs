@@ -937,12 +937,12 @@ WatchtowerScenarioProgress
     private static ApplicationSessionState
         CreateAcceptedSession()
     {
-        return OutpostMissionRules.Resolve(
+        return OutpostDecisionRules.Resolve(
             CreateMissionNotAcceptedSession() with
             {
                 RandomValuesConsumed = 12
             },
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
                 .State;
     }
 

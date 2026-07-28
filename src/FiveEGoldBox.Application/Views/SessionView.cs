@@ -93,25 +93,13 @@ public static class SessionView
 
         if (decision is not null)
         {
-            IReadOnlyList<OutpostMissionChoice> available =
-                OutpostMissionRules.GetAvailableChoices(session);
-
             foreach (ScenarioDecisionOptionDefinition option in decision.Options)
             {
-                if (!Enum.TryParse(
-                        option.OptionId,
-                        ignoreCase: false,
-                        out OutpostMissionChoice choice)
-                    || !available.Contains(choice))
-                {
-                    continue;
-                }
-
                 actions.Add(new SessionAction
                 {
                     Kind = SessionActionKind.ResolveOutpostDecision,
                     DisplayName = option.DisplayName,
-                    MissionChoice = choice
+                    DecisionOptionId = option.OptionId
                 });
             }
         }

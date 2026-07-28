@@ -38,9 +38,9 @@ public sealed class ConsoleSessionRunnerNoncombatTests
         ApplicationSessionState session =
             CreateOutpostSession();
         ApplicationSessionState expected =
-            OutpostMissionRules.Resolve(
+            OutpostDecisionRules.Resolve(
                 session,
-                OutpostMissionChoice.AcceptMission)
+                "AcceptMission")
             .State;
 
         string output = RunSession(
@@ -48,7 +48,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             temporary.SavePath,
             session);
 
-        Assert.Contains("Mission accepted.", output);
+        Assert.Contains("Choice made.", output);
         Assert.Contains(
             $"Progress: {WatchtowerScenario.ProgressOf(expected)}",
             output);
@@ -71,7 +71,7 @@ public sealed class ConsoleSessionRunnerNoncombatTests
             temporary.SavePath,
             session);
 
-        Assert.Contains("Mission deferred.", output);
+        Assert.Contains("Choice made.", output);
         Assert.Equal(
             2,
             CountOccurrences(
@@ -886,9 +886,9 @@ public sealed class ConsoleSessionRunnerNoncombatTests
     private static ApplicationSessionState
         CreateMissionAcceptedSession()
     {
-        return OutpostMissionRules.Resolve(
+        return OutpostDecisionRules.Resolve(
             CreateOutpostSession(),
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
         .State;
     }
 
