@@ -284,10 +284,85 @@ internal static class CombatViewFactory
                         : targets.FirstOrDefault()?.UnavailabilityReason
                             ?? EncounterActionUnavailabilityReason
                                 .TargetNotParticipant,
-                    targets));
+                    targets,
+                    CreateSpellTargetCombinations(spell, targets)));
         }
 
         return Array.AsReadOnly(spellOptions.ToArray());
+    }
+
+    /// Same rule WatchtowerCombatDecisionFactory uses: gated on
+    /// AppliedEffectId, since ResolveDamage and ResolveHealing both land
+    /// their whole total on the single primary target regardless of how
+    /// many are named, and offering combinations for a spell that can't
+    /// actually reach more than one target would be misleading.
+    private static IReadOnlyList<CombatTargetCombinationOption>
+        CreateSpellTargetCombinations(
+            SpellAttack spell,
+            IReadOnlyList<CombatTargetOption> targets)
+    {
+        if (spell.MaximumTargets <= 1
+            || spell.AppliedEffectId is null)
+        {
+            return Array.Empty<CombatTargetCombinationOption>();
+        }
+
+        string[] legalTargetIds = targets
+            .Where(target => target.IsAvailable)
+            .Select(target => target.TargetCombatantId)
+            .ToArray();
+
+        int maximumSize = Math.Min(
+            spell.MaximumTargets,
+            legalTargetIds.Length);
+
+        List<CombatTargetCombinationOption> combinations = [];
+
+        for (int size = 2; size <= maximumSize; size++)
+        {
+            foreach (string[] combination
+                in EnumerateCombinations(legalTargetIds, size))
+            {
+                combinations.Add(
+                    new CombatTargetCombinationOption(combination));
+            }
+        }
+
+        return Array.AsReadOnly(combinations.ToArray());
+    }
+
+    private static IEnumerable<string[]> EnumerateCombinations(
+        IReadOnlyList<string> items,
+        int size)
+    {
+        int[] indices = Enumerable.Range(0, size).ToArray();
+
+        while (true)
+        {
+            yield return indices
+                .Select(index => items[index])
+                .ToArray();
+
+            int cursor = size - 1;
+
+            while (cursor >= 0
+                && indices[cursor] == items.Count - size + cursor)
+            {
+                cursor--;
+            }
+
+            if (cursor < 0)
+            {
+                yield break;
+            }
+
+            indices[cursor]++;
+
+            for (int next = cursor + 1; next < size; next++)
+            {
+                indices[next] = indices[next - 1] + 1;
+            }
+        }
     }
 
     private static EncounterParticipantState FindParticipant(

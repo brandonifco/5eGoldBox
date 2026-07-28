@@ -8,7 +8,9 @@ public sealed record CombatSpellAttackOption
         string spellId,
         bool isAvailable,
         EncounterActionUnavailabilityReason unavailabilityReason,
-        IReadOnlyList<CombatTargetOption> targets)
+        IReadOnlyList<CombatTargetOption> targets,
+        IReadOnlyList<CombatTargetCombinationOption>? targetCombinations
+            = null)
     {
         if (string.IsNullOrWhiteSpace(spellId))
         {
@@ -32,6 +34,9 @@ public sealed record CombatSpellAttackOption
         IsAvailable = isAvailable;
         UnavailabilityReason = unavailabilityReason;
         Targets = Array.AsReadOnly(protectedTargets);
+        TargetCombinations = targetCombinations is null
+            ? Array.Empty<CombatTargetCombinationOption>()
+            : Array.AsReadOnly(targetCombinations.ToArray());
     }
 
     public string SpellId { get; }
@@ -42,4 +47,10 @@ public sealed record CombatSpellAttackOption
     public EncounterActionUnavailabilityReason UnavailabilityReason { get; }
 
     public IReadOnlyList<CombatTargetOption> Targets { get; }
+
+    /// Legal sets of two or more targets, for a spell that can reach more
+    /// than one. Empty for a spell that only ever names one.
+    public IReadOnlyList<CombatTargetCombinationOption>
+        TargetCombinations
+    { get; }
 }

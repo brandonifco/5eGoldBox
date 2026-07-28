@@ -155,6 +155,93 @@ public sealed class WatchtowerCombatSpellAttackTests
     }
 
     [Fact]
+    public void Create_ForABlessAttack_OffersMultiTargetCombinations()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatTestData.AdvanceToCombatant(
+                WatchtowerSignalTestData.CreateEncounterSession(),
+                "party-member.cleric");
+
+        WatchtowerCombatDecision decision = GetDecision(source);
+        WatchtowerCombatSpellAttackOption bless = Assert.Single(
+            decision.SpellAttacks,
+            spell => spell.SpellId
+                == CampaignRulesetContent.BlessId);
+
+        Assert.NotEmpty(bless.TargetCombinations);
+        Assert.All(
+            bless.TargetCombinations,
+            combination => Assert.InRange(
+                combination.TargetCombatantIds.Count,
+                2,
+                3));
+
+        // FireBolt reaches only one target, so it should offer none.
+        WatchtowerCombatDecision wizardDecision = GetDecision(
+            WatchtowerCombatTestData.AdvanceToCombatant(
+                WatchtowerSignalTestData.CreateEncounterSession(),
+                "party-member.wizard"));
+        WatchtowerCombatSpellAttackOption fireBolt = Assert.Single(
+            wizardDecision.SpellAttacks,
+            spell => spell.SpellId
+                == CampaignRulesetContent.FireBoltId);
+
+        Assert.Empty(fireBolt.TargetCombinations);
+    }
+
+    [Fact]
+    public void Execute_MultiTargetConcentrationSpell_AppliesTheEffectToEveryNamedTarget()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatTestData.AdvanceToCombatant(
+                WatchtowerSignalTestData.CreateEncounterSession(),
+                "party-member.cleric");
+
+        WatchtowerCombatDecision decision = GetDecision(source);
+        WatchtowerCombatSpellAttackOption bless = Assert.Single(
+            decision.SpellAttacks,
+            spell => spell.SpellId
+                == CampaignRulesetContent.BlessId);
+        WatchtowerCombatTargetCombinationOption combination =
+            bless.TargetCombinations.First(
+                candidate => candidate.TargetCombatantIds.Contains(
+                    "party-member.cleric",
+                    StringComparer.Ordinal));
+        string primaryTarget = combination.TargetCombatantIds[0];
+        string[] additionalTargets = combination.TargetCombatantIds
+            .Skip(1)
+            .ToArray();
+
+        WatchtowerCombatResolutionResult result =
+            WatchtowerCombatRules.Execute(
+                source,
+                new WatchtowerCombatSpellAttackIntent
+                {
+                    ExpectedEncounterRevision =
+                        decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    SpellId = CampaignRulesetContent.BlessId,
+                    TargetCombatantId = primaryTarget,
+                    AdditionalTargetCombatantIds = additionalTargets
+                });
+
+        Assert.NotNull(result.PrimaryStep!.SpellAttack);
+        Assert.Equal(
+            combination.TargetCombatantIds.Count,
+            result.PrimaryStep.SpellAttack!.EffectedCombatantIds.Count);
+
+        foreach (string targetId in combination.TargetCombatantIds)
+        {
+            EncounterParticipantState target =
+                WatchtowerCombatTestData.GetParticipant(
+                    result.State,
+                    targetId);
+
+            Assert.Single(target.ActiveEffects);
+        }
+    }
+
+    [Fact]
     public void Execute_DamageSpellIncapacitatingAConcentratingTarget_SurfacesConcentrationCheck()
     {
         ApplicationSessionState source =
