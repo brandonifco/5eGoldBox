@@ -32,6 +32,8 @@ internal static class PlayerInputActions
 		"shell_dev_previous_mock_scenario";
 	public const string DevCycleResolutionPreset =
 		"shell_dev_cycle_resolution_preset";
+	public const string DevAdvanceScriptedSession =
+		"shell_dev_advance_scripted_session";
 
 	public static void EnsureRegistered()
 	{
@@ -104,6 +106,9 @@ internal static class PlayerInputActions
 		Register(
 			DevCycleResolutionPreset,
 			new InputEventKey { Keycode = Key.F7 });
+		Register(
+			DevAdvanceScriptedSession,
+			new InputEventKey { Keycode = Key.F8 });
 	}
 
 	private static void Register(string action, params InputEvent[] events)

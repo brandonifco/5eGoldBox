@@ -1,6 +1,6 @@
 # 5eGoldBox Godot UI — Remaining Milestones (M4–M12)
 
-**Status:** M0–M4 complete; M5 in progress (a-d done); seven milestones remain after M5.
+**Status:** M0–M4 complete; M5 in progress (a-e done); seven milestones remain after M5.
 
 This is a concise proposed execution-stage breakdown derived from the creator-approved Godot UI Pre-Integration Governing Plan v1.1. Lettered stages organize implementation; they do not change the governing milestone scope or acceptance gates.
 
@@ -77,8 +77,11 @@ This is a concise proposed execution-stage breakdown derived from the creator-ap
   - **`ShellLayoutController.CycleResolutionPreset()`** is new: cycles `UiResolutionPresets.All` (built in M2, never actually applied to the window until now — confirmed by grep before adding this, only `ShellLayoutController` referenced the type at all, and only for `MinSize`) and sets `_window.Size`, returning the preset so `AppShell` can report which one via the message log too.
   - **Real behavioral verification of the new logic** (not the data, which M5c already covered) — extended the same scratch project: `MockScenarioPicker` flattens to exactly 50, `Current()` doesn't advance on its own, `Next()`/`Previous()` are exact inverses, cycling `Count-1` times visits every one of the 50 labels exactly once (no duplicates, no skips), one more cycle wraps back to the start, and a description looks like a real record dump (contains `{`, non-trivial length). All 7 new checks passed alongside the prior 65.
   - Verified: build clean, headless boot exit 0, all touched/new files ≤250 lines (max 168), 7/7 new scratch checks passed (72/72 total across M5b-d).
-- [ ] e. Add scripted transitions among exploration, regional travel, combat, and modal screens.
-- [ ] e. Add scripted transitions among exploration, regional travel, combat, and modal screens.
+- [x] e. Add scripted transitions among exploration, regional travel, combat, and modal screens. `MockFullScenarios` (`ui/mocks/scenarios/`) composes three complete `ShellViewModel`s — one per presentation mode, each built from M5c's existing per-family fragments (e.g. `MockPartyScenarios.SixMembers()`, `MockCommandScenarios.SevenCommands()`) rather than new content. `MockScriptedSession` (`ui/mocks/`) wraps a real `MockUiGateway` and registers five named, constant command IDs — `mock.travel`, `mock.enter-combat`, `mock.finish-combat`, `mock.open-inventory`, `mock.close-modal` — that step it Exploration → RegionalMap → Combat → Exploration, with a modal opened and closed along the way.
+  - **Nothing new was added to `MockUiGateway` itself.** This is content riding the exact `Submit`/`RegisterHandler`/`SnapshotChanged` mechanism M5b already built — confirmation that mechanism was shaped correctly the first time, not evidence it needed extending.
+  - **Reachable the same way M5d's static scenarios are:** a new dev-only `DevAdvanceScriptedSession` binding (F8) steps through `MockScriptedSession.ScriptOrder` one command at a time via `AppShell.AdvanceScriptedSession`, printing the outcome and resulting mode through the same live `MessageLog` M5d already uses. No new rendering pipeline, same reasoning as M5d.
+  - **Real behavioral verification of the actual transition sequence**, extending the M5b-d scratch project: confirmed the session starts in `Exploration` with no modal open, that `Travel`/`EnterCombat`/`FinishCombat` move `Mode` through `RegionalMap`/`Combat` and back to `Exploration` in order, that `OpenInventory` sets `ActiveModal` (to the actual `Inventory` scenario, checked by title) *without* disturbing `Mode`, that `CloseModal` clears it again, that all five steps fired `SnapshotChanged` exactly once each, and that party data (6 members) survives every full-scenario swap. All 11 new checks passed (83/83 total across M5b-e).
+  - Verified: build clean, headless boot exit 0, all touched/new files ≤250 lines (max 178).
 - [ ] f. Add latency, busy, recoverable-error, and success placeholders.
 - [ ] g. Verify every major UI state can be reached quickly without code edits or backend types.
 

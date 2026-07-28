@@ -13,6 +13,8 @@ public partial class AppShell : Control
 	private ShellPresentationController _presentationController = null!;
 	private ShellThemeController _themeController = null!;
 	private MockScenarioPicker _scenarioPicker = null!;
+	private MockScriptedSession _scriptedSession = null!;
+	private int _scriptedSessionStepIndex;
 
 	public override void _Ready()
 	{
@@ -63,6 +65,7 @@ public partial class AppShell : Control
 			_commandBarController);
 
 		_scenarioPicker = new MockScenarioPicker();
+		_scriptedSession = new MockScriptedSession();
 
 		_inputRouter = new ShellInputRouter(
 			_interactionController,
@@ -76,7 +79,8 @@ public partial class AppShell : Control
 			ReportMovement,
 			ShowNextMockScenario,
 			ShowPreviousMockScenario,
-			CycleResolutionPreset);
+			CycleResolutionPreset,
+			AdvanceScriptedSession);
 
 		_themeController.Initialize();
 		_layoutController.Initialize();

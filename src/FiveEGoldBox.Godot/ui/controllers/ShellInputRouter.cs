@@ -15,6 +15,7 @@ internal sealed class ShellInputRouter
 	private readonly Action _showNextMockScenario;
 	private readonly Action _showPreviousMockScenario;
 	private readonly Action _cycleResolutionPreset;
+	private readonly Action _advanceScriptedSession;
 
 	public ShellInputRouter(
 		IShellInteractionState interactionState,
@@ -28,7 +29,8 @@ internal sealed class ShellInputRouter
 		Action<string> reportMovement,
 		Action showNextMockScenario,
 		Action showPreviousMockScenario,
-		Action cycleResolutionPreset)
+		Action cycleResolutionPreset,
+		Action advanceScriptedSession)
 	{
 		_interactionState = interactionState;
 		_toggleImmersiveMode = toggleImmersiveMode;
@@ -42,6 +44,7 @@ internal sealed class ShellInputRouter
 		_showNextMockScenario = showNextMockScenario;
 		_showPreviousMockScenario = showPreviousMockScenario;
 		_cycleResolutionPreset = cycleResolutionPreset;
+		_advanceScriptedSession = advanceScriptedSession;
 	}
 
 	// Takes the base InputEvent, not InputEventKey, so the same router
@@ -121,6 +124,13 @@ internal sealed class ShellInputRouter
 			PlayerInputActions.DevCycleResolutionPreset))
 		{
 			_cycleResolutionPreset();
+			return true;
+		}
+
+		if (inputEvent.IsActionPressed(
+			PlayerInputActions.DevAdvanceScriptedSession))
+		{
+			_advanceScriptedSession();
 			return true;
 		}
 

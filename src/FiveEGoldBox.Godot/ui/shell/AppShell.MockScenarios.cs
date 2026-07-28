@@ -28,4 +28,22 @@ public partial class AppShell
 		_presentationController.SetMessage(
 			$"Resolution: {preset.DisplayName} ({preset.Size.X}x{preset.Size.Y})");
 	}
+
+	// M5e: steps MockScriptedSession.ScriptOrder one command at a time
+	// through the real MockUiGateway, reporting the outcome the same way
+	// the scenario picker reports a static scenario.
+	private void AdvanceScriptedSession()
+	{
+		string commandId =
+			MockScriptedSession.ScriptOrder[_scriptedSessionStepIndex];
+		_scriptedSessionStepIndex = (_scriptedSessionStepIndex + 1) %
+			MockScriptedSession.ScriptOrder.Length;
+
+		MockCommandResult result =
+			_scriptedSession.Gateway.Submit(new UiCommandIntent(commandId));
+
+		_presentationController.SetMessage(
+			$"[{commandId}] {result.Outcome}: {result.Message}\n" +
+				$"Mode now: {_scriptedSession.Gateway.CurrentSnapshot.Mode}");
+	}
 }
