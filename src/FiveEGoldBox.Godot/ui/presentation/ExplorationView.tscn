@@ -1,0 +1,52 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/presentation/ExplorationView.cs" id="1_exploration_view"]
+
+[ext_resource type="Texture2D" path="res://images/outpost_north_gate01.png" id="2_exploration"]
+
+[node name="ExplorationView" type="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_exploration_view")
+
+[node name="PlaceholderBackground" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.22, 0.22, 0.26, 1)
+
+[node name="ExplorationImage" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("2_exploration")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="ExplorationCenter" type="CenterContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ExplorationLabel" type="Label" parent="ExplorationCenter"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Exploration View"

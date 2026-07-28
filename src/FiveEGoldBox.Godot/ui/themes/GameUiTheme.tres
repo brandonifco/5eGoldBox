@@ -1,0 +1,374 @@
+[gd_resource type="Theme" load_steps=22 format=3]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_presentation_surface"]
+bg_color = Color(0.09411765, 0.101960786, 0.12156863, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.33333334, 0.3529412, 0.4, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_immersive_overlay"]
+bg_color = Color(0.025, 0.025, 0.04, 0.72)
+
+
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shell_panel"]
+bg_color = Color(0.07058824, 0.078431375, 0.09803922, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25490198, 0.27450982, 0.3254902, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shell_header_panel"]
+bg_color = Color(0.101960786, 0.11372549, 0.14117648, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.54509807, 0.4509804, 0.21960784, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_party_member_panel"]
+bg_color = Color(0.09411765, 0.101960786, 0.12156863, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.21176471, 0.22745098, 0.27058825, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal_backdrop"]
+bg_color = Color(0.007843138, 0.007843138, 0.011764706, 0.72)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal_panel"]
+bg_color = Color(0.05882353, 0.06666667, 0.08627451, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.54509807, 0.4509804, 0.21960784, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tooltip_panel"]
+bg_color = Color(0.03529412, 0.039215688, 0.050980393, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.54509807, 0.5764706, 0.6627451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_status_badge_panel"]
+bg_color = Color(0.09019608, 0.09803922, 0.11764706, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33333334, 0.3529412, 0.4, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_selected_row"]
+bg_color = Color(0.1764706, 0.15294118, 0.08627451, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.9254902, 0.78039217, 0.36078432, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dangerous_button_normal"]
+bg_color = Color(0.23921569, 0.078431375, 0.078431375, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.6509804, 0.20784314, 0.20784314, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dangerous_button_hover"]
+bg_color = Color(0.33333334, 0.101960786, 0.101960786, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.92156863, 0.36078432, 0.36078432, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dangerous_button_pressed"]
+bg_color = Color(0.15686275, 0.047058824, 0.047058824, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.92156863, 0.36078432, 0.36078432, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_confirm_button_normal"]
+bg_color = Color(0.08627451, 0.20392157, 0.101960786, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.32156864, 0.6039216, 0.28627452, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_confirm_button_hover"]
+bg_color = Color(0.11764706, 0.28235295, 0.14117648, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.53333336, 0.78431374, 0.46666667, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_confirm_button_pressed"]
+bg_color = Color(0.05490196, 0.13725491, 0.07058824, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.53333336, 0.78431374, 0.46666667, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_command_button_normal"]
+bg_color = Color(0.11764706, 0.12941177, 0.15686275, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33333334, 0.3529412, 0.4, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_command_button_hover"]
+bg_color = Color(0.16862746, 0.1882353, 0.23137255, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.54509807, 0.5764706, 0.6627451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_command_button_pressed"]
+bg_color = Color(0.078431375, 0.08627451, 0.105882354, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.7607843, 0.627451, 0.28627452, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_command_button_focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.9254902, 0.78039217, 0.36078432, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_command_button_disabled"]
+bg_color = Color(0.08627451, 0.09411765, 0.11372549, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25490198, 0.26666668, 0.3019608, 0.8)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[resource]
+PresentationSurface/base_type = &"PanelContainer"
+PresentationSurface/styles/panel = SubResource("StyleBoxFlat_presentation_surface")
+ImmersiveOverlayPanel/base_type = &"PanelContainer"
+ImmersiveOverlayPanel/styles/panel = SubResource("StyleBoxFlat_immersive_overlay")
+ShellHeaderLabel/base_type = &"Label"
+ShellHeaderLabel/font_sizes/font_size = 18
+ShellHeaderLabel/colors/font_color = Color(0.9254902, 0.78039217, 0.36078432, 1)
+ShellSectionTitle/base_type = &"Label"
+ShellSectionTitle/font_sizes/font_size = 16
+ShellSectionTitle/colors/font_color = Color(0.9254902, 0.78039217, 0.36078432, 1)
+
+ShellSafeArea/base_type = &"MarginContainer"
+ShellSafeArea/constants/margin_left = 16
+ShellSafeArea/constants/margin_top = 16
+ShellSafeArea/constants/margin_right = 16
+ShellSafeArea/constants/margin_bottom = 16
+ShellContentMargin/base_type = &"MarginContainer"
+ShellContentMargin/constants/margin_left = 12
+ShellContentMargin/constants/margin_top = 12
+ShellContentMargin/constants/margin_right = 12
+ShellContentMargin/constants/margin_bottom = 12
+ShellCompactMargin/base_type = &"MarginContainer"
+ShellCompactMargin/constants/margin_left = 12
+ShellCompactMargin/constants/margin_top = 8
+ShellCompactMargin/constants/margin_right = 12
+ShellCompactMargin/constants/margin_bottom = 8
+ShellBadgeMargin/base_type = &"MarginContainer"
+ShellBadgeMargin/constants/margin_left = 8
+ShellBadgeMargin/constants/margin_top = 4
+ShellBadgeMargin/constants/margin_right = 8
+ShellBadgeMargin/constants/margin_bottom = 4
+PartyMemberMargin/base_type = &"MarginContainer"
+PartyMemberMargin/constants/margin_left = 10
+PartyMemberMargin/constants/margin_top = 8
+PartyMemberMargin/constants/margin_right = 10
+PartyMemberMargin/constants/margin_bottom = 8
+ImmersiveCommandMargin/base_type = &"MarginContainer"
+ImmersiveCommandMargin/constants/margin_left = 12
+ImmersiveCommandMargin/constants/margin_top = 6
+ImmersiveCommandMargin/constants/margin_right = 12
+ImmersiveCommandMargin/constants/margin_bottom = 6
+ShellMainStack/base_type = &"VBoxContainer"
+ShellMainStack/constants/separation = 12
+ShellSectionStack/base_type = &"VBoxContainer"
+ShellSectionStack/constants/separation = 10
+ShellListStack/base_type = &"VBoxContainer"
+ShellListStack/constants/separation = 8
+ShellCommandRow/base_type = &"HBoxContainer"
+ShellCommandRow/constants/separation = 8
+ShellBadgeGrid/base_type = &"GridContainer"
+ShellBadgeGrid/constants/h_separation = 8
+ShellBadgeGrid/constants/v_separation = 8
+
+
+ShellPanel/base_type = &"PanelContainer"
+ShellPanel/styles/panel = SubResource("StyleBoxFlat_shell_panel")
+ShellHeaderPanel/base_type = &"PanelContainer"
+ShellHeaderPanel/styles/panel = SubResource("StyleBoxFlat_shell_header_panel")
+PartyMemberPanel/base_type = &"PanelContainer"
+PartyMemberPanel/styles/panel = SubResource("StyleBoxFlat_party_member_panel")
+ShellBodyLabel/base_type = &"Label"
+ShellBodyLabel/colors/font_color = Color(0.8862745, 0.9019608, 0.92941177, 1)
+ShellBodyLabel/font_sizes/font_size = 16
+ShellBodyRichText/base_type = &"RichTextLabel"
+ShellBodyRichText/colors/default_color = Color(0.8862745, 0.9019608, 0.92941177, 1)
+ShellBodyRichText/font_sizes/normal_font_size = 16
+ShellMutedLabel/base_type = &"Label"
+ShellMutedLabel/colors/font_color = Color(0.6509804, 0.6784314, 0.7411765, 1)
+ShellMutedLabel/font_sizes/font_size = 14
+ShellStatusPositive/base_type = &"Label"
+ShellStatusPositive/colors/font_color = Color(0.53333336, 0.78431374, 0.46666667, 1)
+ShellStatusWarning/base_type = &"Label"
+ShellStatusWarning/colors/font_color = Color(0.9490196, 0.68235296, 0.28235295, 1)
+ShellStatusError/base_type = &"Label"
+ShellStatusError/colors/font_color = Color(0.92156863, 0.36078432, 0.36078432, 1)
+ShellCommandText/base_type = &"RichTextLabel"
+ShellCommandText/colors/default_color = Color(0.9254902, 0.78039217, 0.36078432, 1)
+ShellCommandText/font_sizes/normal_font_size = 16
+
+ShellCommandButton/base_type = &"Button"
+ShellCommandButton/styles/normal = SubResource("StyleBoxFlat_command_button_normal")
+ShellCommandButton/styles/hover = SubResource("StyleBoxFlat_command_button_hover")
+ShellCommandButton/styles/pressed = SubResource("StyleBoxFlat_command_button_pressed")
+ShellCommandButton/styles/focus = SubResource("StyleBoxFlat_command_button_focus")
+ShellCommandButton/styles/disabled = SubResource("StyleBoxFlat_command_button_disabled")
+
+ShellEmphasisLabel/base_type = &"Label"
+ShellEmphasisLabel/colors/font_color = Color(0.9254902, 0.78039217, 0.36078432, 1)
+ShellEmphasisLabel/font_sizes/font_size = 16
+ShellSmallStatus/base_type = &"Label"
+ShellSmallStatus/colors/font_color = Color(0.6509804, 0.6784314, 0.7411765, 1)
+ShellSmallStatus/font_sizes/font_size = 14
+
+ShellModalBackdrop/base_type = &"PanelContainer"
+ShellModalBackdrop/styles/panel = SubResource("StyleBoxFlat_modal_backdrop")
+ShellModalPanel/base_type = &"PanelContainer"
+ShellModalPanel/styles/panel = SubResource("StyleBoxFlat_modal_panel")
+ShellTooltipPanel/base_type = &"PanelContainer"
+ShellTooltipPanel/styles/panel = SubResource("StyleBoxFlat_tooltip_panel")
+ShellStatusBadgePanel/base_type = &"PanelContainer"
+ShellStatusBadgePanel/styles/panel = SubResource("StyleBoxFlat_status_badge_panel")
+ShellSelectedRowPanel/base_type = &"PanelContainer"
+ShellSelectedRowPanel/styles/panel = SubResource("StyleBoxFlat_selected_row")
+
+ShellStatusHealthy/base_type = &"Label"
+ShellStatusHealthy/colors/font_color = Color(0.53333336, 0.78431374, 0.46666667, 1)
+ShellStatusWounded/base_type = &"Label"
+ShellStatusWounded/colors/font_color = Color(0.9490196, 0.68235296, 0.28235295, 1)
+ShellStatusCritical/base_type = &"Label"
+ShellStatusCritical/colors/font_color = Color(0.92156863, 0.36078432, 0.36078432, 1)
+ShellStatusIncapacitated/base_type = &"Label"
+ShellStatusIncapacitated/colors/font_color = Color(0.72156864, 0.5411765, 0.78039217, 1)
+ShellStatusRemoved/base_type = &"Label"
+ShellStatusRemoved/colors/font_color = Color(0.4745098, 0.49803922, 0.5529412, 1)
+ShellStatusPositiveEffect/base_type = &"Label"
+ShellStatusPositiveEffect/colors/font_color = Color(0.4392157, 0.7607843, 0.8509804, 1)
+ShellStatusNegativeEffect/base_type = &"Label"
+ShellStatusNegativeEffect/colors/font_color = Color(0.8509804, 0.4392157, 0.6901961, 1)
+
+ShellDangerousButton/base_type = &"Button"
+ShellDangerousButton/styles/normal = SubResource("StyleBoxFlat_dangerous_button_normal")
+ShellDangerousButton/styles/hover = SubResource("StyleBoxFlat_dangerous_button_hover")
+ShellDangerousButton/styles/pressed = SubResource("StyleBoxFlat_dangerous_button_pressed")
+ShellDangerousButton/styles/focus = SubResource("StyleBoxFlat_command_button_focus")
+ShellDangerousButton/styles/disabled = SubResource("StyleBoxFlat_command_button_disabled")
+ShellConfirmButton/base_type = &"Button"
+ShellConfirmButton/styles/normal = SubResource("StyleBoxFlat_confirm_button_normal")
+ShellConfirmButton/styles/hover = SubResource("StyleBoxFlat_confirm_button_hover")
+ShellConfirmButton/styles/pressed = SubResource("StyleBoxFlat_confirm_button_pressed")
+ShellConfirmButton/styles/focus = SubResource("StyleBoxFlat_command_button_focus")
+ShellConfirmButton/styles/disabled = SubResource("StyleBoxFlat_command_button_disabled")
+
+ShellSelectionRowButton/base_type = &"Button"
+ShellSelectionRowButton/font_sizes/font_size = 16
+ShellSelectionRowButton/styles/normal = SubResource("StyleBoxFlat_command_button_normal")
+ShellSelectionRowButton/styles/hover = SubResource("StyleBoxFlat_command_button_hover")
+ShellSelectionRowButton/styles/pressed = SubResource("StyleBoxFlat_selected_row")
+ShellSelectionRowButton/styles/focus = SubResource("StyleBoxFlat_command_button_focus")
+ShellSelectionRowButton/styles/disabled = SubResource("StyleBoxFlat_command_button_disabled")

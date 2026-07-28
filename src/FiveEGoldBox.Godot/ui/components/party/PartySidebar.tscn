@@ -1,0 +1,33 @@
+[gd_scene load_steps=3 format=3 uid="uid://f8q2s5v7x1z4b"]
+
+[ext_resource type="Script" uid="uid://f2r5t8w1y4a7c" path="res://ui/components/party/PartySidebar.cs" id="1_party_sidebar"]
+[ext_resource type="PackedScene" uid="uid://b7j3m5q8r2t6v" path="res://ui/components/party/PartyMemberRow.tscn" id="2_party_member_row"]
+
+[node name="PartySidebar" type="PanelContainer"]
+theme_type_variation = &"ShellPanel"
+script = ExtResource("1_party_sidebar")
+PartyMemberRowScene = ExtResource("2_party_member_row")
+
+[node name="PartyMargin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="PartyLayout" type="VBoxContainer" parent="PartyMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="PartyTitle" type="Label" parent="PartyMargin/PartyLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "Party"
+
+[node name="PartyScroll" type="ScrollContainer" parent="PartyMargin/PartyLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PartyMembers" type="VBoxContainer" parent="PartyMargin/PartyLayout/PartyScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellListStack"
+size_flags_horizontal = 3

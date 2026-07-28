@@ -1,0 +1,169 @@
+[gd_scene load_steps=6 format=3 uid="uid://m9x3b5e7h1k4p"]
+
+[ext_resource type="Script" uid="uid://n1y4c6f8j2m5q" path="res://ui/dev/StatusAndTooltipDemo.cs" id="1_demo"]
+[ext_resource type="Theme" path="res://ui/themes/GameUiTheme.tres" id="2_standard_theme"]
+[ext_resource type="Theme" path="res://ui/themes/GameUiHighContrastTheme.tres" id="3_high_contrast_theme"]
+[ext_resource type="PackedScene" uid="uid://h4s7v9y2b5d8f" path="res://ui/components/status/StatusBadge.tscn" id="4_status_badge"]
+[ext_resource type="PackedScene" uid="uid://k7v1y3c5f8h2m" path="res://ui/components/tooltips/TooltipPanel.tscn" id="5_tooltip_panel"]
+
+[node name="StatusAndTooltipDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_standard_theme")
+script = ExtResource("1_demo")
+StandardTheme = ExtResource("2_standard_theme")
+HighContrastTheme = ExtResource("3_high_contrast_theme")
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"ShellSafeArea"
+
+[node name="DemoLayout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_type_variation = &"ShellMainStack"
+
+[node name="Title" type="Label" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellHeaderLabel"
+text = "StatusBadge and TooltipPanel Verification"
+
+[node name="Instructions" type="Label" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Inspect all badge states. Hover the tooltip buttons or move focus with Tab/Shift+Tab. Ctrl+Alt+H toggles high contrast."
+autowrap_mode = 2
+
+[node name="BadgeSection" type="PanelContainer" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellPanel"
+
+[node name="BadgeMargin" type="MarginContainer" parent="SafeArea/DemoLayout/BadgeSection"]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="BadgeLayout" type="VBoxContainer" parent="SafeArea/DemoLayout/BadgeSection/BadgeMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="BadgeTitle" type="Label" parent="SafeArea/DemoLayout/BadgeSection/BadgeMargin/BadgeLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "StatusBadge states"
+
+[node name="BadgeGrid" type="GridContainer" parent="SafeArea/DemoLayout/BadgeSection/BadgeMargin/BadgeLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellBadgeGrid"
+columns = 4
+
+[node name="NeutralBadge" parent="SafeArea/DemoLayout/BadgeSection/BadgeMargin/BadgeLayout/BadgeGrid" instance=ExtResource("4_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Neutral"
+
+[node name="HealthyBadge" parent="SafeArea/DemoLayout/BadgeSection/BadgeMargin/BadgeLayout/BadgeGrid" instance=ExtResource("4_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Healthy"
+Kind = 1
+
+[node name="WoundedBadge" parent="SafeArea/DemoLayout/BadgeSection/BadgeMargin/BadgeLayout/BadgeGrid" instance=ExtResource("4_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Wounded"
+Kind = 2
+
+[node name="CriticalBadge" parent="SafeArea/DemoLayout/BadgeSection/BadgeMargin/BadgeLayout/BadgeGrid" instance=ExtResource("4_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Critical"
+Kind = 3
+
+[node name="IncapacitatedBadge" parent="SafeArea/DemoLayout/BadgeSection/BadgeMargin/BadgeLayout/BadgeGrid" instance=ExtResource("4_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Incapacitated"
+Kind = 4
+
+[node name="RemovedBadge" parent="SafeArea/DemoLayout/BadgeSection/BadgeMargin/BadgeLayout/BadgeGrid" instance=ExtResource("4_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Removed"
+Kind = 5
+
+[node name="PositiveEffectBadge" parent="SafeArea/DemoLayout/BadgeSection/BadgeMargin/BadgeLayout/BadgeGrid" instance=ExtResource("4_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Blessed"
+Kind = 6
+
+[node name="NegativeEffectBadge" parent="SafeArea/DemoLayout/BadgeSection/BadgeMargin/BadgeLayout/BadgeGrid" instance=ExtResource("4_status_badge")]
+layout_mode = 2
+size_flags_horizontal = 3
+StatusText = "Poisoned"
+Kind = 7
+
+[node name="TooltipSection" type="PanelContainer" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_type_variation = &"ShellPanel"
+
+[node name="TooltipMargin" type="MarginContainer" parent="SafeArea/DemoLayout/TooltipSection"]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="TooltipLayout" type="VBoxContainer" parent="SafeArea/DemoLayout/TooltipSection/TooltipMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="TooltipTitle" type="Label" parent="SafeArea/DemoLayout/TooltipSection/TooltipMargin/TooltipLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "TooltipPanel mouse and keyboard behavior"
+
+[node name="TriggerRow" type="HBoxContainer" parent="SafeArea/DemoLayout/TooltipSection/TooltipMargin/TooltipLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellCommandRow"
+
+[node name="ShortTooltipTrigger" type="Button" parent="SafeArea/DemoLayout/TooltipSection/TooltipMargin/TooltipLayout/TriggerRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellCommandButton"
+text = "Short tooltip"
+
+[node name="LongTooltipTrigger" type="Button" parent="SafeArea/DemoLayout/TooltipSection/TooltipMargin/TooltipLayout/TriggerRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellCommandButton"
+text = "Long tooltip stress case"
+
+[node name="DemoTooltip" parent="SafeArea/DemoLayout/TooltipSection/TooltipMargin/TooltipLayout" instance=ExtResource("5_tooltip_panel")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+TitleText = "Tooltip"
+BodyText = "Tooltip content appears here."
+
+[node name="StatusPanel" type="PanelContainer" parent="SafeArea/DemoLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellHeaderPanel"
+
+[node name="StatusMargin" type="MarginContainer" parent="SafeArea/DemoLayout/StatusPanel"]
+layout_mode = 2
+theme_type_variation = &"ShellCompactMargin"
+
+[node name="StatusLabel" type="Label" parent="SafeArea/DemoLayout/StatusPanel/StatusMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Ready"
+autowrap_mode = 2

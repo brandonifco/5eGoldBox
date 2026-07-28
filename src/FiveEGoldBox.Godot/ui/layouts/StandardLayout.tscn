@@ -1,0 +1,151 @@
+[gd_scene load_steps=9 format=3 uid="uid://n4q7t1w3z6c9f"]
+
+[ext_resource type="Script" uid="uid://m3k5p8s1v4y7b" path="res://ui/layouts/StandardLayout.cs" id="1_standard_layout"]
+
+[ext_resource type="PackedScene" uid="uid://e4m7p9r2t5w8y" path="res://ui/components/shell/HeaderBar.tscn" id="2_header_bar"]
+
+[ext_resource type="PackedScene" uid="uid://f8q2s5v7x1z4b" path="res://ui/components/party/PartySidebar.tscn" id="3_party_sidebar"]
+
+[ext_resource type="PackedScene" uid="uid://c9p5r3t7w1y4a" path="res://ui/components/messages/MessageLog.tscn" id="4_message_log"]
+
+[ext_resource type="PackedScene" uid="uid://d3k6m8p1r4t7x" path="res://ui/components/commands/CommandBar.tscn" id="5_command_bar"]
+
+[ext_resource type="PackedScene" path="res://ui/presentation/ExplorationView.tscn" id="6_exploration_view"]
+
+[ext_resource type="Texture2D" path="res://images/regional_map_01.png" id="7_regional_map"]
+
+[ext_resource type="Texture2D" path="res://images/tactical_combat_view_01.png" id="8_combat"]
+
+[node name="StandardLayout" type="MarginContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"ShellSafeArea"
+script = ExtResource("1_standard_layout")
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"ShellMainStack"
+
+[node name="HeaderBar" parent="MainLayout" instance=ExtResource("2_header_bar")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="MainContentSplit" type="HSplitContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PresentationPanel" type="PanelContainer" parent="MainLayout/MainContentSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ShellPanel"
+
+[node name="PresentationMargin" type="MarginContainer" parent="MainLayout/MainContentSplit/PresentationPanel"]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="PresentationAspect" type="AspectRatioContainer" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+ratio = 1.7778
+
+[node name="PresentationSurface" type="PanelContainer" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PresentationSurface"
+
+[node name="PresentationContent" type="Control" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface"]
+layout_mode = 2
+
+[node name="ExplorationView" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("6_exploration_view")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="RegionalMapView" type="Control" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RegionalMapCenter" type="CenterContainer" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/RegionalMapView"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RegionalMapLabel" type="Label" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/RegionalMapView/RegionalMapCenter"]
+layout_mode = 2
+text = "Regional Map View"
+
+[node name="RegionalMapImage" type="TextureRect" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/RegionalMapView"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("7_regional_map")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="CombatView" type="Control" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CombatCenter" type="CenterContainer" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/CombatView"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CombatLabel" type="Label" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/CombatView/CombatCenter"]
+layout_mode = 2
+text = "Technical Combat View"
+
+[node name="CombatImage" type="TextureRect" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/CombatView"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("8_combat")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="PartySidebar" parent="MainLayout/MainContentSplit" instance=ExtResource("3_party_sidebar")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+
+[node name="MessageLog" parent="MainLayout" instance=ExtResource("4_message_log")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+MessageText = "You stand at the entrance to the outpost."
+Scrollable = true
+
+[node name="CommandBar" parent="MainLayout" instance=ExtResource("5_command_bar")]
+unique_name_in_owner = true
+layout_mode = 2

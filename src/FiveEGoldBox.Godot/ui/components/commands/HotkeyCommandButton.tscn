@@ -1,0 +1,27 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8m4p2r6v9y1w"]
+
+[ext_resource type="Script" uid="uid://d5h9n3q7u1x4z" path="res://ui/components/commands/HotkeyCommandButton.cs" id="1_hotkey_command_button"]
+
+[node name="HotkeyCommandButton" type="Button"]
+custom_minimum_size = Vector2(0, 40)
+size_flags_horizontal = 3
+theme_type_variation = &"ShellCommandButton"
+shortcut_in_tooltip = false
+script = ExtResource("1_hotkey_command_button")
+
+[node name="CommandLabel" type="RichTextLabel" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"ShellCommandText"
+bbcode_enabled = true
+fit_content = false
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 0

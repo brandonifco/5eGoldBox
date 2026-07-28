@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://w3z6c9f2j5m8p"]
+
+[node name="ConfirmationDialogCard" type="PanelContainer"]
+custom_minimum_size = Vector2(520, 0)
+theme_type_variation = &"ShellModalPanel"
+
+[node name="DialogMargin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="DialogLayout" type="VBoxContainer" parent="DialogMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="TitleLabel" type="Label" parent="DialogMargin/DialogLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "Confirmation required"
+autowrap_mode = 2
+
+[node name="MessageLabel" type="Label" parent="DialogMargin/DialogLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Confirm or cancel this action."
+autowrap_mode = 2
+
+[node name="ButtonRow" type="HBoxContainer" parent="DialogMargin/DialogLayout"]
+layout_mode = 2
+theme_type_variation = &"ShellCommandRow"
+alignment = 2
+
+[node name="CancelButton" type="Button" parent="DialogMargin/DialogLayout/ButtonRow"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 2
+theme_type_variation = &"ShellCommandButton"
+text = "Cancel"
+
+[node name="ConfirmButton" type="Button" parent="DialogMargin/DialogLayout/ButtonRow"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 2
+theme_type_variation = &"ShellConfirmButton"
+text = "Confirm"

@@ -1,0 +1,41 @@
+[gd_scene load_steps=2 format=3 uid="uid://p2s5v8y1b4e7h"]
+
+[ext_resource type="Script" uid="uid://q3t6w9z2c5f8j" path="res://ui/components/modals/ModalBackdrop.cs" id="1_modal_backdrop"]
+
+[node name="ModalBackdrop" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+focus_mode = 2
+script = ExtResource("1_modal_backdrop")
+
+[node name="BackdropSurface" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+theme_type_variation = &"ShellModalBackdrop"
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"ShellSafeArea"
+
+[node name="ContentHost" type="CenterContainer" parent="SafeArea"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2

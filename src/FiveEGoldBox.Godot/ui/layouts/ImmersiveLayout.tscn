@@ -1,0 +1,92 @@
+[gd_scene load_steps=6 format=3 uid="uid://q5t8w1z3c6f9j"]
+
+[ext_resource type="Script" uid="uid://p6s9v2y4b7e1h" path="res://ui/layouts/ImmersiveLayout.cs" id="1_immersive_layout"]
+
+[ext_resource type="PackedScene" uid="uid://e4m7p9r2t5w8y" path="res://ui/components/shell/HeaderBar.tscn" id="2_header_bar"]
+
+[ext_resource type="PackedScene" uid="uid://f8q2s5v7x1z4b" path="res://ui/components/party/PartySidebar.tscn" id="3_party_sidebar"]
+
+[ext_resource type="PackedScene" uid="uid://c9p5r3t7w1y4a" path="res://ui/components/messages/MessageLog.tscn" id="4_message_log"]
+
+[ext_resource type="PackedScene" uid="uid://d3k6m8p1r4t7x" path="res://ui/components/commands/CommandBar.tscn" id="5_command_bar"]
+
+[node name="ImmersiveLayout" type="Control"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_immersive_layout")
+
+[node name="PresentationAspect" type="AspectRatioContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+ratio = 1.7778
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"ShellSafeArea"
+z_index = 10
+
+[node name="OverlayLayer" type="Control" parent="SafeArea"]
+layout_mode = 2
+
+[node name="HeaderBar" parent="SafeArea/OverlayLayer" instance=ExtResource("2_header_bar")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 52.0
+grow_horizontal = 2
+Immersive = true
+
+[node name="PartySidebar" parent="SafeArea/OverlayLayer" instance=ExtResource("3_party_sidebar")]
+unique_name_in_owner = true
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = 64.0
+offset_bottom = -140.0
+grow_horizontal = 0
+grow_vertical = 2
+Immersive = true
+
+[node name="MessageLog" parent="SafeArea/OverlayLayer" instance=ExtResource("4_message_log")]
+unique_name_in_owner = true
+layout_mode = 1
+theme_type_variation = &"ImmersiveOverlayPanel"
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -188.0
+offset_right = -316.0
+offset_bottom = -64.0
+grow_horizontal = 2
+grow_vertical = 0
+MessageText = "You stand at the entrance to the outpost."
+Scrollable = true
+
+[node name="CommandBar" parent="SafeArea/OverlayLayer" instance=ExtResource("5_command_bar")]
+unique_name_in_owner = true
+layout_mode = 1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -52.0
+grow_horizontal = 2
+grow_vertical = 0
+Immersive = true

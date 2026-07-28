@@ -1,0 +1,30 @@
+[gd_scene load_steps=2 format=3 uid="uid://k7v1y3c5f8h2m"]
+
+[ext_resource type="Script" uid="uid://l8w2z4d6g9j3n" path="res://ui/components/tooltips/TooltipPanel.cs" id="1_tooltip_panel"]
+
+[node name="TooltipPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(280, 0)
+mouse_filter = 2
+theme_type_variation = &"ShellTooltipPanel"
+script = ExtResource("1_tooltip_panel")
+
+[node name="TooltipMargin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"ShellCompactMargin"
+
+[node name="TooltipLayout" type="VBoxContainer" parent="TooltipMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="TitleLabel" type="Label" parent="TooltipMargin/TooltipLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "Tooltip"
+autowrap_mode = 2
+
+[node name="BodyLabel" type="Label" parent="TooltipMargin/TooltipLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+autowrap_mode = 2
