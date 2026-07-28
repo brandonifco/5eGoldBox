@@ -35,56 +35,61 @@ internal sealed class ShellInputRouter
 		_reportMovement = reportMovement;
 	}
 
-	public bool Handle(InputEventKey keyEvent)
+	// Takes the base InputEvent, not InputEventKey, so the same router
+	// serves both AppShell._UnhandledKeyInput and its joypad-only
+	// _UnhandledInput sibling — IsActionPressed resolves against whatever
+	// PlayerInputActions bound the action to, keyboard or joypad alike.
+	public bool Handle(InputEvent inputEvent)
 	{
-		if (keyEvent.IsActionPressed(PlayerInputActions.ToggleImmersiveMode))
+		if (inputEvent.IsActionPressed(
+			PlayerInputActions.ToggleImmersiveMode))
 		{
 			_toggleImmersiveMode();
 			return true;
 		}
 
-		if (HandleDeveloperShortcut(keyEvent))
+		if (HandleDeveloperShortcut(inputEvent))
 		{
 			return true;
 		}
 
 		return _interactionState.CurrentContext ==
 				ShellInteractionContext.ExplorationMovement &&
-			HandleExplorationMovementInput(keyEvent);
+			HandleExplorationMovementInput(inputEvent);
 	}
 
-	private bool HandleDeveloperShortcut(InputEventKey keyEvent)
+	private bool HandleDeveloperShortcut(InputEvent inputEvent)
 	{
 #if DEBUG
-		if (keyEvent.IsActionPressed(
+		if (inputEvent.IsActionPressed(
 			PlayerInputActions.DevToggleHighContrastTheme))
 		{
 			_toggleHighContrastTheme();
 			return true;
 		}
 
-		if (keyEvent.IsActionPressed(
+		if (inputEvent.IsActionPressed(
 			PlayerInputActions.DevToggleReducedMotion))
 		{
 			_toggleReducedMotion();
 			return true;
 		}
 
-		if (keyEvent.IsActionPressed(
+		if (inputEvent.IsActionPressed(
 			PlayerInputActions.DevShowExplorationView))
 		{
 			_showExplorationView();
 			return true;
 		}
 
-		if (keyEvent.IsActionPressed(
+		if (inputEvent.IsActionPressed(
 			PlayerInputActions.DevShowRegionalMapView))
 		{
 			_showRegionalMapView();
 			return true;
 		}
 
-		if (keyEvent.IsActionPressed(PlayerInputActions.DevShowCombatView))
+		if (inputEvent.IsActionPressed(PlayerInputActions.DevShowCombatView))
 		{
 			_showCombatView();
 			return true;
@@ -96,34 +101,34 @@ internal sealed class ShellInputRouter
 #endif
 	}
 
-	private bool HandleExplorationMovementInput(InputEventKey keyEvent)
+	private bool HandleExplorationMovementInput(InputEvent inputEvent)
 	{
-		if (keyEvent.IsActionPressed(PlayerInputActions.UiCancel) ||
-			keyEvent.IsActionPressed(PlayerInputActions.ExitMovementMode))
+		if (inputEvent.IsActionPressed(PlayerInputActions.UiCancel) ||
+			inputEvent.IsActionPressed(PlayerInputActions.ExitMovementMode))
 		{
 			_exitExplorationMovementMode();
 			return true;
 		}
 
-		if (keyEvent.IsActionPressed(PlayerInputActions.MoveForward))
+		if (inputEvent.IsActionPressed(PlayerInputActions.MoveForward))
 		{
 			_reportMovement("Step forward");
 			return true;
 		}
 
-		if (keyEvent.IsActionPressed(PlayerInputActions.MoveBackward))
+		if (inputEvent.IsActionPressed(PlayerInputActions.MoveBackward))
 		{
 			_reportMovement("Step backward");
 			return true;
 		}
 
-		if (keyEvent.IsActionPressed(PlayerInputActions.TurnLeft))
+		if (inputEvent.IsActionPressed(PlayerInputActions.TurnLeft))
 		{
 			_reportMovement("Turn left");
 			return true;
 		}
 
-		if (keyEvent.IsActionPressed(PlayerInputActions.TurnRight))
+		if (inputEvent.IsActionPressed(PlayerInputActions.TurnRight))
 		{
 			_reportMovement("Turn right");
 			return true;

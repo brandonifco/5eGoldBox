@@ -34,22 +34,30 @@ internal static class PlayerInputActions
 
 		Register(ExitMovementMode, new InputEventKey { Keycode = Key.Space });
 
+		// D-pad only for now, deliberately — analog-stick movement needs
+		// deadzone tuning and continuous-vs-discrete handling that would
+		// be locking in real controller-binding decisions, not scaffolding
+		// them. See M4f's milestone note before adding stick support.
 		Register(
 			MoveForward,
 			new InputEventKey { Keycode = Key.Up },
-			new InputEventKey { Keycode = Key.Kp8 });
+			new InputEventKey { Keycode = Key.Kp8 },
+			new InputEventJoypadButton { ButtonIndex = JoyButton.DpadUp });
 		Register(
 			MoveBackward,
 			new InputEventKey { Keycode = Key.Down },
-			new InputEventKey { Keycode = Key.Kp2 });
+			new InputEventKey { Keycode = Key.Kp2 },
+			new InputEventJoypadButton { ButtonIndex = JoyButton.DpadDown });
 		Register(
 			TurnLeft,
 			new InputEventKey { Keycode = Key.Left },
-			new InputEventKey { Keycode = Key.Kp4 });
+			new InputEventKey { Keycode = Key.Kp4 },
+			new InputEventJoypadButton { ButtonIndex = JoyButton.DpadLeft });
 		Register(
 			TurnRight,
 			new InputEventKey { Keycode = Key.Right },
-			new InputEventKey { Keycode = Key.Kp6 });
+			new InputEventKey { Keycode = Key.Kp6 },
+			new InputEventJoypadButton { ButtonIndex = JoyButton.DpadRight });
 
 		Register(ListSelectFirst, new InputEventKey { Keycode = Key.Home });
 		Register(ListSelectLast, new InputEventKey { Keycode = Key.End });
@@ -80,7 +88,7 @@ internal static class PlayerInputActions
 			});
 	}
 
-	private static void Register(string action, params InputEventKey[] events)
+	private static void Register(string action, params InputEvent[] events)
 	{
 		if (InputMap.HasAction(action))
 		{
@@ -89,7 +97,7 @@ internal static class PlayerInputActions
 
 		InputMap.AddAction(action);
 
-		foreach (InputEventKey inputEvent in events)
+		foreach (InputEvent inputEvent in events)
 		{
 			InputMap.ActionAddEvent(action, inputEvent);
 		}
