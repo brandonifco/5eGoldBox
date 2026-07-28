@@ -144,6 +144,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
 MessageText = "You stand at the entrance to the outpost."
+Scrollable = true
 
 [node name="CommandBar" parent="MainLayout" instance=ExtResource("5_command_bar")]
 unique_name_in_owner = true
