@@ -48,8 +48,8 @@ internal sealed class ShellInputRouter
 			return true;
 		}
 
-		return _interactionState.CurrentMode ==
-				InteractionMode.ExplorationMovement &&
+		return _interactionState.CurrentContext ==
+				ShellInteractionContext.ExplorationMovement &&
 			HandleExplorationMovementInput(keyEvent);
 	}
 

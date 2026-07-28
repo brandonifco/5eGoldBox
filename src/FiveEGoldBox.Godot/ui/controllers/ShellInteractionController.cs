@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using Godot;
 
 internal sealed class ShellInteractionController : IShellInteractionState
 {
 	private readonly IShellPresentation _presentationController;
 	private readonly IShellCommandBar _commandBarController;
+	private readonly Stack<ShellInteractionContext> _contextStack = new();
 
 	public ShellInteractionController(
 		IShellPresentation presentationController,
@@ -11,20 +13,21 @@ internal sealed class ShellInteractionController : IShellInteractionState
 	{
 		_presentationController = presentationController;
 		_commandBarController = commandBarController;
+		_contextStack.Push(ShellInteractionContext.CommandMenu);
 	}
 
-	public InteractionMode CurrentMode { get; private set; }
+	public ShellInteractionContext CurrentContext => _contextStack.Peek();
 
 	public void ShowExploration()
 	{
-		CurrentMode = InteractionMode.CommandMenu;
+		ResetContext();
 		_presentationController.ShowExploration();
 		ShowExplorationCommands();
 	}
 
 	public void ShowRegionalMap()
 	{
-		CurrentMode = InteractionMode.CommandMenu;
+		ResetContext();
 		_presentationController.ShowRegionalMap();
 
 		_commandBarController.ShowCommands(
@@ -62,7 +65,7 @@ internal sealed class ShellInteractionController : IShellInteractionState
 
 	public void ShowCombat()
 	{
-		CurrentMode = InteractionMode.CommandMenu;
+		ResetContext();
 		_presentationController.ShowCombat();
 
 		_commandBarController.ShowCommands(
@@ -100,7 +103,7 @@ internal sealed class ShellInteractionController : IShellInteractionState
 
 	public void ExitExplorationMovementMode()
 	{
-		CurrentMode = InteractionMode.CommandMenu;
+		PopContext(ShellInteractionContext.ExplorationMovement);
 
 		_presentationController.SetMessage("Movement mode ended.");
 		ShowExplorationCommands();
@@ -154,7 +157,7 @@ internal sealed class ShellInteractionController : IShellInteractionState
 
 	private void EnterExplorationMovementMode()
 	{
-		CurrentMode = InteractionMode.ExplorationMovement;
+		PushContext(ShellInteractionContext.ExplorationMovement);
 
 		_commandBarController.ShowMovementPrompt();
 		_presentationController.SetMessage(
@@ -166,5 +169,24 @@ internal sealed class ShellInteractionController : IShellInteractionState
 	{
 		_presentationController.SetMessage(
 			$"{command} selected. Backend behavior is not connected yet.");
+	}
+
+	private void ResetContext()
+	{
+		_contextStack.Clear();
+		_contextStack.Push(ShellInteractionContext.CommandMenu);
+	}
+
+	private void PushContext(ShellInteractionContext context)
+	{
+		_contextStack.Push(context);
+	}
+
+	private void PopContext(ShellInteractionContext expected)
+	{
+		if (CurrentContext == expected && _contextStack.Count > 1)
+		{
+			_contextStack.Pop();
+		}
 	}
 }

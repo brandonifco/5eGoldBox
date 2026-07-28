@@ -1,4 +1,4 @@
 internal interface IShellInteractionState
 {
-	InteractionMode CurrentMode { get; }
+	ShellInteractionContext CurrentContext { get; }
 }
