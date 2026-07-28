@@ -96,6 +96,36 @@ internal sealed class RealGameSession
 		};
 	}
 
+	// Godot's DirectMovement UX (M4) drives movement by arrow key rather
+	// than a command-bar button per action — ShellInteractionController
+	// collapses MoveForward/TurnLeft/TurnRight into one "Move" command that
+	// enters that mode, then routes each keypress here directly rather
+	// than through the by-ID Submit dispatch above, since the transient
+	// "real.N" command IDs are only valid against the snapshot they came
+	// from and movement mode deliberately never re-renders the command bar
+	// between steps.
+	//
+	// MoveBackward exists as a Godot input action (numpad 2) but the real
+	// engine has no such verb — ExplorationRules only ever moves forward
+	// or turns, matching 5e Gold Box's own "turn to face a direction, walk
+	// into it" convention. Shown honestly rather than silently ignored.
+	internal string SubmitMovement(string movementCommandId)
+	{
+		return movementCommandId switch
+		{
+			ExplorationMovementCommandIds.MoveForward => MoveForward(),
+			ExplorationMovementCommandIds.TurnLeft =>
+				Turn(ExplorationTurnDirection.Left, "Turned left."),
+			ExplorationMovementCommandIds.TurnRight =>
+				Turn(ExplorationTurnDirection.Right, "Turned right."),
+			ExplorationMovementCommandIds.MoveBackward =>
+				"Backward movement is not offered by the real engine — " +
+					"turn and walk forward instead.",
+			_ => $"'{movementCommandId}' is not a recognized movement " +
+				"command.",
+		};
+	}
+
 	private string ResolveDecision(SessionAction action)
 	{
 		OutpostDecisionResult result = OutpostDecisionRules.Resolve(

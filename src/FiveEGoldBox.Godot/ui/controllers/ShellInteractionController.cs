@@ -5,10 +5,22 @@ using Godot;
 
 internal sealed class ShellInteractionController : IShellInteractionState
 {
+	// SessionView's own literal DisplayName strings for the three movement
+	// actions it always offers unconditionally in Exploration mode — the
+	// seam that lets ShowRealCommands collapse them into one "Move" entry
+	// driving the existing DirectMovement UX (M4) instead of three flat
+	// buttons. No Kind is available at this layer (RealGameSession already
+	// projected SessionAction into CommandViewModel by here), so this
+	// matches by the same stable content strings the player sees.
+	private const string MoveForwardLabel = "Move forward";
+	private const string TurnLeftLabel = "Turn left";
+	private const string TurnRightLabel = "Turn right";
+
 	private readonly IShellPresentation _presentationController;
 	private readonly IShellCommandBar _commandBarController;
 	private readonly IShellConfirmation _confirmation;
 	private readonly Stack<ShellInteractionContext> _contextStack = new();
+	private RealGameSession? _activeRealMovementSession;
 
 	public ShellInteractionController(
 		IShellPresentation presentationController,
@@ -100,15 +112,35 @@ internal sealed class ShellInteractionController : IShellInteractionState
 		RealSessionSnapshot snapshot)
 	{
 		List<CommandDefinition> commands = new();
+		bool offersMovement = false;
 
 		foreach (CommandViewModel commandViewModel in
 			snapshot.Commands.Commands)
 		{
+			if (commandViewModel.Label is MoveForwardLabel
+				or TurnLeftLabel
+				or TurnRightLabel)
+			{
+				offersMovement = true;
+				continue;
+			}
+
 			string commandId = commandViewModel.CommandId;
 
 			commands.Add(CommandViewModelTranslator.ToCommandDefinition(
 				commandViewModel,
 				() => SubmitRealCommand(session, commandId)));
+		}
+
+		if (offersMovement)
+		{
+			commands.Insert(
+				0,
+				new CommandDefinition(
+					"Move",
+					"[b]M[/b]ove",
+					Key.M,
+					() => EnterRealMovementMode(session)));
 		}
 
 		_commandBarController.ShowCommands(commands.ToArray());
@@ -119,6 +151,17 @@ internal sealed class ShellInteractionController : IShellInteractionState
 		string message = session.Submit(commandId);
 
 		ShowRealSession(session, message);
+	}
+
+	private void EnterRealMovementMode(RealGameSession session)
+	{
+		_activeRealMovementSession = session;
+		PushContext(ShellInteractionContext.DirectMovement);
+
+		_commandBarController.ShowMovementPrompt();
+		_presentationController.SetMessage(
+			"Movement active: arrows or numpad 8 move forward; " +
+			"4/6 turn. Press Esc or Space to return.");
 	}
 
 	public void ShowRegionalMap()
@@ -201,15 +244,41 @@ internal sealed class ShellInteractionController : IShellInteractionState
 	{
 		PopContext(ShellInteractionContext.DirectMovement);
 
+		if (_activeRealMovementSession is not null)
+		{
+			RealGameSession session = _activeRealMovementSession;
+
+			_activeRealMovementSession = null;
+			ShowRealSession(session, "Movement mode ended.");
+			return;
+		}
+
 		_presentationController.SetMessage("Movement mode ended.");
 		ShowExplorationCommands();
 	}
 
 	// M6d: takes the real UiCommandIntent a keypress now constructs
-	// (ShellInputRouter) instead of a raw display string — the first real
-	// player action to reach a UiCommandIntent, not just mock content.
+	// (ShellInputRouter) instead of a raw display string. Routed to
+	// RealGameSession.SubmitMovement directly rather than through the
+	// by-ID Submit dispatch other commands use — movement mode
+	// deliberately never re-renders the command bar between steps, so
+	// there is no fresh snapshot to look a transient command ID up in.
 	public void ReportMovement(UiCommandIntent intent)
 	{
+		if (_activeRealMovementSession is not null)
+		{
+			string message =
+				_activeRealMovementSession.SubmitMovement(intent.CommandId);
+			RealSessionSnapshot snapshot =
+				_activeRealMovementSession.Describe();
+
+			_presentationController.SetHeader(
+				snapshot.LocationDisplayName,
+				snapshot.ModeLabel);
+			_presentationController.SetMessage(message);
+			return;
+		}
+
 		_presentationController.SetMessage(
 			$"{DescribeMovement(intent.CommandId)}. " +
 				"Backend movement is not connected yet.");
