@@ -2,6 +2,12 @@ using Godot;
 
 public partial class AppShell : Control
 {
+	// Matches FiveEGoldBox.Console's own default (Program.cs) — the same
+	// scenario, same convention: a client names a scenario ID string and
+	// knows nothing else about it.
+	private const string DefaultScenarioId = "scenario.watchtower";
+	private const int DefaultRandomSeed = 20260728;
+
 	private StandardLayout _standardLayout = null!;
 	private ImmersiveLayout _immersiveLayout = null!;
 	private ConfirmationDialog _confirmationDialog = null!;
@@ -17,6 +23,7 @@ public partial class AppShell : Control
 	private MockScenarioPicker _scenarioPicker = null!;
 	private MockScriptedSession _scriptedSession = null!;
 	private int _scriptedSessionStepIndex;
+	private RealGameSession _realSession = null!;
 
 	public override void _Ready()
 	{
@@ -92,6 +99,16 @@ public partial class AppShell : Control
 
 		_themeController.Initialize();
 		_layoutController.Initialize();
-		ShowExplorationView();
+
+		// The real integration seam (RealGameSession) is now the default
+		// experience rather than a dev-only path — mock content
+		// (MockScenarioPicker, MockScriptedSession, the F-key dev
+		// shortcuts) still exists unchanged for QA, but starting the app
+		// now plays an actual scenario through the actual engine. Combat
+		// is the one mode this doesn't reach yet — ShellInteractionController
+		// .ShowRealSession shows that honestly rather than faking it, and
+		// every one of the three real scenarios eventually leads there.
+		_realSession = new RealGameSession(DefaultScenarioId, DefaultRandomSeed);
+		_interactionController.ShowRealSession(_realSession);
 	}
 }
