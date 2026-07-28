@@ -103,7 +103,7 @@ internal sealed class ShellInteractionController : IShellInteractionState
 
 	public void ExitExplorationMovementMode()
 	{
-		PopContext(ShellInteractionContext.ExplorationMovement);
+		PopContext(ShellInteractionContext.DirectMovement);
 
 		_presentationController.SetMessage("Movement mode ended.");
 		ShowExplorationCommands();
@@ -157,7 +157,7 @@ internal sealed class ShellInteractionController : IShellInteractionState
 
 	private void EnterExplorationMovementMode()
 	{
-		PushContext(ShellInteractionContext.ExplorationMovement);
+		PushContext(ShellInteractionContext.DirectMovement);
 
 		_commandBarController.ShowMovementPrompt();
 		_presentationController.SetMessage(
