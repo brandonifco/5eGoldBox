@@ -8,6 +8,8 @@
 
 [ext_resource type="PackedScene" uid="uid://q5t8w1z3c6f9j" path="res://ui/layouts/ImmersiveLayout.tscn" id="PackedScene_immersive_layout"]
 
+[ext_resource type="PackedScene" uid="uid://x4a7d1g3k6n9q" path="res://ui/components/modals/ConfirmationDialog.tscn" id="PackedScene_confirmation_dialog"]
+
 [node name="AppShell" type="Control" unique_id=701235117]
 layout_mode = 3
 anchors_preset = 15
@@ -23,3 +25,12 @@ unique_name_in_owner = true
 
 [node name="ImmersiveLayout" parent="." instance=ExtResource("PackedScene_immersive_layout")]
 unique_name_in_owner = true
+
+[node name="ConfirmationDialog" parent="." instance=ExtResource("PackedScene_confirmation_dialog")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

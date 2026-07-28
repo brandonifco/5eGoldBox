@@ -4,8 +4,10 @@ public partial class AppShell : Control
 {
 	private StandardLayout _standardLayout = null!;
 	private ImmersiveLayout _immersiveLayout = null!;
+	private ConfirmationDialog _confirmationDialog = null!;
 
 	private ShellCommandBarController _commandBarController = null!;
+	private ShellConfirmationController _confirmationController = null!;
 	private ShellInputRouter _inputRouter = null!;
 	private ShellInteractionController _interactionController = null!;
 	private ShellLayoutController _layoutController = null!;
@@ -22,6 +24,7 @@ public partial class AppShell : Control
 
 		_standardLayout = GetNode<StandardLayout>("%StandardLayout");
 		_immersiveLayout = GetNode<ImmersiveLayout>("%ImmersiveLayout");
+		_confirmationDialog = GetNode<ConfirmationDialog>("%ConfirmationDialog");
 
 		_presentationController = new ShellPresentationController(
 			_standardLayout.ExplorationView,
@@ -60,9 +63,13 @@ public partial class AppShell : Control
 				"res://ui/components/commands/" +
 					"HotkeyCommandButton.tscn"));
 
+		_confirmationController =
+			new ShellConfirmationController(_confirmationDialog);
+
 		_interactionController = new ShellInteractionController(
 			_presentationController,
-			_commandBarController);
+			_commandBarController,
+			_confirmationController);
 
 		_scenarioPicker = new MockScenarioPicker();
 		_scriptedSession = new MockScriptedSession();

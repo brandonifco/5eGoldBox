@@ -6,14 +6,17 @@ internal sealed class ShellInteractionController : IShellInteractionState
 {
 	private readonly IShellPresentation _presentationController;
 	private readonly IShellCommandBar _commandBarController;
+	private readonly IShellConfirmation _confirmation;
 	private readonly Stack<ShellInteractionContext> _contextStack = new();
 
 	public ShellInteractionController(
 		IShellPresentation presentationController,
-		IShellCommandBar commandBarController)
+		IShellCommandBar commandBarController,
+		IShellConfirmation confirmation)
 	{
 		_presentationController = presentationController;
 		_commandBarController = commandBarController;
+		_confirmation = confirmation;
 		_contextStack.Push(ShellInteractionContext.CommandMenu);
 	}
 
@@ -152,18 +155,49 @@ internal sealed class ShellInteractionController : IShellInteractionState
 		_commandBarController.ShowCommands(commands.ToArray());
 	}
 
+	// M6e: each shell is deliberately distinct rather than one generic
+	// "X selected" template — Encamp is a real decision (ConfirmationDialog,
+	// M3's component, first live use outside dev demos), the other five
+	// are one-line placeholder results. Full versions (a real Character
+	// view, Spellbook, Area map) are M9's job; these are shells, not
+	// screens.
 	private Dictionary<string, Action> BuildExplorationCommandHandlers()
 	{
 		return new Dictionary<string, Action>
 		{
 			["move"] = EnterExplorationMovementMode,
-			["view"] = () => ReportCommand("View"),
-			["cast"] = () => ReportCommand("Cast"),
-			["area"] = () => ReportCommand("Area"),
-			["encamp"] = () => ReportCommand("Encamp"),
-			["search"] = () => ReportCommand("Search"),
-			["look"] = () => ReportCommand("Look"),
+			["view"] = () => _presentationController.SetMessage(
+				"You check the party's status. " +
+					"Detailed character views are not connected yet."),
+			["cast"] = () => _presentationController.SetMessage(
+				"You have no spells ready. " +
+					"Spellcasting is not connected yet."),
+			["area"] = () => _presentationController.SetMessage(
+				"You get your bearings. " +
+					"Area details are not connected yet."),
+			["encamp"] = ShowEncampConfirmation,
+			["search"] = () => _presentationController.SetMessage(
+				"You search the area but find nothing. " +
+					"Search mechanics are not connected yet."),
+			["look"] = () => _presentationController.SetMessage(
+				"You look around. " +
+					"Descriptive detail is not connected yet."),
 		};
+	}
+
+	private void ShowEncampConfirmation()
+	{
+		PushContext(ShellInteractionContext.Confirmation);
+
+		_confirmation.ShowConfirmation(
+			"Encamp",
+			"Rest here and recover?",
+			"Rest",
+			"Cancel",
+			onConfirmed: () => _presentationController.SetMessage(
+				"You make camp and rest. " +
+					"Rest mechanics are not connected yet."),
+			onClosed: () => PopContext(ShellInteractionContext.Confirmation));
 	}
 
 	private void EnterExplorationMovementMode()
