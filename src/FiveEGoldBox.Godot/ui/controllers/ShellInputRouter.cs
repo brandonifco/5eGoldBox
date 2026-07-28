@@ -12,6 +12,9 @@ internal sealed class ShellInputRouter
 	private readonly Action _toggleReducedMotion;
 	private readonly Action _exitExplorationMovementMode;
 	private readonly Action<string> _reportMovement;
+	private readonly Action _showNextMockScenario;
+	private readonly Action _showPreviousMockScenario;
+	private readonly Action _cycleResolutionPreset;
 
 	public ShellInputRouter(
 		IShellInteractionState interactionState,
@@ -22,7 +25,10 @@ internal sealed class ShellInputRouter
 		Action toggleHighContrastTheme,
 		Action toggleReducedMotion,
 		Action exitExplorationMovementMode,
-		Action<string> reportMovement)
+		Action<string> reportMovement,
+		Action showNextMockScenario,
+		Action showPreviousMockScenario,
+		Action cycleResolutionPreset)
 	{
 		_interactionState = interactionState;
 		_toggleImmersiveMode = toggleImmersiveMode;
@@ -33,6 +39,9 @@ internal sealed class ShellInputRouter
 		_toggleReducedMotion = toggleReducedMotion;
 		_exitExplorationMovementMode = exitExplorationMovementMode;
 		_reportMovement = reportMovement;
+		_showNextMockScenario = showNextMockScenario;
+		_showPreviousMockScenario = showPreviousMockScenario;
+		_cycleResolutionPreset = cycleResolutionPreset;
 	}
 
 	// Takes the base InputEvent, not InputEventKey, so the same router
@@ -92,6 +101,26 @@ internal sealed class ShellInputRouter
 		if (inputEvent.IsActionPressed(PlayerInputActions.DevShowCombatView))
 		{
 			_showCombatView();
+			return true;
+		}
+
+		if (inputEvent.IsActionPressed(PlayerInputActions.DevNextMockScenario))
+		{
+			_showNextMockScenario();
+			return true;
+		}
+
+		if (inputEvent.IsActionPressed(
+			PlayerInputActions.DevPreviousMockScenario))
+		{
+			_showPreviousMockScenario();
+			return true;
+		}
+
+		if (inputEvent.IsActionPressed(
+			PlayerInputActions.DevCycleResolutionPreset))
+		{
+			_cycleResolutionPreset();
 			return true;
 		}
 

@@ -27,6 +27,11 @@ internal static class PlayerInputActions
 		"shell_dev_toggle_high_contrast_theme";
 	public const string DevToggleReducedMotion =
 		"shell_dev_toggle_reduced_motion";
+	public const string DevNextMockScenario = "shell_dev_next_mock_scenario";
+	public const string DevPreviousMockScenario =
+		"shell_dev_previous_mock_scenario";
+	public const string DevCycleResolutionPreset =
+		"shell_dev_cycle_resolution_preset";
 
 	public static void EnsureRegistered()
 	{
@@ -86,6 +91,19 @@ internal static class PlayerInputActions
 				CtrlPressed = true,
 				AltPressed = true,
 			});
+
+		// Three plain, unmodified keys rather than a Shift-modified pair —
+		// avoids the exact-match pitfall M4c had to handle for
+		// ModalBackdrop's Tab/Shift+Tab (a Shift+F5 press would otherwise
+		// also satisfy a plain-F5 action under IsActionPressed's default
+		// non-exact matching).
+		Register(DevNextMockScenario, new InputEventKey { Keycode = Key.F5 });
+		Register(
+			DevPreviousMockScenario,
+			new InputEventKey { Keycode = Key.F6 });
+		Register(
+			DevCycleResolutionPreset,
+			new InputEventKey { Keycode = Key.F7 });
 	}
 
 	private static void Register(string action, params InputEvent[] events)

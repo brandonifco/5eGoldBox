@@ -12,6 +12,7 @@ public partial class AppShell : Control
 	private ShellPartyPreviewController _partyPreviewController = null!;
 	private ShellPresentationController _presentationController = null!;
 	private ShellThemeController _themeController = null!;
+	private MockScenarioPicker _scenarioPicker = null!;
 
 	public override void _Ready()
 	{
@@ -61,6 +62,8 @@ public partial class AppShell : Control
 			_presentationController,
 			_commandBarController);
 
+		_scenarioPicker = new MockScenarioPicker();
+
 		_inputRouter = new ShellInputRouter(
 			_interactionController,
 			ToggleImmersiveMode,
@@ -70,7 +73,10 @@ public partial class AppShell : Control
 			ToggleHighContrastTheme,
 			ToggleReducedMotion,
 			ExitExplorationMovementMode,
-			ReportMovement);
+			ReportMovement,
+			ShowNextMockScenario,
+			ShowPreviousMockScenario,
+			CycleResolutionPreset);
 
 		_themeController.Initialize();
 		_layoutController.Initialize();

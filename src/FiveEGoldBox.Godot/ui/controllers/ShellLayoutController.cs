@@ -32,6 +32,8 @@ internal sealed class ShellLayoutController : IShellLayoutState
 		_refreshCommandBars = refreshCommandBars;
 	}
 
+	private int _resolutionPresetIndex;
+
 	public bool IsImmersive { get; private set; }
 
 	public void Initialize()
@@ -42,6 +44,20 @@ internal sealed class ShellLayoutController : IShellLayoutState
 		_standardLayout.Show();
 		_immersiveLayout.Hide();
 		_refreshImmersivePartyPreview();
+	}
+
+	// Dev-only (M5d): cycles the window through UiResolutionPresets.All so
+	// a developer can check a mock scenario at every required test size
+	// without editing code or resizing by hand.
+	public UiResolutionPreset CycleResolutionPreset()
+	{
+		_resolutionPresetIndex =
+			(_resolutionPresetIndex + 1) % UiResolutionPresets.All.Count;
+
+		UiResolutionPreset preset = UiResolutionPresets.All[_resolutionPresetIndex];
+		_window.Size = preset.Size;
+
+		return preset;
 	}
 
 	public void Toggle()
