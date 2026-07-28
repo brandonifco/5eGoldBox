@@ -1,6 +1,6 @@
 # 5eGoldBox Godot UI — Remaining Milestones (M4–M12)
 
-**Status:** M0–M4 complete; M5 in progress (a-f done); seven milestones remain after M5.
+**Status:** M0–M5 complete; seven milestones remain (M6–M12).
 
 This is a concise proposed execution-stage breakdown derived from the creator-approved Godot UI Pre-Integration Governing Plan v1.1. Lettered stages organize implementation; they do not change the governing milestone scope or acceptance gates.
 
@@ -90,8 +90,15 @@ This is a concise proposed execution-stage breakdown derived from the creator-ap
   - The attempt counters are plain `int` locals captured by each handler's closure, not instance fields — each is read only by the one handler it belongs to.
   - **Real behavioral verification**, extending the same scratch project: the slow command's first attempt is `Busy` and does *not* fire `SnapshotChanged`; its second attempt is `Accepted` and *does* fire it; the risky action's first attempt is `Error` and doesn't touch the snapshot; its retry is `Accepted`. All 8 new checks passed (91/91 total across M5b-f).
   - Verified: build clean, headless boot exit 0, file stays at 93 lines.
-- [ ] g. Verify every major UI state can be reached quickly without code edits or backend types.
-- [ ] g. Verify every major UI state can be reached quickly without code edits or backend types.
+- [x] g. Verify every major UI state can be reached quickly without code edits or backend types. Final closeout pass against the governing plan's actual §11.6 acceptance gate text, not just this doc's letter summary:
+  - **"Any major UI state can be reached in seconds without editing code":** concretely, one keypress each — F1/F2/F3 for presentation mode, F5/F6 to cycle forward/back through all 50 named scenarios (M5c/d), F7 to cycle resolution presets (M2's presets, applied for the first time), F8 to step the scripted session through every mode transition, the modal open/close, and both resilience placeholders' first-attempt-then-resolution (M5e/f). Every one of those states is one keypress from any other.
+  - **"Mock runs are deterministic and named":** every one of the 50 scenarios and both scripted-session command families use a stable, compile-time string ID (grep-checked: zero `Random`/`GD.Randi`/`GD.Randf`/`DateTime.Now`/`Environment.TickCount` anywhere in `ui/mocks/` or `ui/models/viewmodels/`).
+  - **"No mock model uses backend types or namespaces":** grep across all of `ui/` for `FiveEGoldBox.Application`/`FiveEGoldBox.Core` returns exactly one hit — `ui/components/README.md`, which is the M3-era doc *describing* that boundary rule in prose, not a violation of it. Zero in any `.cs` file.
+  - **"All later milestones can develop against the mock gateway":** structurally ready — `MockUiGateway`, all 50 `MockScenarioCatalog` entries, and `MockScriptedSession` are complete, strongly typed, and behaviorally verified (below). Whether M6+ actually finds them convenient to build against is something only M6 can confirm; nothing more could be proven without M6 existing yet.
+  - **Whole-milestone regression sweep:** all 87 UI C# scripts (52 at the M4 close, +35 new across M5) stay ≤250 lines. `git diff --stat` across the entire M5 range touches zero `.tscn`/`.tres` files — M5, like M4, was pure C#. The complete scratch-project regression suite built up across M5b-f — 97 checks spanning the gateway's rejection/accept/busy/error paths, the full 50-scenario catalog, the hotkey validator's both true- and false-positive cases, the scenario picker's cycle/wrap behavior, and the scripted session's full mode-transition-plus-resilience sequence — was re-run once more in full: 97/97 passed, 0 failures.
+  - Verified: build clean, headless boot (`godot --headless --path . --quit-after 15`) exit 0 with empty stderr.
+
+**M5 COMPLETE — READY FOR M6.** The mock gateway, view-model contracts, and 50-scenario catalog exist, are wired into dev tooling, and are behaviorally verified — the leverage point the governing plan's own "Immediate Recommended Next Workflow" (§18) called out ("Complete M4 and M5 before adding detailed exploration, regional-map, or combat content... the input router and mock gateway are the leverage points for the entire remaining UI program"). M6 is where a real screen first consumes `CommandViewModel`/`ShellViewModel` instead of the current hardcoded `CommandDefinition` sets — nothing in M5 pre-built that rewiring, on purpose, per the boundary held consistently since M5a.
 
 ## M6 — Exploration Experience Shell
 
