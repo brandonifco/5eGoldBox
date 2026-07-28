@@ -1,6 +1,6 @@
 # 5eGoldBox Godot UI — Remaining Milestones (M4–M12)
 
-**Status:** M0–M3 complete; M4 in progress (a-f done); eight milestones remain after M4.
+**Status:** M0–M4 complete; eight milestones remain (M5–M12).
 
 This is a concise proposed execution-stage breakdown derived from the creator-approved Godot UI Pre-Integration Governing Plan v1.1. Lettered stages organize implementation; they do not change the governing milestone scope or acceptance gates.
 
@@ -35,7 +35,15 @@ This is a concise proposed execution-stage breakdown derived from the creator-ap
   - **Known gap, left open on purpose:** `ModalBackdrop` still only captures keyboard input (`_Input`/`_UnhandledKeyInput`), not `_UnhandledInput` — so a joypad button press would currently reach `ShellInputRouter` even while a modal is open, the same way keyboard-vs-modal did before M4c existed. This isn't a new problem so much as the pre-existing "no modal is wired into the live shell yet" caveat extending to a second input device — there is still nothing live to actually leak into. Whoever wires the first real modal (M6+) needs to extend `ModalBackdrop` to capture `_UnhandledInput` too, or joypad users will be able to interact with whatever's behind the modal. Recorded here so it isn't rediscovered as a surprise later.
   - **"Preserve direct MOVE behavior"** held throughout by construction — every M4a-e change to the movement path was a mechanism swap verified behavior-identical at each step (see those entries), and this step only *adds* a second event per action, never removes or reorders the keyboard ones.
   - Verified: `dotnet build` clean, headless run (`godot --headless --path . --quit-after 10`) exit 0 with empty stderr, touched files stay at 105/139/38 lines (all ≤250).
-- [ ] g. Complete keyboard/mouse parity, cancel-priority, context-isolation, and movement-mode verification.
+- [x] g. Complete keyboard/mouse parity, cancel-priority, context-isolation, and movement-mode verification. Final closeout pass — full re-verification, not just the last letter's diff:
+  - **Keyboard/mouse parity:** `HotkeyCommandButton.Configure` wires `Pressed += _handler` unconditionally — mouse click always works — and only conditionally attaches a keyboard `Shortcut` when `enableShortcut` is true (i.e. only on the currently-visible layout's bar). Confirmed by re-reading the method, not just asserted.
+  - **Escape/cancel priority:** re-confirmed as documented in c — `ModalBackdrop` wins by construction (deepest-node unhandled-input order + unconditional `SetInputAsHandled`), `ui_cancel` exits movement mode when no modal is capturing it first.
+  - **Context isolation:** re-confirmed as audited in e — nothing live races for the same keypress today; `ShellInteractionContext` accurately reflects `CommandMenu`/`ExplorationMovement` at all times because both real producers push/pop it (b).
+  - **Movement-mode suppression:** during `ExplorationMovement`, `ShowMovementPrompt()` clears every `HotkeyCommandButton`, so ordinary domain commands (Move/View/Cast/Area/Encamp/Search/Look, etc.) have no live node to fire from — not merely gated, structurally absent. Worth being explicit about one thing that could look like a violation but isn't: `ToggleImmersiveMode` (F11) and the dev shortcuts still work during movement mode, by design — those are shell-chrome/system-level, not "ordinary commands" in the sense this gate means, and suppressing F11 during movement would be a real usability regression, not a fix.
+  - **Whole-milestone regression sweep, not just this step's diff:** grep across the full repo confirms zero remaining raw `Key.*` comparisons in any player-facing input file (`ShellInputRouter`, `AppShell.Input.cs`, `SelectionList.Input.cs`, `ModalBackdrop.cs`) and zero remaining references to the old `InteractionMode` name anywhere, in `.cs` or `.tscn`. All 52 UI C# scripts (51 at the M3 close, +1 for the new `PlayerInputActions.cs`) are still ≤250 lines — the M3 gate, re-run as part of this milestone's own close. `git diff --stat` across the whole M4 range touches zero `.tscn`/`.tres` files — M4 was pure C#, no scene/theme/visual risk introduced.
+  - Verified: `dotnet build` clean, headless boot (`godot --headless --path . --quit-after 15`) exit 0 with empty stderr.
+
+**M4 COMPLETE — READY FOR M5.** Every letter has a real, live producer today except the parts that explicitly can't (no modal/list/target-picker exists in the shell yet — M6/M8/M9's job); those are declared, documented, and contracted for rather than built ahead of evidence, consistently across a-g. No `.tscn`/`.tres` file was touched in this milestone. No product-owner runtime click-through was possible in this environment (no display); what stands in for it here is a real `godot --headless` boot plus the `dotnet build` gate, run after every letter, not only at the end.
 
 ## M5 — Mock Gateway and Scenario Laboratory
 
