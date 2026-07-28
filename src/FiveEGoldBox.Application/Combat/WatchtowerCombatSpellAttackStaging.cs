@@ -36,7 +36,8 @@ internal static class WatchtowerCombatSpellAttackStaging
         int cursor,
         string actorCombatantId,
         string targetCombatantId,
-        string spellId)
+        string spellId,
+        IReadOnlyList<string>? additionalTargetCombatantIds = null)
     {
         WatchtowerCombatSpellAttackAvailability availability =
             EvaluateAvailability(
@@ -243,6 +244,9 @@ internal static class WatchtowerCombatSpellAttackStaging
                     ExpectedRevision = encounter.Revision,
                     ActorCombatantId = actorCombatantId,
                     TargetCombatantId = targetCombatantId,
+                    AdditionalTargetCombatantIds =
+                        additionalTargetCombatantIds
+                        ?? Array.Empty<string>(),
                     SpellId = spellId,
                     FirstAttackRoll = firstAttackRoll,
                     SecondAttackRoll = secondAttackRoll,

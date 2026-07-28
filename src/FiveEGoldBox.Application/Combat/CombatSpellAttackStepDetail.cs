@@ -27,8 +27,12 @@ public sealed record CombatSpellAttackStepDetail
         bool tookEffect,
         int damageDealt,
         int healingDone,
-        CombatDamagedTargetDetail? damagedTarget)
+        CombatDamagedTargetDetail? damagedTarget,
+        IReadOnlyList<string>? effectedCombatantIds = null)
     {
+        EffectedCombatantIds = effectedCombatantIds is null
+            ? Array.Empty<string>()
+            : Array.AsReadOnly(effectedCombatantIds.ToArray());
         SpellId = spellId;
         DistanceFeet = distanceFeet;
         AttackRollMode = attackRollMode;
@@ -91,4 +95,9 @@ public sealed record CombatSpellAttackStepDetail
     /// The target's condition afterward. Null when the spell dealt no
     /// damage.
     public CombatDamagedTargetDetail? DamagedTarget { get; }
+
+    /// Everyone the spell settled its effect on, in the order it reached
+    /// them — the named target first, then every additional one. Empty for
+    /// a spell that applies no effect.
+    public IReadOnlyList<string> EffectedCombatantIds { get; }
 }

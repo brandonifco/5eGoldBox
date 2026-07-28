@@ -143,7 +143,8 @@ internal static class WatchtowerPlayerCommandResolver
                 cursorBefore,
                 intent.ActorCombatantId,
                 intent.TargetCombatantId,
-                intent.SpellId);
+                intent.SpellId,
+                intent.AdditionalTargetCombatantIds);
 
         return new WatchtowerPlayerCommandResolution
         {

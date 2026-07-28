@@ -97,6 +97,10 @@ internal static class WatchtowerCombatResultMapper
             source.UnavailabilityReason,
             source.Targets
                 .Select(ToCombatTargetOption)
+                .ToArray(),
+            source.TargetCombinations
+                .Select(combination => new CombatTargetCombinationOption(
+                    combination.TargetCombatantIds))
                 .ToArray());
     }
 
@@ -215,7 +219,8 @@ internal static class WatchtowerCombatResultMapper
             source.HealingDone,
             source.TargetDamage is null
                 ? null
-                : ToDamagedTargetDetail(source.TargetDamage));
+                : ToDamagedTargetDetail(source.TargetDamage),
+            source.EffectedCombatantIds);
     }
 
     private static CombatConcentrationCheckStepDetail
