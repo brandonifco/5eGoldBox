@@ -165,6 +165,60 @@ internal static class WatchtowerCombatAttackStaging
                 WatchtowerCombatDiePurpose.DamageRoll));
         }
 
+        // A hit that lands damage can end whatever the target was
+        // concentrating on. Asked for here, before Resolve, for the same
+        // reason every other roll in this method is.
+        int? concentrationSavingThrowRoll = null;
+        List<int> concentrationContributionValues = [];
+
+        if (requiredDamage is not null)
+        {
+            EncounterParticipantState target =
+                WatchtowerCombatDecisionFactory.FindParticipant(
+                    encounter,
+                    targetCombatantId);
+
+            if (target.ConcentratingOnEffectId is not null)
+            {
+                ApplicationRandomRoll concentration =
+                    ApplicationRandomSequence.GenerateDie(
+                        seed,
+                        nextCursor,
+                        DieType.D20);
+
+                nextCursor = concentration.UpdatedValuesConsumed;
+                concentrationSavingThrowRoll = concentration.Value;
+                dice.Add(CreateDie(
+                    concentration,
+                    WatchtowerCombatDiePurpose
+                        .ConcentrationSavingThrow));
+
+                RollContributionSet concentrationContributions =
+                    RollContributionRules.Resolve(
+                        target,
+                        RollContributionTarget.SavingThrow);
+
+                foreach (DieType die
+                    in concentrationContributions.RequiredDice)
+                {
+                    ApplicationRandomRoll contribution =
+                        ApplicationRandomSequence.GenerateDie(
+                            seed,
+                            nextCursor,
+                            die);
+
+                    nextCursor =
+                        contribution.UpdatedValuesConsumed;
+                    concentrationContributionValues.Add(
+                        contribution.Value);
+                    dice.Add(CreateDie(
+                        contribution,
+                        WatchtowerCombatDiePurpose
+                            .ConcentrationSavingThrow));
+                }
+            }
+        }
+
         EncounterWeaponAttackResult result =
             EncounterWeaponAttackRules.Resolve(
                 encounter,
@@ -180,7 +234,13 @@ internal static class WatchtowerCombatAttackStaging
                     DamageRolls = Array.AsReadOnly(
                         damageValues.ToArray()),
                     DamageContributionRolls = Array.AsReadOnly(
-                        damageContributionValues.ToArray())
+                        damageContributionValues.ToArray()),
+                    ConcentrationSavingThrowRoll =
+                        concentrationSavingThrowRoll,
+                    ConcentrationSavingThrowContributionRolls =
+                        Array.AsReadOnly(
+                            concentrationContributionValues
+                                .ToArray())
                 });
 
         return new WatchtowerCombatAttackExecution(

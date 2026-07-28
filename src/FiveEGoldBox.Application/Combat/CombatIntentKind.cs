@@ -4,5 +4,6 @@ public enum CombatIntentKind
 {
     Move,
     WeaponAttack,
+    SpellAttack,
     EndTurn
 }

@@ -542,10 +542,12 @@ public sealed class CombatOperationsTests
             typeof(CombatMovementOption),
             typeof(CombatMovementDestinationOption),
             typeof(CombatWeaponAttackOption),
+            typeof(CombatSpellAttackOption),
             typeof(CombatTargetOption),
             typeof(CombatEndTurnOption),
             typeof(CombatMoveIntent),
             typeof(CombatWeaponAttackIntent),
+            typeof(CombatSpellAttackIntent),
             typeof(CombatEndTurnIntent),
             typeof(CombatIntentKind),
             typeof(CombatIntentReceipt),
@@ -557,6 +559,8 @@ public sealed class CombatOperationsTests
             typeof(CombatTurnAdvanceReason),
             typeof(CombatMovementStepDetail),
             typeof(CombatWeaponAttackStepDetail),
+            typeof(CombatSpellAttackStepDetail),
+            typeof(CombatConcentrationCheckStepDetail),
             typeof(CombatDamagedTargetDetail),
             typeof(CombatDeathSavingThrowStepDetail),
             typeof(CombatTurnAdvancementStepDetail)
@@ -576,6 +580,7 @@ public sealed class CombatOperationsTests
         [
             typeof(CombatMoveIntent),
             typeof(CombatWeaponAttackIntent),
+            typeof(CombatSpellAttackIntent),
             typeof(CombatEndTurnIntent)
         ];
 
@@ -643,6 +648,8 @@ public sealed class CombatOperationsTests
             typeof(CombatTurnState),
             typeof(EncounterMovementResult),
             typeof(EncounterWeaponAttackResult),
+            typeof(EncounterSpellCastResult),
+            typeof(EncounterConcentrationCheckResult),
             typeof(EncounterDeathSavingThrowResult),
             typeof(EncounterTurnAdvancementResult),
             typeof(AttackResolutionResult),

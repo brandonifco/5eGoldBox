@@ -50,7 +50,13 @@ public static class EncounterSpellRules
         EncounterParticipantState target = state.Participants[targetIndex];
         SpellAttack spell = FindSpell(actor, command.SpellId);
 
-        ValidateRollsMatchResolution(spell, command);
+        ArgumentNullException.ThrowIfNull(command.EffectRolls);
+        ValidateRollsMatchResolution(
+            spell,
+            command.FirstAttackRoll,
+            command.SavingThrowRoll,
+            command.AttackContributionRolls,
+            command.SavingThrowContributionRolls);
 
         IReadOnlyList<string> allTargets = ResolveTargets(
             state,
@@ -59,12 +65,15 @@ public static class EncounterSpellRules
 
         AttackRollResult? attackRoll = ResolveAttackRoll(
             spell,
-            command,
+            command.FirstAttackRoll,
+            command.SecondAttackRoll,
+            command.AttackContributionRolls,
             prerequisites,
             target);
         SavingThrowResult? savingThrow = ResolveSavingThrow(
             spell,
-            command,
+            command.SavingThrowRoll,
+            command.SavingThrowContributionRolls,
             prerequisites,
             target);
         bool tookEffect = TookEffect(spell, attackRoll, savingThrow);
@@ -165,6 +174,133 @@ public static class EncounterSpellRules
             ConcentrationCheck = concentrationCheck,
             State = resolvedState
         };
+    }
+
+    /// What Resolve would do, without doing it. A caller rolls whatever
+    /// attack roll or saving throw the spell needs first — the same
+    /// prerequisite information Evaluate itself resolves tells it which —
+    /// then asks here what the effect needs before rolling that too.
+    internal static EncounterSpellCastEvaluation Evaluate(
+        EncounterState state,
+        EncounterSpellCastEvaluationCommand command)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(command);
+
+        EncounterRules.ValidateState(state);
+
+        if (command.ExpectedRevision != state.Revision)
+        {
+            throw new InvalidOperationException(
+                $"Expected encounter revision '{command.ExpectedRevision}', but the current revision is '{state.Revision}'.");
+        }
+
+        EncounterSpellPrerequisiteEvaluation prerequisites =
+            EncounterSpellPrerequisiteRules.Evaluate(
+                state,
+                command.ActorCombatantId,
+                command.TargetCombatantId,
+                command.SpellId);
+
+        if (!prerequisites.IsLegal)
+        {
+            throw new InvalidOperationException(
+                $"The spell is unavailable for reason '{prerequisites.UnavailabilityReason}'.");
+        }
+
+        int actorIndex = FindParticipantIndex(state, command.ActorCombatantId);
+        int targetIndex = FindParticipantIndex(state, command.TargetCombatantId);
+        EncounterParticipantState actor = state.Participants[actorIndex];
+        EncounterParticipantState target = state.Participants[targetIndex];
+        SpellAttack spell = FindSpell(actor, command.SpellId);
+
+        ValidateRollsMatchResolution(
+            spell,
+            command.FirstAttackRoll,
+            command.SavingThrowRoll,
+            command.AttackContributionRolls,
+            command.SavingThrowContributionRolls);
+
+        AttackRollResult? attackRoll = ResolveAttackRoll(
+            spell,
+            command.FirstAttackRoll,
+            command.SecondAttackRoll,
+            command.AttackContributionRolls,
+            prerequisites,
+            target);
+        SavingThrowResult? savingThrow = ResolveSavingThrow(
+            spell,
+            command.SavingThrowRoll,
+            command.SavingThrowContributionRolls,
+            prerequisites,
+            target);
+        bool tookEffect = TookEffect(spell, attackRoll, savingThrow);
+
+        return new EncounterSpellCastEvaluation
+        {
+            EncounterRevision = state.Revision,
+            ActorCombatantId = command.ActorCombatantId,
+            TargetCombatantId = command.TargetCombatantId,
+            SpellId = command.SpellId,
+            Prerequisites = prerequisites,
+            AttackRoll = attackRoll,
+            SavingThrow = savingThrow,
+            TookEffect = tookEffect,
+            RequiredEffectDice = ResolveRequiredEffectDice(
+                spell,
+                attackRoll,
+                tookEffect),
+            WouldDealDamage = tookEffect
+                && spell.Effects.Any(effect =>
+                    effect.Kind == SpellEffectKind.Damage)
+        };
+    }
+
+    /// The dice Resolve's ResolveDamage and ResolveHealing will consume, in
+    /// the same order: every damage effect's dice first (doubled on a
+    /// critical hit, the same way the weapon path doubles), then every
+    /// healing effect's — matching ResolveHealing's own assumption that
+    /// damage dice occupy the front of the roll list.
+    private static IReadOnlyList<DieType> ResolveRequiredEffectDice(
+        SpellAttack spell,
+        AttackRollResult? attackRoll,
+        bool tookEffect)
+    {
+        if (!tookEffect)
+        {
+            return Array.Empty<DieType>();
+        }
+
+        List<DieType> required = [];
+
+        foreach (SpellAttackEffect effect in spell.Effects
+            .Where(effect => effect.Kind == SpellEffectKind.Damage))
+        {
+            DamageDice dice =
+                attackRoll?.Outcome == AttackRollOutcome.CriticalHit
+                    ? DamageRules.GetCriticalHitDamageDice(effect.Dice)
+                    : effect.Dice;
+
+            for (int instance = 0; instance < effect.Instances; instance++)
+            {
+                required.AddRange(
+                    Enumerable.Repeat(dice.Die, dice.Count));
+            }
+        }
+
+        foreach (SpellAttackEffect effect in spell.Effects
+            .Where(effect => effect.Kind == SpellEffectKind.Healing))
+        {
+            for (int instance = 0; instance < effect.Instances; instance++)
+            {
+                required.AddRange(
+                    Enumerable.Repeat(
+                        effect.Dice.Die,
+                        effect.Dice.Count));
+            }
+        }
+
+        return Array.AsReadOnly(required.ToArray());
     }
 
     /// Every creature the spell reaches, the named one first. A spell may not
@@ -299,7 +435,9 @@ public static class EncounterSpellRules
 
     private static AttackRollResult? ResolveAttackRoll(
         SpellAttack spell,
-        EncounterSpellCastCommand command,
+        int? firstAttackRoll,
+        int? secondAttackRoll,
+        IReadOnlyList<int> attackContributionRolls,
         EncounterSpellPrerequisiteEvaluation prerequisites,
         EncounterParticipantState target)
     {
@@ -310,19 +448,20 @@ public static class EncounterSpellRules
 
         return AttackRollRules.ResolveResult(
             prerequisites.AttackRollMode!.Value,
-            command.FirstAttackRoll!.Value,
-            command.SecondAttackRoll,
+            firstAttackRoll!.Value,
+            secondAttackRoll,
             checked(spell.AttackBonus
                 + RollContributionRules.Total(
                     prerequisites.AttackRollContributions,
-                    command.AttackContributionRolls)),
+                    attackContributionRolls)),
             target.CombatProfile.ArmorClass
                 + (prerequisites.Cover?.ArmorClassBonus ?? 0));
     }
 
     private static SavingThrowResult? ResolveSavingThrow(
         SpellAttack spell,
-        EncounterSpellCastCommand command,
+        int? savingThrowRoll,
+        IReadOnlyList<int> savingThrowContributionRolls,
         EncounterSpellPrerequisiteEvaluation prerequisites,
         EncounterParticipantState target)
     {
@@ -340,12 +479,12 @@ public static class EncounterSpellRules
         return SavingThrowRules.ResolveSavingThrow(
             spell.SaveAbility!.Value,
             D20RollMode.Normal,
-            command.SavingThrowRoll!.Value,
+            savingThrowRoll!.Value,
             secondRoll: null,
             checked(bonus.TotalBonus
                 + RollContributionRules.Total(
                     prerequisites.SavingThrowContributions,
-                    command.SavingThrowContributionRolls)),
+                    savingThrowContributionRolls)),
             spell.SaveDc);
     }
 
@@ -551,49 +690,49 @@ public static class EncounterSpellRules
 
     private static void ValidateRollsMatchResolution(
         SpellAttack spell,
-        EncounterSpellCastCommand command)
+        int? firstAttackRoll,
+        int? savingThrowRoll,
+        IReadOnlyList<int> attackContributionRolls,
+        IReadOnlyList<int> savingThrowContributionRolls)
     {
-        ArgumentNullException.ThrowIfNull(command.EffectRolls);
-        ArgumentNullException.ThrowIfNull(
-            command.AttackContributionRolls);
-        ArgumentNullException.ThrowIfNull(
-            command.SavingThrowContributionRolls);
+        ArgumentNullException.ThrowIfNull(attackContributionRolls);
+        ArgumentNullException.ThrowIfNull(savingThrowContributionRolls);
 
         bool needsAttackRoll =
             spell.Resolution == SpellResolutionKind.SpellAttack;
         bool needsSavingThrow =
             spell.Resolution == SpellResolutionKind.SavingThrow;
 
-        if (needsAttackRoll != command.FirstAttackRoll.HasValue)
+        if (needsAttackRoll != firstAttackRoll.HasValue)
         {
             throw new ArgumentException(
                 $"Spell '{spell.SpellId}' {(needsAttackRoll ? "requires" : "does not use")} an attack roll.",
-                nameof(command));
+                nameof(firstAttackRoll));
         }
 
-        if (needsSavingThrow != command.SavingThrowRoll.HasValue)
+        if (needsSavingThrow != savingThrowRoll.HasValue)
         {
             throw new ArgumentException(
                 $"Spell '{spell.SpellId}' {(needsSavingThrow ? "requires" : "does not use")} a saving throw.",
-                nameof(command));
+                nameof(savingThrowRoll));
         }
 
         // Dice contributed to a roll nobody makes were rolled for nothing, and
         // randomness spent here is randomness the next roll does not get.
         if (!needsAttackRoll
-            && command.AttackContributionRolls.Count > 0)
+            && attackContributionRolls.Count > 0)
         {
             throw new ArgumentException(
                 $"Spell '{spell.SpellId}' does not use an attack roll, so nothing can contribute to one.",
-                nameof(command));
+                nameof(attackContributionRolls));
         }
 
         if (!needsSavingThrow
-            && command.SavingThrowContributionRolls.Count > 0)
+            && savingThrowContributionRolls.Count > 0)
         {
             throw new ArgumentException(
                 $"Spell '{spell.SpellId}' does not use a saving throw, so nothing can contribute to one.",
-                nameof(command));
+                nameof(savingThrowContributionRolls));
         }
     }
 

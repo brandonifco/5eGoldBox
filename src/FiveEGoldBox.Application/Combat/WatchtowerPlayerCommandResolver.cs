@@ -116,6 +116,60 @@ internal static class WatchtowerPlayerCommandResolver
         EncounterState encounter,
         int randomSeed,
         int cursorBefore,
+        WatchtowerCombatSpellAttackIntent intent)
+    {
+        ArgumentNullException.ThrowIfNull(encounter);
+        ArgumentNullException.ThrowIfNull(intent);
+        ValidateRequiredId(intent.SpellId, nameof(intent.SpellId));
+        ValidateRequiredId(intent.TargetCombatantId, nameof(intent.TargetCombatantId));
+
+        WatchtowerCombatSpellAttackAvailability prerequisites =
+            WatchtowerCombatSpellAttackStaging.EvaluateAvailability(
+                encounter,
+                intent.ActorCombatantId,
+                intent.TargetCombatantId,
+                intent.SpellId);
+
+        if (!prerequisites.IsLegal)
+        {
+            throw new InvalidOperationException(
+                $"The selected spell attack is unavailable for reason '{prerequisites.UnavailabilityReason}'.");
+        }
+
+        WatchtowerCombatSpellAttackExecution spellAttack =
+            WatchtowerCombatSpellAttackStaging.Resolve(
+                encounter,
+                randomSeed,
+                cursorBefore,
+                intent.ActorCombatantId,
+                intent.TargetCombatantId,
+                intent.SpellId);
+
+        return new WatchtowerPlayerCommandResolution
+        {
+            State = spellAttack.Result.State,
+            CursorAfter = spellAttack.CursorAfter,
+            PrimaryStep = WatchtowerCombatStepFactory.CreateSpellAttack(
+                encounter,
+                spellAttack.Result,
+                spellAttack.Dice),
+            Receipt = new WatchtowerCombatIntentReceipt
+            {
+                Kind = WatchtowerCombatIntentKind.SpellAttack,
+                ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
+                ActorCombatantId = intent.ActorCombatantId,
+                Path = Array.Empty<GridPosition>(),
+                WeaponId = null,
+                SpellId = intent.SpellId,
+                TargetCombatantId = intent.TargetCombatantId
+            }
+        };
+    }
+
+    internal static WatchtowerPlayerCommandResolution Resolve(
+        EncounterState encounter,
+        int randomSeed,
+        int cursorBefore,
         WatchtowerCombatEndTurnIntent intent)
     {
         ArgumentNullException.ThrowIfNull(encounter);

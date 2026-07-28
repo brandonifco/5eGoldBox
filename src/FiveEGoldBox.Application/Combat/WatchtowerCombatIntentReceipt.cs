@@ -14,5 +14,7 @@ internal sealed record WatchtowerCombatIntentReceipt
 
     public string? WeaponId { get; init; }
 
+    public string? SpellId { get; init; }
+
     public string? TargetCombatantId { get; init; }
 }

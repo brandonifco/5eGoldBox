@@ -22,6 +22,8 @@ internal static class WatchtowerCombatStepFactory
             Dice = Array.Empty<WatchtowerCombatDieRoll>(),
             Movement = movement,
             WeaponAttack = null,
+            SpellAttack = null,
+            ConcentrationCheck = null,
             DeathSavingThrow = null,
             TurnAdvancement = null,
             TurnAdvanceReason = null,
@@ -44,10 +46,36 @@ internal static class WatchtowerCombatStepFactory
             Dice = Array.AsReadOnly(dice.ToArray()),
             Movement = null,
             WeaponAttack = attack,
+            SpellAttack = null,
+            ConcentrationCheck = attack.ConcentrationCheck,
             DeathSavingThrow = null,
             TurnAdvancement = null,
             TurnAdvanceReason = null,
             WinningSideId = attack.State.WinningSideId
+        };
+    }
+
+    internal static WatchtowerCombatStepResult CreateSpellAttack(
+        EncounterState startingState,
+        EncounterSpellCastResult spellAttack,
+        IReadOnlyList<WatchtowerCombatDieRoll> dice)
+    {
+        return new WatchtowerCombatStepResult
+        {
+            Kind = WatchtowerCombatStepKind.SpellAttack,
+            StartingEncounterRevision = startingState.Revision,
+            ResultingEncounterRevision = spellAttack.State.Revision,
+            ActorCombatantId = spellAttack.ActorCombatantId,
+            TargetCombatantId = spellAttack.TargetCombatantId,
+            Dice = Array.AsReadOnly(dice.ToArray()),
+            Movement = null,
+            WeaponAttack = null,
+            SpellAttack = spellAttack,
+            ConcentrationCheck = spellAttack.ConcentrationCheck,
+            DeathSavingThrow = null,
+            TurnAdvancement = null,
+            TurnAdvanceReason = null,
+            WinningSideId = spellAttack.State.WinningSideId
         };
     }
 
@@ -66,6 +94,8 @@ internal static class WatchtowerCombatStepFactory
             Dice = Array.AsReadOnly(dice.ToArray()),
             Movement = null,
             WeaponAttack = null,
+            SpellAttack = null,
+            ConcentrationCheck = null,
             DeathSavingThrow = deathSave,
             TurnAdvancement = null,
             TurnAdvanceReason = null,
@@ -88,6 +118,8 @@ internal static class WatchtowerCombatStepFactory
             Dice = Array.Empty<WatchtowerCombatDieRoll>(),
             Movement = null,
             WeaponAttack = null,
+            SpellAttack = null,
+            ConcentrationCheck = null,
             DeathSavingThrow = null,
             TurnAdvancement = turn,
             TurnAdvanceReason = reason,
@@ -115,6 +147,8 @@ internal static class WatchtowerCombatStepFactory
             Dice = Array.Empty<WatchtowerCombatDieRoll>(),
             Movement = null,
             WeaponAttack = null,
+            SpellAttack = null,
+            ConcentrationCheck = null,
             DeathSavingThrow = null,
             TurnAdvancement = null,
             TurnAdvanceReason = null,

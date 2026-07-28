@@ -11,6 +11,7 @@ public sealed record CombatIntentReceipt
         string actorCombatantId,
         IReadOnlyList<GridPosition> path,
         string? weaponId,
+        string? spellId,
         string? targetCombatantId)
     {
         ArgumentNullException.ThrowIfNull(path);
@@ -20,6 +21,7 @@ public sealed record CombatIntentReceipt
         ActorCombatantId = actorCombatantId;
         Path = Array.AsReadOnly(path.ToArray());
         WeaponId = weaponId;
+        SpellId = spellId;
         TargetCombatantId = targetCombatantId;
     }
 
@@ -33,6 +35,8 @@ public sealed record CombatIntentReceipt
     public IReadOnlyList<GridPosition> Path { get; }
 
     public string? WeaponId { get; }
+
+    public string? SpellId { get; }
 
     public string? TargetCombatantId { get; }
 }

@@ -10,7 +10,9 @@ public sealed record CombatTargetOption
         bool isAvailable,
         EncounterActionUnavailabilityReason unavailabilityReason,
         D20RollMode? attackRollMode,
-        int? distanceFeet)
+        int? distanceFeet,
+        Ability? saveAbility = null,
+        int? saveDc = null)
     {
         if (string.IsNullOrWhiteSpace(targetCombatantId))
         {
@@ -32,6 +34,8 @@ public sealed record CombatTargetOption
         UnavailabilityReason = unavailabilityReason;
         AttackRollMode = attackRollMode;
         DistanceFeet = distanceFeet;
+        SaveAbility = saveAbility;
+        SaveDc = saveDc;
     }
 
     public string TargetCombatantId { get; }
@@ -43,4 +47,9 @@ public sealed record CombatTargetOption
     public D20RollMode? AttackRollMode { get; }
 
     public int? DistanceFeet { get; }
+
+    /// Set only for a spell target resolved by a saving throw.
+    public Ability? SaveAbility { get; }
+
+    public int? SaveDc { get; }
 }

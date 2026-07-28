@@ -18,6 +18,11 @@ internal sealed record WatchtowerCombatDecision
     public IReadOnlyList<WatchtowerCombatWeaponAttackOption> WeaponAttacks
     { get; init; } = Array.Empty<WatchtowerCombatWeaponAttackOption>();
 
+    /// One entry per spell the active combatant has prepared. Empty for a
+    /// combatant that carries none.
+    public IReadOnlyList<WatchtowerCombatSpellAttackOption> SpellAttacks
+    { get; init; } = Array.Empty<WatchtowerCombatSpellAttackOption>();
+
     public WatchtowerCombatEndTurnOption? EndTurn { get; init; }
 
     public string? WinningSideId { get; init; }

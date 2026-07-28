@@ -20,6 +20,14 @@ internal sealed record WatchtowerCombatStepResult
 
     public EncounterWeaponAttackResult? WeaponAttack { get; init; }
 
+    public EncounterSpellCastResult? SpellAttack { get; init; }
+
+    /// Set whenever this step damaged a combatant who was concentrating on
+    /// something, whichever kind of step did it. Populated regardless of
+    /// Kind rather than nested under WeaponAttack or SpellAttack, since
+    /// either can trigger one.
+    public EncounterConcentrationCheckResult? ConcentrationCheck { get; init; }
+
     public EncounterDeathSavingThrowResult? DeathSavingThrow { get; init; }
 
     public EncounterTurnAdvancementResult? TurnAdvancement { get; init; }
