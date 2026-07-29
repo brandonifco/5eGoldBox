@@ -1,7 +1,13 @@
-using System;
+using System.Collections.Generic;
 using Godot;
 
-internal sealed class ShellPresentationController : IShellPresentation
+// Split into partials by concern (M8d) — the same 250-line pattern
+// ShellInteractionController and RegionalMapView already adopted. This
+// file keeps exploration presentation and the members shared across all
+// three modes (SetMessage/SetHeader, the constructor). Regional-map
+// state is in ShellPresentationController.RegionalMap.cs, combat state
+// is in ShellPresentationController.Combat.cs.
+internal sealed partial class ShellPresentationController : IShellPresentation
 {
 	// M6b dev proof only: cycles ExplorationView through every scene key
 	// that has a distinct appearance, real image first. Not "the" list of
@@ -17,18 +23,21 @@ internal sealed class ShellPresentationController : IShellPresentation
 	};
 
 	private readonly ExplorationView _explorationView;
-	private readonly Control _regionalMapView;
-	private readonly Control _combatView;
+	private readonly RegionalMapView _regionalMapView;
+	private readonly CombatView _combatView;
 	private readonly HeaderBar _headerBar;
 	private readonly HeaderBar _immersiveHeaderBar;
 	private readonly MessageLog _messageLog;
 	private readonly MessageLog _immersiveMessageLog;
 	private int _explorationVariantIndex;
+	private string _currentSceneKey = ExplorationSceneKeys.OutpostEntrance;
+	private CompassDirection _facing = CompassDirection.North;
+	private IReadOnlyList<string>? _overlayPrompts;
 
 	public ShellPresentationController(
 		ExplorationView explorationView,
-		Control regionalMapView,
-		Control combatView,
+		RegionalMapView regionalMapView,
+		CombatView combatView,
 		HeaderBar headerBar,
 		HeaderBar immersiveHeaderBar,
 		MessageLog messageLog,
@@ -41,11 +50,31 @@ internal sealed class ShellPresentationController : IShellPresentation
 		_immersiveHeaderBar = immersiveHeaderBar;
 		_messageLog = messageLog;
 		_immersiveMessageLog = immersiveMessageLog;
+
+		_regionalMapView.LocationFocused += OnRegionalLocationFocused;
+		_regionalMapView.LocationActivated += OnRegionalLocationActivated;
+		_combatView.CombatantActivated += id => CombatantTargeted?.Invoke(id);
+		_combatView.CellActivated += (x, y) => CombatCellTargeted?.Invoke(x, y);
 	}
 
 	public PresentationMode CurrentMode { get; private set; }
 
 	public void ShowExploration()
+	{
+		ShowExplorationAt(MockRegionalMapContent.Outpost);
+	}
+
+	// M7e: the deterministic regional-map -> exploration transition. Falls
+	// back to the outpost for an unknown ID rather than throwing — this is
+	// presentation, not validation; a real backend would be the one place
+	// entitled to reject an actual illegal destination.
+	public void EnterRegionalLocation(string locationId)
+	{
+		ShowExplorationAt(
+			MockRegionalMapContent.Find(locationId) ?? MockRegionalMapContent.Outpost);
+	}
+
+	private void ShowExplorationAt(RegionalLocationDefinition location)
 	{
 		CurrentMode = PresentationMode.Exploration;
 
@@ -53,12 +82,20 @@ internal sealed class ShellPresentationController : IShellPresentation
 		_regionalMapView.Hide();
 		_combatView.Hide();
 
-		_explorationView.Configure(
-			new ExplorationViewModel(ExplorationSceneKeys.OutpostEntrance));
-		SetHeader("Outpost", "Exploration");
-		SetMessage("You stand at the entrance to the outpost.");
+		_currentSceneKey = location.ExplorationSceneKey;
+		_facing = CompassDirection.North;
+		_overlayPrompts = null;
+		RefreshExplorationView();
+
+		SetHeader(location.Label, "Exploration");
+		SetMessage($"You stand at {location.Label}.");
 	}
 
+	// Real-session variant — a raw sceneKey/location/mode/message rather
+	// than a RegionalLocationDefinition, since a real session's locations
+	// don't come from MockRegionalMapContent's calibrated frontier
+	// content. Still resets facing/overlay prompts the same way, so a
+	// real session gets the same facing/compass badges a mock one does.
 	public void ShowExploration(
 		string sceneKey,
 		string location,
@@ -71,75 +108,59 @@ internal sealed class ShellPresentationController : IShellPresentation
 		_regionalMapView.Hide();
 		_combatView.Hide();
 
-		_explorationView.Configure(new ExplorationViewModel(sceneKey));
+		_currentSceneKey = sceneKey;
+		_facing = CompassDirection.North;
+		_overlayPrompts = null;
+		RefreshExplorationView();
+
 		SetHeader(location, mode);
 		SetMessage(message);
-	}
-
-	public void ShowRegionalMap()
-	{
-		CurrentMode = PresentationMode.RegionalMap;
-
-		_explorationView.Hide();
-		_regionalMapView.Show();
-		_combatView.Hide();
-
-		SetHeader("Wilderness", "Regional Travel");
-		SetMessage("The surrounding region stretches before the party.");
-	}
-
-	// Real journey progress rendered through the existing placeholder Label
-	// (StandardLayout.tscn's RegionalMapView/RegionalMapCenter/
-	// RegionalMapLabel) rather than the spatial marker layout
-	// RegionalMapMarkerViewModel/RegionalMapPointViewModel ultimately imply
-	// — that needs a real map-rendering component (M7a), which this isn't.
-	// "Function before beauty," the same call M6b made for exploration
-	// placeholders, applied one milestone early because the real data
-	// arrived before the real view did.
-	//
-	// LocationMarkers[0]/[1] are relied on being origin/destination in that
-	// order, matching how RealGameSession.DescribeRegionalMap builds them —
-	// not a general contract of RegionalMapViewModel itself.
-	public void ConfigureRegionalMap(RegionalMapViewModel model)
-	{
-		Label label = _regionalMapView.GetNode<Label>(
-			"RegionalMapCenter/RegionalMapLabel");
-
-		if (model.LocationMarkers.Count < 2 || model.PartyMarker is null)
-		{
-			label.Text = "The road stretches ahead.";
-			return;
-		}
-
-		RegionalMapMarkerViewModel origin = model.LocationMarkers[0];
-		RegionalMapMarkerViewModel destination = model.LocationMarkers[1];
-		int percent = (int)Math.Round(model.PartyMarker.Position.X);
-
-		label.Text =
-			$"{origin.Label}  →  {destination.Label}\n{percent}% of the way there";
-	}
-
-	public void ShowCombat()
-	{
-		CurrentMode = PresentationMode.Combat;
-
-		_explorationView.Hide();
-		_regionalMapView.Hide();
-		_combatView.Show();
-
-		SetHeader("Encounter", "Combat");
-		SetMessage("Combat has begun.");
 	}
 
 	public string CycleExplorationVariant()
 	{
 		_explorationVariantIndex =
 			(_explorationVariantIndex + 1) % ExplorationVariantSceneKeys.Length;
-		string sceneKey = ExplorationVariantSceneKeys[_explorationVariantIndex];
+		_currentSceneKey = ExplorationVariantSceneKeys[_explorationVariantIndex];
 
-		_explorationView.Configure(new ExplorationViewModel(sceneKey));
+		RefreshExplorationView();
 
-		return sceneKey;
+		return _currentSceneKey;
+	}
+
+	// M6f: the first real player action (a keypress, not mock data — see
+	// M6d) to change what ExplorationView visibly shows rather than just
+	// printing a message.
+	public void TurnFacing(bool turnLeft)
+	{
+		_facing = turnLeft
+			? CompassDirectionPresentation.TurnLeft(_facing)
+			: CompassDirectionPresentation.TurnRight(_facing);
+
+		RefreshExplorationView();
+	}
+
+	// M6f: local-status presentation as a capability — CommandBar's own
+	// ShowMovementPrompt already communicates the exploration-movement
+	// hint below the viewport, so wiring this to movement mode too would
+	// have shown the same instruction twice on screen at once. No placed
+	// objects/NPCs exist yet to drive it with real content (M6e's own
+	// finding, still true), so this is proven correct without a
+	// production caller — see the milestone doc's M6g entry for how.
+	public void SetOverlayPrompts(IReadOnlyList<string>? prompts)
+	{
+		_overlayPrompts = prompts;
+
+		RefreshExplorationView();
+	}
+
+	private void RefreshExplorationView()
+	{
+		_explorationView.Configure(new ExplorationViewModel(
+			_currentSceneKey,
+			CompassDirectionPresentation.ToFacingText(_facing),
+			CompassDirectionPresentation.ToCompassLetter(_facing),
+			_overlayPrompts));
 	}
 
 	public void SetMessage(string message)

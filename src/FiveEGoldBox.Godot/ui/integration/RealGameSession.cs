@@ -88,7 +88,15 @@ internal sealed class RealGameSession
 	// rather than invented geography — the backend has no concept of map
 	// coordinates for a location, so this doesn't pretend to place things
 	// on a meaningful map, only to show real journey progress between two
-	// named points on a line.
+	// named points on a line. Positions are normalized (0.0-1.0), the same
+	// convention MockRegionalMapContent uses (M7a), so RegionalMapView
+	// renders both through the exact same Configure(RegionalMapViewModel)
+	// — RegionalMapView itself switches off the calibrated Frontier
+	// Region art when it sees this real MapKey (RegionalMapView.cs).
+	private const double TrackOriginX = 0.08;
+	private const double TrackDestinationX = 0.92;
+	private const double TrackY = 0.5;
+
 	private RegionalMapViewModel DescribeRegionalMap()
 	{
 		RegionalTravelState travel = _state.RegionalTravel
@@ -99,24 +107,30 @@ internal sealed class RealGameSession
 			: (double)travel.CurrentStepIndex / travel.FinalStepIndex;
 		string originLabel = _travelOriginDisplayName ?? "Origin";
 		string destinationLabel = _travelDestinationDisplayName ?? "Destination";
+		double partyX = TrackOriginX + (progress * (TrackDestinationX - TrackOriginX));
 
 		return new RegionalMapViewModel(
 			RegionalMapKey,
 			new RegionalMapMarkerViewModel(
 				"party",
 				"Party",
-				new RegionalMapPointViewModel(progress * 100.0, 0)),
+				new RegionalMapPointViewModel(partyX, TrackY)),
 			new[]
 			{
 				new RegionalMapMarkerViewModel(
 					travel.OriginLocationId,
 					originLabel,
-					new RegionalMapPointViewModel(0, 0)),
+					new RegionalMapPointViewModel(TrackOriginX, TrackY)),
 				new RegionalMapMarkerViewModel(
 					travel.DestinationLocationId,
 					destinationLabel,
-					new RegionalMapPointViewModel(100, 0),
+					new RegionalMapPointViewModel(TrackDestinationX, TrackY),
 					Selected: travel.IsComplete),
+			},
+			RoutePreview: new[]
+			{
+				new RegionalMapPointViewModel(TrackOriginX, TrackY),
+				new RegionalMapPointViewModel(partyX, TrackY),
 			});
 	}
 

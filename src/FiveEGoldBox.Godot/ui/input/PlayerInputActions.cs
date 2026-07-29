@@ -18,6 +18,8 @@ internal static class PlayerInputActions
 	public const string TurnRight = "shell_turn_right";
 	public const string ListSelectFirst = "shell_list_select_first";
 	public const string ListSelectLast = "shell_list_select_last";
+	public const string RegionalMapZoomIn = "shell_regional_map_zoom_in";
+	public const string RegionalMapZoomOut = "shell_regional_map_zoom_out";
 	public const string DevShowExplorationView =
 		"shell_dev_show_exploration_view";
 	public const string DevShowRegionalMapView =
@@ -70,6 +72,13 @@ internal static class PlayerInputActions
 
 		Register(ListSelectFirst, new InputEventKey { Keycode = Key.Home });
 		Register(ListSelectLast, new InputEventKey { Keycode = Key.End });
+
+		Register(
+			RegionalMapZoomIn,
+			new InputEventKey { Keycode = Key.Pageup });
+		Register(
+			RegionalMapZoomOut,
+			new InputEventKey { Keycode = Key.Pagedown });
 
 		Register(
 			DevShowExplorationView,

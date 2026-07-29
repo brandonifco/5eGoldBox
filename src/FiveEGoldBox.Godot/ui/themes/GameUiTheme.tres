@@ -232,6 +232,8 @@ corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_combat_marker"]
+
 [resource]
 PresentationSurface/base_type = &"PanelContainer"
 PresentationSurface/styles/panel = SubResource("StyleBoxFlat_presentation_surface")
@@ -372,3 +374,9 @@ ShellSelectionRowButton/styles/hover = SubResource("StyleBoxFlat_command_button_
 ShellSelectionRowButton/styles/pressed = SubResource("StyleBoxFlat_selected_row")
 ShellSelectionRowButton/styles/focus = SubResource("StyleBoxFlat_command_button_focus")
 ShellSelectionRowButton/styles/disabled = SubResource("StyleBoxFlat_command_button_disabled")
+CombatMarkerButton/base_type = &"Button"
+CombatMarkerButton/styles/normal = SubResource("StyleBoxEmpty_combat_marker")
+CombatMarkerButton/styles/hover = SubResource("StyleBoxEmpty_combat_marker")
+CombatMarkerButton/styles/pressed = SubResource("StyleBoxEmpty_combat_marker")
+CombatMarkerButton/styles/focus = SubResource("StyleBoxFlat_command_button_focus")
+CombatMarkerButton/styles/disabled = SubResource("StyleBoxEmpty_combat_marker")

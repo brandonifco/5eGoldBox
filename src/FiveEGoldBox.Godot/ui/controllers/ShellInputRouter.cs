@@ -17,6 +17,8 @@ internal sealed class ShellInputRouter
 	private readonly Action _cycleResolutionPreset;
 	private readonly Action _advanceScriptedSession;
 	private readonly Action _cycleExplorationVariant;
+	private readonly Action<bool> _cycleRegionalMapZoom;
+	private readonly Action _cancelCombatTargeting;
 
 	public ShellInputRouter(
 		IShellInteractionState interactionState,
@@ -32,7 +34,9 @@ internal sealed class ShellInputRouter
 		Action showPreviousMockScenario,
 		Action cycleResolutionPreset,
 		Action advanceScriptedSession,
-		Action cycleExplorationVariant)
+		Action cycleExplorationVariant,
+		Action<bool> cycleRegionalMapZoom,
+		Action cancelCombatTargeting)
 	{
 		_interactionState = interactionState;
 		_toggleImmersiveMode = toggleImmersiveMode;
@@ -48,6 +52,8 @@ internal sealed class ShellInputRouter
 		_cycleResolutionPreset = cycleResolutionPreset;
 		_advanceScriptedSession = advanceScriptedSession;
 		_cycleExplorationVariant = cycleExplorationVariant;
+		_cycleRegionalMapZoom = cycleRegionalMapZoom;
+		_cancelCombatTargeting = cancelCombatTargeting;
 	}
 
 	// Takes the base InputEvent, not InputEventKey, so the same router
@@ -68,9 +74,25 @@ internal sealed class ShellInputRouter
 			return true;
 		}
 
-		return _interactionState.CurrentContext ==
-				ShellInteractionContext.DirectMovement &&
-			HandleExplorationMovementInput(inputEvent);
+		if (_interactionState.CurrentContext ==
+			ShellInteractionContext.DirectMovement)
+		{
+			return HandleExplorationMovementInput(inputEvent);
+		}
+
+		if (_interactionState.CurrentContext ==
+			ShellInteractionContext.SelectionList)
+		{
+			return HandleRegionalMapInput(inputEvent);
+		}
+
+		if (_interactionState.CurrentContext ==
+			ShellInteractionContext.Targeting)
+		{
+			return HandleCombatTargetingInput(inputEvent);
+		}
+
+		return false;
 	}
 
 	private bool HandleDeveloperShortcut(InputEvent inputEvent)
@@ -184,6 +206,42 @@ internal sealed class ShellInputRouter
 		{
 			_reportMovement(
 				new UiCommandIntent(ExplorationMovementCommandIds.TurnRight));
+			return true;
+		}
+
+		return false;
+	}
+
+	// M7b: keyboard zoom, gated to the regional map's own default
+	// context — mouse-wheel zoom is handled locally by RegionalMapView
+	// itself instead, the same way a ScrollContainer handles its own
+	// wheel input without going through this central router.
+	private bool HandleRegionalMapInput(InputEvent inputEvent)
+	{
+		if (inputEvent.IsActionPressed(PlayerInputActions.RegionalMapZoomIn))
+		{
+			_cycleRegionalMapZoom(true);
+			return true;
+		}
+
+		if (inputEvent.IsActionPressed(PlayerInputActions.RegionalMapZoomOut))
+		{
+			_cycleRegionalMapZoom(false);
+			return true;
+		}
+
+		return false;
+	}
+
+	// M8e: cancel out of a pending Move/Attack/Cast/Use target selection
+	// without resolving it — same UiCancel/ExitMovementMode keys as
+	// exploration's own movement-mode cancel.
+	private bool HandleCombatTargetingInput(InputEvent inputEvent)
+	{
+		if (inputEvent.IsActionPressed(PlayerInputActions.UiCancel) ||
+			inputEvent.IsActionPressed(PlayerInputActions.ExitMovementMode))
+		{
+			_cancelCombatTargeting();
 			return true;
 		}
 

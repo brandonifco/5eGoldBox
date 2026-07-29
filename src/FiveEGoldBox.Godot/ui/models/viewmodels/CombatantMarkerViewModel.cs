@@ -4,4 +4,5 @@ internal sealed record CombatantMarkerViewModel(
 	int GridX,
 	int GridY,
 	bool Active = false,
-	bool Selected = false);
+	bool Selected = false,
+	bool IsAlly = true);

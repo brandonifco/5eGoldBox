@@ -1,0 +1,110 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://ui/presentation/RegionalMapView.cs" id="1_regional_map_view"]
+
+[ext_resource type="Texture2D" path="res://images/regional_map_01.png" id="2_regional_map"]
+
+[ext_resource type="PackedScene" uid="uid://g9r3t6w8y2b5d" path="res://ui/components/selection/SelectionList.tscn" id="3_selection_list"]
+
+[ext_resource type="PackedScene" uid="uid://k7v1y3c5f8h2m" path="res://ui/components/tooltips/TooltipPanel.tscn" id="4_tooltip_panel"]
+
+[node name="RegionalMapView" type="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_regional_map_view")
+
+[node name="MapViewport" type="Control" parent="."]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MapContent" type="Control" parent="MapViewport"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PlaceholderBackground" type="ColorRect" parent="MapViewport/MapContent"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.16, 0.18, 0.16, 1)
+
+[node name="RegionalMapImage" type="TextureRect" parent="MapViewport/MapContent"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("2_regional_map")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="RouteOverlay" type="Control" parent="MapViewport/MapContent"]
+unique_name_in_owner = true
+mouse_filter = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarkersLayer" type="Control" parent="MapViewport/MapContent"]
+unique_name_in_owner = true
+mouse_filter = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SelectionPanel" parent="." instance=ExtResource("3_selection_list")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 150)
+layout_mode = 1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -160.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_type_variation = &"ImmersiveOverlayPanel"
+TitleText = "Known Sites"
+EmptyText = "No known sites nearby."
+
+[node name="InspectionPanel" parent="." instance=ExtResource("4_tooltip_panel")]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 1
+offset_left = 12.0
+offset_top = 60.0
+offset_right = 272.0
+offset_bottom = 108.0

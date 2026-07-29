@@ -50,3 +50,95 @@ grow_vertical = 2
 unique_name_in_owner = true
 layout_mode = 2
 text = "Exploration View"
+
+[node name="ExplorationOverlay" type="Control" parent="."]
+mouse_filter = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="OverlayMargin" type="MarginContainer" parent="ExplorationOverlay"]
+mouse_filter = 2
+layout_mode = 2
+theme_type_variation = &"ShellCompactMargin"
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="OverlayStack" type="VBoxContainer" parent="ExplorationOverlay/OverlayMargin"]
+mouse_filter = 2
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StatusRow" type="HBoxContainer" parent="ExplorationOverlay/OverlayMargin/OverlayStack"]
+mouse_filter = 2
+layout_mode = 2
+
+[node name="FacingBadge" type="PanelContainer" parent="ExplorationOverlay/OverlayMargin/OverlayStack/StatusRow"]
+unique_name_in_owner = true
+mouse_filter = 2
+layout_mode = 2
+theme_type_variation = &"ShellStatusBadgePanel"
+
+[node name="FacingBadgeMargin" type="MarginContainer" parent="ExplorationOverlay/OverlayMargin/OverlayStack/StatusRow/FacingBadge"]
+mouse_filter = 2
+layout_mode = 2
+theme_type_variation = &"ShellBadgeMargin"
+
+[node name="FacingLabel" type="Label" parent="ExplorationOverlay/OverlayMargin/OverlayStack/StatusRow/FacingBadge/FacingBadgeMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellSmallStatus"
+text = "Facing North"
+
+[node name="StatusRowSpacer" type="Control" parent="ExplorationOverlay/OverlayMargin/OverlayStack/StatusRow"]
+mouse_filter = 2
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CompassBadge" type="PanelContainer" parent="ExplorationOverlay/OverlayMargin/OverlayStack/StatusRow"]
+unique_name_in_owner = true
+mouse_filter = 2
+layout_mode = 2
+theme_type_variation = &"ShellStatusBadgePanel"
+
+[node name="CompassBadgeMargin" type="MarginContainer" parent="ExplorationOverlay/OverlayMargin/OverlayStack/StatusRow/CompassBadge"]
+mouse_filter = 2
+layout_mode = 2
+theme_type_variation = &"ShellBadgeMargin"
+
+[node name="CompassLabel" type="Label" parent="ExplorationOverlay/OverlayMargin/OverlayStack/StatusRow/CompassBadge/CompassBadgeMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellSmallStatus"
+text = "N"
+
+[node name="OverlayPromptSpacer" type="Control" parent="ExplorationOverlay/OverlayMargin/OverlayStack"]
+mouse_filter = 2
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="OverlayPromptPanel" type="PanelContainer" parent="ExplorationOverlay/OverlayMargin/OverlayStack"]
+unique_name_in_owner = true
+visible = false
+mouse_filter = 2
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"ShellTooltipPanel"
+
+[node name="OverlayPromptMargin" type="MarginContainer" parent="ExplorationOverlay/OverlayMargin/OverlayStack/OverlayPromptPanel"]
+mouse_filter = 2
+layout_mode = 2
+theme_type_variation = &"ShellCompactMargin"
+
+[node name="OverlayPromptLabel" type="Label" parent="ExplorationOverlay/OverlayMargin/OverlayStack/OverlayPromptPanel/OverlayPromptMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+horizontal_alignment = 1
+autowrap_mode = 2

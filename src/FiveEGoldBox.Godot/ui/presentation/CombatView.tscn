@@ -1,0 +1,105 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/presentation/CombatView.cs" id="1_combat_view"]
+
+[ext_resource type="Texture2D" path="res://images/tactical_combat_view_01.png" id="2_combat"]
+
+[node name="CombatView" type="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_combat_view")
+
+[node name="CombatViewport" type="Control" parent="."]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CombatContent" type="Control" parent="CombatViewport"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CombatImage" type="TextureRect" parent="CombatViewport/CombatContent"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("2_combat")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="GridOverlay" type="Control" parent="CombatViewport/CombatContent"]
+unique_name_in_owner = true
+mouse_filter = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HighlightsLayer" type="Control" parent="CombatViewport/CombatContent"]
+unique_name_in_owner = true
+mouse_filter = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CombatantsLayer" type="Control" parent="CombatViewport/CombatContent"]
+unique_name_in_owner = true
+mouse_filter = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ResultBanner" type="CenterContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+mouse_filter = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ResultPanel" type="PanelContainer" parent="ResultBanner"]
+mouse_filter = 2
+custom_minimum_size = Vector2(360, 0)
+theme_type_variation = &"ShellPanel"
+
+[node name="ResultMargin" type="MarginContainer" parent="ResultBanner/ResultPanel"]
+mouse_filter = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="ResultLabel" type="Label" parent="ResultBanner/ResultPanel/ResultMargin"]
+unique_name_in_owner = true
+mouse_filter = 2
+theme_type_variation = &"ShellHeaderLabel"
+horizontal_alignment = 1
+autowrap_mode = 2
+text = ""
