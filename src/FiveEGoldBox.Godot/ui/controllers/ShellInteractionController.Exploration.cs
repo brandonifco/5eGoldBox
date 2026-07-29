@@ -97,6 +97,7 @@ internal sealed partial class ShellInteractionController
 			["view"] = ShowCharacterScreen,
 			["inventory"] = ShowInventoryScreen,
 			["journal"] = ShowJournalScreen,
+			["options"] = ShowOptionsScreen,
 			["cast"] = ShowSpellbookScreen,
 			["area"] = ShowAreaMapScreen,
 			["encamp"] = ShowEncampConfirmation,

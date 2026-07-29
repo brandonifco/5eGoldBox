@@ -47,6 +47,7 @@ internal sealed partial class ShellInteractionController
 			// already applies to Encamp.
 			["inventory"] = ShowInventoryScreen,
 			["journal"] = ShowJournalScreen,
+			["options"] = ShowOptionsScreen,
 		};
 	}
 

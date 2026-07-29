@@ -21,18 +21,24 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 	private readonly IShellCommandBar _commandBarController;
 	private readonly IShellConfirmation _confirmation;
 	private readonly IShellModalScreen _modalScreen;
+	private readonly Func<bool> _isHighContrastTheme;
+	private readonly Func<bool> _isReducedMotion;
 	private readonly Stack<ShellInteractionContext> _contextStack = new();
 
 	public ShellInteractionController(
 		IShellPresentation presentationController,
 		IShellCommandBar commandBarController,
 		IShellConfirmation confirmation,
-		IShellModalScreen modalScreen)
+		IShellModalScreen modalScreen,
+		Func<bool> isHighContrastTheme,
+		Func<bool> isReducedMotion)
 	{
 		_presentationController = presentationController;
 		_commandBarController = commandBarController;
 		_confirmation = confirmation;
 		_modalScreen = modalScreen;
+		_isHighContrastTheme = isHighContrastTheme;
+		_isReducedMotion = isReducedMotion;
 		_contextStack.Push(ShellInteractionContext.CommandMenu);
 
 		_presentationController.CombatantTargeted += OnCombatantTargeted;

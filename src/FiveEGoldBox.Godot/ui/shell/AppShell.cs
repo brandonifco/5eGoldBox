@@ -82,7 +82,11 @@ public partial class AppShell : Control
 			_presentationController,
 			_commandBarController,
 			_confirmationController,
-			_modalScreenController);
+			_modalScreenController,
+			() => _themeController.Settings.ThemeVariant ==
+				UiThemeVariant.HighContrast,
+			() => _themeController.Settings.MotionPreference ==
+				UiMotionPreference.Reduced);
 
 		_scenarioPicker = new MockScenarioPicker();
 		_scriptedSession = new MockScriptedSession();

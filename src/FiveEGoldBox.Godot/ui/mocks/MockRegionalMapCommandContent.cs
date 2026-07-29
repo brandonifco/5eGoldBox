@@ -15,6 +15,7 @@ internal static class MockRegionalMapCommandContent
 				new CommandViewModel("camp", "Camp", "C"),
 				new CommandViewModel("inventory", "Inventory", "I"),
 				new CommandViewModel("journal", "Journal", "J"),
+				new CommandViewModel("options", "Options", "O"),
 			},
 			ShellInteractionContext.SelectionList);
 	}

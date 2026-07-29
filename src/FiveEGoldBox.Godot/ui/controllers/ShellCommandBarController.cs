@@ -10,6 +10,7 @@ internal sealed class ShellCommandBarController : IShellCommandBar
 	private readonly PackedScene _commandButtonScene;
 
 	private bool _showingMovementPrompt;
+	private bool _shortcutsSuppressed;
 	private CommandDefinition[] _currentCommands =
 		Array.Empty<CommandDefinition>();
 
@@ -55,11 +56,31 @@ internal sealed class ShellCommandBarController : IShellCommandBar
 		RenderCommands(
 			_standardCommandBar,
 			_currentCommands,
-			enableShortcuts: !isImmersive);
+			enableShortcuts: !isImmersive && !_shortcutsSuppressed);
 		RenderCommands(
 			_immersiveCommandBar,
 			_currentCommands,
-			enableShortcuts: isImmersive);
+			enableShortcuts: isImmersive && !_shortcutsSuppressed);
+	}
+
+	// A modal screen's own action buttons use the same HotkeyCommandButton/
+	// Shortcut mechanism as the command bar underneath them, and Godot
+	// matches a Shortcut on any visible, enabled button — regardless of
+	// z-order or focus, not just the topmost one. Without suppressing the
+	// bar's own shortcuts while a modal is open, a modal reusing a letter
+	// the bar already bound (e.g. both "Close" and "Cast" on "C") would
+	// trigger both. The backdrop already blocks mouse input to what's
+	// behind it this way; this is the keyboard equivalent.
+	public void SuppressShortcuts()
+	{
+		_shortcutsSuppressed = true;
+		Refresh();
+	}
+
+	public void RestoreShortcuts()
+	{
+		_shortcutsSuppressed = false;
+		Refresh();
 	}
 
 	private void RenderCommands(
