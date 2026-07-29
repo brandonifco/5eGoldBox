@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 public partial class ExplorationView : Control
@@ -5,23 +6,40 @@ public partial class ExplorationView : Control
 	private ColorRect _placeholderBackground = null!;
 	private TextureRect _explorationImage = null!;
 	private Label _label = null!;
+	private Control _facingBadge = null!;
+	private Label _facingLabel = null!;
+	private Control _compassBadge = null!;
+	private Label _compassLabel = null!;
+	private Control _overlayPromptPanel = null!;
+	private Label _overlayPromptLabel = null!;
 
 	public override void _Ready()
 	{
 		_placeholderBackground = GetNode<ColorRect>("%PlaceholderBackground");
 		_explorationImage = GetNode<TextureRect>("%ExplorationImage");
 		_label = GetNode<Label>("%ExplorationLabel");
+		_facingBadge = GetNode<Control>("%FacingBadge");
+		_facingLabel = GetNode<Label>("%FacingLabel");
+		_compassBadge = GetNode<Control>("%CompassBadge");
+		_compassLabel = GetNode<Label>("%CompassLabel");
+		_overlayPromptPanel = GetNode<Control>("%OverlayPromptPanel");
+		_overlayPromptLabel = GetNode<Label>("%OverlayPromptLabel");
 	}
 
 	// M6b: plain colored placeholders for scene keys with no real art yet
 	// ("placeholders are just fine, function before beauty" — explicit
 	// creator direction). The one location with real art (the outpost
-	// entrance) keeps showing its actual image instead. Facing/compass/
-	// overlay-prompt display (M6f) is still deliberately not wired here —
-	// that needs its own creator approval per the governing plan.
+	// entrance) keeps showing its actual image instead.
 	internal void Configure(ExplorationViewModel model)
 	{
-		if (model.SceneKey == ExplorationSceneKeys.OutpostEntrance)
+		ConfigureScene(model.SceneKey);
+		ConfigureFacing(model.FacingIndicatorText, model.CompassText);
+		ConfigureOverlayPrompts(model.OverlayPrompts);
+	}
+
+	private void ConfigureScene(string sceneKey)
+	{
+		if (sceneKey == ExplorationSceneKeys.OutpostEntrance)
 		{
 			_placeholderBackground.Hide();
 			_explorationImage.Show();
@@ -31,8 +49,32 @@ public partial class ExplorationView : Control
 
 		_explorationImage.Hide();
 		_placeholderBackground.Show();
-		_placeholderBackground.Color = ResolvePlaceholderColor(model.SceneKey);
-		_label.Text = ResolveDisplayLabel(model.SceneKey);
+		_placeholderBackground.Color = ResolvePlaceholderColor(sceneKey);
+		_label.Text = ResolveDisplayLabel(sceneKey);
+	}
+
+	// M6f: facing/compass badges and the overlay-prompt panel — the three
+	// ExplorationViewModel fields M6a declared but left unwired pending
+	// creator approval, now that it's given. All three are null/empty by
+	// default, so a caller that never sets them (dev tools cycling scene
+	// keys only) just keeps them hidden, matching prior behavior.
+	private void ConfigureFacing(string? facingIndicatorText, string? compassText)
+	{
+		_facingBadge.Visible = !string.IsNullOrEmpty(facingIndicatorText);
+		_facingLabel.Text = facingIndicatorText ?? string.Empty;
+
+		_compassBadge.Visible = !string.IsNullOrEmpty(compassText);
+		_compassLabel.Text = compassText ?? string.Empty;
+	}
+
+	private void ConfigureOverlayPrompts(IReadOnlyList<string>? overlayPrompts)
+	{
+		bool hasPrompts = overlayPrompts is { Count: > 0 };
+
+		_overlayPromptPanel.Visible = hasPrompts;
+		_overlayPromptLabel.Text = hasPrompts
+			? string.Join("\n", overlayPrompts!)
+			: string.Empty;
 	}
 
 	private static Color ResolvePlaceholderColor(string sceneKey)

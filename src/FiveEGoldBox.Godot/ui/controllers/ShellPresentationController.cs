@@ -15,6 +15,15 @@ internal sealed class ShellPresentationController : IShellPresentation
 		ExplorationSceneKeys.DungeonCorridor,
 	};
 
+	// M6f: the movement-mode hint is the one live overlay-prompt case that
+	// exists right now — no placed objects/NPCs to interact with yet
+	// (M6e's own note), so this is what exercises the mechanism rather
+	// than inventing fake interaction content ahead of it.
+	private static readonly string[] MovementOverlayPrompts =
+	{
+		"ARROWS/NUMPAD TO MOVE — ESC/SPACE TO EXIT",
+	};
+
 	private readonly ExplorationView _explorationView;
 	private readonly Control _regionalMapView;
 	private readonly Control _combatView;
@@ -23,6 +32,9 @@ internal sealed class ShellPresentationController : IShellPresentation
 	private readonly MessageLog _messageLog;
 	private readonly MessageLog _immersiveMessageLog;
 	private int _explorationVariantIndex;
+	private string _currentSceneKey = ExplorationSceneKeys.OutpostEntrance;
+	private CompassDirection _facing = CompassDirection.North;
+	private string[]? _overlayPrompts;
 
 	public ShellPresentationController(
 		ExplorationView explorationView,
@@ -52,8 +64,11 @@ internal sealed class ShellPresentationController : IShellPresentation
 		_regionalMapView.Hide();
 		_combatView.Hide();
 
-		_explorationView.Configure(
-			new ExplorationViewModel(ExplorationSceneKeys.OutpostEntrance));
+		_currentSceneKey = ExplorationSceneKeys.OutpostEntrance;
+		_facing = CompassDirection.North;
+		_overlayPrompts = null;
+		RefreshExplorationView();
+
 		SetHeader("Outpost", "Exploration");
 		SetMessage("You stand at the entrance to the outpost.");
 	}
@@ -86,11 +101,39 @@ internal sealed class ShellPresentationController : IShellPresentation
 	{
 		_explorationVariantIndex =
 			(_explorationVariantIndex + 1) % ExplorationVariantSceneKeys.Length;
-		string sceneKey = ExplorationVariantSceneKeys[_explorationVariantIndex];
+		_currentSceneKey = ExplorationVariantSceneKeys[_explorationVariantIndex];
 
-		_explorationView.Configure(new ExplorationViewModel(sceneKey));
+		RefreshExplorationView();
 
-		return sceneKey;
+		return _currentSceneKey;
+	}
+
+	// M6f: the first real player action (a keypress, not mock data — see
+	// M6d) to change what ExplorationView visibly shows rather than just
+	// printing a message.
+	public void TurnFacing(bool turnLeft)
+	{
+		_facing = turnLeft
+			? CompassDirectionPresentation.TurnLeft(_facing)
+			: CompassDirectionPresentation.TurnRight(_facing);
+
+		RefreshExplorationView();
+	}
+
+	public void SetExplorationMovementOverlayActive(bool active)
+	{
+		_overlayPrompts = active ? MovementOverlayPrompts : null;
+
+		RefreshExplorationView();
+	}
+
+	private void RefreshExplorationView()
+	{
+		_explorationView.Configure(new ExplorationViewModel(
+			_currentSceneKey,
+			CompassDirectionPresentation.ToFacingText(_facing),
+			CompassDirectionPresentation.ToCompassLetter(_facing),
+			_overlayPrompts));
 	}
 
 	public void SetMessage(string message)

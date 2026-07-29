@@ -1,8 +1,16 @@
-using System;
 using System.Collections.Generic;
 using Godot;
 
-internal sealed class ShellInteractionController : IShellInteractionState
+// Split into partials by concern once this crossed the governing plan's
+// 250-line review threshold (§6.3), flagged as "worth watching" back at
+// M6e (244 lines) and crossed by M6f's facing/overlay wiring — same
+// per-concern partial-class convention AppShell itself already uses
+// (AppShell.Presentation.cs, AppShell.Commands.cs, etc.). This file keeps
+// shell navigation and the interaction-context stack; the exploration
+// command shells (View/Cast/Area/Encamp/Search/Look, movement mode) moved
+// to ShellInteractionController.Exploration.cs. Pure code motion — no
+// behavior changed by the split itself.
+internal sealed partial class ShellInteractionController : IShellInteractionState
 {
 	private readonly IShellPresentation _presentationController;
 	private readonly IShellCommandBar _commandBarController;
@@ -109,105 +117,9 @@ internal sealed class ShellInteractionController : IShellInteractionState
 	{
 		PopContext(ShellInteractionContext.DirectMovement);
 
+		_presentationController.SetExplorationMovementOverlayActive(false);
 		_presentationController.SetMessage("Movement mode ended.");
 		ShowExplorationCommands();
-	}
-
-	// M6d: takes the real UiCommandIntent a keypress now constructs
-	// (ShellInputRouter) instead of a raw display string — the first real
-	// player action to reach a UiCommandIntent, not just mock content.
-	public void ReportMovement(UiCommandIntent intent)
-	{
-		_presentationController.SetMessage(
-			$"{DescribeMovement(intent.CommandId)}. " +
-				"Backend movement is not connected yet.");
-	}
-
-	private static string DescribeMovement(string commandId)
-	{
-		return commandId switch
-		{
-			ExplorationMovementCommandIds.MoveForward => "Step forward",
-			ExplorationMovementCommandIds.MoveBackward => "Step backward",
-			ExplorationMovementCommandIds.TurnLeft => "Turn left",
-			ExplorationMovementCommandIds.TurnRight => "Turn right",
-			_ => commandId,
-		};
-	}
-
-	// M6c: driven from CommandSetViewModel data instead of hardcoded
-	// CommandDefinition construction — RegionalMap/Combat above stay
-	// hardcoded on purpose, that's M7/M8's own milestone to do the same.
-	private void ShowExplorationCommands()
-	{
-		CommandSetViewModel commandSet = MockExplorationCommandContent.Current();
-		Dictionary<string, Action> handlers =
-			BuildExplorationCommandHandlers();
-		List<CommandDefinition> commands = new();
-
-		foreach (CommandViewModel commandViewModel in commandSet.Commands)
-		{
-			commands.Add(CommandViewModelTranslator.ToCommandDefinition(
-				commandViewModel,
-				handlers[commandViewModel.CommandId]));
-		}
-
-		_commandBarController.ShowCommands(commands.ToArray());
-	}
-
-	// M6e: each shell is deliberately distinct rather than one generic
-	// "X selected" template — Encamp is a real decision (ConfirmationDialog,
-	// M3's component, first live use outside dev demos), the other five
-	// are one-line placeholder results. Full versions (a real Character
-	// view, Spellbook, Area map) are M9's job; these are shells, not
-	// screens.
-	private Dictionary<string, Action> BuildExplorationCommandHandlers()
-	{
-		return new Dictionary<string, Action>
-		{
-			["move"] = EnterExplorationMovementMode,
-			["view"] = () => _presentationController.SetMessage(
-				"You check the party's status. " +
-					"Detailed character views are not connected yet."),
-			["cast"] = () => _presentationController.SetMessage(
-				"You have no spells ready. " +
-					"Spellcasting is not connected yet."),
-			["area"] = () => _presentationController.SetMessage(
-				"You get your bearings. " +
-					"Area details are not connected yet."),
-			["encamp"] = ShowEncampConfirmation,
-			["search"] = () => _presentationController.SetMessage(
-				"You search the area but find nothing. " +
-					"Search mechanics are not connected yet."),
-			["look"] = () => _presentationController.SetMessage(
-				"You look around. " +
-					"Descriptive detail is not connected yet."),
-		};
-	}
-
-	private void ShowEncampConfirmation()
-	{
-		PushContext(ShellInteractionContext.Confirmation);
-
-		_confirmation.ShowConfirmation(
-			"Encamp",
-			"Rest here and recover?",
-			"Rest",
-			"Cancel",
-			onConfirmed: () => _presentationController.SetMessage(
-				"You make camp and rest. " +
-					"Rest mechanics are not connected yet."),
-			onClosed: () => PopContext(ShellInteractionContext.Confirmation));
-	}
-
-	private void EnterExplorationMovementMode()
-	{
-		PushContext(ShellInteractionContext.DirectMovement);
-
-		_commandBarController.ShowMovementPrompt();
-		_presentationController.SetMessage(
-			"Movement active: arrows or numpad 8/2 move; " +
-			"4/6 turn. Press Esc or Space to return.");
 	}
 
 	private void ReportCommand(string command)
