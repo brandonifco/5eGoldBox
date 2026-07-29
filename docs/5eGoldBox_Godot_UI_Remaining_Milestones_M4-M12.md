@@ -12,6 +12,8 @@ Two things worth knowing before touching M6f onward:
 
 Combat is not wired — every one of the three real scenarios eventually reaches `Encounter` mode, and `ShellInteractionController.ShowRealSession` shows that state honestly ("combat is not connected to the real engine yet") rather than faking a fight. That's the real boundary M8 will need to cross, not a gap in this pass.
 
+**Worth knowing before starting M7a specifically.** PR #172 rendered real regional-travel progress (origin/destination names, percent of the way there) through the *existing* placeholder Label in `RegionalMapView` — `RealGameSession.DescribeRegionalMap` already builds a real `RegionalMapViewModel` (grounded in `RegionalTravelState.CurrentStepIndex`/`FinalStepIndex`, not invented map coordinates — the backend has no spatial layout data for a location at all), and `ShellPresentationController.ConfigureRegionalMap` already consumes it. `RegionalMapView` itself is still bare inline nodes in `StandardLayout.tscn`, never extracted into its own component the way `ExplorationView` was (M6a) — that extraction, plus real spatial marker placement, is still M7a's actual job. When building it, extend `ConfigureRegionalMap`/`DescribeRegionalMap` rather than building a second real-data path alongside them.
+
 ## M4 — Input Router, Focus, and Interaction-State Framework
 
 **Objective:** Make player input deterministic, context-aware, and consistent across the entire UI.
