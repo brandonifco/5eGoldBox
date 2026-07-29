@@ -11,6 +11,7 @@ internal sealed partial class ShellPresentationController
 	private string? _activeCombatantId;
 	private string? _combatSelectedTargetId;
 	private IReadOnlyList<CombatHighlightViewModel>? _combatHighlights;
+	private IReadOnlyList<string>? _combatInformationalOverlays;
 
 	public event Action<string>? CombatantTargeted;
 	public event Action<int, int>? CombatCellTargeted;
@@ -30,10 +31,23 @@ internal sealed partial class ShellPresentationController
 		_activeCombatantId = MockCombatContent.AllyIdsInOrder.First();
 		_combatSelectedTargetId = null;
 		_combatHighlights = null;
-		RefreshCombatView();
+		_combatInformationalOverlays = null;
+		_combatView.Configure(BuildCombatViewModel());
 
 		SetHeader("Frontier Outpost", "Combat");
 		SetMessage("Raiders block the outpost gate!");
+	}
+
+	// M8f: completed-combat presentation — a capability, not yet given a
+	// production trigger, since there is no real win/loss condition to
+	// reach it from (this milestone implements combat presentation, not
+	// combat rules). Verified directly, the same "temporary trigger,
+	// screenshot, revert" technique M6e used for ConfirmationDialog.
+	public void ShowCompletedEncounter(IReadOnlyList<string> informationalOverlays)
+	{
+		_combatHighlights = null;
+		_combatInformationalOverlays = informationalOverlays;
+		RefreshCombatView();
 	}
 
 	public void ShowCombatHighlights(IReadOnlyList<CombatHighlightViewModel>? highlights)
@@ -83,6 +97,11 @@ internal sealed partial class ShellPresentationController
 
 	private void RefreshCombatView()
 	{
+		_combatView.Refresh(BuildCombatViewModel());
+	}
+
+	private CombatViewModel BuildCombatViewModel()
+	{
 		IReadOnlyList<CombatantMarkerViewModel> combatants = _combatCombatants
 			.Select(combatant => combatant with
 			{
@@ -91,12 +110,13 @@ internal sealed partial class ShellPresentationController
 			})
 			.ToList();
 
-		_combatView.Configure(new CombatViewModel(
+		return new CombatViewModel(
 			MockCombatContent.GridWidth,
 			MockCombatContent.GridHeight,
 			combatants,
 			_activeCombatantId,
 			_combatSelectedTargetId,
-			_combatHighlights));
+			_combatHighlights,
+			_combatInformationalOverlays);
 	}
 }
