@@ -11,9 +11,11 @@ public partial class AppShell : Control
 	private StandardLayout _standardLayout = null!;
 	private ImmersiveLayout _immersiveLayout = null!;
 	private ConfirmationDialog _confirmationDialog = null!;
+	private ModalScreenView _modalScreenView = null!;
 
 	private ShellCommandBarController _commandBarController = null!;
 	private ShellConfirmationController _confirmationController = null!;
+	private ShellModalScreenController _modalScreenController = null!;
 	private ShellInputRouter _inputRouter = null!;
 	private ShellInteractionController _interactionController = null!;
 	private ShellLayoutController _layoutController = null!;
@@ -32,6 +34,7 @@ public partial class AppShell : Control
 		_standardLayout = GetNode<StandardLayout>("%StandardLayout");
 		_immersiveLayout = GetNode<ImmersiveLayout>("%ImmersiveLayout");
 		_confirmationDialog = GetNode<ConfirmationDialog>("%ConfirmationDialog");
+		_modalScreenView = GetNode<ModalScreenView>("%ModalScreenView");
 
 		_presentationController = new ShellPresentationController(
 			_standardLayout.ExplorationView,
@@ -72,11 +75,14 @@ public partial class AppShell : Control
 
 		_confirmationController =
 			new ShellConfirmationController(_confirmationDialog);
+		_modalScreenController =
+			new ShellModalScreenController(_modalScreenView);
 
 		_interactionController = new ShellInteractionController(
 			_presentationController,
 			_commandBarController,
-			_confirmationController);
+			_confirmationController,
+			_modalScreenController);
 
 		_scenarioPicker = new MockScenarioPicker();
 		_scriptedSession = new MockScriptedSession();

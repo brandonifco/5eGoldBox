@@ -8,25 +8,31 @@ using System.Collections.Generic;
 // (AppShell.Presentation.cs, AppShell.Commands.cs, etc.). This file keeps
 // shell navigation and the interaction-context stack; the exploration
 // command shells (View/Cast/Area/Encamp/Search/Look, movement mode) moved
-// to ShellInteractionController.Exploration.cs, and the real-session
+// to ShellInteractionController.Exploration.cs, the real-session
 // integration (RealGameSession, PR #170-172) moved to
-// ShellInteractionController.RealSession.cs. Pure code motion — no
+// ShellInteractionController.RealSession.cs, and M9's secondary-screen
+// entry points (Character/Party, Inventory, Spellbook, Journal, Options,
+// Save/Load, location interactions) are in
+// ShellInteractionController.SecondaryScreens.cs. Pure code motion — no
 // behavior changed by the split itself.
 internal sealed partial class ShellInteractionController : IShellInteractionState
 {
 	private readonly IShellPresentation _presentationController;
 	private readonly IShellCommandBar _commandBarController;
 	private readonly IShellConfirmation _confirmation;
+	private readonly IShellModalScreen _modalScreen;
 	private readonly Stack<ShellInteractionContext> _contextStack = new();
 
 	public ShellInteractionController(
 		IShellPresentation presentationController,
 		IShellCommandBar commandBarController,
-		IShellConfirmation confirmation)
+		IShellConfirmation confirmation,
+		IShellModalScreen modalScreen)
 	{
 		_presentationController = presentationController;
 		_commandBarController = commandBarController;
 		_confirmation = confirmation;
+		_modalScreen = modalScreen;
 		_contextStack.Push(ShellInteractionContext.CommandMenu);
 
 		_presentationController.CombatantTargeted += OnCombatantTargeted;

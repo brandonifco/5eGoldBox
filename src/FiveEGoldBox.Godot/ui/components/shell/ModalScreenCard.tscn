@@ -1,0 +1,56 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/components/shell/ModalScreenCard.cs" id="1_modal_screen_card"]
+
+[ext_resource type="PackedScene" uid="uid://g9r3t6w8y2b5d" path="res://ui/components/selection/SelectionList.tscn" id="2_selection_list"]
+
+[node name="ModalScreenCard" type="PanelContainer"]
+custom_minimum_size = Vector2(560, 0)
+theme_type_variation = &"ShellModalPanel"
+script = ExtResource("1_modal_screen_card")
+
+[node name="ScreenMargin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"ShellContentMargin"
+
+[node name="ScreenLayout" type="VBoxContainer" parent="ScreenMargin"]
+layout_mode = 2
+theme_type_variation = &"ShellSectionStack"
+
+[node name="BreadcrumbLabel" type="Label" parent="ScreenMargin/ScreenLayout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Breadcrumb"
+autowrap_mode = 2
+
+[node name="TitleLabel" type="Label" parent="ScreenMargin/ScreenLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellSectionTitle"
+text = "Screen Title"
+autowrap_mode = 2
+
+[node name="BodyLabel" type="Label" parent="ScreenMargin/ScreenLayout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"ShellBodyLabel"
+text = "Body text."
+autowrap_mode = 2
+
+[node name="ItemList" parent="ScreenMargin/ScreenLayout" instance=ExtResource("2_selection_list")]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+theme_type_variation = &"ImmersiveOverlayPanel"
+TitleText = ""
+EmptyText = "Nothing here."
+
+[node name="CommandRow" type="HBoxContainer" parent="ScreenMargin/ScreenLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ShellCommandRow"
+alignment = 2
