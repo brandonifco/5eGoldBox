@@ -94,9 +94,8 @@ internal sealed partial class ShellInteractionController
 		return new Dictionary<string, Action>
 		{
 			["move"] = EnterExplorationMovementMode,
-			["view"] = () => _presentationController.SetMessage(
-				"You check the party's status. " +
-					"Detailed character views are not connected yet."),
+			["view"] = ShowCharacterScreen,
+			["inventory"] = ShowInventoryScreen,
 			["cast"] = () => _presentationController.SetMessage(
 				"You have no spells ready. " +
 					"Spellcasting is not connected yet."),

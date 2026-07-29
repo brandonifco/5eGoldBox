@@ -54,7 +54,20 @@ public partial class ModalScreenView : Control
 		// real first control — the last deferred call in a frame wins.
 		_modalBackdrop.ShowModal(_card, initialFocus: null);
 		_card.Configure(model, commandHandlers);
-		_card.InitialFocusControl?.CallDeferred(Control.MethodName.GrabFocus);
+
+		ModalScreenCard cardToFocus = _card;
+		Callable.From(() =>
+		{
+			if (GodotObject.IsInstanceValid(cardToFocus) && cardToFocus.IsInsideTree())
+			{
+				cardToFocus.FocusInitialControl();
+			}
+		}).CallDeferred();
+	}
+
+	internal void UpdateBody(string? bodyText)
+	{
+		_card?.SetBodyText(bodyText);
 	}
 
 	public void Close()

@@ -33,4 +33,9 @@ internal sealed class ShellModalScreenController : IShellModalScreen
 	{
 		_view.Close();
 	}
+
+	public void UpdateBody(string? bodyText)
+	{
+		_view.UpdateBody(bodyText);
+	}
 }

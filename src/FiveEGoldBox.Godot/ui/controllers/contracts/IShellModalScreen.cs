@@ -11,4 +11,6 @@ internal interface IShellModalScreen
 		Action? onClosed = null);
 
 	void CloseScreen();
+
+	void UpdateBody(string? bodyText);
 }

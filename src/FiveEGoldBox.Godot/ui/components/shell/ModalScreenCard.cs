@@ -24,8 +24,6 @@ public partial class ModalScreenCard : PanelContainer
 	private PackedScene _commandButtonScene = null!;
 	private bool _nodesResolved;
 
-	public Control? InitialFocusControl { get; private set; }
-
 	public override void _Ready()
 	{
 		EnsureNodesResolved();
@@ -96,12 +94,39 @@ public partial class ModalScreenCard : PanelContainer
 		}
 
 		RebuildCommandRow(model.Commands ?? Array.Empty<CommandViewModel>(), commandHandlers);
+	}
 
-		InitialFocusControl = hasItems
-			? _itemList
-			: _commandRow.GetChildCount() > 0
-				? _commandRow.GetChild<Control>(0)
-				: null;
+	// SelectionList itself has FocusMode.None — only its internal row
+	// buttons are focusable — so landing focus on "the list" means asking
+	// it to focus its own selected row (FocusSelected, M4/M7) rather than
+	// grabbing focus on the container directly, which Godot logs as a
+	// silent no-op warning ("this control can't grab focus") rather than
+	// an error, easy to miss without checking stderr.
+	internal void FocusInitialControl()
+	{
+		if (_itemList.Visible)
+		{
+			_itemList.FocusSelected();
+			return;
+		}
+
+		if (_commandRow.GetChildCount() > 0)
+		{
+			_commandRow.GetChild<Control>(0).GrabFocus();
+		}
+	}
+
+	// A lighter update for a list-row focus change alone (e.g. Character's
+	// list picking a different party member to describe) — reuses M7f's
+	// precedent (RegionalMapView.SetSelectedLocation) of not tearing down
+	// and reopening the whole screen just to change what one line of text
+	// says.
+	internal void SetBodyText(string? bodyText)
+	{
+		EnsureNodesResolved();
+
+		_bodyLabel.Text = bodyText ?? string.Empty;
+		_bodyLabel.Visible = !string.IsNullOrWhiteSpace(bodyText);
 	}
 
 	private void RebuildCommandRow(

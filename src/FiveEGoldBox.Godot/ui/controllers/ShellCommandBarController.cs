@@ -82,9 +82,27 @@ internal sealed class ShellCommandBarController : IShellCommandBar
 		// enableShortcuts is true only for the currently visible layout's
 		// bar, so it also gates which bar gets deterministic initial
 		// focus — the hidden layout's bar must not steal it.
-		if (enableShortcuts)
+		if (enableShortcuts && firstButton is not null)
 		{
-			firstButton?.CallDeferred(Control.MethodName.GrabFocus);
+			// Guarded rather than a bare CallDeferred(GrabFocus): if
+			// ShowCommands is called again before this deferred call fires
+			// (e.g. RealGameSession's initial command set immediately
+			// replaced by a mode switch in the same frame — M9's screenshot
+			// harness does exactly this), Clear() above will already have
+			// QueueFree'd this exact button by the time it runs, and
+			// grab_focus on a freed control logs a real engine error
+			// ("!is_inside_tree()") — the same race ModalBackdrop.
+			// RestorePreviousFocus already guards against.
+			HotkeyCommandButton buttonToFocus = firstButton;
+
+			Callable.From(() =>
+			{
+				if (GodotObject.IsInstanceValid(buttonToFocus) &&
+					buttonToFocus.IsInsideTree())
+				{
+					buttonToFocus.GrabFocus();
+				}
+			}).CallDeferred();
 		}
 	}
 
