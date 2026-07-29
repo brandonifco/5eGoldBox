@@ -284,10 +284,31 @@ internal static class CombatViewFactory
                         : targets.FirstOrDefault()?.UnavailabilityReason
                             ?? EncounterActionUnavailabilityReason
                                 .TargetNotParticipant,
-                    targets));
+                    targets,
+                    CreateSpellTargetCombinations(spell, targets)));
         }
 
         return Array.AsReadOnly(spellOptions.ToArray());
+    }
+
+    /// See SpellTargetCombinationRules — WatchtowerCombatDecisionFactory
+    /// builds the same options independently for the write path, so the
+    /// combination algorithm itself lives there rather than here twice.
+    private static IReadOnlyList<CombatTargetCombinationOption>
+        CreateSpellTargetCombinations(
+            SpellAttack spell,
+            IReadOnlyList<CombatTargetOption> targets)
+    {
+        string[] legalTargetIds = targets
+            .Where(target => target.IsAvailable)
+            .Select(target => target.TargetCombatantId)
+            .ToArray();
+
+        return SpellTargetCombinationRules
+            .Create(spell, legalTargetIds)
+            .Select(combination =>
+                new CombatTargetCombinationOption(combination))
+            .ToArray();
     }
 
     private static EncounterParticipantState FindParticipant(

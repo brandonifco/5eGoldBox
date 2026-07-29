@@ -8,7 +8,9 @@ using System.Collections.Generic;
 // (AppShell.Presentation.cs, AppShell.Commands.cs, etc.). This file keeps
 // shell navigation and the interaction-context stack; the exploration
 // command shells (View/Cast/Area/Encamp/Search/Look, movement mode) moved
-// to ShellInteractionController.Exploration.cs. Pure code motion — no
+// to ShellInteractionController.Exploration.cs, and the real-session
+// integration (RealGameSession, PR #170-172) moved to
+// ShellInteractionController.RealSession.cs. Pure code motion — no
 // behavior changed by the split itself.
 internal sealed partial class ShellInteractionController : IShellInteractionState
 {
@@ -70,6 +72,15 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 	public void ExitExplorationMovementMode()
 	{
 		PopContext(ShellInteractionContext.DirectMovement);
+
+		if (_activeRealMovementSession is not null)
+		{
+			RealGameSession session = _activeRealMovementSession;
+
+			_activeRealMovementSession = null;
+			ShowRealSession(session, "Movement mode ended.");
+			return;
+		}
 
 		_presentationController.SetMessage("Movement mode ended.");
 		ShowExplorationCommands();

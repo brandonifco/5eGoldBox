@@ -128,11 +128,11 @@ public sealed class WatchtowerScenarioDefinitionProviderTests
         ScenarioDecisionOptionDefinition accept = Assert.Single(
             decision.Options,
             option => option.OptionId
-                == Outposts.OutpostMissionChoice.AcceptMission.ToString());
+                == "AcceptMission");
         ScenarioDecisionOptionDefinition notYet = Assert.Single(
             decision.Options,
             option => option.OptionId
-                == Outposts.OutpostMissionChoice.NotYet.ToString());
+                == "NotYet");
 
         Assert.Equal(
             WatchtowerScenario.ToProgressId(

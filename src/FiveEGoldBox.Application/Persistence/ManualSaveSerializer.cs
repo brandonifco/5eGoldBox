@@ -161,16 +161,24 @@ public static class ManualSaveSerializer
         if (!IsSaveableMode(session.CurrentMode))
         {
             throw new ArgumentException(
-                "Only outpost, exploration, and scenario-conclusion sessions can be stored in the manual save during this application phase.",
+                "Only outpost, regional-travel, exploration, and scenario-conclusion sessions can be stored in the manual save during this application phase.",
                 nameof(session));
         }
     }
 
+    // RegionalTravelState was always simple, already-resumable data — the V1
+    // DTO and SaveGameMapper have carried it since the format's first
+    // version, in case a mode needed to save mid-journey once one did. The
+    // only reason it couldn't was this gate. Encounter is not here: a
+    // combat's turn order and mid-resolution rolls are not comparably
+    // simple, and V1's ActiveEncounter is still the deliberate empty
+    // placeholder it always was.
     private static bool IsSaveableMode(
         ApplicationMode mode)
     {
         return mode is
             ApplicationMode.Outpost
+            or ApplicationMode.RegionalTravel
             or ApplicationMode.Exploration
             or ApplicationMode.ScenarioConclusion;
     }

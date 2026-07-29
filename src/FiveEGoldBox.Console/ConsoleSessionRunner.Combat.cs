@@ -123,10 +123,19 @@ internal sealed partial class ConsoleSessionRunner
                         selectedOption.SpellAttack
                         ?? throw new InvalidOperationException(
                             "A spell-attack menu option did not contain a spell option.");
-                    CombatTargetOption spellTarget =
-                        selectedOption.Target
-                        ?? throw new InvalidOperationException(
-                            "A spell-attack menu option did not contain a target option.");
+                    (string primaryTargetId,
+                        IReadOnlyList<string> additionalTargetIds) =
+                        selectedOption.TargetCombination is not null
+                            ? (selectedOption.TargetCombination
+                                    .TargetCombatantIds[0],
+                                selectedOption.TargetCombination
+                                    .TargetCombatantIds
+                                    .Skip(1)
+                                    .ToArray())
+                            : (selectedOption.Target?.TargetCombatantId
+                                ?? throw new InvalidOperationException(
+                                    "A spell-attack menu option did not contain a target option."),
+                                Array.Empty<string>());
 
                     CombatResolutionResult castResult =
                         CombatOperations.Execute(
@@ -138,8 +147,9 @@ internal sealed partial class ConsoleSessionRunner
                                 ActorCombatantId =
                                     decision.ActiveCombatantId!,
                                 SpellId = spellAttack.SpellId,
-                                TargetCombatantId =
-                                    spellTarget.TargetCombatantId
+                                TargetCombatantId = primaryTargetId,
+                                AdditionalTargetCombatantIds =
+                                    additionalTargetIds
                             });
 
                     RenderCombatResolution(output, castResult);
@@ -390,6 +400,23 @@ internal sealed partial class ConsoleSessionRunner
                         SpellAttack: spellAttack,
                         Target: target));
             }
+
+            // One additional row per legal set of two or more targets, for
+            // a spell that can reach more than one — a caster who wants to
+            // Bless two allies rather than three chooses which row names
+            // the pair they mean.
+            foreach (CombatTargetCombinationOption combination
+                in spellAttack.TargetCombinations)
+            {
+                options.Add(
+                    new CombatMenuOption(
+                        CreateSpellAttackCombinationLabel(
+                            spellAttack,
+                            combination),
+                        CombatMenuAction.SpellAttack,
+                        SpellAttack: spellAttack,
+                        TargetCombination: combination));
+            }
         }
 
         if (decision.EndTurn!.IsAvailable)
@@ -467,6 +494,13 @@ internal sealed partial class ConsoleSessionRunner
         }
 
         return label;
+    }
+
+    private static string CreateSpellAttackCombinationLabel(
+        CombatSpellAttackOption spellAttack,
+        CombatTargetCombinationOption combination)
+    {
+        return $"Cast {spellAttack.SpellId} on {string.Join(", ", combination.TargetCombatantIds)}";
     }
 
     private static void WriteCombatMenu(
@@ -728,6 +762,14 @@ internal sealed partial class ConsoleSessionRunner
         output.WriteLine($"Damage Dealt: {spellAttack.DamageDealt}");
         output.WriteLine($"Healing Done: {spellAttack.HealingDone}");
 
+        for (int index = 0;
+            index < spellAttack.EffectedCombatantIds.Count;
+            index++)
+        {
+            output.WriteLine(
+                $"Effected Combatant {index + 1}: {spellAttack.EffectedCombatantIds[index]}");
+        }
+
         if (spellAttack.DamagedTarget is null)
         {
             return;
@@ -892,7 +934,8 @@ internal sealed partial class ConsoleSessionRunner
             MovementDestination = null,
         CombatWeaponAttackOption? WeaponAttack = null,
         CombatSpellAttackOption? SpellAttack = null,
-        CombatTargetOption? Target = null);
+        CombatTargetOption? Target = null,
+        CombatTargetCombinationOption? TargetCombination = null);
 
     private sealed record CombatSessionRunResult(
         bool ExitRequested,

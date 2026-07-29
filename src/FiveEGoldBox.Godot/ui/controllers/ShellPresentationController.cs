@@ -91,6 +91,32 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		SetMessage($"You stand at {location.Label}.");
 	}
 
+	// Real-session variant — a raw sceneKey/location/mode/message rather
+	// than a RegionalLocationDefinition, since a real session's locations
+	// don't come from MockRegionalMapContent's calibrated frontier
+	// content. Still resets facing/overlay prompts the same way, so a
+	// real session gets the same facing/compass badges a mock one does.
+	public void ShowExploration(
+		string sceneKey,
+		string location,
+		string mode,
+		string message)
+	{
+		CurrentMode = PresentationMode.Exploration;
+
+		_explorationView.Show();
+		_regionalMapView.Hide();
+		_combatView.Hide();
+
+		_currentSceneKey = sceneKey;
+		_facing = CompassDirection.North;
+		_overlayPrompts = null;
+		RefreshExplorationView();
+
+		SetHeader(location, mode);
+		SetMessage(message);
+	}
+
 	public string CycleExplorationVariant()
 	{
 		_explorationVariantIndex =
@@ -143,7 +169,7 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		_immersiveMessageLog.SetMessage(message);
 	}
 
-	private void SetHeader(string location, string mode)
+	public void SetHeader(string location, string mode)
 	{
 		_headerBar.SetLocationAndMode(location, mode);
 		_immersiveHeaderBar.SetLocationAndMode(location, mode);

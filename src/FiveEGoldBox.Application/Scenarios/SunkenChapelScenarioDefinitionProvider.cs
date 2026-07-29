@@ -164,13 +164,13 @@ internal static class SunkenChapelScenarioDefinitionProvider
             [
                 new ScenarioDecisionOptionDefinition
                 {
-                    OptionId = OutpostMissionChoice.AcceptMission.ToString(),
+                    OptionId = "AcceptMission",
                     DisplayName = "Sign the charter",
                     ResultingProgressId = CharterSigned
                 },
                 new ScenarioDecisionOptionDefinition
                 {
-                    OptionId = OutpostMissionChoice.NotYet.ToString(),
+                    OptionId = "NotYet",
                     DisplayName = "Not yet",
                     ResultingProgressId = null
                 }

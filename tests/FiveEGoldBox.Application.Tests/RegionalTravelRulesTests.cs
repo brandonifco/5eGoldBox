@@ -706,9 +706,9 @@ WatchtowerScenarioProgress
                 RandomValuesConsumed = 12
             };
 
-        return OutpostMissionRules.Resolve(
+        return OutpostDecisionRules.Resolve(
             session,
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
                 .State;
     }
 

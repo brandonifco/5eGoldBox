@@ -93,35 +93,25 @@ public static class SessionView
 
         if (decision is not null)
         {
-            IReadOnlyList<OutpostMissionChoice> available =
-                OutpostMissionRules.GetAvailableChoices(session);
-
             foreach (ScenarioDecisionOptionDefinition option in decision.Options)
             {
-                if (!Enum.TryParse(
-                        option.OptionId,
-                        ignoreCase: false,
-                        out OutpostMissionChoice choice)
-                    || !available.Contains(choice))
-                {
-                    continue;
-                }
-
                 actions.Add(new SessionAction
                 {
                     Kind = SessionActionKind.ResolveOutpostDecision,
                     DisplayName = option.DisplayName,
-                    MissionChoice = choice
+                    DecisionOptionId = option.OptionId
                 });
             }
         }
 
-        if (RegionalTravelRules.CanBeginJourney(session))
+        foreach (TravelRouteDefinition route
+            in RegionalTravelRules.GetAvailableRoutes(session))
         {
             actions.Add(new SessionAction
             {
                 Kind = SessionActionKind.BeginJourney,
-                DisplayName = $"Set out for {FindRouteDestinationName(session, scenario)}"
+                DisplayName = $"Set out for {FindLocationDisplayName(scenario, route.DestinationLocationId)}",
+                RouteId = route.RouteId
             });
         }
     }
@@ -209,19 +199,4 @@ public static class SessionView
             ?? locationId;
     }
 
-    /// Where the open road leads, named as the scenario names it.
-    private static string FindRouteDestinationName(
-        ApplicationSessionState session,
-        ScenarioDefinition scenario)
-    {
-        TravelRouteDefinition? route = scenario.Routes
-            .FirstOrDefault(candidate =>
-                candidate.RequiredProgressIds.Contains(
-                    session.Scenario.ProgressId,
-                    StringComparer.Ordinal));
-
-        return route is null
-            ? "the road"
-            : FindLocationDisplayName(scenario, route.DestinationLocationId);
-    }
 }

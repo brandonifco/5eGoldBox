@@ -457,6 +457,41 @@ internal static partial class CampaignRulesetContent
                     RuleIds.WeaponProperties.Finesse
                 ],
                 ReachFeet = 5
+            },
+
+            // The Hollow Mill's opposition. A natural bite for the rat
+            // swarm and a plain martial cleaver for the miller's thrall —
+            // neither needs a finesse-style property, unlike the two
+            // dexterous foes above.
+            new WeaponDefinition
+            {
+                Id = HollowMillScenarioDefinitionProvider
+                    .RatBiteWeaponId,
+                Name = "Bite",
+                Category = WeaponCategory.Simple,
+                AttackKind = WeaponAttackKind.Melee,
+                Damage = new DamageDice
+                {
+                    Count = 1,
+                    Die = DieType.D4
+                },
+                DamageType = "damage.piercing",
+                ReachFeet = 5
+            },
+            new WeaponDefinition
+            {
+                Id = HollowMillScenarioDefinitionProvider
+                    .ThrallCleaverWeaponId,
+                Name = "Rusted Cleaver",
+                Category = WeaponCategory.Martial,
+                AttackKind = WeaponAttackKind.Melee,
+                Damage = new DamageDice
+                {
+                    Count = 1,
+                    Die = DieType.D8
+                },
+                DamageType = "damage.slashing",
+                ReachFeet = 5
             }
         ];
     }

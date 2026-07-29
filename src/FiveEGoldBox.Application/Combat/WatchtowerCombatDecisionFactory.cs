@@ -237,8 +237,34 @@ internal static class WatchtowerCombatDecisionFactory
             SpellId = spell.SpellId,
             IsAvailable = hasLegalTarget,
             UnavailabilityReason = spellReason,
-            Targets = Array.AsReadOnly(targets)
+            Targets = Array.AsReadOnly(targets),
+            TargetCombinations = CreateSpellTargetCombinations(
+                spell,
+                targets)
         };
+    }
+
+    /// See SpellTargetCombinationRules — CombatViewFactory builds the same
+    /// options independently for the read-only Query() path, so the
+    /// combination algorithm itself lives there rather than here twice.
+    private static IReadOnlyList<WatchtowerCombatTargetCombinationOption>
+        CreateSpellTargetCombinations(
+            SpellAttack spell,
+            IReadOnlyList<WatchtowerCombatTargetOption> targets)
+    {
+        string[] legalTargetIds = targets
+            .Where(target => target.IsAvailable)
+            .Select(target => target.TargetCombatantId)
+            .ToArray();
+
+        return SpellTargetCombinationRules
+            .Create(spell, legalTargetIds)
+            .Select(combination =>
+                new WatchtowerCombatTargetCombinationOption
+                {
+                    TargetCombatantIds = combination
+                })
+            .ToArray();
     }
 
     private static WatchtowerCombatTargetOption CreateSpellTargetOption(

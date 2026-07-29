@@ -14,6 +14,13 @@ public sealed record SessionAction
     public required string DisplayName { get; init; }
 
     /// Set when the action is one of several options on the same decision, so
-    /// the client can pass it back to <see cref="OutpostMissionRules.Resolve"/>.
-    public OutpostMissionChoice? MissionChoice { get; init; }
+    /// the client can pass it back to <see cref="OutpostDecisionRules.Resolve"/>.
+    public string? DecisionOptionId { get; init; }
+
+    /// Set when the action begins a journey along a specific route, so the
+    /// client can pass it back to
+    /// <see cref="FiveEGoldBox.Application.Travel.RegionalTravelRules.BeginJourney"/>.
+    /// Only meaningful when more than one route is open — see
+    /// <see cref="FiveEGoldBox.Application.Travel.RegionalTravelRules.GetAvailableRoutes"/>.
+    public string? RouteId { get; init; }
 }

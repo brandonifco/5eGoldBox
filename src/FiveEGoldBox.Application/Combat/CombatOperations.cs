@@ -98,7 +98,9 @@ public static class CombatOperations
                     ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
                     ActorCombatantId = intent.ActorCombatantId,
                     SpellId = intent.SpellId,
-                    TargetCombatantId = intent.TargetCombatantId
+                    TargetCombatantId = intent.TargetCombatantId,
+                    AdditionalTargetCombatantIds =
+                        intent.AdditionalTargetCombatantIds
                 }));
     }
 

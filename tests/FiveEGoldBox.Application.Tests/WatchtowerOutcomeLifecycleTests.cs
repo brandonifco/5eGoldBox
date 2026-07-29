@@ -59,11 +59,11 @@ public sealed class WatchtowerOutcomeLifecycleTests
         ApplicationSessionState beforeMissionDiscovery = current;
         int cursorBeforeMissionDiscovery =
             current.RandomValuesConsumed;
-        IReadOnlyList<OutpostMissionChoice> availableChoices =
-            OutpostMissionRules.GetAvailableChoices(current);
-        OutpostMissionChoice selectedMissionChoice = Assert.Single(
+        IReadOnlyList<string> availableChoices =
+            OutpostDecisionRules.GetAvailableOptionIds(current);
+        string selectedMissionChoice = Assert.Single(
             availableChoices,
-            choice => choice == OutpostMissionChoice.AcceptMission);
+            choice => choice == "AcceptMission");
 
         Assert.Same(beforeMissionDiscovery, current);
         Assert.Equal(
@@ -75,15 +75,15 @@ public sealed class WatchtowerOutcomeLifecycleTests
             WatchtowerScenario.ProgressOf(current));
         AssertPartyEquals(startingParty, current.Party);
 
-        OutpostMissionResult missionResult =
-            OutpostMissionRules.Resolve(
+        OutpostDecisionResult missionResult =
+            OutpostDecisionRules.Resolve(
                 current,
                 selectedMissionChoice);
         current = missionResult.State;
 
         Assert.Equal(
-            OutpostMissionChoice.AcceptMission,
-            missionResult.Choice);
+            "AcceptMission",
+            missionResult.OptionId);
         Assert.True(missionResult.DidProgressChange);
         Assert.Equal(ApplicationMode.Outpost, current.CurrentMode);
         Assert.Equal(

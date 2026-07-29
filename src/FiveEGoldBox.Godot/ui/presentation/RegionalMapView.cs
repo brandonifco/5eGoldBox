@@ -12,8 +12,17 @@ using Godot;
 // split itself.
 public partial class RegionalMapView : Control
 {
+	// The one map key with real, calibrated art behind it — everything
+	// else (currently just a real session's own two-point journey track,
+	// RealGameSession.DescribeRegionalMap) gets a plain placeholder
+	// background instead, the same ExplorationSceneKeys.OutpostEntrance-
+	// vs-everything-else convention M6b already established, since this
+	// art doesn't correspond to arbitrary real scenario geography.
+	private const string FrontierRegionMapKey = "frontier-region";
+
 	private Control _mapViewport = null!;
 	private Control _mapContent = null!;
+	private ColorRect _placeholderBackground = null!;
 	private TextureRect _mapImage = null!;
 	private Control _routeOverlay = null!;
 	private Control _markersLayer = null!;
@@ -34,6 +43,7 @@ public partial class RegionalMapView : Control
 	{
 		_mapViewport = GetNode<Control>("%MapViewport");
 		_mapContent = GetNode<Control>("%MapContent");
+		_placeholderBackground = GetNode<ColorRect>("%PlaceholderBackground");
 		_mapImage = GetNode<TextureRect>("%RegionalMapImage");
 		_routeOverlay = GetNode<Control>("%RouteOverlay");
 		_markersLayer = GetNode<Control>("%MarkersLayer");
@@ -56,6 +66,10 @@ public partial class RegionalMapView : Control
 		_locationMarkers = model.LocationMarkers;
 		_routePreview = model.RoutePreview;
 		_zoomIndex = 0;
+
+		bool isFrontierRegion = model.MapKey == FrontierRegionMapKey;
+		_mapImage.Visible = isFrontierRegion;
+		_placeholderBackground.Visible = !isFrontierRegion;
 
 		RebuildMarkers();
 		PopulateSelectionList(model.SelectedLocationId);

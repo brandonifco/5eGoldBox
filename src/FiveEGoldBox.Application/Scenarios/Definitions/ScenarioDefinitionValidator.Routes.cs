@@ -14,18 +14,6 @@ internal static partial class ScenarioDefinitionValidator
             "scenario.routes.duplicate_id",
             "route ID");
 
-        // RegionalTravelRules.BeginJourney reads Routes.Single() — a second
-        // route (a return journey, a fork, a choice of approach) passes every
-        // other check here and then throws the first time anyone begins a
-        // journey. Caught here instead, until BeginJourney can actually run
-        // more than one.
-        if (definition.Routes.Count > 1)
-        {
-            issues.Add(Error(
-                "scenario.routes.multiple_routes_unsupported",
-                $"Scenario declares {definition.Routes.Count} routes, but RegionalTravelRules.BeginJourney can only run a single route."));
-        }
-
         HashSet<string> locations = ToSet(
             definition.Locations.Select(location => location.LocationId));
         HashSet<string> progress = ToSet(definition.Progress.ProgressIds);
@@ -60,6 +48,22 @@ internal static partial class ScenarioDefinitionValidator
                 issues.Add(Error(
                     "scenario.routes.circular",
                     $"Route '{route.RouteId}' starts and ends at the same location."));
+            }
+
+            // A route can only be entered in outpost mode, and nothing
+            // currently transitions the party back into that mode once they
+            // have left it — so a route whose origin is not the scenario's
+            // own starting location can never actually be attempted. A real
+            // return journey needs a new transition back into a hub-like
+            // mode from exploration or travel; nothing here builds that yet.
+            if (!string.Equals(
+                route.OriginLocationId,
+                definition.StartingLocationId,
+                StringComparison.Ordinal))
+            {
+                issues.Add(Error(
+                    "scenario.routes.origin_unreachable",
+                    $"Route '{route.RouteId}' originates at '{route.OriginLocationId}', which the party can never be standing in outpost mode — only '{definition.StartingLocationId}' is. This route can never be attempted."));
             }
 
             if (route.FinalStepIndex < 1)

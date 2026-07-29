@@ -64,16 +64,16 @@ internal sealed partial class ConsoleSessionRunner
             switch (selectedOption.Action)
             {
                 case SessionMenuAction.ResolveOutpostDecision:
-                    session = ResolveMissionChoice(
+                    session = ResolveOutpostDecision(
                         output,
                         session,
-                        selectedOption.MissionChoice
+                        selectedOption.DecisionOptionId
                             ?? throw new InvalidOperationException(
-                                "A mission menu option did not contain a mission choice."));
+                                "A decision menu option did not contain an option ID."));
                     break;
                 case SessionMenuAction.BeginJourney:
                     session = RegionalTravelRules
-                        .BeginJourney(session);
+                        .BeginJourney(session, selectedOption.RouteId);
                     output.WriteLine(
                         "Journey begun.");
                     break;
@@ -155,7 +155,8 @@ internal sealed partial class ConsoleSessionRunner
             options.Add(new SessionMenuOption(
                 action.DisplayName,
                 ToMenuAction(action.Kind),
-                action.MissionChoice));
+                action.DecisionOptionId,
+                action.RouteId));
         }
 
         options.Add(
@@ -207,44 +208,21 @@ internal sealed partial class ConsoleSessionRunner
         };
     }
 
-    private static ApplicationSessionState ResolveMissionChoice(
+    private static ApplicationSessionState ResolveOutpostDecision(
         TextWriter output,
         ApplicationSessionState session,
-        OutpostMissionChoice choice)
+        string optionId)
     {
-        OutpostMissionResult result =
-            OutpostMissionRules.Resolve(session, choice);
+        OutpostDecisionResult result =
+            OutpostDecisionRules.Resolve(session, optionId);
 
-        if (result.Choice != choice)
+        if (result.OptionId != optionId)
         {
             throw new InvalidOperationException(
-                "The outpost mission result did not preserve the selected choice.");
+                "The outpost decision result did not preserve the selected option.");
         }
 
-        switch (choice)
-        {
-            case OutpostMissionChoice.AcceptMission:
-                if (!result.DidProgressChange)
-                {
-                    throw new InvalidOperationException(
-                        "Accepting the mission did not report a progress change.");
-                }
-
-                output.WriteLine("Mission accepted.");
-                break;
-            case OutpostMissionChoice.NotYet:
-                if (result.DidProgressChange)
-                {
-                    throw new InvalidOperationException(
-                        "Deferring the mission unexpectedly reported a progress change.");
-                }
-
-                output.WriteLine("Mission deferred.");
-                break;
-            default:
-                throw new InvalidOperationException(
-                    "The selected outpost mission choice is unsupported.");
-        }
+        output.WriteLine("Choice made.");
 
         return result.State;
     }
@@ -268,7 +246,8 @@ internal sealed partial class ConsoleSessionRunner
     private sealed record SessionMenuOption(
         string Label,
         SessionMenuAction Action,
-        OutpostMissionChoice? MissionChoice = null);
+        string? DecisionOptionId = null,
+        string? RouteId = null);
 
     private enum SessionMenuAction
     {

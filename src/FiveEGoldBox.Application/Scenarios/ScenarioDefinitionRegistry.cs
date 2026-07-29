@@ -24,7 +24,9 @@ internal static class ScenarioDefinitionRegistry
             [WatchtowerScenarioContent.ScenarioId] =
                 WatchtowerScenarioDefinitionProvider.Create,
             [SunkenChapelScenarioDefinitionProvider.ScenarioId] =
-                SunkenChapelScenarioDefinitionProvider.Create
+                SunkenChapelScenarioDefinitionProvider.Create,
+            [HollowMillScenarioDefinitionProvider.ScenarioId] =
+                HollowMillScenarioDefinitionProvider.Create
         };
 
     private static readonly ConcurrentDictionary<string, ScenarioDefinition>

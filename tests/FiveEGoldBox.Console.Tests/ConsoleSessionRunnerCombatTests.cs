@@ -1044,34 +1044,51 @@ public sealed class ConsoleSessionRunnerCombatTests
             labels.Add(label);
         }
 
-        foreach ((string spellId, WatchtowerCombatTargetOption target)
-            in GetAvailableSpellTargetPairs(decision))
+        foreach (WatchtowerCombatSpellAttackOption spellAttack
+            in decision.SpellAttacks)
         {
-            string label =
-                $"Cast {spellId} on {target.TargetCombatantId}";
-
-            if (target.DistanceFeet is not null)
+            if (!spellAttack.IsAvailable)
             {
-                label += $" - {target.DistanceFeet} ft";
+                continue;
             }
 
-            if (target.AttackRollMode is not null)
+            foreach (WatchtowerCombatTargetOption target
+                in spellAttack.Targets.Where(
+                    target => target.IsAvailable))
             {
-                label += target.DistanceFeet is null
-                    ? $" - {target.AttackRollMode}"
-                    : $", {target.AttackRollMode}";
+                string label =
+                    $"Cast {spellAttack.SpellId} on {target.TargetCombatantId}";
+
+                if (target.DistanceFeet is not null)
+                {
+                    label += $" - {target.DistanceFeet} ft";
+                }
+
+                if (target.AttackRollMode is not null)
+                {
+                    label += target.DistanceFeet is null
+                        ? $" - {target.AttackRollMode}"
+                        : $", {target.AttackRollMode}";
+                }
+                else if (target.SaveAbility is not null)
+                {
+                    string saveClause =
+                        $"DC {target.SaveDc} {target.SaveAbility} save";
+
+                    label += target.DistanceFeet is null
+                        ? $" - {saveClause}"
+                        : $", {saveClause}";
+                }
+
+                labels.Add(label);
             }
-            else if (target.SaveAbility is not null)
+
+            foreach (WatchtowerCombatTargetCombinationOption combination
+                in spellAttack.TargetCombinations)
             {
-                string saveClause =
-                    $"DC {target.SaveDc} {target.SaveAbility} save";
-
-                label += target.DistanceFeet is null
-                    ? $" - {saveClause}"
-                    : $", {saveClause}";
+                labels.Add(
+                    $"Cast {spellAttack.SpellId} on {string.Join(", ", combination.TargetCombatantIds)}");
             }
-
-            labels.Add(label);
         }
 
         if (decision.EndTurn!.IsAvailable)
@@ -1132,6 +1149,16 @@ public sealed class ConsoleSessionRunnerCombatTests
             .ToArray();
     }
 
+    /// One additional row per legal set of two or more targets — the same
+    /// rows CreateSpellAttackCombinationLabel adds to the real menu, after
+    /// every spell's single-target rows.
+    private static int GetSpellCombinationRowCount(
+        WatchtowerCombatDecision decision)
+    {
+        return decision.SpellAttacks
+            .Sum(spell => spell.TargetCombinations.Count);
+    }
+
     private static int GetMovementCount(
         WatchtowerCombatDecision decision)
     {
@@ -1144,6 +1171,7 @@ public sealed class ConsoleSessionRunnerCombatTests
         Assert.True(decision.EndTurn!.IsAvailable);
         return GetAvailableMovements(decision).Count
             + GetAvailableTargets(decision).Count
+            + GetSpellCombinationRowCount(decision)
             + 1;
     }
 
@@ -1152,6 +1180,7 @@ public sealed class ConsoleSessionRunnerCombatTests
     {
         return GetAvailableMovements(decision).Count
             + GetAvailableTargets(decision).Count
+            + GetSpellCombinationRowCount(decision)
             + (decision.EndTurn!.IsAvailable ? 1 : 0)
             + 1;
     }
@@ -1278,9 +1307,9 @@ public sealed class ConsoleSessionRunnerCombatTests
     {
         ApplicationSessionState current =
             ScenarioSessionFactory.CreateNew("scenario.watchtower", RandomSeed);
-        current = OutpostMissionRules.Resolve(
+        current = OutpostDecisionRules.Resolve(
             current,
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
         .State;
         current = RegionalTravelRules.BeginJourney(
             current);

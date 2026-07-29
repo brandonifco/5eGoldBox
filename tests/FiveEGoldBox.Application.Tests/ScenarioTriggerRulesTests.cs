@@ -604,9 +604,9 @@ WatchtowerScenarioProgress.RaidersDefeated)
                 WatchtowerScenarioContent.ScenarioId,
                 randomSeed: 8675309);
 
-        current = OutpostMissionRules.Resolve(
+        current = OutpostDecisionRules.Resolve(
             current,
-            OutpostMissionChoice.AcceptMission)
+            "AcceptMission")
                 .State;
         current =
             RegionalTravelRules.BeginJourney(

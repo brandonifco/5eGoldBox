@@ -13,6 +13,15 @@ internal sealed partial class ShellInteractionController
 	// M6f: turning now actually rotates the visible facing/compass badges
 	// instead of only ever changing the message text — there is no grid
 	// position yet, so forward/backward still has nothing to move.
+	//
+	// Real-session movement (PR #171, ShellInteractionController.
+	// RealSession.cs's EnterRealMovementMode) is routed to
+	// RealGameSession.SubmitMovement directly rather than the by-ID
+	// Submit dispatch other commands use — movement mode deliberately
+	// never re-renders the command bar between steps, so there is no
+	// fresh snapshot to look a transient command ID up in. Turning still
+	// updates the facing badge either way — that capability postdates
+	// PR #171 and applies just as well to a real session as a mock one.
 	public void ReportMovement(UiCommandIntent intent)
 	{
 		if (intent.CommandId == ExplorationMovementCommandIds.TurnLeft)
@@ -22,6 +31,19 @@ internal sealed partial class ShellInteractionController
 		else if (intent.CommandId == ExplorationMovementCommandIds.TurnRight)
 		{
 			_presentationController.TurnFacing(turnLeft: false);
+		}
+
+		if (_activeRealMovementSession is not null)
+		{
+			string message =
+				_activeRealMovementSession.SubmitMovement(intent.CommandId);
+			RealSessionSnapshot snapshot = _activeRealMovementSession.Describe();
+
+			_presentationController.SetHeader(
+				snapshot.LocationDisplayName,
+				snapshot.ModeLabel);
+			_presentationController.SetMessage(message);
+			return;
 		}
 
 		_presentationController.SetMessage(

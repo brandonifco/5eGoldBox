@@ -651,9 +651,9 @@ public sealed class ConsoleProcessRestartTests
         return action switch
         {
             SessionAction.AcceptMission =>
-                OutpostMissionRules.Resolve(
+                OutpostDecisionRules.Resolve(
                     state,
-                    OutpostMissionChoice.AcceptMission).State,
+                    "AcceptMission").State,
             SessionAction.BeginJourney =>
                 RegionalTravelRules.BeginJourney(state),
             SessionAction.AdvanceTravel =>
@@ -703,15 +703,15 @@ public sealed class ConsoleProcessRestartTests
         switch (state.CurrentMode)
         {
             case ApplicationMode.Outpost:
-                foreach (OutpostMissionChoice choice
-                    in OutpostMissionRules.GetAvailableChoices(state))
+                foreach (string choice
+                    in OutpostDecisionRules.GetAvailableOptionIds(state))
                 {
                     actions.Add(
                         choice switch
                         {
-                            OutpostMissionChoice.AcceptMission =>
+                            "AcceptMission" =>
                                 SessionAction.AcceptMission,
-                            OutpostMissionChoice.NotYet =>
+                            "NotYet" =>
                                 SessionAction.DeferMission,
                             _ => throw new InvalidOperationException(
                                 "The public outpost choice is unsupported by the process-test script builder.")
@@ -883,6 +883,7 @@ public sealed class ConsoleProcessRestartTests
 
                 int selection = movements.Count
                     + GetAvailableTargets(decision).Count
+                    + GetSpellCombinationRowCount(decision)
                     + 1;
                 selections.Add(ToSelection(selection));
                 result = WatchtowerCombatRules.Execute(
@@ -989,6 +990,16 @@ public sealed class ConsoleProcessRestartTests
             .ToArray();
     }
 
+    /// One additional row per legal set of two or more targets — the same
+    /// rows CreateSpellAttackCombinationLabel adds to the real menu, after
+    /// every spell's single-target rows.
+    private static int GetSpellCombinationRowCount(
+        WatchtowerCombatDecision decision)
+    {
+        return decision.SpellAttacks
+            .Sum(spell => spell.TargetCombinations.Count);
+    }
+
     private static int GetCombatExitSelection(
         WatchtowerCombatDecision decision)
     {
@@ -1001,6 +1012,7 @@ public sealed class ConsoleProcessRestartTests
 
         return GetAvailableMovements(decision).Count
             + GetAvailableTargets(decision).Count
+            + GetSpellCombinationRowCount(decision)
             + (decision.EndTurn?.IsAvailable == true ? 1 : 0)
             + 2;
     }
