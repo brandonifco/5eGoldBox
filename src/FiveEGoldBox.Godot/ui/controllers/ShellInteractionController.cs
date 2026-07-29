@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 // Split into partials by concern once this crossed the governing plan's
 // 250-line review threshold (§6.3), flagged as "worth watching" back at
@@ -107,6 +108,20 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 	private void ResetContext(
 		ShellInteractionContext context = ShellInteractionContext.CommandMenu)
 	{
+		// A top-level screen switch (ShowExploration/ShowRegionalMap/
+		// ShowCombat/ShowRealSession, every one of which calls this first)
+		// can happen while a ModalScreen is still open — the F1/F2/F3 dev
+		// view shortcuts are live at all times, not gated by the command-
+		// bar shortcut suppression M9e's ShowModalScreen relies on for
+		// everything else. Found screenshot-verifying M9f: switching
+		// screens this way left the stale modal showing over whatever
+		// loaded underneath it, since ResetContext previously just
+		// discarded the stack without telling ModalScreenView to close.
+		if (_contextStack.Contains(ShellInteractionContext.ModalScreen))
+		{
+			_modalScreen.CloseScreen();
+		}
+
 		_contextStack.Clear();
 		_contextStack.Push(context);
 	}

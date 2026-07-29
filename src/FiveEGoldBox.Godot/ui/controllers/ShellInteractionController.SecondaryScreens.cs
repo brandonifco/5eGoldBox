@@ -122,6 +122,46 @@ internal sealed partial class ShellInteractionController
 			});
 	}
 
+	// M9f: the reusable location-interaction screen — the same
+	// ModalViewModel shape and ShowModalScreen path every other M9 screen
+	// uses, driven by MockLocationInteractionContent instead of a new
+	// component. A no-op for a location with nothing to offer (the
+	// Outpost, Old Mine) rather than a special case at the call site
+	// (ShellInteractionController.RegionalMap.cs's EnterSelectedLocation).
+	//
+	// One handler set covers every wired location kind (shop items are
+	// list rows, activated via onRowActivated; the other three kinds'
+	// single action is a Commands-row button) since a given screen's own
+	// Commands/ListItems only ever reference the subset of these that
+	// actually apply to it.
+	public void ShowLocationInteraction(string locationId)
+	{
+		ModalViewModel? model = MockLocationInteractionContent.ForLocation(locationId);
+
+		if (model is null)
+		{
+			return;
+		}
+
+		ShowModalScreen(
+			model,
+			new Dictionary<string, Action>
+			{
+				["close"] = CloseModalScreen,
+				["rent-room"] = () => _presentationController.SetMessage(
+					"You rent a room for the night. Resting here is not " +
+						"connected to the real engine yet."),
+				["request-healing"] = () => _presentationController.SetMessage(
+					"You make a small donation and receive a blessing. " +
+						"Healing is not connected to the real engine yet."),
+				["charter-passage"] = () => _presentationController.SetMessage(
+					"You charter passage across the lake. Travel here " +
+						"is not connected to the real engine yet."),
+			},
+			onRowActivated: goodId => _presentationController.SetMessage(
+				MockLocationInteractionContent.ShopPurchaseMessage(goodId)));
+	}
+
 	private void ShowModalScreen(
 		ModalViewModel model,
 		IReadOnlyDictionary<string, Action> commandHandlers,

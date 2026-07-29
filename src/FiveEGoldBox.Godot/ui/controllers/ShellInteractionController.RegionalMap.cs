@@ -69,6 +69,13 @@ internal sealed partial class ShellInteractionController
 				RegionalLocationIds.Outpost;
 
 		EnterExploration(() => _presentationController.EnterRegionalLocation(locationId));
+
+		// M9f: arriving at a settlement with a service (Northhold's shop,
+		// Mirefen's inn, etc.) greets the player with it immediately,
+		// layered as a ModalScreen over the exploration view it just
+		// showed — a no-op for locations with nothing to offer (the
+		// Outpost, Old Mine).
+		ShowLocationInteraction(locationId);
 	}
 
 	private RegionalLocationDefinition? CurrentRegionalSelection()
