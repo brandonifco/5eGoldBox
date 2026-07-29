@@ -17,7 +17,7 @@ internal static class MockRegionalMapContent
 		"Frontier Outpost",
 		new RegionalMapPointViewModel(0.374, 0.427),
 		ExplorationSceneKeys.OutpostEntrance,
-		"A fortified waypost where the party's journey begins.");
+		"The party's frontier waypost.");
 
 	public static readonly IReadOnlyList<RegionalLocationDefinition> Locations =
 		new[]
@@ -28,31 +28,31 @@ internal static class MockRegionalMapContent
 				"Northhold",
 				new RegionalMapPointViewModel(0.472, 0.145),
 				ExplorationSceneKeys.TownStreet,
-				"A walled town at the foot of the northern mountains."),
+				"A walled mountain town."),
 			new RegionalLocationDefinition(
 				RegionalLocationIds.OldMine,
 				"Old Mine",
 				new RegionalMapPointViewModel(0.135, 0.330),
 				ExplorationSceneKeys.Cavern,
-				"An abandoned mine cut into the mountainside."),
+				"An abandoned mountainside mine."),
 			new RegionalLocationDefinition(
 				RegionalLocationIds.Mirefen,
 				"Mirefen",
 				new RegionalMapPointViewModel(0.845, 0.175),
 				ExplorationSceneKeys.BuildingInterior,
-				"A small hamlet on the edge of a misty marsh."),
+				"A small hamlet by the marsh."),
 			new RegionalLocationDefinition(
 				RegionalLocationIds.Lakeside,
 				"Lakeside",
 				new RegionalMapPointViewModel(0.108, 0.610),
 				ExplorationSceneKeys.BuildingInterior,
-				"A fishing village on the shore of a quiet lake."),
+				"A fishing village by the lake."),
 			new RegionalLocationDefinition(
 				RegionalLocationIds.Seagate,
 				"Seagate",
 				new RegionalMapPointViewModel(0.690, 0.700),
 				ExplorationSceneKeys.TownStreet,
-				"A busy port town where the river meets the sea."),
+				"A busy port town."),
 		};
 
 	public static RegionalLocationDefinition? Find(string locationId)

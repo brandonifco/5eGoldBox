@@ -105,9 +105,7 @@ public partial class RegionalMapView : Control
 
 		if (_routePreview is { Count: >= 2 })
 		{
-			body += string.IsNullOrEmpty(body)
-				? "A route is shown from the outpost."
-				: " A route is shown from the outpost.";
+			body += string.IsNullOrEmpty(body) ? "Route shown." : " Route shown.";
 		}
 
 		_inspectionPanel.ShowTooltip(selected.Label, body);
