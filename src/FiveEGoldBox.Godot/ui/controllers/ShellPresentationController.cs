@@ -99,6 +99,11 @@ internal sealed class ShellPresentationController : IShellPresentation
 			MockRegionalMapContent.BuildViewModel(locationId).RoutePreview);
 	}
 
+	public void CycleRegionalMapZoom(bool zoomIn)
+	{
+		_regionalMapView.CycleZoom(zoomIn);
+	}
+
 	private void OnRegionalLocationActivated(string locationId)
 	{
 		OnRegionalLocationFocused(locationId);

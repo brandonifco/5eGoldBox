@@ -12,5 +12,7 @@ internal interface IShellPresentation
 
 	void SetOverlayPrompts(IReadOnlyList<string>? prompts);
 
+	void CycleRegionalMapZoom(bool zoomIn);
+
 	void SetMessage(string message);
 }

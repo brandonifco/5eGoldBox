@@ -39,7 +39,11 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 
 	public void ShowRegionalMap()
 	{
-		ResetContext();
+		// M7b: SelectionList, not CommandMenu — the location list/cursor
+		// is this mode's ambient default interaction, the same way
+		// CommandMenu is Exploration's, so zoom keys (gated on this
+		// context in ShellInputRouter) are live as soon as the map shows.
+		ResetContext(ShellInteractionContext.SelectionList);
 		_presentationController.ShowRegionalMap();
 
 		_commandBarController.ShowCommands(
@@ -127,10 +131,11 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 			$"{command} selected. Backend behavior is not connected yet.");
 	}
 
-	private void ResetContext()
+	private void ResetContext(
+		ShellInteractionContext context = ShellInteractionContext.CommandMenu)
 	{
 		_contextStack.Clear();
-		_contextStack.Push(ShellInteractionContext.CommandMenu);
+		_contextStack.Push(context);
 	}
 
 	// Cancel priority is Godot's own unhandled-input order (deepest node
