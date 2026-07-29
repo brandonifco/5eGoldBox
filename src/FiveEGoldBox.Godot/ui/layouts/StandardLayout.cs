@@ -5,7 +5,7 @@ public partial class StandardLayout : MarginContainer
 	public AspectRatioContainer PresentationAspect { get; private set; } = null!;
 	public PanelContainer PresentationSurface { get; private set; } = null!;
 	public ExplorationView ExplorationView { get; private set; } = null!;
-	public Control RegionalMapView { get; private set; } = null!;
+	public RegionalMapView RegionalMapView { get; private set; } = null!;
 	public Control CombatView { get; private set; } = null!;
 	public HeaderBar HeaderBar { get; private set; } = null!;
 	public PartySidebar PartySidebar { get; private set; } = null!;
@@ -19,7 +19,7 @@ public partial class StandardLayout : MarginContainer
 		PresentationSurface =
 			GetNode<PanelContainer>("%PresentationSurface");
 		ExplorationView = GetNode<ExplorationView>("%ExplorationView");
-		RegionalMapView = GetNode<Control>("%RegionalMapView");
+		RegionalMapView = GetNode<RegionalMapView>("%RegionalMapView");
 		CombatView = GetNode<Control>("%CombatView");
 		HeaderBar = GetNode<HeaderBar>("%HeaderBar");
 		PartySidebar = GetNode<PartySidebar>("%PartySidebar");

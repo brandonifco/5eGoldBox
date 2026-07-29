@@ -12,7 +12,7 @@
 
 [ext_resource type="PackedScene" path="res://ui/presentation/ExplorationView.tscn" id="6_exploration_view"]
 
-[ext_resource type="Texture2D" path="res://images/regional_map_01.png" id="7_regional_map"]
+[ext_resource type="PackedScene" path="res://ui/presentation/RegionalMapView.tscn" id="7_regional_map"]
 
 [ext_resource type="Texture2D" path="res://images/tactical_combat_view_01.png" id="8_combat"]
 
@@ -64,40 +64,10 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 1
 
-[node name="RegionalMapView" type="Control" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent"]
+[node name="RegionalMapView" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("7_regional_map")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="RegionalMapCenter" type="CenterContainer" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/RegionalMapView"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="RegionalMapLabel" type="Label" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/RegionalMapView/RegionalMapCenter"]
-layout_mode = 2
-text = "Regional Map View"
-
-[node name="RegionalMapImage" type="TextureRect" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent/RegionalMapView"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture_filter = 1
-texture = ExtResource("7_regional_map")
-expand_mode = 1
-stretch_mode = 0
 
 [node name="CombatView" type="Control" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent"]
 unique_name_in_owner = true
