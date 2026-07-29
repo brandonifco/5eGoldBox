@@ -36,6 +36,16 @@ public partial class CombatView
 		}
 	}
 
+	// Pans/clamps against the full background rect (_combatImage.Size —
+	// the placeholder or the mock art, whichever is showing), exactly
+	// like the pre-isometric version did, NOT the diamond's own smaller,
+	// letterboxed bounding box. The diamond is already centered within
+	// that background by Metrics' own offsetX/offsetY; only the focus
+	// point (below) needed to become isometric-aware. Clamping against
+	// the diamond's bounds instead — tried first, reverted — shifted the
+	// whole content group (background included) to chase the diamond's
+	// center, cutting off the background's own far edge inside the
+	// viewport even at the default zoom level.
 	private void ApplyZoomAndPan()
 	{
 		float zoom = ZoomLevels[_zoomIndex];
@@ -45,7 +55,7 @@ public partial class CombatView
 		Vector2 contentSize = _combatImage.Size * zoom;
 		Vector2 focusPoint = ResolveFocusPoint() * zoom;
 
-		Vector2 offset = viewportSize / 2f - focusPoint;
+		Vector2 offset = (viewportSize / 2f) - focusPoint;
 		Vector2 minOffset = new(
 			Mathf.Min(0, viewportSize.X - contentSize.X),
 			Mathf.Min(0, viewportSize.Y - contentSize.Y));
@@ -61,15 +71,12 @@ public partial class CombatView
 			_combatants.FirstOrDefault(combatant => combatant.Selected) ??
 				_combatants.FirstOrDefault(combatant => combatant.Active);
 
-		Vector2 cellSize = CellSize;
-
 		if (focus is null)
 		{
-			return new Vector2(_gridWidth * cellSize.X, _gridHeight * cellSize.Y) / 2f;
+			// Project(W/2, H/2) is exactly the diamond's own centroid.
+			return Project(_gridWidth / 2f, _gridHeight / 2f);
 		}
 
-		return new Vector2(
-			(focus.GridX + 0.5f) * cellSize.X,
-			(focus.GridY + 0.5f) * cellSize.Y);
+		return Project(focus.GridX + 0.5f, focus.GridY + 0.5f);
 	}
 }

@@ -30,12 +30,43 @@ public partial class CombatHighlightCell : Button
 
 	public override void _Draw()
 	{
-		DrawRect(new Rect2(Vector2.Zero, Size), _fillColor);
-		DrawRect(
-			new Rect2(Vector2.Zero, Size),
-			new Color(_fillColor, 0.9f),
-			filled: false,
-			width: 1.5f);
+		Vector2[] points = DiamondPoints(Size);
+		DrawColoredPolygon(points, _fillColor);
+
+		Vector2[] outline = { points[0], points[1], points[2], points[3], points[0] };
+		DrawPolyline(outline, new Color(_fillColor, 0.9f), width: 1.5f, antialiased: true);
+	}
+
+	private static Vector2[] DiamondPoints(Vector2 size)
+	{
+		Vector2 half = size / 2f;
+		return new[]
+		{
+			new Vector2(half.X, 0f),     // top
+			new Vector2(size.X, half.Y), // right
+			new Vector2(half.X, size.Y), // bottom
+			new Vector2(0f, half.Y),     // left
+		};
+	}
+
+	// A rhombus centered at (half.X, half.Y) with half-extents `half` is
+	// the L1 ("taxicab") unit ball scaled by `half`:
+	// |dx|/half.X + |dy|/half.Y <= 1. Exact for a rhombus, O(1) — no
+	// generic point-in-polygon test needed. Without this override,
+	// Control's default hit-test is the full rectangular bounding box,
+	// so clicking a diamond's invisible corner would wrongly register as
+	// a click on this cell.
+	public override bool _HasPoint(Vector2 point)
+	{
+		Vector2 half = Size / 2f;
+
+		if (half.X <= 0f || half.Y <= 0f)
+		{
+			return false;
+		}
+
+		Vector2 centered = point - half;
+		return (Mathf.Abs(centered.X) / half.X) + (Mathf.Abs(centered.Y) / half.Y) <= 1f;
 	}
 
 	private static (Color Fill, bool Selectable) ResolveStyle(string kind)
