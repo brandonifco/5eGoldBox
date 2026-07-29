@@ -48,6 +48,24 @@ internal sealed class RealGameSession
 		_state = ScenarioSessionFactory.CreateNew(scenarioId, randomSeed);
 	}
 
+	// The state-ownership handoff to RealCombatSession
+	// (ShellInteractionController.RealCombat.cs) — called once, the
+	// moment ShowRealSession first sees ApplicationMode.Encounter. This
+	// class stops being the active owner of _state until ResumeFromCombat
+	// hands it back; it never learns CombatOperations exists, keeping the
+	// combat dependency isolated to RealCombatSession alone.
+	internal ApplicationSessionState HandOffToCombat() => _state;
+
+	// Called once combat concludes (CombatOutcomeRules.Finalize has
+	// already run) — resumes ownership of the post-combat state, which
+	// Finalize already left in Exploration or ScenarioConclusion mode, so
+	// the very next Describe() renders through the existing non-combat
+	// switch cases with no special-casing needed here.
+	internal void ResumeFromCombat(ApplicationSessionState state)
+	{
+		_state = state;
+	}
+
 	internal RealSessionSnapshot Describe()
 	{
 		SessionViewModel view = SessionView.Describe(_state);

@@ -23,6 +23,11 @@ internal interface IShellPresentation
 
 	void ShowCombat();
 
+	// Real-session variant: renders a real encounter's actual battlefield
+	// (grid dimensions, combatants, HP, whose turn it is) rather than
+	// ShowCombat()'s mock content. Call instead of ShowCombat().
+	void ConfigureCombat(CombatViewModel model);
+
 	string? SelectedRegionalLocationId { get; }
 
 	void EnterRegionalLocation(string locationId);

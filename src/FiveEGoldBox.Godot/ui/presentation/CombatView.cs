@@ -14,6 +14,7 @@ public partial class CombatView : Control
 {
 	private Control _combatViewport = null!;
 	private Control _combatContent = null!;
+	private ColorRect _placeholderBackground = null!;
 	private TextureRect _combatImage = null!;
 	private Control _gridOverlay = null!;
 	private Control _highlightsLayer = null!;
@@ -42,6 +43,7 @@ public partial class CombatView : Control
 	{
 		_combatViewport = GetNode<Control>("%CombatViewport");
 		_combatContent = GetNode<Control>("%CombatContent");
+		_placeholderBackground = GetNode<ColorRect>("%PlaceholderBackground");
 		_combatImage = GetNode<TextureRect>("%CombatImage");
 		_gridOverlay = GetNode<Control>("%GridOverlay");
 		_highlightsLayer = GetNode<Control>("%HighlightsLayer");
@@ -72,6 +74,9 @@ public partial class CombatView : Control
 		_gridHeight = model.GridHeight;
 		_combatants = model.Combatants;
 		_highlights = model.Highlights ?? Array.Empty<CombatHighlightViewModel>();
+
+		_combatImage.Visible = model.HasArtBackground;
+		_placeholderBackground.Visible = !model.HasArtBackground;
 
 		RebuildCombatants();
 		RebuildHighlights();

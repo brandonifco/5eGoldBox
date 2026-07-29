@@ -72,12 +72,18 @@ internal sealed partial class ShellInteractionController
 	{
 		PopContext(ShellInteractionContext.Targeting);
 		_pendingCombatCommand = null;
-		_presentationController.ShowCombatHighlights(null);
+		ClearRealCombatTargeting();
 		_presentationController.SetMessage("Cancelled.");
 	}
 
 	private void OnCombatCellTargeted(int gridX, int gridY)
 	{
+		if (_activeCombatSession is not null)
+		{
+			ResolveRealCombatCellTargeted(gridX, gridY);
+			return;
+		}
+
 		if (_pendingCombatCommand != "move")
 		{
 			return;
@@ -93,6 +99,12 @@ internal sealed partial class ShellInteractionController
 
 	private void OnCombatantTargeted(string combatantId)
 	{
+		if (_activeCombatSession is not null)
+		{
+			ResolveRealCombatantTargeted(combatantId);
+			return;
+		}
+
 		if (_pendingCombatCommand is not string commandId)
 		{
 			return;

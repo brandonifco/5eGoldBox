@@ -116,10 +116,11 @@ public partial class AppShell : Control
 		// experience rather than a dev-only path — mock content
 		// (MockScenarioPicker, MockScriptedSession, the F-key dev
 		// shortcuts) still exists unchanged for QA, but starting the app
-		// now plays an actual scenario through the actual engine. Combat
-		// is the one mode this doesn't reach yet — ShellInteractionController
-		// .ShowRealSession shows that honestly rather than faking it, and
-		// every one of the three real scenarios eventually leads there.
+		// now plays an actual scenario through the actual engine,
+		// including tactical combat (RealCombatSession, wired through
+		// ShellInteractionController.RealCombat.cs) for Move, single-
+		// target Weapon Attack, and End Turn — spellcasting and multi-
+		// target attacks are proven at the backend but not wired here yet.
 		_realSession = new RealGameSession(DefaultScenarioId, DefaultRandomSeed);
 		_interactionController.ShowRealSession(_realSession);
 	}

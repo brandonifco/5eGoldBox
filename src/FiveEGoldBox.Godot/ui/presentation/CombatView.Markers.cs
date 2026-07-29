@@ -30,7 +30,9 @@ public partial class CombatView
 				allyIndex,
 				combatant.IsAlly,
 				combatant.Active,
-				combatant.Selected);
+				combatant.Selected,
+				combatant.CurrentHitPoints,
+				combatant.MaximumHitPoints);
 
 			string combatantId = combatant.Id;
 			pin.Pressed += () => CombatantActivated?.Invoke(combatantId);

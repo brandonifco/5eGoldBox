@@ -43,14 +43,10 @@ internal sealed partial class ShellInteractionController
 		switch (snapshot.Mode)
 		{
 			case ApplicationMode.Encounter:
-				ShowCombat();
-				_presentationController.SetHeader(
-					snapshot.LocationDisplayName,
-					"Combat");
-				_presentationController.SetMessage(
-					overrideMessage
-						?? "A fight has begun. Combat is not connected " +
-							"to the real engine yet.");
+				_activeCombatGameSession = session;
+				_activeCombatSession ??=
+					new RealCombatSession(session.HandOffToCombat());
+				ShowRealCombat(snapshot, overrideMessage);
 				return;
 			case ApplicationMode.ScenarioConclusion:
 				_presentationController.ShowExploration(
