@@ -13,6 +13,11 @@ internal interface IShellPresentation
 
 	void ShowRegionalMap();
 
+	// Real-session variant: renders actual journey progress (origin,
+	// destination, how far along) rather than ShowRegionalMap()'s generic
+	// placeholder text. Call after ShowRegionalMap().
+	void ConfigureRegionalMap(RegionalMapViewModel model);
+
 	void ShowCombat();
 
 	void SetMessage(string message);

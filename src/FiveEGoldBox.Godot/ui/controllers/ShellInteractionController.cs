@@ -82,6 +82,13 @@ internal sealed class ShellInteractionController : IShellInteractionState
 				return;
 			case ApplicationMode.RegionalTravel:
 				_presentationController.ShowRegionalMap();
+
+				if (snapshot.Map is not null)
+				{
+					_presentationController.ConfigureRegionalMap(
+						snapshot.Map);
+				}
+
 				_presentationController.SetHeader(
 					snapshot.LocationDisplayName,
 					snapshot.ModeLabel);
