@@ -17,6 +17,10 @@ internal static class MockExplorationCommandContent
 				new CommandViewModel("encamp", "Encamp", "E"),
 				new CommandViewModel("search", "Search", "S"),
 				new CommandViewModel("look", "Look", "L"),
+				// M7e: the return trip to the regional map — every other
+				// letter (M/V/C/A/E/S/L) was already taken, so "Exit"
+				// needed a hotkey that's actually IN the word; X was free.
+				new CommandViewModel("exit", "Exit", "X"),
 			},
 			ShellInteractionContext.CommandMenu);
 	}

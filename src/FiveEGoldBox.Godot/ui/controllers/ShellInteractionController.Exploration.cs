@@ -88,6 +88,11 @@ internal sealed partial class ShellInteractionController
 			["look"] = () => _presentationController.SetMessage(
 				"You look around. " +
 					"Descriptive detail is not connected yet."),
+			// M7e: the deterministic return trip — reuses the same public
+			// ShowRegionalMap() entry point F2/dev and the regional map's
+			// own "Enter" command use, so there is exactly one way this
+			// transition happens, not two.
+			["exit"] = ShowRegionalMap,
 		};
 	}
 

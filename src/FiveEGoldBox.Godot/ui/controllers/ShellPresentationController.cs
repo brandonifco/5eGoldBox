@@ -54,19 +54,34 @@ internal sealed class ShellPresentationController : IShellPresentation
 
 	public void ShowExploration()
 	{
+		ShowExplorationAt(MockRegionalMapContent.Outpost);
+	}
+
+	// M7e: the deterministic regional-map -> exploration transition. Falls
+	// back to the outpost for an unknown ID rather than throwing — this is
+	// presentation, not validation; a real backend would be the one place
+	// entitled to reject an actual illegal destination.
+	public void EnterRegionalLocation(string locationId)
+	{
+		ShowExplorationAt(
+			MockRegionalMapContent.Find(locationId) ?? MockRegionalMapContent.Outpost);
+	}
+
+	private void ShowExplorationAt(RegionalLocationDefinition location)
+	{
 		CurrentMode = PresentationMode.Exploration;
 
 		_explorationView.Show();
 		_regionalMapView.Hide();
 		_combatView.Hide();
 
-		_currentSceneKey = ExplorationSceneKeys.OutpostEntrance;
+		_currentSceneKey = location.ExplorationSceneKey;
 		_facing = CompassDirection.North;
 		_overlayPrompts = null;
 		RefreshExplorationView();
 
-		SetHeader("Outpost", "Exploration");
-		SetMessage("You stand at the entrance to the outpost.");
+		SetHeader(location.Label, "Exploration");
+		SetMessage($"You stand at {location.Label}.");
 	}
 
 	public string? SelectedRegionalLocationId => _selectedRegionalLocationId;

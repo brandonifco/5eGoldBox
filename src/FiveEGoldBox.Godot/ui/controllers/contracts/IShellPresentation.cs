@@ -8,6 +8,10 @@ internal interface IShellPresentation
 
 	void ShowCombat();
 
+	string? SelectedRegionalLocationId { get; }
+
+	void EnterRegionalLocation(string locationId);
+
 	void TurnFacing(bool turnLeft);
 
 	void SetOverlayPrompts(IReadOnlyList<string>? prompts);

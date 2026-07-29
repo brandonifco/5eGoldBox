@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 
@@ -32,8 +33,17 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 
 	public void ShowExploration()
 	{
+		EnterExploration(_presentationController.ShowExploration);
+	}
+
+	// M7e: shared by the boot/dev-shortcut entry point above and the
+	// regional map's "Enter" command (ShellInteractionController.
+	// RegionalMap.cs) — same context reset and command-bar setup either
+	// way, only which presentation call fires differs.
+	private void EnterExploration(Action showPresentation)
+	{
 		ResetContext();
-		_presentationController.ShowExploration();
+		showPresentation();
 		ShowExplorationCommands();
 	}
 
@@ -45,38 +55,7 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 		// context in ShellInputRouter) are live as soon as the map shows.
 		ResetContext(ShellInteractionContext.SelectionList);
 		_presentationController.ShowRegionalMap();
-
-		_commandBarController.ShowCommands(
-			new CommandDefinition(
-				"Travel",
-				"[b]T[/b]ravel",
-				Key.T,
-				() => ReportCommand("Travel")),
-			new CommandDefinition(
-				"Search",
-				"[b]S[/b]earch",
-				Key.S,
-				() => ReportCommand("Search")),
-			new CommandDefinition(
-				"Enter",
-				"[b]E[/b]nter",
-				Key.E,
-				() => ReportCommand("Enter")),
-			new CommandDefinition(
-				"Camp",
-				"[b]C[/b]amp",
-				Key.C,
-				() => ReportCommand("Camp")),
-			new CommandDefinition(
-				"Inventory",
-				"[b]I[/b]nventory",
-				Key.I,
-				() => ReportCommand("Inventory")),
-			new CommandDefinition(
-				"Journal",
-				"[b]J[/b]ournal",
-				Key.J,
-				() => ReportCommand("Journal")));
+		ShowRegionalMapCommands();
 	}
 
 	public void ShowCombat()
