@@ -1,7 +1,13 @@
 using System.Collections.Generic;
 using Godot;
 
-internal sealed class ShellPresentationController : IShellPresentation
+// Split into partials by concern (M8d) — the same 250-line pattern
+// ShellInteractionController and RegionalMapView already adopted. This
+// file keeps exploration presentation and the members shared across all
+// three modes (SetMessage/SetHeader, the constructor). Regional-map
+// state is in ShellPresentationController.RegionalMap.cs, combat state
+// is in ShellPresentationController.Combat.cs.
+internal sealed partial class ShellPresentationController : IShellPresentation
 {
 	// M6b dev proof only: cycles ExplorationView through every scene key
 	// that has a distinct appearance, real image first. Not "the" list of
@@ -27,7 +33,6 @@ internal sealed class ShellPresentationController : IShellPresentation
 	private string _currentSceneKey = ExplorationSceneKeys.OutpostEntrance;
 	private CompassDirection _facing = CompassDirection.North;
 	private IReadOnlyList<string>? _overlayPrompts;
-	private string? _selectedRegionalLocationId;
 
 	public ShellPresentationController(
 		ExplorationView explorationView,
@@ -48,6 +53,8 @@ internal sealed class ShellPresentationController : IShellPresentation
 
 		_regionalMapView.LocationFocused += OnRegionalLocationFocused;
 		_regionalMapView.LocationActivated += OnRegionalLocationActivated;
+		_combatView.CombatantActivated += id => CombatantTargeted?.Invoke(id);
+		_combatView.CellActivated += (x, y) => CombatCellTargeted?.Invoke(x, y);
 	}
 
 	public PresentationMode CurrentMode { get; private set; }
@@ -82,63 +89,6 @@ internal sealed class ShellPresentationController : IShellPresentation
 
 		SetHeader(location.Label, "Exploration");
 		SetMessage($"You stand at {location.Label}.");
-	}
-
-	public string? SelectedRegionalLocationId => _selectedRegionalLocationId;
-
-	public void ShowRegionalMap()
-	{
-		CurrentMode = PresentationMode.RegionalMap;
-
-		_explorationView.Hide();
-		_regionalMapView.Show();
-		_combatView.Hide();
-
-		_selectedRegionalLocationId = null;
-		_regionalMapView.Configure(MockRegionalMapContent.BuildViewModel(null));
-
-		SetHeader("Frontier Region", "Regional Travel");
-		SetMessage("The surrounding region stretches before the party.");
-	}
-
-	// M7a: SelectionList (the view's own component) owns cursor movement;
-	// this just keeps the map's pins/route-preview and this controller's
-	// notion of "what's current" in sync with it, the same reactive-view
-	// pattern ExplorationView already uses for facing (M6f) — the view
-	// never tracks its own state, it is only ever told what to show.
-	private void OnRegionalLocationFocused(string locationId)
-	{
-		_selectedRegionalLocationId = locationId;
-		_regionalMapView.SetSelectedLocation(
-			locationId,
-			MockRegionalMapContent.BuildViewModel(locationId).RoutePreview);
-	}
-
-	public void CycleRegionalMapZoom(bool zoomIn)
-	{
-		_regionalMapView.CycleZoom(zoomIn);
-	}
-
-	private void OnRegionalLocationActivated(string locationId)
-	{
-		OnRegionalLocationFocused(locationId);
-
-		RegionalLocationDefinition? location = MockRegionalMapContent.Find(locationId);
-		SetMessage($"{location?.Label ?? locationId} selected as destination.");
-	}
-
-	public void ShowCombat()
-	{
-		CurrentMode = PresentationMode.Combat;
-
-		_explorationView.Hide();
-		_regionalMapView.Hide();
-		_combatView.Show();
-
-		_combatView.Configure(MockCombatContent.BuildViewModel());
-
-		SetHeader("Frontier Outpost", "Combat");
-		SetMessage("Raiders block the outpost gate!");
 	}
 
 	public string CycleExplorationVariant()

@@ -89,7 +89,8 @@ public partial class AppShell : Control
 			CycleResolutionPreset,
 			AdvanceScriptedSession,
 			CycleExplorationVariant,
-			_presentationController.CycleRegionalMapZoom);
+			_presentationController.CycleRegionalMapZoom,
+			_interactionController.CancelCombatTargeting);
 
 		_themeController.Initialize();
 		_layoutController.Initialize();

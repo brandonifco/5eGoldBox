@@ -18,6 +18,7 @@ internal sealed class ShellInputRouter
 	private readonly Action _advanceScriptedSession;
 	private readonly Action _cycleExplorationVariant;
 	private readonly Action<bool> _cycleRegionalMapZoom;
+	private readonly Action _cancelCombatTargeting;
 
 	public ShellInputRouter(
 		IShellInteractionState interactionState,
@@ -34,7 +35,8 @@ internal sealed class ShellInputRouter
 		Action cycleResolutionPreset,
 		Action advanceScriptedSession,
 		Action cycleExplorationVariant,
-		Action<bool> cycleRegionalMapZoom)
+		Action<bool> cycleRegionalMapZoom,
+		Action cancelCombatTargeting)
 	{
 		_interactionState = interactionState;
 		_toggleImmersiveMode = toggleImmersiveMode;
@@ -51,6 +53,7 @@ internal sealed class ShellInputRouter
 		_advanceScriptedSession = advanceScriptedSession;
 		_cycleExplorationVariant = cycleExplorationVariant;
 		_cycleRegionalMapZoom = cycleRegionalMapZoom;
+		_cancelCombatTargeting = cancelCombatTargeting;
 	}
 
 	// Takes the base InputEvent, not InputEventKey, so the same router
@@ -81,6 +84,12 @@ internal sealed class ShellInputRouter
 			ShellInteractionContext.SelectionList)
 		{
 			return HandleRegionalMapInput(inputEvent);
+		}
+
+		if (_interactionState.CurrentContext ==
+			ShellInteractionContext.Targeting)
+		{
+			return HandleCombatTargetingInput(inputEvent);
 		}
 
 		return false;
@@ -218,6 +227,21 @@ internal sealed class ShellInputRouter
 		if (inputEvent.IsActionPressed(PlayerInputActions.RegionalMapZoomOut))
 		{
 			_cycleRegionalMapZoom(false);
+			return true;
+		}
+
+		return false;
+	}
+
+	// M8e: cancel out of a pending Move/Attack/Cast/Use target selection
+	// without resolving it — same UiCancel/ExitMovementMode keys as
+	// exploration's own movement-mode cancel.
+	private bool HandleCombatTargetingInput(InputEvent inputEvent)
+	{
+		if (inputEvent.IsActionPressed(PlayerInputActions.UiCancel) ||
+			inputEvent.IsActionPressed(PlayerInputActions.ExitMovementMode))
+		{
+			_cancelCombatTargeting();
 			return true;
 		}
 

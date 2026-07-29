@@ -62,4 +62,39 @@ internal static class MockCombatContent
 			new CombatantMarkerViewModel(
 				"raider-2", "Raider", 11, 6, IsAlly: false),
 		};
+
+	public static IEnumerable<string> AllyIdsInOrder =>
+		Combatants.Where(combatant => combatant.IsAlly).Select(combatant => combatant.Id);
+
+	public static CombatantMarkerViewModel? Find(string combatantId) =>
+		Combatants.FirstOrDefault(combatant => combatant.Id == combatantId);
+
+	// M8e: presentation-only move range — the four orthogonal neighbors
+	// of the active combatant, clamped to the grid. Not a real movement
+	// rule (no terrain, no occupied-cell check, no speed) — this milestone
+	// implements combat *presentation*, not combat rules.
+	public static IReadOnlyList<CombatHighlightViewModel> MoveRangeHighlights(
+		CombatantMarkerViewModel active)
+	{
+		(int dx, int dy)[] offsets = { (0, -1), (0, 1), (-1, 0), (1, 0) };
+
+		return offsets
+			.Select(offset => (X: active.GridX + offset.dx, Y: active.GridY + offset.dy))
+			.Where(cell => cell.X >= 0 && cell.X < GridWidth &&
+				cell.Y >= 0 && cell.Y < GridHeight)
+			.Select(cell => new CombatHighlightViewModel(cell.X, cell.Y, "move-range"))
+			.ToList();
+	}
+
+	// M8e: every combatant on the other side of the given one is a
+	// "valid target" here — again presentation only, no line-of-sight or
+	// range rule behind it.
+	public static IReadOnlyList<CombatHighlightViewModel> TargetHighlights(bool targetAllies)
+	{
+		return Combatants
+			.Where(combatant => combatant.IsAlly == targetAllies)
+			.Select(combatant => new CombatHighlightViewModel(
+				combatant.GridX, combatant.GridY, "valid-target"))
+			.ToList();
+	}
 }

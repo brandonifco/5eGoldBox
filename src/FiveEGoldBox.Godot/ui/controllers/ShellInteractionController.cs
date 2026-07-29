@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Godot;
 
 // Split into partials by concern once this crossed the governing plan's
 // 250-line review threshold (§6.3), flagged as "worth watching" back at
@@ -27,6 +26,9 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 		_commandBarController = commandBarController;
 		_confirmation = confirmation;
 		_contextStack.Push(ShellInteractionContext.CommandMenu);
+
+		_presentationController.CombatantTargeted += OnCombatantTargeted;
+		_presentationController.CombatCellTargeted += OnCombatCellTargeted;
 	}
 
 	public ShellInteractionContext CurrentContext => _contextStack.Peek();
@@ -62,38 +64,7 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 	{
 		ResetContext();
 		_presentationController.ShowCombat();
-
-		_commandBarController.ShowCommands(
-			new CommandDefinition(
-				"Move",
-				"[b]M[/b]ove",
-				Key.M,
-				() => ReportCommand("Combat movement")),
-			new CommandDefinition(
-				"Attack",
-				"[b]A[/b]ttack",
-				Key.A,
-				() => ReportCommand("Attack")),
-			new CommandDefinition(
-				"Cast",
-				"[b]C[/b]ast",
-				Key.C,
-				() => ReportCommand("Cast")),
-			new CommandDefinition(
-				"Use",
-				"[b]U[/b]se",
-				Key.U,
-				() => ReportCommand("Use")),
-			new CommandDefinition(
-				"Defend",
-				"[b]D[/b]efend",
-				Key.D,
-				() => ReportCommand("Defend")),
-			new CommandDefinition(
-				"End Turn",
-				"[b]E[/b]nd Turn",
-				Key.E,
-				() => ReportCommand("End turn")));
+		ShowCombatCommands();
 	}
 
 	public void ExitExplorationMovementMode()
