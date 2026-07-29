@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 internal sealed class ShellPresentationController : IShellPresentation
@@ -15,15 +16,6 @@ internal sealed class ShellPresentationController : IShellPresentation
 		ExplorationSceneKeys.DungeonCorridor,
 	};
 
-	// M6f: the movement-mode hint is the one live overlay-prompt case that
-	// exists right now — no placed objects/NPCs to interact with yet
-	// (M6e's own note), so this is what exercises the mechanism rather
-	// than inventing fake interaction content ahead of it.
-	private static readonly string[] MovementOverlayPrompts =
-	{
-		"ARROWS/NUMPAD TO MOVE — ESC/SPACE TO EXIT",
-	};
-
 	private readonly ExplorationView _explorationView;
 	private readonly Control _regionalMapView;
 	private readonly Control _combatView;
@@ -34,7 +26,7 @@ internal sealed class ShellPresentationController : IShellPresentation
 	private int _explorationVariantIndex;
 	private string _currentSceneKey = ExplorationSceneKeys.OutpostEntrance;
 	private CompassDirection _facing = CompassDirection.North;
-	private string[]? _overlayPrompts;
+	private IReadOnlyList<string>? _overlayPrompts;
 
 	public ShellPresentationController(
 		ExplorationView explorationView,
@@ -120,9 +112,16 @@ internal sealed class ShellPresentationController : IShellPresentation
 		RefreshExplorationView();
 	}
 
-	public void SetExplorationMovementOverlayActive(bool active)
+	// M6f: local-status presentation as a capability — CommandBar's own
+	// ShowMovementPrompt already communicates the exploration-movement
+	// hint below the viewport, so wiring this to movement mode too would
+	// have shown the same instruction twice on screen at once. No placed
+	// objects/NPCs exist yet to drive it with real content (M6e's own
+	// finding, still true), so this is proven correct without a
+	// production caller — see the milestone doc's M6g entry for how.
+	public void SetOverlayPrompts(IReadOnlyList<string>? prompts)
 	{
-		_overlayPrompts = active ? MovementOverlayPrompts : null;
+		_overlayPrompts = prompts;
 
 		RefreshExplorationView();
 	}

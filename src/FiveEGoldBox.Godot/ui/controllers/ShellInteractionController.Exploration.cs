@@ -111,7 +111,6 @@ internal sealed partial class ShellInteractionController
 		PushContext(ShellInteractionContext.DirectMovement);
 
 		_commandBarController.ShowMovementPrompt();
-		_presentationController.SetExplorationMovementOverlayActive(true);
 		_presentationController.SetMessage(
 			"Movement active: arrows or numpad 8/2 move; " +
 			"4/6 turn. Press Esc or Space to return.");

@@ -117,7 +117,6 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 	{
 		PopContext(ShellInteractionContext.DirectMovement);
 
-		_presentationController.SetExplorationMovementOverlayActive(false);
 		_presentationController.SetMessage("Movement mode ended.");
 		ShowExplorationCommands();
 	}

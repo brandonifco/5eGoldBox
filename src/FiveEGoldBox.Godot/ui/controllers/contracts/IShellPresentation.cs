@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 internal interface IShellPresentation
 {
 	void ShowExploration();
@@ -8,7 +10,7 @@ internal interface IShellPresentation
 
 	void TurnFacing(bool turnLeft);
 
-	void SetExplorationMovementOverlayActive(bool active);
+	void SetOverlayPrompts(IReadOnlyList<string>? prompts);
 
 	void SetMessage(string message);
 }
