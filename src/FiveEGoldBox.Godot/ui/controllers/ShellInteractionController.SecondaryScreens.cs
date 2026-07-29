@@ -37,6 +37,33 @@ internal sealed partial class ShellInteractionController
 			new Dictionary<string, Action> { ["close"] = CloseModalScreen });
 	}
 
+	// M9c: "Cast" already existed as an Exploration command (M6c) and only
+	// ever printed a placeholder message. Activating a spell in the list
+	// (Enter/click, not just focus) reports a real "readied" message
+	// through the shared message log behind the still-open screen — the
+	// same honesty other unconnected shells use, just reachable per-item
+	// here instead of only on the screen as a whole.
+	public void ShowSpellbookScreen()
+	{
+		ShowModalScreen(
+			MockSecondaryScreenContent.Spellbook(),
+			new Dictionary<string, Action> { ["close"] = CloseModalScreen },
+			onRowFocused: spellId => _modalScreen.UpdateBody(
+				MockSecondaryScreenContent.DescribeSpell(spellId)),
+			onRowActivated: spellId => _presentationController.SetMessage(
+				MockSecondaryScreenContent.ReadySpellMessage(spellId)));
+	}
+
+	// M9c: "Area" already existed as an Exploration command (M6c) and only
+	// ever printed a placeholder message — a body-text-only screen, no
+	// list, same shared shell either way.
+	public void ShowAreaMapScreen()
+	{
+		ShowModalScreen(
+			MockSecondaryScreenContent.AreaMap(),
+			new Dictionary<string, Action> { ["close"] = CloseModalScreen });
+	}
+
 	private void ShowModalScreen(
 		ModalViewModel model,
 		IReadOnlyDictionary<string, Action> commandHandlers,

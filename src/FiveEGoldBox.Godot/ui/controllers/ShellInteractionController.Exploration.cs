@@ -96,12 +96,8 @@ internal sealed partial class ShellInteractionController
 			["move"] = EnterExplorationMovementMode,
 			["view"] = ShowCharacterScreen,
 			["inventory"] = ShowInventoryScreen,
-			["cast"] = () => _presentationController.SetMessage(
-				"You have no spells ready. " +
-					"Spellcasting is not connected yet."),
-			["area"] = () => _presentationController.SetMessage(
-				"You get your bearings. " +
-					"Area details are not connected yet."),
+			["cast"] = ShowSpellbookScreen,
+			["area"] = ShowAreaMapScreen,
 			["encamp"] = ShowEncampConfirmation,
 			["search"] = () => _presentationController.SetMessage(
 				"You search the area but find nothing. " +
