@@ -18,7 +18,7 @@ internal sealed class ShellPresentationController : IShellPresentation
 
 	private readonly ExplorationView _explorationView;
 	private readonly RegionalMapView _regionalMapView;
-	private readonly Control _combatView;
+	private readonly CombatView _combatView;
 	private readonly HeaderBar _headerBar;
 	private readonly HeaderBar _immersiveHeaderBar;
 	private readonly MessageLog _messageLog;
@@ -32,7 +32,7 @@ internal sealed class ShellPresentationController : IShellPresentation
 	public ShellPresentationController(
 		ExplorationView explorationView,
 		RegionalMapView regionalMapView,
-		Control combatView,
+		CombatView combatView,
 		HeaderBar headerBar,
 		HeaderBar immersiveHeaderBar,
 		MessageLog messageLog,
@@ -135,8 +135,10 @@ internal sealed class ShellPresentationController : IShellPresentation
 		_regionalMapView.Hide();
 		_combatView.Show();
 
-		SetHeader("Encounter", "Combat");
-		SetMessage("Combat has begun.");
+		_combatView.Configure(MockCombatContent.BuildViewModel());
+
+		SetHeader("Frontier Outpost", "Combat");
+		SetMessage("Raiders block the outpost gate!");
 	}
 
 	public string CycleExplorationVariant()
