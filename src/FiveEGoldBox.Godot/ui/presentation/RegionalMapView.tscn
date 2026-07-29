@@ -6,6 +6,8 @@
 
 [ext_resource type="PackedScene" uid="uid://g9r3t6w8y2b5d" path="res://ui/components/selection/SelectionList.tscn" id="3_selection_list"]
 
+[ext_resource type="PackedScene" uid="uid://k7v1y3c5f8h2m" path="res://ui/components/tooltips/TooltipPanel.tscn" id="4_tooltip_panel"]
+
 [node name="RegionalMapView" type="Control"]
 layout_mode = 1
 anchors_preset = 15
@@ -85,3 +87,13 @@ grow_vertical = 0
 theme_type_variation = &"ImmersiveOverlayPanel"
 TitleText = "Known Sites"
 EmptyText = "No known sites nearby."
+
+[node name="InspectionPanel" parent="." instance=ExtResource("4_tooltip_panel")]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 1
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 252.0
+offset_bottom = 60.0

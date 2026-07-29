@@ -16,7 +16,8 @@ internal static class MockRegionalMapContent
 		RegionalLocationIds.Outpost,
 		"Frontier Outpost",
 		new RegionalMapPointViewModel(0.374, 0.427),
-		ExplorationSceneKeys.OutpostEntrance);
+		ExplorationSceneKeys.OutpostEntrance,
+		"A fortified waypost where the party's journey begins.");
 
 	public static readonly IReadOnlyList<RegionalLocationDefinition> Locations =
 		new[]
@@ -26,27 +27,32 @@ internal static class MockRegionalMapContent
 				RegionalLocationIds.Northhold,
 				"Northhold",
 				new RegionalMapPointViewModel(0.472, 0.145),
-				ExplorationSceneKeys.TownStreet),
+				ExplorationSceneKeys.TownStreet,
+				"A walled town at the foot of the northern mountains."),
 			new RegionalLocationDefinition(
 				RegionalLocationIds.OldMine,
 				"Old Mine",
 				new RegionalMapPointViewModel(0.135, 0.330),
-				ExplorationSceneKeys.Cavern),
+				ExplorationSceneKeys.Cavern,
+				"An abandoned mine cut into the mountainside."),
 			new RegionalLocationDefinition(
 				RegionalLocationIds.Mirefen,
 				"Mirefen",
 				new RegionalMapPointViewModel(0.845, 0.175),
-				ExplorationSceneKeys.BuildingInterior),
+				ExplorationSceneKeys.BuildingInterior,
+				"A small hamlet on the edge of a misty marsh."),
 			new RegionalLocationDefinition(
 				RegionalLocationIds.Lakeside,
 				"Lakeside",
 				new RegionalMapPointViewModel(0.108, 0.610),
-				ExplorationSceneKeys.BuildingInterior),
+				ExplorationSceneKeys.BuildingInterior,
+				"A fishing village on the shore of a quiet lake."),
 			new RegionalLocationDefinition(
 				RegionalLocationIds.Seagate,
 				"Seagate",
 				new RegionalMapPointViewModel(0.690, 0.700),
-				ExplorationSceneKeys.TownStreet),
+				ExplorationSceneKeys.TownStreet,
+				"A busy port town where the river meets the sea."),
 		};
 
 	public static RegionalLocationDefinition? Find(string locationId)
@@ -72,7 +78,8 @@ internal static class MockRegionalMapContent
 				location.Id,
 				location.Label,
 				location.Position,
-				Selected: location.Id == selectedLocationId));
+				Selected: location.Id == selectedLocationId,
+				Description: location.Description));
 		}
 
 		return new RegionalMapViewModel(

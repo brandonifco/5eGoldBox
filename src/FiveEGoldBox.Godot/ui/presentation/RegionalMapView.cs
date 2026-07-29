@@ -18,6 +18,7 @@ public partial class RegionalMapView : Control
 	private Control _routeOverlay = null!;
 	private Control _markersLayer = null!;
 	private SelectionList _selectionPanel = null!;
+	private TooltipPanel _inspectionPanel = null!;
 
 	private readonly List<RegionalMapMarkerPin> _pins = new();
 	private RegionalMapMarkerViewModel? _partyMarker;
@@ -37,6 +38,7 @@ public partial class RegionalMapView : Control
 		_routeOverlay = GetNode<Control>("%RouteOverlay");
 		_markersLayer = GetNode<Control>("%MarkersLayer");
 		_selectionPanel = GetNode<SelectionList>("%SelectionPanel");
+		_inspectionPanel = GetNode<TooltipPanel>("%InspectionPanel");
 
 		_selectionPanel.SelectionChanged += OnSelectionChanged;
 		_selectionPanel.SelectionActivated += OnSelectionActivated;
@@ -57,6 +59,7 @@ public partial class RegionalMapView : Control
 
 		RebuildMarkers();
 		PopulateSelectionList(model.SelectedLocationId);
+		UpdateInspectionPanel();
 		ApplyZoomAndPan();
 		_routeOverlay.QueueRedraw();
 	}
@@ -77,8 +80,37 @@ public partial class RegionalMapView : Control
 		_routePreview = routePreview;
 
 		RebuildMarkers();
+		UpdateInspectionPanel();
 		ApplyZoomAndPan();
 		_routeOverlay.QueueRedraw();
+	}
+
+	// M7f: location and route inspection in one panel rather than two —
+	// a route preview only ever exists between the party and whatever's
+	// currently selected, so there's nothing a separate "route tooltip"
+	// would say that isn't already "here's where you're looking, and
+	// there's a route shown to it."
+	private void UpdateInspectionPanel()
+	{
+		RegionalMapMarkerViewModel? selected =
+			_locationMarkers.FirstOrDefault(marker => marker.Selected);
+
+		if (selected is null)
+		{
+			_inspectionPanel.HideTooltip();
+			return;
+		}
+
+		string body = selected.Description ?? string.Empty;
+
+		if (_routePreview is { Count: >= 2 })
+		{
+			body += string.IsNullOrEmpty(body)
+				? "A route is shown from the outpost."
+				: " A route is shown from the outpost.";
+		}
+
+		_inspectionPanel.ShowTooltip(selected.Label, body);
 	}
 
 	private void OnSelectionChanged(int index, string itemId)

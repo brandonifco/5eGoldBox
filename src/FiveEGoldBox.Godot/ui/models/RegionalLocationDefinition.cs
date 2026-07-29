@@ -5,4 +5,5 @@ internal sealed record RegionalLocationDefinition(
 	string Id,
 	string Label,
 	RegionalMapPointViewModel Position,
-	string ExplorationSceneKey);
+	string ExplorationSceneKey,
+	string Description);
