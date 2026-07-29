@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 internal sealed class ShellPresentationController : IShellPresentation
@@ -85,6 +86,37 @@ internal sealed class ShellPresentationController : IShellPresentation
 
 		SetHeader("Wilderness", "Regional Travel");
 		SetMessage("The surrounding region stretches before the party.");
+	}
+
+	// Real journey progress rendered through the existing placeholder Label
+	// (StandardLayout.tscn's RegionalMapView/RegionalMapCenter/
+	// RegionalMapLabel) rather than the spatial marker layout
+	// RegionalMapMarkerViewModel/RegionalMapPointViewModel ultimately imply
+	// — that needs a real map-rendering component (M7a), which this isn't.
+	// "Function before beauty," the same call M6b made for exploration
+	// placeholders, applied one milestone early because the real data
+	// arrived before the real view did.
+	//
+	// LocationMarkers[0]/[1] are relied on being origin/destination in that
+	// order, matching how RealGameSession.DescribeRegionalMap builds them —
+	// not a general contract of RegionalMapViewModel itself.
+	public void ConfigureRegionalMap(RegionalMapViewModel model)
+	{
+		Label label = _regionalMapView.GetNode<Label>(
+			"RegionalMapCenter/RegionalMapLabel");
+
+		if (model.LocationMarkers.Count < 2 || model.PartyMarker is null)
+		{
+			label.Text = "The road stretches ahead.";
+			return;
+		}
+
+		RegionalMapMarkerViewModel origin = model.LocationMarkers[0];
+		RegionalMapMarkerViewModel destination = model.LocationMarkers[1];
+		int percent = (int)Math.Round(model.PartyMarker.Position.X);
+
+		label.Text =
+			$"{origin.Label}  →  {destination.Label}\n{percent}% of the way there";
 	}
 
 	public void ShowCombat()

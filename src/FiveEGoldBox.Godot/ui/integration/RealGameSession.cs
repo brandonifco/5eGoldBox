@@ -26,9 +26,22 @@ using FiveEGoldBox.Application.Views;
 // was exactly the kind of thing this integration pass exists to surface.
 internal sealed class RealGameSession
 {
+	// No real per-scenario key exists for a regional map, same gap as
+	// ExplorationSceneKeys — this is a placeholder key, not content.
+	private const string RegionalMapKey = "real-session-region";
+
 	private ApplicationSessionState _state;
 	private Dictionary<string, SessionAction> _lastActions =
 		new(StringComparer.Ordinal);
+
+	// Captured the moment a journey begins, not read back off session state
+	// later — CurrentLocationId only ever names the origin or the
+	// destination (whichever the party currently is nearer being at), never
+	// both at once, so there is nowhere else honest to read the far end's
+	// name from mid-journey. Both come from the same content-authored
+	// display names SessionView itself already computed.
+	private string? _travelOriginDisplayName;
+	private string? _travelDestinationDisplayName;
 
 	internal RealGameSession(string scenarioId, int randomSeed)
 	{
@@ -65,7 +78,46 @@ internal sealed class RealGameSession
 			view.IsSuccess,
 			new CommandSetViewModel(
 				commands.ToArray(),
-				ShellInteractionContext.CommandMenu));
+				ShellInteractionContext.CommandMenu),
+			view.Mode == ApplicationMode.RegionalTravel
+				? DescribeRegionalMap()
+				: null);
+	}
+
+	// Grounded in RegionalTravelState's real CurrentStepIndex/FinalStepIndex
+	// rather than invented geography — the backend has no concept of map
+	// coordinates for a location, so this doesn't pretend to place things
+	// on a meaningful map, only to show real journey progress between two
+	// named points on a line.
+	private RegionalMapViewModel DescribeRegionalMap()
+	{
+		RegionalTravelState travel = _state.RegionalTravel
+			?? throw new InvalidOperationException(
+				"DescribeRegionalMap was called outside regional travel.");
+		double progress = travel.FinalStepIndex == 0
+			? 1.0
+			: (double)travel.CurrentStepIndex / travel.FinalStepIndex;
+		string originLabel = _travelOriginDisplayName ?? "Origin";
+		string destinationLabel = _travelDestinationDisplayName ?? "Destination";
+
+		return new RegionalMapViewModel(
+			RegionalMapKey,
+			new RegionalMapMarkerViewModel(
+				"party",
+				"Party",
+				new RegionalMapPointViewModel(progress * 100.0, 0)),
+			new[]
+			{
+				new RegionalMapMarkerViewModel(
+					travel.OriginLocationId,
+					originLabel,
+					new RegionalMapPointViewModel(0, 0)),
+				new RegionalMapMarkerViewModel(
+					travel.DestinationLocationId,
+					destinationLabel,
+					new RegionalMapPointViewModel(100, 0),
+					Selected: travel.IsComplete),
+			});
 	}
 
 	internal string Submit(string commandId)
@@ -139,8 +191,17 @@ internal sealed class RealGameSession
 		return $"Choice made: {action.DisplayName}.";
 	}
 
+	private const string SetOutForPrefix = "Set out for ";
+
 	private string BeginJourney(SessionAction action)
 	{
+		_travelOriginDisplayName = SessionView.Describe(_state).LocationDisplayName;
+		_travelDestinationDisplayName = action.DisplayName.StartsWith(
+			SetOutForPrefix,
+			StringComparison.Ordinal)
+			? action.DisplayName[SetOutForPrefix.Length..]
+			: action.DisplayName;
+
 		_state = RegionalTravelRules.BeginJourney(_state, action.RouteId);
 
 		return "Journey begun.";
@@ -244,4 +305,5 @@ internal sealed record RealSessionSnapshot(
 	string StatusMessage,
 	bool IsConcluded,
 	bool? IsSuccess,
-	CommandSetViewModel Commands);
+	CommandSetViewModel Commands,
+	RegionalMapViewModel? Map = null);
