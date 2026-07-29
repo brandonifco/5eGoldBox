@@ -1,8 +1,23 @@
 # 5eGoldBox
 
-A layered C#/.NET 8 D&D 5e engine: `FiveEGoldBox.Core` (pure rules), `FiveEGoldBox.Application` (session/campaign orchestration, three scenarios: "Watchtower", a minimal "Sunken Chapel" that exists to prove the content boundary, and "The Hollow Mill" — the first authored to be worth playing rather than to prove a seam), `FiveEGoldBox.Console` (working text client), `FiveEGoldBox.Godot` (a real UI shell through M6e — input/focus framework, mock-driven scenario catalog, exploration/regional-map view scaffolding — merged back into this working tree 2026-07-28 after developing on its own `godot-ui` branch/worktree; still entirely decoupled from `Application`/`Core`, not yet wired — see "Repo hygiene" below).
+A layered C#/.NET 8 D&D 5e engine: `FiveEGoldBox.Core` (pure rules), `FiveEGoldBox.Application` (session/campaign orchestration, three scenarios: "Watchtower", a minimal "Sunken Chapel" that exists to prove the content boundary, and "The Hollow Mill" — the first authored to be worth playing rather than to prove a seam), `FiveEGoldBox.Console` (working text client), `FiveEGoldBox.Godot` (a real UI shell through M6e — input/focus framework, mock-driven scenario catalog, exploration/regional-map view scaffolding — merged back into this working tree 2026-07-28 after developing on its own `godot-ui` branch/worktree, and as of the same day wired to `Application`/`Core` for real for outpost decisions, exploration, and regional travel — see "Where things stand" just below).
 
-## Current work: the Priority 1 Development Plan
+## Where things stand (2026-07-28) — read this first if you're resuming cold
+
+**Backend** (`Core`/`Application`/`Console`): stable. Priority 1 (engineering foundation, below) is closed; Priority 2 (Phases 9–12, further down) is a long-running product phase, not a gate. This session closed three concrete driver gaps that had been sitting as open constraints — multi-route travel (PR #167), generic N-way outpost decisions replacing a hardcoded accept/decline (PR #168), mid-travel saves (PR #169) — and authored a third real scenario, Hollow Mill (PR #166), the first meant to actually be played rather than to prove a seam. 2099 tests, public API 63 exported types, both reflection-verified at every change that could move them.
+
+**Godot** (`src/FiveEGoldBox.Godot/`): back in this working tree as of today — it spent 2026-07-27 through today on its own `godot-ui` branch/worktree while Priority 1 housekeeping needed a clean tree (see "Repo hygiene" below for the full story). M0–M6e of its own UI milestone plan (`docs/5eGoldBox_Godot_UI_Remaining_Milestones_M4-M12.md`) are done, all mock-driven. **New today, and the reason it's back in this tree:** the user asked for the two lines to stop developing separately. Three PRs (#170, #171, #172) wired `AppShell` to run a *real* session by default — not mock — for outpost decisions, exploration, and regional travel, through `RealGameSession` (`ui/integration/`, zero Godot dependencies of its own). Combat is deliberately not wired.
+
+**What's next, in the order it was recommended and agreed:**
+1. A real `RegionalMapView` presentation component (M7a). The map screen's *data* is already real (`RealGameSession.DescribeRegionalMap` / `ShellPresentationController.ConfigureRegionalMap`), but it still renders through the placeholder Label — `RegionalMapView` was never extracted into its own scene the way `ExplorationView` was in M6a. Extend the existing real-data path rather than building a second one.
+2. Tactical combat — both `CombatOperations`-side backend wiring and Godot's tactical UI (M8), which doesn't exist at all yet. This is the actual big remaining frontier, bigger than everything done today combined, and deliberately not started — it needs its own dedicated pass, not a tack-on.
+
+**Verifying Godot-side work** — there's no dedicated C# test project for it yet, so this is what stands in for one:
+- `dotnet build src/FiveEGoldBox.Godot/FiveEGoldBox.Godot.sln -c Debug` (0 warnings expected; `ExportRelease` is the real "release" config, not `Release` — the `.sln` doesn't define one).
+- Headless boot: `godot --headless --path src/FiveEGoldBox.Godot --quit-after 15`, expect exit 0 and empty stderr. On a fresh checkout, run `godot --headless --path src/FiveEGoldBox.Godot --import` once first, or boot fails with "Main scene's path could not be resolved." If a `zenity` dialog blocks the run instead of exiting, that's a real runtime exception trying to show a GUI error dialog with no display attached — put a fake `zenity` ahead of the real one on `PATH` (`ln -sf /bin/true` to some dir, prepend it) to force the underlying error out to stderr instead of hanging forever.
+- `RealGameSession` and the models it uses (`CommandViewModel`/`CommandSetViewModel`/etc.) have zero Godot dependencies — for anything beyond a boot check, a throwaway console project (`ProjectReference` to `FiveEGoldBox.Application`, `<Compile Include>` the relevant `ui/integration`/`ui/models` files) can drive `Submit`/`Describe`/`SubmitMovement` directly outside the engine entirely. Faster than the engine, and gives real assertions instead of "didn't crash."
+
+## History: the Priority 1 Development Plan (complete)
 
 The full plan lives at [docs/priority-1-development-plan.md](docs/priority-1-development-plan.md) — read it before starting any Priority 1 work. It's an 8-phase sequence to stabilize the public API and persistence boundary before further scenario/orchestration refactors, executed as one small branch per phase step.
 
@@ -140,4 +155,4 @@ dotnet test 5eGoldBox.sln -c Debug      # full suite, currently 2099 tests
 dotnet build 5eGoldBox.sln -c Release   # required gate before merge
 ```
 
-`FiveEGoldBox.Godot` is a separate, not-yet-integrated project (its own `.sln`, not referenced by `5eGoldBox.sln`, back in this working tree as of 2026-07-28 — see "Repo hygiene" above) — the above commands don't touch it.
+`FiveEGoldBox.Godot` is a separate project (its own `.sln`, not referenced by `5eGoldBox.sln`, back in this working tree as of 2026-07-28 — see "Repo hygiene" above) — the above commands don't touch it, and CI doesn't build or test it either. It's real backend-wired now, not "not-yet-integrated" — see "Where things stand" at the top for what that means and how to verify changes to it.
