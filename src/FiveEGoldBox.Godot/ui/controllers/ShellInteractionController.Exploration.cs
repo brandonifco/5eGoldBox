@@ -96,6 +96,7 @@ internal sealed partial class ShellInteractionController
 			["move"] = EnterExplorationMovementMode,
 			["view"] = ShowCharacterScreen,
 			["inventory"] = ShowInventoryScreen,
+			["journal"] = ShowJournalScreen,
 			["cast"] = ShowSpellbookScreen,
 			["area"] = ShowAreaMapScreen,
 			["encamp"] = ShowEncampConfirmation,

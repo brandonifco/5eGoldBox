@@ -144,4 +144,43 @@ internal static class MockSecondaryScreenContent
 			ListItems: null,
 			Commands: new[] { new CommandViewModel("close", "Close", "C") });
 	}
+
+	// Names the same Frontier Outpost / Ruined Watchtower narrative
+	// MockRegionalMapContent (M7a) already established, rather than
+	// inventing a separate unrelated journal narrative.
+	private static readonly (string Id, string Label, string Detail, bool Complete)[]
+		JournalEntries =
+	{
+		("investigate-watchtower", "Investigate the Ruined Watchtower",
+			"The outpost's quartermaster reports strange signal fires " +
+				"from the old watchtower down the road. Active.",
+			false),
+		("report-outpost", "Report to the Frontier Outpost",
+			"Arrived and spoke with the quartermaster. Complete.",
+			true),
+	};
+
+	public static ModalViewModel Journal(string? selectedEntryId = null)
+	{
+		string activeId = selectedEntryId ?? JournalEntries[0].Id;
+
+		return new ModalViewModel(
+			"Journal",
+			DescribeJournalEntry(activeId),
+			JournalEntries
+				.Select(entry => new CommandViewModel(
+					entry.Id,
+					entry.Complete ? $"{entry.Label} (Complete)" : entry.Label))
+				.ToArray(),
+			new[] { new CommandViewModel("close", "Close", "C") },
+			SelectedRowId: activeId);
+	}
+
+	public static string DescribeJournalEntry(string entryId)
+	{
+		(string Id, string Label, string Detail, bool Complete) entry =
+			JournalEntries.First(candidate => candidate.Id == entryId);
+
+		return entry.Detail;
+	}
 }

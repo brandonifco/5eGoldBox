@@ -64,6 +64,17 @@ internal sealed partial class ShellInteractionController
 			new Dictionary<string, Action> { ["close"] = CloseModalScreen });
 	}
 
+	// M9d: no existing Exploration command slot named it, but "J" (for
+	// Journal itself) was free.
+	public void ShowJournalScreen()
+	{
+		ShowModalScreen(
+			MockSecondaryScreenContent.Journal(),
+			new Dictionary<string, Action> { ["close"] = CloseModalScreen },
+			onRowFocused: entryId => _modalScreen.UpdateBody(
+				MockSecondaryScreenContent.DescribeJournalEntry(entryId)));
+	}
+
 	private void ShowModalScreen(
 		ModalViewModel model,
 		IReadOnlyDictionary<string, Action> commandHandlers,

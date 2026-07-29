@@ -41,12 +41,12 @@ internal sealed partial class ShellInteractionController
 			// rather than a second copy — the dialog mechanism and message
 			// don't depend on which screen opened it.
 			["camp"] = ShowEncampConfirmation,
-			["inventory"] = () => _presentationController.SetMessage(
-				"You check the party's inventory. " +
-					"Inventory management is not connected yet."),
-			["journal"] = () => _presentationController.SetMessage(
-				"You review the party's journal. " +
-					"Journal tracking is not connected yet."),
+			// M9b/M9d: reuses Exploration's own screens rather than a
+			// second copy — Inventory/Journal content doesn't depend on
+			// which screen opened it, the same reasoning "camp" above
+			// already applies to Encamp.
+			["inventory"] = ShowInventoryScreen,
+			["journal"] = ShowJournalScreen,
 		};
 	}
 
