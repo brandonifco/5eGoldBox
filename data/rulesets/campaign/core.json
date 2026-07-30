@@ -1,0 +1,382 @@
+{
+    "FormatVersion": 1,
+    "Id": "ruleset.campaign",
+    "Name": "Campaign Ruleset",
+    "Races": [
+        {
+            "Id": "race.human",
+            "Name": "Human",
+            "BaseSpeedFeet": 30,
+            "AbilityScoreIncreases": [
+                { "Ability": "Strength", "Amount": 1 },
+                { "Ability": "Dexterity", "Amount": 1 },
+                { "Ability": "Constitution", "Amount": 1 },
+                { "Ability": "Intelligence", "Amount": 1 },
+                { "Ability": "Wisdom", "Amount": 1 },
+                { "Ability": "Charisma", "Amount": 1 }
+            ]
+        }
+    ],
+    "Classes": [
+        {
+            "Id": "class.fighter",
+            "Name": "Fighter",
+            "HitDie": "D10",
+            "SavingThrowProficiencies": [ "Strength", "Constitution" ],
+            "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
+            "SkillChoices": [ "skill.athletics", "skill.perception" ],
+            "NumberOfSkillChoices": 2
+        },
+        {
+            "Id": "class.barbarian",
+            "Name": "Barbarian",
+            "HitDie": "D12",
+            "SavingThrowProficiencies": [ "Strength", "Constitution" ],
+            "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
+            "SkillChoices": [ "skill.athletics", "skill.survival" ],
+            "NumberOfSkillChoices": 2
+        },
+        {
+            "Id": "class.cleric",
+            "Name": "Cleric",
+            "HitDie": "D8",
+            "SavingThrowProficiencies": [ "Wisdom", "Charisma" ],
+            "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
+            "SkillChoices": [ "skill.perception", "skill.survival" ],
+            "NumberOfSkillChoices": 2,
+            "SpellcastingAbility": "Wisdom",
+            "SpellSlotsByLevel": { "1": 2 }
+        },
+        {
+            "Id": "class.wizard",
+            "Name": "Wizard",
+            "HitDie": "D6",
+            "SavingThrowProficiencies": [ "Intelligence", "Wisdom" ],
+            "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
+            "SkillChoices": [ "skill.perception", "skill.stealth" ],
+            "NumberOfSkillChoices": 2,
+            "SpellcastingAbility": "Intelligence",
+            "SpellSlotsByLevel": { "1": 2 }
+        },
+        {
+            "Id": "class.ranger",
+            "Name": "Ranger",
+            "HitDie": "D10",
+            "SavingThrowProficiencies": [ "Strength", "Dexterity" ],
+            "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
+            "SkillChoices": [
+                "skill.perception",
+                "skill.stealth",
+                "skill.survival"
+            ],
+            "NumberOfSkillChoices": 3
+        },
+        {
+            "Id": "class.rogue",
+            "Name": "Rogue",
+            "HitDie": "D8",
+            "SavingThrowProficiencies": [ "Dexterity", "Intelligence" ],
+            "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
+            "SkillChoices": [ "skill.perception", "skill.stealth" ],
+            "NumberOfSkillChoices": 2,
+            "FeaturesByLevel": { "1": [ "feature.sneak_attack" ] }
+        }
+    ],
+    "Backgrounds": [
+        {
+            "Id": "background.soldier",
+            "Name": "Soldier"
+        }
+    ],
+    "Skills": [
+        {
+            "Id": "skill.athletics",
+            "Name": "Athletics",
+            "Ability": "Strength"
+        },
+        {
+            "Id": "skill.perception",
+            "Name": "Perception",
+            "Ability": "Wisdom"
+        },
+        {
+            "Id": "skill.stealth",
+            "Name": "Stealth",
+            "Ability": "Dexterity"
+        },
+        {
+            "Id": "skill.survival",
+            "Name": "Survival",
+            "Ability": "Wisdom"
+        }
+    ],
+    "Weapons": [
+        {
+            "Id": "weapon.longsword",
+            "Name": "Longsword",
+            "Category": "Martial",
+            "AttackKind": "Melee",
+            "Damage": { "Count": 1, "Die": "D8" },
+            "DamageType": "damage.slashing",
+            "ReachFeet": 5
+        },
+        {
+            "Id": "weapon.greataxe",
+            "Name": "Greataxe",
+            "Category": "Martial",
+            "AttackKind": "Melee",
+            "Damage": { "Count": 1, "Die": "D12" },
+            "DamageType": "damage.slashing",
+            "ReachFeet": 5
+        },
+        {
+            "Id": "weapon.longbow",
+            "Name": "Longbow",
+            "Category": "Martial",
+            "AttackKind": "Ranged",
+            "Damage": { "Count": 1, "Die": "D8" },
+            "DamageType": "damage.piercing",
+            "Properties": [
+                "weapon_property.ammunition",
+                "weapon_property.heavy",
+                "weapon_property.two_handed"
+            ],
+            "NormalRangeFeet": 150,
+            "LongRangeFeet": 600,
+            "AmmunitionItemId": "item.arrow"
+        },
+        {
+            "Id": "weapon.shortbow",
+            "Name": "Shortbow",
+            "Category": "Simple",
+            "AttackKind": "Ranged",
+            "Damage": { "Count": 1, "Die": "D6" },
+            "DamageType": "damage.piercing",
+            "Properties": [
+                "weapon_property.ammunition",
+                "weapon_property.two_handed"
+            ],
+            "NormalRangeFeet": 80,
+            "LongRangeFeet": 320,
+            "AmmunitionItemId": "item.arrow"
+        },
+        {
+            "Id": "weapon.dagger",
+            "Name": "Dagger",
+            "Category": "Simple",
+            "AttackKind": "Melee",
+            "Damage": { "Count": 1, "Die": "D4" },
+            "DamageType": "damage.piercing",
+            "Properties": [ "weapon_property.finesse" ],
+            "ReachFeet": 5
+        },
+        {
+            "Id": "weapon.mace",
+            "Name": "Mace",
+            "Category": "Simple",
+            "AttackKind": "Melee",
+            "Damage": { "Count": 1, "Die": "D6" },
+            "DamageType": "damage.bludgeoning",
+            "ReachFeet": 5
+        },
+        {
+            "Id": "weapon.watchtower-raider.scimitar",
+            "Name": "Raider Scimitar",
+            "Category": "Martial",
+            "AttackKind": "Melee",
+            "Damage": { "Count": 1, "Die": "D6" },
+            "DamageType": "damage.slashing",
+            "Properties": [ "weapon_property.finesse" ],
+            "ReachFeet": 5
+        },
+        {
+            "Id": "weapon.watchtower-raider.shortbow",
+            "Name": "Raider Shortbow",
+            "Category": "Simple",
+            "AttackKind": "Ranged",
+            "Damage": { "Count": 1, "Die": "D6" },
+            "DamageType": "damage.piercing",
+            "Properties": [ "weapon_property.ammunition" ],
+            "NormalRangeFeet": 80,
+            "LongRangeFeet": 320,
+            "AmmunitionItemId": "item.arrow"
+        },
+        {
+            "Id": "weapon.chapel-guardian.dagger",
+            "Name": "Barnacled Dagger",
+            "Category": "Simple",
+            "AttackKind": "Melee",
+            "Damage": { "Count": 1, "Die": "D4" },
+            "DamageType": "damage.piercing",
+            "Properties": [ "weapon_property.finesse" ],
+            "ReachFeet": 5
+        },
+        {
+            "Id": "weapon.mill-rat.bite",
+            "Name": "Bite",
+            "Category": "Simple",
+            "AttackKind": "Melee",
+            "Damage": { "Count": 1, "Die": "D4" },
+            "DamageType": "damage.piercing",
+            "ReachFeet": 5
+        },
+        {
+            "Id": "weapon.mill-thrall.cleaver",
+            "Name": "Rusted Cleaver",
+            "Category": "Martial",
+            "AttackKind": "Melee",
+            "Damage": { "Count": 1, "Die": "D8" },
+            "DamageType": "damage.slashing",
+            "ReachFeet": 5
+        }
+    ],
+    "Spells": [
+        {
+            "Id": "spell.fire-bolt",
+            "Name": "Fire Bolt",
+            "Cost": "Cantrip",
+            "Level": 0,
+            "CastingTime": "Action",
+            "RangeKind": "Ranged",
+            "RangeFeet": 120,
+            "Targets": "Enemies",
+            "Resolution": "SpellAttack",
+            "Effects": [
+                {
+                    "Kind": "Damage",
+                    "Dice": { "Count": 1, "Die": "D10" },
+                    "DamageType": "damage.fire"
+                }
+            ]
+        },
+        {
+            "Id": "spell.sacred-flame",
+            "Name": "Sacred Flame",
+            "Cost": "Cantrip",
+            "Level": 0,
+            "CastingTime": "Action",
+            "RangeKind": "Ranged",
+            "RangeFeet": 60,
+            "Targets": "Enemies",
+            "Resolution": "SavingThrow",
+            "SaveAbility": "Dexterity",
+            "SaveOutcome": "Negates",
+            "Effects": [
+                {
+                    "Kind": "Damage",
+                    "Dice": { "Count": 1, "Die": "D8" },
+                    "DamageType": "damage.radiant"
+                }
+            ]
+        },
+        {
+            "Id": "spell.cure-wounds",
+            "Name": "Cure Wounds",
+            "Cost": "Slot",
+            "Level": 1,
+            "CastingTime": "Action",
+            "RangeKind": "Touch",
+            "Targets": "Allies",
+            "Resolution": "Automatic",
+            "Effects": [
+                {
+                    "Kind": "Healing",
+                    "Dice": { "Count": 1, "Die": "D8" },
+                    "AddsSpellcastingModifier": true
+                }
+            ]
+        },
+        {
+            "Id": "spell.healing-word",
+            "Name": "Healing Word",
+            "Cost": "Slot",
+            "Level": 1,
+            "CastingTime": "BonusAction",
+            "RangeKind": "Ranged",
+            "RangeFeet": 60,
+            "Targets": "Allies",
+            "Resolution": "Automatic",
+            "Effects": [
+                {
+                    "Kind": "Healing",
+                    "Dice": { "Count": 1, "Die": "D4" },
+                    "AddsSpellcastingModifier": true
+                }
+            ]
+        },
+        {
+            "Id": "spell.magic-missile",
+            "Name": "Magic Missile",
+            "Cost": "Slot",
+            "Level": 1,
+            "CastingTime": "Action",
+            "RangeKind": "Ranged",
+            "RangeFeet": 120,
+            "MaximumTargets": 3,
+            "Targets": "Enemies",
+            "Resolution": "Automatic",
+            "Effects": [
+                {
+                    "Kind": "Damage",
+                    "Dice": { "Count": 1, "Die": "D4" },
+                    "Instances": 3,
+                    "DamageType": "damage.force"
+                }
+            ]
+        },
+        {
+            "Id": "spell.bless",
+            "Name": "Bless",
+            "Cost": "Slot",
+            "Level": 1,
+            "CastingTime": "Action",
+            "RangeKind": "Ranged",
+            "RangeFeet": 30,
+            "MaximumTargets": 3,
+            "Targets": "Allies",
+            "Resolution": "Automatic",
+            "AppliedEffectId": "effect.bless",
+            "RequiresConcentration": true,
+            "DurationRounds": 10
+        }
+    ],
+    "Effects": [
+        {
+            "Id": "effect.bless",
+            "Name": "Blessed",
+            "Contributions": [
+                {
+                    "Target": "AttackRoll",
+                    "Dice": { "Count": 1, "Die": "D4" }
+                },
+                {
+                    "Target": "SavingThrow",
+                    "Dice": { "Count": 1, "Die": "D4" }
+                }
+            ]
+        }
+    ],
+    "Features": [
+        {
+            "Id": "feature.sneak_attack",
+            "Name": "Sneak Attack",
+            "Contributions": [
+                {
+                    "Target": "DamageRoll",
+                    "Dice": { "Count": 1, "Die": "D6" },
+                    "Conditions": [
+                        "AdvantageOrAdjacentEnemy",
+                        "FinesseOrRangedWeapon"
+                    ]
+                }
+            ]
+        }
+    ],
+    "EquipmentItems": [
+        {
+            "Id": "item.arrow",
+            "Name": "Arrow",
+            "WeightPounds": 0.05
+        }
+    ]
+}
