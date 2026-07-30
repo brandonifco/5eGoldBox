@@ -789,7 +789,7 @@ public sealed class ConsoleProcessRestartTests
         for (int operation = 0; operation < 1000; operation++)
         {
             if (decision.State
-                == WatchtowerCombatDecisionState.CombatCompleted)
+                == CombatDecisionState.CombatCompleted)
             {
                 CombatOutcomeResult outcome =
                     CombatOutcomeRules.Finalize(state);
@@ -800,7 +800,7 @@ public sealed class ConsoleProcessRestartTests
             }
 
             if (decision.State
-                != WatchtowerCombatDecisionState
+                != CombatDecisionState
                     .PlayerDecisionRequired)
             {
                 throw new InvalidOperationException(
@@ -835,7 +835,7 @@ public sealed class ConsoleProcessRestartTests
                 selections.Add(ToSelection(selection));
                 result = WatchtowerCombatRules.Execute(
                     state,
-                    new WatchtowerCombatWeaponAttackIntent
+                    new CombatWeaponAttackIntent
                     {
                         ExpectedEncounterRevision =
                             decision.EncounterRevision,
@@ -862,7 +862,7 @@ public sealed class ConsoleProcessRestartTests
                 selections.Add(ToSelection(selection));
                 result = WatchtowerCombatRules.Execute(
                     state,
-                    new WatchtowerCombatMoveIntent
+                    new CombatMoveIntent
                     {
                         ExpectedEncounterRevision =
                             decision.EncounterRevision,
@@ -888,7 +888,7 @@ public sealed class ConsoleProcessRestartTests
                 selections.Add(ToSelection(selection));
                 result = WatchtowerCombatRules.Execute(
                     state,
-                    new WatchtowerCombatEndTurnIntent
+                    new CombatEndTurnIntent
                     {
                         ExpectedEncounterRevision =
                             decision.EncounterRevision,
@@ -1004,7 +1004,7 @@ public sealed class ConsoleProcessRestartTests
         WatchtowerCombatDecision decision)
     {
         if (decision.State
-            != WatchtowerCombatDecisionState.PlayerDecisionRequired)
+            != CombatDecisionState.PlayerDecisionRequired)
         {
             throw new InvalidOperationException(
                 "A combat Exit selection requires a public player decision.");

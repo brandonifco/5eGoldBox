@@ -15,7 +15,7 @@ internal static class WatchtowerPlayerCommandResolver
         EncounterState encounter,
         int randomSeed,
         int cursorBefore,
-        WatchtowerCombatMoveIntent intent)
+        CombatMoveIntent intent)
     {
         ArgumentNullException.ThrowIfNull(encounter);
         ArgumentNullException.ThrowIfNull(intent);
@@ -49,7 +49,7 @@ internal static class WatchtowerPlayerCommandResolver
                 movement),
             Receipt = new WatchtowerCombatIntentReceipt
             {
-                Kind = WatchtowerCombatIntentKind.Move,
+                Kind = CombatIntentKind.Move,
                 ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
                 ActorCombatantId = intent.ActorCombatantId,
                 Path = Array.AsReadOnly(path),
@@ -63,7 +63,7 @@ internal static class WatchtowerPlayerCommandResolver
         EncounterState encounter,
         int randomSeed,
         int cursorBefore,
-        WatchtowerCombatWeaponAttackIntent intent)
+        CombatWeaponAttackIntent intent)
     {
         ArgumentNullException.ThrowIfNull(encounter);
         ArgumentNullException.ThrowIfNull(intent);
@@ -102,7 +102,7 @@ internal static class WatchtowerPlayerCommandResolver
                 attack.Dice),
             Receipt = new WatchtowerCombatIntentReceipt
             {
-                Kind = WatchtowerCombatIntentKind.WeaponAttack,
+                Kind = CombatIntentKind.WeaponAttack,
                 ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
                 ActorCombatantId = intent.ActorCombatantId,
                 Path = Array.Empty<GridPosition>(),
@@ -116,7 +116,7 @@ internal static class WatchtowerPlayerCommandResolver
         EncounterState encounter,
         int randomSeed,
         int cursorBefore,
-        WatchtowerCombatSpellAttackIntent intent)
+        CombatSpellAttackIntent intent)
     {
         ArgumentNullException.ThrowIfNull(encounter);
         ArgumentNullException.ThrowIfNull(intent);
@@ -156,7 +156,7 @@ internal static class WatchtowerPlayerCommandResolver
                 spellAttack.Dice),
             Receipt = new WatchtowerCombatIntentReceipt
             {
-                Kind = WatchtowerCombatIntentKind.SpellAttack,
+                Kind = CombatIntentKind.SpellAttack,
                 ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
                 ActorCombatantId = intent.ActorCombatantId,
                 Path = Array.Empty<GridPosition>(),
@@ -171,7 +171,7 @@ internal static class WatchtowerPlayerCommandResolver
         EncounterState encounter,
         int randomSeed,
         int cursorBefore,
-        WatchtowerCombatEndTurnIntent intent)
+        CombatEndTurnIntent intent)
     {
         ArgumentNullException.ThrowIfNull(encounter);
         ArgumentNullException.ThrowIfNull(intent);
@@ -195,7 +195,7 @@ internal static class WatchtowerPlayerCommandResolver
                 WatchtowerCombatTurnAdvanceReason.PlayerEndTurn),
             Receipt = new WatchtowerCombatIntentReceipt
             {
-                Kind = WatchtowerCombatIntentKind.EndTurn,
+                Kind = CombatIntentKind.EndTurn,
                 ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
                 ActorCombatantId = intent.ActorCombatantId,
                 Path = Array.Empty<GridPosition>(),

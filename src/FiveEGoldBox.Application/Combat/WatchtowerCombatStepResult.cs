@@ -4,7 +4,7 @@ namespace FiveEGoldBox.Application.Combat;
 
 internal sealed record WatchtowerCombatStepResult
 {
-    public required WatchtowerCombatStepKind Kind { get; init; }
+    public required CombatStepKind Kind { get; init; }
 
     public required long StartingEncounterRevision { get; init; }
 

@@ -232,7 +232,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
             completionResult.ResultingDecision;
 
         Assert.Equal(
-            WatchtowerCombatDecisionState.CombatCompleted,
+            CombatDecisionState.CombatCompleted,
             completionDecision.State);
         Assert.Equal(PartySideId, completionDecision.WinningSideId);
         Assert.True(
@@ -556,7 +556,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 advanced.State,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -567,7 +567,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
         Assert.NotNull(result.SubmittedIntent);
         Assert.Equal(
-            WatchtowerCombatIntentKind.WeaponAttack,
+            CombatIntentKind.WeaponAttack,
             result.SubmittedIntent!.Kind);
         Assert.Equal(
             decision.ActiveCombatantId,
@@ -579,7 +579,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
             target.TargetCombatantId,
             result.SubmittedIntent.TargetCombatantId);
         Assert.Equal(
-            WatchtowerCombatStepKind.WeaponAttack,
+            CombatStepKind.WeaponAttack,
             result.PrimaryStep!.Kind);
         Assert.Equal(
             expectedActorId,
@@ -606,7 +606,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 advanced.State,
-                new WatchtowerCombatEndTurnIntent
+                new CombatEndTurnIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -615,14 +615,14 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
         Assert.NotNull(result.SubmittedIntent);
         Assert.Equal(
-            WatchtowerCombatIntentKind.EndTurn,
+            CombatIntentKind.EndTurn,
             result.SubmittedIntent!.Kind);
         Assert.Equal(
             decision.ActiveCombatantId,
             result.SubmittedIntent.ActorCombatantId);
         Assert.NotNull(result.PrimaryStep);
         Assert.Equal(
-            WatchtowerCombatStepKind.TurnAdvanced,
+            CombatStepKind.TurnAdvanced,
             result.PrimaryStep!.Kind);
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.PlayerEndTurn,
@@ -647,7 +647,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 advanced.State,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -663,7 +663,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         string expectedActorId)
     {
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             decision.State);
         Assert.Equal(expectedActorId, decision.ActiveCombatantId);
         Assert.NotNull(decision.Movement);

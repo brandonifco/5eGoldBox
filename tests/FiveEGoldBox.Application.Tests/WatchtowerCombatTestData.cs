@@ -15,7 +15,7 @@ internal static class WatchtowerCombatTestData
                 WatchtowerSignalTestData.CreateEncounterSession());
 
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             result.ResultingDecision.State);
 
         return result.State;

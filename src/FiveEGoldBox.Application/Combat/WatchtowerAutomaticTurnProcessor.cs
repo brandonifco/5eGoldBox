@@ -143,7 +143,7 @@ internal static class WatchtowerAutomaticTurnProcessor
                 {
                     WatchtowerCombatStepFactory.CreateDie(
                         randomRoll,
-                        WatchtowerCombatDiePurpose.DeathSavingThrow)
+                        CombatDiePurpose.DeathSavingThrow)
                 });
 
         steps.Add(WatchtowerCombatStepFactory.CreateDeathSavingThrow(

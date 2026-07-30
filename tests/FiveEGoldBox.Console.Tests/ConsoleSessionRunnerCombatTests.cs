@@ -139,7 +139,7 @@ public sealed class ConsoleSessionRunnerCombatTests
         WatchtowerCombatResolutionResult expected =
             WatchtowerCombatRules.Execute(
                 normalized.State,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision =
                         normalized.ResultingDecision.EncounterRevision,
@@ -192,7 +192,7 @@ public sealed class ConsoleSessionRunnerCombatTests
         WatchtowerCombatResolutionResult expected =
             WatchtowerCombatRules.Execute(
                 normalized.State,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -250,7 +250,7 @@ public sealed class ConsoleSessionRunnerCombatTests
         WatchtowerCombatResolutionResult expected =
             WatchtowerCombatRules.Execute(
                 normalized.State,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -302,7 +302,7 @@ public sealed class ConsoleSessionRunnerCombatTests
         WatchtowerCombatResolutionResult expected =
             WatchtowerCombatRules.Execute(
                 normalized.State,
-                new WatchtowerCombatEndTurnIntent
+                new CombatEndTurnIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -339,7 +339,7 @@ public sealed class ConsoleSessionRunnerCombatTests
         WatchtowerCombatResolutionResult expected =
             WatchtowerCombatRules.Execute(
                 normalized.State,
-                new WatchtowerCombatEndTurnIntent
+                new CombatEndTurnIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -839,7 +839,7 @@ public sealed class ConsoleSessionRunnerCombatTests
         for (int operation = 0; operation < 1000; operation++)
         {
             if (decision.State
-                == WatchtowerCombatDecisionState.CombatCompleted)
+                == CombatDecisionState.CombatCompleted)
             {
                 CombatOutcomeResult outcome =
                     CombatOutcomeRules.Finalize(state);
@@ -851,7 +851,7 @@ public sealed class ConsoleSessionRunnerCombatTests
             }
 
             Assert.Equal(
-                WatchtowerCombatDecisionState.PlayerDecisionRequired,
+                CombatDecisionState.PlayerDecisionRequired,
                 decision.State);
 
             IReadOnlyList<WatchtowerCombatMovementDestinationOption>
@@ -880,7 +880,7 @@ public sealed class ConsoleSessionRunnerCombatTests
                 selections.Add(selection.ToString());
                 result = WatchtowerCombatRules.Execute(
                     state,
-                    new WatchtowerCombatWeaponAttackIntent
+                    new CombatWeaponAttackIntent
                     {
                         ExpectedEncounterRevision =
                             decision.EncounterRevision,
@@ -905,7 +905,7 @@ public sealed class ConsoleSessionRunnerCombatTests
                 selections.Add(selection.ToString());
                 result = WatchtowerCombatRules.Execute(
                     state,
-                    new WatchtowerCombatMoveIntent
+                    new CombatMoveIntent
                     {
                         ExpectedEncounterRevision =
                             decision.EncounterRevision,
@@ -920,7 +920,7 @@ public sealed class ConsoleSessionRunnerCombatTests
                 selections.Add(selection.ToString());
                 result = WatchtowerCombatRules.Execute(
                     state,
-                    new WatchtowerCombatEndTurnIntent
+                    new CombatEndTurnIntent
                     {
                         ExpectedEncounterRevision =
                             decision.EncounterRevision,
@@ -988,7 +988,7 @@ public sealed class ConsoleSessionRunnerCombatTests
             WatchtowerCombatResolutionResult moved =
                 WatchtowerCombatRules.Execute(
                     normalized.State,
-                    new WatchtowerCombatMoveIntent
+                    new CombatMoveIntent
                     {
                         ExpectedEncounterRevision =
                             normalized.ResultingDecision

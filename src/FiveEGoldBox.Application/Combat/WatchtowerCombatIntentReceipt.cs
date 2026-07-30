@@ -4,7 +4,7 @@ namespace FiveEGoldBox.Application.Combat;
 
 internal sealed record WatchtowerCombatIntentReceipt
 {
-    public required WatchtowerCombatIntentKind Kind { get; init; }
+    public required CombatIntentKind Kind { get; init; }
 
     public required long ExpectedEncounterRevision { get; init; }
 

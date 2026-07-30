@@ -170,7 +170,7 @@ public sealed class WatchtowerCombatScenarioTests
             state = advanced.State;
 
             if (advanced.ResultingDecision.State
-                == WatchtowerCombatDecisionState.CombatCompleted)
+                == CombatDecisionState.CombatCompleted)
             {
                 return metrics.Complete(state);
             }
@@ -199,7 +199,7 @@ public sealed class WatchtowerCombatScenarioTests
                 WatchtowerCombatResolutionResult attacked =
                     WatchtowerCombatRules.Execute(
                         state,
-                        new WatchtowerCombatWeaponAttackIntent
+                        new CombatWeaponAttackIntent
                         {
                             ExpectedEncounterRevision = decision.EncounterRevision,
                             ActorCombatantId = decision.ActiveCombatantId!,
@@ -246,7 +246,7 @@ public sealed class WatchtowerCombatScenarioTests
                     WatchtowerCombatResolutionResult moved =
                         WatchtowerCombatRules.Execute(
                             state,
-                            new WatchtowerCombatMoveIntent
+                            new CombatMoveIntent
                             {
                                 ExpectedEncounterRevision = decision.EncounterRevision,
                                 ActorCombatantId = decision.ActiveCombatantId!,
@@ -261,7 +261,7 @@ public sealed class WatchtowerCombatScenarioTests
             WatchtowerCombatResolutionResult ended =
                 WatchtowerCombatRules.Execute(
                     state,
-                    new WatchtowerCombatEndTurnIntent
+                    new CombatEndTurnIntent
                     {
                         ExpectedEncounterRevision = decision.EncounterRevision,
                         ActorCombatantId = decision.ActiveCombatantId!
@@ -323,7 +323,7 @@ public sealed class WatchtowerCombatScenarioTests
         {
             GeneratedDice += step.Dice.Count;
 
-            if (step.Kind == WatchtowerCombatStepKind.Movement
+            if (step.Kind == CombatStepKind.Movement
                 && step.ActorCombatantId?.StartsWith(
                     "party-member.",
                     StringComparison.Ordinal) == true)
@@ -331,7 +331,7 @@ public sealed class WatchtowerCombatScenarioTests
                 PlayerMovementSteps++;
             }
 
-            if (step.Kind == WatchtowerCombatStepKind.WeaponAttack)
+            if (step.Kind == CombatStepKind.WeaponAttack)
             {
                 if (string.Equals(
                     step.ActorCombatantId,
@@ -360,7 +360,7 @@ public sealed class WatchtowerCombatScenarioTests
                 PlayerEndTurns++;
             }
 
-            if (step.Kind == WatchtowerCombatStepKind.DeathSavingThrow)
+            if (step.Kind == CombatStepKind.DeathSavingThrow)
             {
                 DeathSavingThrows++;
             }

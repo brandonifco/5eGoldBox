@@ -15,8 +15,8 @@ internal static class WatchtowerCombatOrchestrator
         int cursorBefore = state.RandomValuesConsumed;
 
         if (startingDecision.State is
-            WatchtowerCombatDecisionState.PlayerDecisionRequired
-            or WatchtowerCombatDecisionState.CombatCompleted)
+            CombatDecisionState.PlayerDecisionRequired
+            or CombatDecisionState.CombatCompleted)
         {
             return CreateResult(
                 startingDecision,
@@ -43,7 +43,7 @@ internal static class WatchtowerCombatOrchestrator
 
     internal static WatchtowerCombatResolutionResult Execute(
         ApplicationSessionState source,
-        WatchtowerCombatMoveIntent intent)
+        CombatMoveIntent intent)
     {
         ArgumentNullException.ThrowIfNull(intent);
 
@@ -61,7 +61,7 @@ internal static class WatchtowerCombatOrchestrator
 
     internal static WatchtowerCombatResolutionResult Execute(
         ApplicationSessionState source,
-        WatchtowerCombatWeaponAttackIntent intent)
+        CombatWeaponAttackIntent intent)
     {
         ArgumentNullException.ThrowIfNull(intent);
 
@@ -79,7 +79,7 @@ internal static class WatchtowerCombatOrchestrator
 
     internal static WatchtowerCombatResolutionResult Execute(
         ApplicationSessionState source,
-        WatchtowerCombatSpellAttackIntent intent)
+        CombatSpellAttackIntent intent)
     {
         ArgumentNullException.ThrowIfNull(intent);
 
@@ -97,7 +97,7 @@ internal static class WatchtowerCombatOrchestrator
 
     internal static WatchtowerCombatResolutionResult Execute(
         ApplicationSessionState source,
-        WatchtowerCombatEndTurnIntent intent)
+        CombatEndTurnIntent intent)
     {
         ArgumentNullException.ThrowIfNull(intent);
 
@@ -168,7 +168,7 @@ internal static class WatchtowerCombatOrchestrator
             WatchtowerCombatDecisionFactory.Create(state);
 
         if (decision.State
-            != WatchtowerCombatDecisionState.PlayerDecisionRequired)
+            != CombatDecisionState.PlayerDecisionRequired)
         {
             throw new InvalidOperationException(
                 "A conscious party participant must own the current watchtower combat decision.");
@@ -207,7 +207,7 @@ internal static class WatchtowerCombatOrchestrator
             WatchtowerCombatDecisionFactory.Create(state);
 
         if (resultingDecision.State
-            == WatchtowerCombatDecisionState.AutomaticProcessingRequired)
+            == CombatDecisionState.AutomaticProcessingRequired)
         {
             throw new InvalidOperationException(
                 "A successful watchtower combat operation cannot stop at an automatic-processing boundary.");

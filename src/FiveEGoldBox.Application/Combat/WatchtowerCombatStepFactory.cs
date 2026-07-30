@@ -14,7 +14,7 @@ internal static class WatchtowerCombatStepFactory
     {
         return new WatchtowerCombatStepResult
         {
-            Kind = WatchtowerCombatStepKind.Movement,
+            Kind = CombatStepKind.Movement,
             StartingEncounterRevision = startingState.Revision,
             ResultingEncounterRevision = movement.State.Revision,
             ActorCombatantId = movement.ActorCombatantId,
@@ -38,7 +38,7 @@ internal static class WatchtowerCombatStepFactory
     {
         return new WatchtowerCombatStepResult
         {
-            Kind = WatchtowerCombatStepKind.WeaponAttack,
+            Kind = CombatStepKind.WeaponAttack,
             StartingEncounterRevision = startingState.Revision,
             ResultingEncounterRevision = attack.State.Revision,
             ActorCombatantId = attack.ActorCombatantId,
@@ -62,7 +62,7 @@ internal static class WatchtowerCombatStepFactory
     {
         return new WatchtowerCombatStepResult
         {
-            Kind = WatchtowerCombatStepKind.SpellAttack,
+            Kind = CombatStepKind.SpellAttack,
             StartingEncounterRevision = startingState.Revision,
             ResultingEncounterRevision = spellAttack.State.Revision,
             ActorCombatantId = spellAttack.ActorCombatantId,
@@ -86,7 +86,7 @@ internal static class WatchtowerCombatStepFactory
     {
         return new WatchtowerCombatStepResult
         {
-            Kind = WatchtowerCombatStepKind.DeathSavingThrow,
+            Kind = CombatStepKind.DeathSavingThrow,
             StartingEncounterRevision = startingState.Revision,
             ResultingEncounterRevision = deathSave.State.Revision,
             ActorCombatantId = deathSave.ActorCombatantId,
@@ -110,7 +110,7 @@ internal static class WatchtowerCombatStepFactory
     {
         return new WatchtowerCombatStepResult
         {
-            Kind = WatchtowerCombatStepKind.TurnAdvanced,
+            Kind = CombatStepKind.TurnAdvanced,
             StartingEncounterRevision = startingState.Revision,
             ResultingEncounterRevision = turn.State.Revision,
             ActorCombatantId = turn.EndedTurnCombatantId,
@@ -139,7 +139,7 @@ internal static class WatchtowerCombatStepFactory
     {
         steps.Add(new WatchtowerCombatStepResult
         {
-            Kind = WatchtowerCombatStepKind.CombatCompleted,
+            Kind = CombatStepKind.CombatCompleted,
             StartingEncounterRevision = encounter.Revision,
             ResultingEncounterRevision = encounter.Revision,
             ActorCombatantId = null,
@@ -158,7 +158,7 @@ internal static class WatchtowerCombatStepFactory
 
     internal static WatchtowerCombatDieRoll CreateDie(
         ApplicationRandomRoll roll,
-        WatchtowerCombatDiePurpose purpose)
+        CombatDiePurpose purpose)
     {
         return new WatchtowerCombatDieRoll
         {

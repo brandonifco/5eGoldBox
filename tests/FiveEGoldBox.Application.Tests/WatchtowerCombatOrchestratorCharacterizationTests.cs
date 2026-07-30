@@ -34,7 +34,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
             run.Lines);
 
         Assert.Equal(
-            WatchtowerCombatDecisionState.CombatCompleted,
+            CombatDecisionState.CombatCompleted,
             run.Result.ResultingDecision.State);
         Assert.Equal(
             WatchtowerSignalEncounter.PartySideId,
@@ -58,7 +58,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
             run.Lines);
 
         Assert.Equal(
-            WatchtowerCombatDecisionState.CombatCompleted,
+            CombatDecisionState.CombatCompleted,
             run.Result.ResultingDecision.State);
         Assert.Equal(
             WatchtowerSignalEncounter.RaiderSideId,
@@ -88,7 +88,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
         WatchtowerCombatIntentReceipt attack = RequireReceipt(
             WatchtowerCombatRules.Execute(
                 state,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = actorId,
@@ -96,7 +96,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
                     TargetCombatantId = target.TargetCombatantId
                 }));
 
-        Assert.Equal(WatchtowerCombatIntentKind.WeaponAttack, attack.Kind);
+        Assert.Equal(CombatIntentKind.WeaponAttack, attack.Kind);
         Assert.Equal(decision.EncounterRevision, attack.ExpectedEncounterRevision);
         Assert.Equal(actorId, attack.ActorCombatantId);
         Assert.Equal(weapon.WeaponId, attack.WeaponId);
@@ -106,14 +106,14 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
         WatchtowerCombatIntentReceipt move = RequireReceipt(
             WatchtowerCombatRules.Execute(
                 state,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = actorId,
                     Path = path
                 }));
 
-        Assert.Equal(WatchtowerCombatIntentKind.Move, move.Kind);
+        Assert.Equal(CombatIntentKind.Move, move.Kind);
         Assert.Equal(decision.EncounterRevision, move.ExpectedEncounterRevision);
         Assert.Equal(actorId, move.ActorCombatantId);
         Assert.Equal(path, move.Path);
@@ -123,13 +123,13 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
         WatchtowerCombatIntentReceipt endTurn = RequireReceipt(
             WatchtowerCombatRules.Execute(
                 state,
-                new WatchtowerCombatEndTurnIntent
+                new CombatEndTurnIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = actorId
                 }));
 
-        Assert.Equal(WatchtowerCombatIntentKind.EndTurn, endTurn.Kind);
+        Assert.Equal(CombatIntentKind.EndTurn, endTurn.Kind);
         Assert.Equal(decision.EncounterRevision, endTurn.ExpectedEncounterRevision);
         Assert.Equal(actorId, endTurn.ActorCombatantId);
         Assert.Empty(endTurn.Path);
@@ -164,7 +164,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
         WatchtowerCombatStepResult[] steps = run.Steps.ToArray();
         WatchtowerCombatStepResult completion = Assert.Single(
             steps,
-            step => step.Kind == WatchtowerCombatStepKind.CombatCompleted);
+            step => step.Kind == CombatStepKind.CombatCompleted);
 
         Assert.Same(steps[^1], completion);
         Assert.All(
@@ -200,7 +200,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
             Assert.True(result.ResultingEncounterRevision >= result.PriorEncounterRevision);
             Assert.True(result.RandomValuesConsumedAfter >= result.RandomValuesConsumedBefore);
             Assert.NotEqual(
-                WatchtowerCombatDecisionState.AutomaticProcessingRequired,
+                CombatDecisionState.AutomaticProcessingRequired,
                 result.ResultingDecision.State);
 
             int diceInSteps = CollectSteps(result).Sum(step => step.Dice.Count);
@@ -302,7 +302,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
         {
             WatchtowerCombatDecision decision = result.ResultingDecision;
 
-            if (decision.State != WatchtowerCombatDecisionState.PlayerDecisionRequired)
+            if (decision.State != CombatDecisionState.PlayerDecisionRequired)
             {
                 break;
             }
@@ -317,7 +317,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
         }
 
         Assert.Equal(
-            WatchtowerCombatDecisionState.CombatCompleted,
+            CombatDecisionState.CombatCompleted,
             result.ResultingDecision.State);
 
         return new ScriptedRun(
@@ -376,7 +376,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
             WatchtowerCombatResolutionResult attack =
                 WatchtowerCombatRules.Execute(
                     state,
-                    new WatchtowerCombatWeaponAttackIntent
+                    new CombatWeaponAttackIntent
                     {
                         ExpectedEncounterRevision = decision.EncounterRevision,
                         ActorCombatantId = actorId,
@@ -400,7 +400,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
             WatchtowerCombatResolutionResult move =
                 WatchtowerCombatRules.Execute(
                     state,
-                    new WatchtowerCombatMoveIntent
+                    new CombatMoveIntent
                     {
                         ExpectedEncounterRevision = decision.EncounterRevision,
                         ActorCombatantId = actorId,
@@ -414,7 +414,7 @@ public sealed class WatchtowerCombatOrchestratorCharacterizationTests
         WatchtowerCombatResolutionResult endTurn =
             WatchtowerCombatRules.Execute(
                 state,
-                new WatchtowerCombatEndTurnIntent
+                new CombatEndTurnIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = actorId

@@ -300,15 +300,15 @@ internal static class WatchtowerCombatResultMapper
     }
 
     private static CombatDecisionState ToCombatDecisionState(
-        WatchtowerCombatDecisionState source)
+        CombatDecisionState source)
     {
         return source switch
         {
-            WatchtowerCombatDecisionState.PlayerDecisionRequired =>
+            CombatDecisionState.PlayerDecisionRequired =>
                 CombatDecisionState.PlayerDecisionRequired,
-            WatchtowerCombatDecisionState.AutomaticProcessingRequired =>
+            CombatDecisionState.AutomaticProcessingRequired =>
                 CombatDecisionState.AutomaticProcessingRequired,
-            WatchtowerCombatDecisionState.CombatCompleted =>
+            CombatDecisionState.CombatCompleted =>
                 CombatDecisionState.CombatCompleted,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(source),
@@ -318,17 +318,17 @@ internal static class WatchtowerCombatResultMapper
     }
 
     private static CombatStepKind ToCombatStepKind(
-        WatchtowerCombatStepKind source)
+        CombatStepKind source)
     {
         return source switch
         {
-            WatchtowerCombatStepKind.Movement => CombatStepKind.Movement,
-            WatchtowerCombatStepKind.WeaponAttack => CombatStepKind.WeaponAttack,
-            WatchtowerCombatStepKind.SpellAttack => CombatStepKind.SpellAttack,
-            WatchtowerCombatStepKind.DeathSavingThrow =>
+            CombatStepKind.Movement => CombatStepKind.Movement,
+            CombatStepKind.WeaponAttack => CombatStepKind.WeaponAttack,
+            CombatStepKind.SpellAttack => CombatStepKind.SpellAttack,
+            CombatStepKind.DeathSavingThrow =>
                 CombatStepKind.DeathSavingThrow,
-            WatchtowerCombatStepKind.TurnAdvanced => CombatStepKind.TurnAdvanced,
-            WatchtowerCombatStepKind.CombatCompleted =>
+            CombatStepKind.TurnAdvanced => CombatStepKind.TurnAdvanced,
+            CombatStepKind.CombatCompleted =>
                 CombatStepKind.CombatCompleted,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(source),
@@ -338,19 +338,19 @@ internal static class WatchtowerCombatResultMapper
     }
 
     private static CombatDiePurpose ToCombatDiePurpose(
-        WatchtowerCombatDiePurpose source)
+        CombatDiePurpose source)
     {
         return source switch
         {
-            WatchtowerCombatDiePurpose.AttackRoll => CombatDiePurpose.AttackRoll,
-            WatchtowerCombatDiePurpose.DamageRoll => CombatDiePurpose.DamageRoll,
-            WatchtowerCombatDiePurpose.DeathSavingThrow =>
+            CombatDiePurpose.AttackRoll => CombatDiePurpose.AttackRoll,
+            CombatDiePurpose.DamageRoll => CombatDiePurpose.DamageRoll,
+            CombatDiePurpose.DeathSavingThrow =>
                 CombatDiePurpose.DeathSavingThrow,
-            WatchtowerCombatDiePurpose.SavingThrow =>
+            CombatDiePurpose.SavingThrow =>
                 CombatDiePurpose.SavingThrow,
-            WatchtowerCombatDiePurpose.EffectRoll =>
+            CombatDiePurpose.EffectRoll =>
                 CombatDiePurpose.EffectRoll,
-            WatchtowerCombatDiePurpose.ConcentrationSavingThrow =>
+            CombatDiePurpose.ConcentrationSavingThrow =>
                 CombatDiePurpose.ConcentrationSavingThrow,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(source),
@@ -360,16 +360,16 @@ internal static class WatchtowerCombatResultMapper
     }
 
     private static CombatIntentKind ToCombatIntentKind(
-        WatchtowerCombatIntentKind source)
+        CombatIntentKind source)
     {
         return source switch
         {
-            WatchtowerCombatIntentKind.Move => CombatIntentKind.Move,
-            WatchtowerCombatIntentKind.WeaponAttack =>
+            CombatIntentKind.Move => CombatIntentKind.Move,
+            CombatIntentKind.WeaponAttack =>
                 CombatIntentKind.WeaponAttack,
-            WatchtowerCombatIntentKind.SpellAttack =>
+            CombatIntentKind.SpellAttack =>
                 CombatIntentKind.SpellAttack,
-            WatchtowerCombatIntentKind.EndTurn => CombatIntentKind.EndTurn,
+            CombatIntentKind.EndTurn => CombatIntentKind.EndTurn,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(source),
                 source,

@@ -26,7 +26,7 @@ public sealed class WatchtowerCombatExecutionTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
@@ -35,13 +35,13 @@ public sealed class WatchtowerCombatExecutionTests
 
         Assert.NotNull(result.PrimaryStep);
         Assert.Equal(
-            WatchtowerCombatStepKind.Movement,
+            CombatStepKind.Movement,
             result.PrimaryStep.Kind);
         Assert.Equal(path, result.PrimaryStep.Movement!.Path);
         Assert.Equal(path[^1], result.PrimaryStep.Movement.EndingPosition);
         Assert.Equal(cursor, result.RandomValuesConsumedAfter);
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             result.ResultingDecision.State);
         Assert.True(
             WatchtowerCombatTestData.GetParticipant(
@@ -76,7 +76,7 @@ public sealed class WatchtowerCombatExecutionTests
             WatchtowerCombatResolutionResult result =
                 WatchtowerCombatRules.Execute(
                     source,
-                    new WatchtowerCombatMoveIntent
+                    new CombatMoveIntent
                     {
                         ExpectedEncounterRevision =
                             decision.EncounterRevision,
@@ -99,7 +99,7 @@ public sealed class WatchtowerCombatExecutionTests
                     decision.ActiveCombatantId!);
 
             Assert.Equal(
-                WatchtowerCombatIntentKind.Move,
+                CombatIntentKind.Move,
                 receipt.Kind);
             Assert.Equal(
                 decision.ActiveCombatantId,
@@ -111,7 +111,7 @@ public sealed class WatchtowerCombatExecutionTests
                 option.Path.ToArray(),
                 receipt.Path.ToArray());
             Assert.Equal(
-                WatchtowerCombatStepKind.Movement,
+                CombatStepKind.Movement,
                 step.Kind);
             Assert.Equal(
                 option.Path.ToArray(),
@@ -151,7 +151,7 @@ public sealed class WatchtowerCombatExecutionTests
         Assert.ThrowsAny<ArgumentException>(() =>
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -176,7 +176,7 @@ public sealed class WatchtowerCombatExecutionTests
         ApplicationSessionState afterFirst =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision = firstDecision.EncounterRevision,
                     ActorCombatantId = firstDecision.ActiveCombatantId!,
@@ -188,7 +188,7 @@ public sealed class WatchtowerCombatExecutionTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 afterFirst,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision = secondDecision.EncounterRevision,
                     ActorCombatantId = secondDecision.ActiveCombatantId!,
@@ -219,7 +219,7 @@ public sealed class WatchtowerCombatExecutionTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
@@ -239,11 +239,11 @@ public sealed class WatchtowerCombatExecutionTests
                 ? 0
                 : attack.Attack.Damage.DamageDice!.Count;
 
-        Assert.Equal(WatchtowerCombatStepKind.WeaponAttack, step.Kind);
+        Assert.Equal(CombatStepKind.WeaponAttack, step.Kind);
         Assert.Equal(expectedAttackDice, step.Dice.Count(die =>
-            die.Purpose == WatchtowerCombatDiePurpose.AttackRoll));
+            die.Purpose == CombatDiePurpose.AttackRoll));
         Assert.Equal(expectedDamageDice, step.Dice.Count(die =>
-            die.Purpose == WatchtowerCombatDiePurpose.DamageRoll));
+            die.Purpose == CombatDiePurpose.DamageRoll));
         Assert.Equal(
             expectedAttackDice + expectedDamageDice,
             result.RandomValuesConsumedAfter - cursorBefore);
@@ -253,7 +253,7 @@ public sealed class WatchtowerCombatExecutionTests
                 decision.ActiveCombatantId!)
             .TurnResources.HasActionAvailable);
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             result.ResultingDecision.State);
     }
 
@@ -283,7 +283,7 @@ public sealed class WatchtowerCombatExecutionTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
@@ -336,7 +336,7 @@ public sealed class WatchtowerCombatExecutionTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
@@ -345,7 +345,7 @@ public sealed class WatchtowerCombatExecutionTests
                 });
 
         Assert.Equal(2, result.PrimaryStep!.Dice.Count(die =>
-            die.Purpose == WatchtowerCombatDiePurpose.AttackRoll));
+            die.Purpose == CombatDiePurpose.AttackRoll));
         Assert.Equal(
             FiveEGoldBox.Core.Rules.D20RollMode.Disadvantage,
             result.PrimaryStep.WeaponAttack!.Attack.AttackRoll.RollMode);
@@ -366,7 +366,7 @@ public sealed class WatchtowerCombatExecutionTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
@@ -379,7 +379,7 @@ public sealed class WatchtowerCombatExecutionTests
             result.PrimaryStep!.WeaponAttack!.Attack.AttackRoll.Outcome);
         Assert.Single(result.PrimaryStep.Dice);
         Assert.Equal(
-            WatchtowerCombatDiePurpose.AttackRoll,
+            CombatDiePurpose.AttackRoll,
             result.PrimaryStep.Dice[0].Purpose);
         Assert.Equal(1, result.PrimaryStep.Dice[0].Value);
         Assert.Equal(4, result.RandomValuesConsumedAfter);
@@ -400,7 +400,7 @@ public sealed class WatchtowerCombatExecutionTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
@@ -412,9 +412,9 @@ public sealed class WatchtowerCombatExecutionTests
             FiveEGoldBox.Core.Rules.AttackRollOutcome.CriticalHit,
             result.PrimaryStep!.WeaponAttack!.Attack.AttackRoll.Outcome);
         Assert.Equal(1, result.PrimaryStep.Dice.Count(die =>
-            die.Purpose == WatchtowerCombatDiePurpose.AttackRoll));
+            die.Purpose == CombatDiePurpose.AttackRoll));
         Assert.Equal(2, result.PrimaryStep.Dice.Count(die =>
-            die.Purpose == WatchtowerCombatDiePurpose.DamageRoll));
+            die.Purpose == CombatDiePurpose.DamageRoll));
         Assert.Equal(38, result.RandomValuesConsumedAfter);
     }
 
@@ -430,7 +430,7 @@ public sealed class WatchtowerCombatExecutionTests
         ApplicationSessionState afterAttack =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = attackDecision.EncounterRevision,
                     ActorCombatantId = attackDecision.ActiveCombatantId!,
@@ -443,7 +443,7 @@ public sealed class WatchtowerCombatExecutionTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 afterAttack,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision = moveDecision.EncounterRevision,
                     ActorCombatantId = moveDecision.ActiveCombatantId!,
@@ -469,7 +469,7 @@ public sealed class WatchtowerCombatExecutionTests
         ApplicationSessionState afterFirstMove =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision = firstDecision.EncounterRevision,
                     ActorCombatantId = firstDecision.ActiveCombatantId!,
@@ -485,7 +485,7 @@ public sealed class WatchtowerCombatExecutionTests
         ApplicationSessionState afterAttack =
             WatchtowerCombatRules.Execute(
                 afterFirstMove,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = attackDecision.EncounterRevision,
                     ActorCombatantId = attackDecision.ActiveCombatantId!,
@@ -497,7 +497,7 @@ public sealed class WatchtowerCombatExecutionTests
         ApplicationSessionState afterSecondMove =
             WatchtowerCombatRules.Execute(
                 afterAttack,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision = secondMoveDecision.EncounterRevision,
                     ActorCombatantId = secondMoveDecision.ActiveCombatantId!,
@@ -507,7 +507,7 @@ public sealed class WatchtowerCombatExecutionTests
         WatchtowerCombatResolutionResult ended =
             WatchtowerCombatRules.Execute(
                 afterSecondMove,
-                new WatchtowerCombatEndTurnIntent
+                new CombatEndTurnIntent
                 {
                     ExpectedEncounterRevision = endDecision.EncounterRevision,
                     ActorCombatantId = endDecision.ActiveCombatantId!
@@ -524,7 +524,7 @@ public sealed class WatchtowerCombatExecutionTests
             WatchtowerCombatTurnAdvanceReason.PlayerEndTurn,
             ended.PrimaryStep!.TurnAdvanceReason);
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             ended.ResultingDecision.State);
     }
 
@@ -538,7 +538,7 @@ public sealed class WatchtowerCombatExecutionTests
 
         source = WatchtowerCombatRules.Execute(
             source,
-            new WatchtowerCombatMoveIntent
+            new CombatMoveIntent
             {
                 ExpectedEncounterRevision = decision.EncounterRevision,
                 ActorCombatantId = actorId,
@@ -547,7 +547,7 @@ public sealed class WatchtowerCombatExecutionTests
         decision = GetDecision(source);
         source = WatchtowerCombatRules.Execute(
             source,
-            new WatchtowerCombatMoveIntent
+            new CombatMoveIntent
             {
                 ExpectedEncounterRevision = decision.EncounterRevision,
                 ActorCombatantId = actorId,
@@ -561,7 +561,7 @@ public sealed class WatchtowerCombatExecutionTests
         Assert.True(target.IsAvailable);
         source = WatchtowerCombatRules.Execute(
             source,
-            new WatchtowerCombatWeaponAttackIntent
+            new CombatWeaponAttackIntent
             {
                 ExpectedEncounterRevision = decision.EncounterRevision,
                 ActorCombatantId = actorId,
@@ -571,7 +571,7 @@ public sealed class WatchtowerCombatExecutionTests
         decision = GetDecision(source);
         source = WatchtowerCombatRules.Execute(
             source,
-            new WatchtowerCombatMoveIntent
+            new CombatMoveIntent
             {
                 ExpectedEncounterRevision = decision.EncounterRevision,
                 ActorCombatantId = actorId,
@@ -581,7 +581,7 @@ public sealed class WatchtowerCombatExecutionTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatEndTurnIntent
+                new CombatEndTurnIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = actorId
@@ -607,7 +607,7 @@ public sealed class WatchtowerCombatExecutionTests
         ApplicationSessionState afterAttack =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
@@ -627,7 +627,7 @@ public sealed class WatchtowerCombatExecutionTests
         Assert.Throws<InvalidOperationException>(() =>
             WatchtowerCombatRules.Execute(
                 afterAttack,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = afterDecision.EncounterRevision,
                     ActorCombatantId = afterDecision.ActiveCombatantId!,
@@ -650,7 +650,7 @@ public sealed class WatchtowerCombatExecutionTests
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
@@ -704,7 +704,7 @@ public sealed class WatchtowerCombatExecutionTests
         Assert.Throws<InvalidOperationException>(() =>
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
@@ -748,7 +748,7 @@ public sealed class WatchtowerCombatExecutionTests
         Assert.Throws<InvalidOperationException>(() =>
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision = encounter.Revision,
                     ActorCombatantId = encounter.ActiveCombatantId,
@@ -856,7 +856,7 @@ public sealed class WatchtowerCombatExecutionTests
         Assert.Throws<ControlledDamageResponseEnumerationException>(() =>
             failedResult = WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
@@ -871,7 +871,7 @@ public sealed class WatchtowerCombatExecutionTests
             WatchtowerCombatRules.AdvanceToDecision(source);
 
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             reusable.ResultingDecision.State);
         Assert.Null(reusable.PrimaryStep);
         Assert.Empty(reusable.AutomaticSteps);
@@ -895,20 +895,20 @@ public sealed class WatchtowerCombatExecutionTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatEndTurnIntent
+                new CombatEndTurnIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!
                 });
 
         Assert.Equal(
-            WatchtowerCombatStepKind.TurnAdvanced,
+            CombatStepKind.TurnAdvanced,
             result.PrimaryStep!.Kind);
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.PlayerEndTurn,
             result.PrimaryStep.TurnAdvanceReason);
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             result.ResultingDecision.State);
         Assert.Empty(result.PrimaryStep.Dice);
         int automaticDice = result.AutomaticSteps.Sum(
@@ -936,7 +936,7 @@ public sealed class WatchtowerCombatExecutionTests
         Assert.Throws<InvalidOperationException>(() =>
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatEndTurnIntent
+                new CombatEndTurnIntent
                 {
                     ExpectedEncounterRevision = staleRevision
                         ? decision.EncounterRevision + 1
@@ -962,7 +962,7 @@ public sealed class WatchtowerCombatExecutionTests
         Assert.Throws<InvalidOperationException>(() =>
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,

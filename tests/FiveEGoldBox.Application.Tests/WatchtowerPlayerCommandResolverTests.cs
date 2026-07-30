@@ -25,7 +25,7 @@ public sealed class WatchtowerPlayerCommandResolverTests
                 fixture.Encounter,
                 fixture.RandomSeed,
                 fixture.CursorBefore,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision = fixture.Revision,
                     ActorCombatantId = fixture.ActorId,
@@ -34,10 +34,10 @@ public sealed class WatchtowerPlayerCommandResolverTests
 
         Assert.Equal(fixture.CursorBefore, resolution.CursorAfter);
         Assert.Equal(
-            WatchtowerCombatStepKind.Movement,
+            CombatStepKind.Movement,
             resolution.PrimaryStep.Kind);
         Assert.Empty(resolution.PrimaryStep.Dice);
-        Assert.Equal(WatchtowerCombatIntentKind.Move, resolution.Receipt.Kind);
+        Assert.Equal(CombatIntentKind.Move, resolution.Receipt.Kind);
         Assert.Equal(destination.Path, resolution.Receipt.Path);
         Assert.True(resolution.State.Revision > fixture.Revision);
     }
@@ -52,7 +52,7 @@ public sealed class WatchtowerPlayerCommandResolverTests
                 fixture.Encounter,
                 fixture.RandomSeed,
                 fixture.CursorBefore,
-                new WatchtowerCombatEndTurnIntent
+                new CombatEndTurnIntent
                 {
                     ExpectedEncounterRevision = fixture.Revision,
                     ActorCombatantId = fixture.ActorId
@@ -60,13 +60,13 @@ public sealed class WatchtowerPlayerCommandResolverTests
 
         Assert.Equal(fixture.CursorBefore, resolution.CursorAfter);
         Assert.Equal(
-            WatchtowerCombatStepKind.TurnAdvanced,
+            CombatStepKind.TurnAdvanced,
             resolution.PrimaryStep.Kind);
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.PlayerEndTurn,
             resolution.PrimaryStep.TurnAdvanceReason);
         Assert.Equal(
-            WatchtowerCombatIntentKind.EndTurn,
+            CombatIntentKind.EndTurn,
             resolution.Receipt.Kind);
         Assert.Empty(resolution.Receipt.Path);
     }
@@ -88,7 +88,7 @@ public sealed class WatchtowerPlayerCommandResolverTests
                 fixture.Encounter,
                 fixture.RandomSeed,
                 fixture.CursorBefore,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = fixture.Revision,
                     ActorCombatantId = fixture.ActorId,
@@ -97,7 +97,7 @@ public sealed class WatchtowerPlayerCommandResolverTests
                 });
 
         Assert.Equal(
-            WatchtowerCombatStepKind.WeaponAttack,
+            CombatStepKind.WeaponAttack,
             resolution.PrimaryStep.Kind);
         Assert.NotEmpty(resolution.PrimaryStep.Dice);
         Assert.Equal(
@@ -118,7 +118,7 @@ public sealed class WatchtowerPlayerCommandResolverTests
                 fixture.Encounter,
                 fixture.RandomSeed,
                 fixture.CursorBefore,
-                new WatchtowerCombatMoveIntent
+                new CombatMoveIntent
                 {
                     ExpectedEncounterRevision = fixture.Revision,
                     ActorCombatantId = fixture.ActorId,
@@ -138,7 +138,7 @@ public sealed class WatchtowerPlayerCommandResolverTests
                 fixture.Encounter,
                 fixture.RandomSeed,
                 fixture.CursorBefore,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision = fixture.Revision,
                     ActorCombatantId = fixture.ActorId,

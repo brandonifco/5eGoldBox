@@ -22,10 +22,10 @@ public sealed class WatchtowerCombatDecisionTests
             WatchtowerCombatRules.AdvanceToDecision(state);
 
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             result.StartingDecision.State);
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             result.ResultingDecision.State);
         Assert.NotNull(result.ResultingDecision.ActiveCombatantId);
         Assert.NotNull(result.ResultingDecision.Movement);
@@ -397,11 +397,11 @@ public sealed class WatchtowerCombatDecisionTests
             WatchtowerCombatRules.AdvanceToDecision(source);
 
         Assert.Equal(
-            WatchtowerCombatDecisionState.AutomaticProcessingRequired,
+            CombatDecisionState.AutomaticProcessingRequired,
             result.StartingDecision.State);
         Assert.NotEmpty(result.AutomaticSteps);
         Assert.NotEqual(
-            WatchtowerCombatDecisionState.AutomaticProcessingRequired,
+            CombatDecisionState.AutomaticProcessingRequired,
             result.ResultingDecision.State);
     }
 
@@ -423,10 +423,10 @@ public sealed class WatchtowerCombatDecisionTests
             WatchtowerCombatRules.AdvanceToDecision(source);
 
         Assert.Equal(
-            WatchtowerCombatDecisionState.CombatCompleted,
+            CombatDecisionState.CombatCompleted,
             result.StartingDecision.State);
         Assert.Equal(
-            WatchtowerCombatDecisionState.CombatCompleted,
+            CombatDecisionState.CombatCompleted,
             result.ResultingDecision.State);
         Assert.Equal("side.party", result.ResultingDecision.WinningSideId);
         Assert.Null(result.ResultingDecision.Movement);
@@ -541,7 +541,7 @@ public sealed class WatchtowerCombatDecisionTests
             {
                 _ = WatchtowerCombatRules.Execute(
                     source,
-                    new WatchtowerCombatMoveIntent
+                    new CombatMoveIntent
                     {
                         ExpectedEncounterRevision = completedBefore.Revision,
                         ActorCombatantId = completedBefore.ActiveCombatantId,
@@ -552,7 +552,7 @@ public sealed class WatchtowerCombatDecisionTests
             {
                 _ = WatchtowerCombatRules.Execute(
                     source,
-                    new WatchtowerCombatWeaponAttackIntent
+                    new CombatWeaponAttackIntent
                     {
                         ExpectedEncounterRevision = completedBefore.Revision,
                         ActorCombatantId = activeDecision.ActiveCombatantId!,
@@ -564,7 +564,7 @@ public sealed class WatchtowerCombatDecisionTests
             {
                 _ = WatchtowerCombatRules.Execute(
                     source,
-                    new WatchtowerCombatEndTurnIntent
+                    new CombatEndTurnIntent
                     {
                         ExpectedEncounterRevision = completedBefore.Revision,
                         ActorCombatantId = completedBefore.ActiveCombatantId

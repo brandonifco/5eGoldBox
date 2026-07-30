@@ -56,12 +56,7 @@ public static class CombatOperations
         return WatchtowerCombatResultMapper.ToCombatResolutionResult(
             WatchtowerCombatOrchestrator.Execute(
                 session,
-                new WatchtowerCombatMoveIntent
-                {
-                    ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
-                    ActorCombatantId = intent.ActorCombatantId,
-                    Path = intent.Path
-                }));
+                intent));
     }
 
     public static CombatResolutionResult Execute(
@@ -74,13 +69,7 @@ public static class CombatOperations
         return WatchtowerCombatResultMapper.ToCombatResolutionResult(
             WatchtowerCombatOrchestrator.Execute(
                 session,
-                new WatchtowerCombatWeaponAttackIntent
-                {
-                    ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
-                    ActorCombatantId = intent.ActorCombatantId,
-                    WeaponId = intent.WeaponId,
-                    TargetCombatantId = intent.TargetCombatantId
-                }));
+                intent));
     }
 
     public static CombatResolutionResult Execute(
@@ -93,15 +82,7 @@ public static class CombatOperations
         return WatchtowerCombatResultMapper.ToCombatResolutionResult(
             WatchtowerCombatOrchestrator.Execute(
                 session,
-                new WatchtowerCombatSpellAttackIntent
-                {
-                    ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
-                    ActorCombatantId = intent.ActorCombatantId,
-                    SpellId = intent.SpellId,
-                    TargetCombatantId = intent.TargetCombatantId,
-                    AdditionalTargetCombatantIds =
-                        intent.AdditionalTargetCombatantIds
-                }));
+                intent));
     }
 
     public static CombatResolutionResult Execute(
@@ -114,10 +95,6 @@ public static class CombatOperations
         return WatchtowerCombatResultMapper.ToCombatResolutionResult(
             WatchtowerCombatOrchestrator.Execute(
                 session,
-                new WatchtowerCombatEndTurnIntent
-                {
-                    ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
-                    ActorCombatantId = intent.ActorCombatantId
-                }));
+                intent));
     }
 }
