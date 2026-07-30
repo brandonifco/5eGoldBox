@@ -11,7 +11,8 @@ internal static class ConsoleProcessHarness
     internal static async Task<ConsoleProcessResult> RunAsync(
         string workingDirectory,
         string scriptedInput,
-        TimeSpan? timeout = null)
+        TimeSpan? timeout = null,
+        IReadOnlyList<string>? arguments = null)
     {
         if (string.IsNullOrWhiteSpace(workingDirectory))
         {
@@ -35,6 +36,11 @@ internal static class ConsoleProcessHarness
             CreateNoWindow = true
         };
         startInfo.ArgumentList.Add(consoleDllPath);
+
+        foreach (string argument in arguments ?? [])
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
 
         using Process process = new()
         {
