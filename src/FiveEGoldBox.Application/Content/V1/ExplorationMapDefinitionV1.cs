@@ -8,7 +8,7 @@ internal sealed record ExplorationMapDefinitionV1
 
     public required int Height { get; init; }
 
-    public required ExplorationFloorV1 StartingFloor { get; init; }
+    public required string StartingFloor { get; init; }
 
     public required GridPositionV1 StartingPosition { get; init; }
 

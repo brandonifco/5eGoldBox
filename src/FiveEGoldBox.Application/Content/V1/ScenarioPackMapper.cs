@@ -103,7 +103,7 @@ internal static class ScenarioPackMapper
             MapId = map.MapId,
             Width = map.Width,
             Height = map.Height,
-            StartingFloor = ToRuntimeFloor(map.StartingFloor),
+            StartingFloor = map.StartingFloor,
             StartingPosition = ToRuntimePosition(map.StartingPosition),
             StartingFacing = ToRuntimeFacing(map.StartingFacing),
             Floors = map.Floors
@@ -117,7 +117,7 @@ internal static class ScenarioPackMapper
     {
         return new ExplorationFloorDefinition
         {
-            Floor = ToRuntimeFloor(floor.Floor),
+            Floor = floor.Floor,
             TraversablePositions = floor.TraversablePositions
                 .Select(ToRuntimePosition)
                 .ToArray(),
@@ -133,7 +133,7 @@ internal static class ScenarioPackMapper
         return new StairDefinition
         {
             Position = ToRuntimePosition(stair.Position),
-            DestinationFloor = ToRuntimeFloor(stair.DestinationFloor),
+            DestinationFloor = stair.DestinationFloor,
             DestinationPosition = ToRuntimePosition(
                 stair.DestinationPosition)
         };
@@ -241,9 +241,7 @@ internal static class ScenarioPackMapper
             TriggerId = trigger.TriggerId,
             DisplayName = trigger.DisplayName,
             LocationId = trigger.LocationId,
-            Floor = trigger.Floor is null
-                ? null
-                : ToRuntimeFloor(trigger.Floor.Value),
+            Floor = trigger.Floor,
             Position = trigger.Position is null
                 ? null
                 : ToRuntimePosition(trigger.Position),
@@ -286,20 +284,6 @@ internal static class ScenarioPackMapper
         GridPositionV1 position)
     {
         return new GridPosition(position.X, position.Y);
-    }
-
-    private static ExplorationFloor ToRuntimeFloor(
-        ExplorationFloorV1 floor)
-    {
-        return floor switch
-        {
-            ExplorationFloorV1.GroundFloor => ExplorationFloor.GroundFloor,
-            ExplorationFloorV1.UpperFloor => ExplorationFloor.UpperFloor,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(floor),
-                floor,
-                "Unsupported packed exploration floor.")
-        };
     }
 
     private static ExplorationFacing ToRuntimeFacing(

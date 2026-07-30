@@ -189,16 +189,16 @@ public sealed class ScenarioPackLoaderTests
         ScenarioLocationDefinition dungeon = scenario.Locations
             .Single(location => location.LocationId == "location.dungeon");
         Assert.NotNull(dungeon.ExplorationMap);
-        Assert.Equal(ExplorationFloor.GroundFloor, dungeon.ExplorationMap.StartingFloor);
+        Assert.Equal("GroundFloor", dungeon.ExplorationMap.StartingFloor);
         Assert.Equal(new GridPosition(1, 1), dungeon.ExplorationMap.StartingPosition);
         Assert.Equal(ExplorationFacing.North, dungeon.ExplorationMap.StartingFacing);
         Assert.Equal(2, dungeon.ExplorationMap.Floors.Count);
 
         ExplorationFloorDefinition groundFloor = dungeon.ExplorationMap.Floors
-            .Single(floor => floor.Floor == ExplorationFloor.GroundFloor);
+            .Single(floor => floor.Floor == "GroundFloor");
         Assert.Equal(2, groundFloor.TraversablePositions.Count);
         StairDefinition stair = Assert.Single(groundFloor.Stairs);
-        Assert.Equal(ExplorationFloor.UpperFloor, stair.DestinationFloor);
+        Assert.Equal("UpperFloor", stair.DestinationFloor);
         Assert.Equal(new GridPosition(2, 2), stair.DestinationPosition);
 
         TravelRouteDefinition route = Assert.Single(scenario.Routes);
@@ -226,7 +226,7 @@ public sealed class ScenarioPackLoaderTests
         Assert.Equal(2, scenario.Triggers.Count);
         ScenarioTriggerDefinition positionalTrigger = scenario.Triggers
             .Single(trigger => trigger.TriggerId == "trigger.positional");
-        Assert.Equal(ExplorationFloor.UpperFloor, positionalTrigger.Floor);
+        Assert.Equal("UpperFloor", positionalTrigger.Floor);
         Assert.Equal(new GridPosition(2, 2), positionalTrigger.Position);
         Assert.Equal(ExplorationFacing.East, positionalTrigger.RequiredFacing);
         Assert.Equal("encounter.test", positionalTrigger.EncounterId);

@@ -8,7 +8,7 @@ internal sealed record ScenarioTriggerDefinitionV1
 
     public required string LocationId { get; init; }
 
-    public ExplorationFloorV1? Floor { get; init; }
+    public string? Floor { get; init; }
 
     public GridPositionV1? Position { get; init; }
 
