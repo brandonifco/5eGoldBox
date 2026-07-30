@@ -116,11 +116,17 @@ jobs:
           curl -fL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/${GODOT_ARCHIVE}"
           unzip -q /tmp/godot.zip -d ~/godot-engine
 
-      - name: Add Godot to PATH
+      # The extracted binary keeps its versioned filename (e.g.
+      # Godot_v4.7-stable_mono_linux.x86_64), not `godot` -- symlink it so
+      # every command below (and CLAUDE.md's own documented commands) can
+      # just call `godot`.
+      - name: Install Godot as `godot` on PATH
         run: |
           bin=$(find ~/godot-engine -maxdepth 2 -type f -name 'Godot_v*_mono_linux.x86_64')
           chmod +x "$bin"
-          echo "$(dirname "$bin")" >> "$GITHUB_PATH"
+          mkdir -p /tmp/godot-bin
+          ln -sf "$bin" /tmp/godot-bin/godot
+          echo "/tmp/godot-bin" >> "$GITHUB_PATH"
 
       # A runtime exception with no display attached tries to show a GUI
       # error dialog via zenity and hangs forever instead of exiting. A fake
