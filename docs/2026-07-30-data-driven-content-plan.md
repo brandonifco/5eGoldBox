@@ -143,16 +143,36 @@ lines, one file, no merge semantics).
 
 ### Phase 4 — `/data/` directory convention and runtime discovery
 
-- Proposed default: a repo-root `/data/` directory (ruleset packs, scenario packs, campaign
-  files); each of Phases 1–3's loader takes a content-root path parameter rather than a hardcoded
-  relative path, so tests can point it at a temp directory.
-- Console: resolve via an explicit path argument or environment variable, defaulting to a
-  repo-relative dev path when running from source. What "installed" (non-dev) resolution should
-  look like is a real open question once this matters practically.
-- Godot: needs investigation against the actual export pipeline before assuming a shared
-  filesystem path "just works" the way it does for Console — flagged here rather than assumed.
-- Deliberately last: orthogonal to the schema/loader work, which is verified with test-local paths
-  regardless of where the real directory ends up living.
+- ~~Proposed default: a repo-root `/data/` directory~~ — **done, as part of Phases 1–3.** All
+  three content types live under a repo-root `data/` (`data/rulesets/campaign/core.json`,
+  `data/scenarios/*/scenario.json`, `data/campaigns/frontier/campaign.json`), and
+  `DataDirectoryLocator.ResolveDataFilePath` is the one seam every loader goes through.
+- **Explicit override added (2026-07-30):** `DataDirectoryLocator` now checks a
+  `FIVEEGOLDBOX_DATA_ROOT` environment variable first. When set, it is trusted absolutely — a
+  missing file under it is a real misconfiguration and fails loudly rather than silently falling
+  through to the search below, matching this codebase's existing "fail loudly, don't paper over a
+  real conflict" discipline. Without it, the existing dev-checkout walk-up (from the running
+  assembly's location up to a `data/` directory) is the fallback, unchanged.
+- **Deliberately not added: a `--data-path` CLI argument for Console.** The environment variable
+  already covers the override need end to end, and Console's `Program.Main` takes no arguments
+  today — adding argument parsing for a need the environment variable already satisfies would be
+  exactly the kind of speculative flag this codebase's own discipline argues against. Easy to add
+  later (just set the environment variable from `Main` before the first resolve) if a real need
+  surfaces.
+- **Still genuinely open, not resolved here:**
+  - Neither client has an actual publish/export pipeline yet — Console is run via `dotnet run`
+    from a checkout (confirmed: no `dotnet publish` step exists in the README or CI), and Godot has
+    no `export_presets.cfg` configured. So "how does a shipped build locate `/data/`" has an
+    *override mechanism* now, but no actual packaging convention to set that override *to* — that
+    packaging work doesn't exist yet for either client and is out of scope here.
+  - **Godot's export-specific behavior is unverified, not assumed solved.** This sandbox has no
+    Godot binary installed, so the original concern this phase raised — whether an *exported*
+    Godot build can read an arbitrary filesystem path the way a plain .NET console app can, and
+    whether `FIVEEGOLDBOX_DATA_ROOT` is inherited the same way in Godot's embedded-runtime process
+    model — was not and could not be tested here. `dotnet build
+    src/FiveEGoldBox.Godot/FiveEGoldBox.Godot.sln` (compile-only) is green, which confirms nothing
+    broke, but is not evidence about export-time behavior. Whoever next has access to the Godot
+    editor/export templates should verify this before relying on it for a real export.
 
 ### Phase 5 — Content-pack authoring ergonomics (future, not scoped in detail here)
 
