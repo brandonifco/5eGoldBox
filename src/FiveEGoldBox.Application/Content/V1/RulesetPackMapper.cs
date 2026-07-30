@@ -412,7 +412,7 @@ internal static class RulesetPackMapper
         };
     }
 
-    private static Core.Rules.Ability ToRuntimeAbility(
+    internal static Core.Rules.Ability ToRuntimeAbility(
         AbilityV1 ability)
     {
         return ability switch
