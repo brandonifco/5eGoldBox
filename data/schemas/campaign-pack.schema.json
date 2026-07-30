@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "5eGoldBox campaign content pack",
+  "type": "object",
+  "properties": {
+    "ActivePartySize": {
+      "type": "integer"
+    },
+    "CampaignId": {
+      "type": "string"
+    },
+    "DisplayName": {
+      "type": "string"
+    },
+    "FormatVersion": {
+      "type": "integer"
+    },
+    "Roster": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CampaignCharacterDefinitionV1"
+      }
+    },
+    "RulesetId": {
+      "type": "string"
+    },
+    "ScenarioIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "ActivePartySize",
+    "CampaignId",
+    "DisplayName",
+    "FormatVersion",
+    "Roster",
+    "RulesetId",
+    "ScenarioIds"
+  ],
+  "$defs": {
+    "CampaignCharacterDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AbilityScores": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "Ammunition": {
+          "$ref": "#/$defs/CampaignAmmunitionDefinitionV1"
+        },
+        "BackgroundId": {
+          "type": "string"
+        },
+        "CharacterDefinitionId": {
+          "type": "string"
+        },
+        "ClassId": {
+          "type": "string"
+        },
+        "CurrentHitPoints": {
+          "type": "integer"
+        },
+        "DisplayName": {
+          "type": "string"
+        },
+        "EquippedWeaponIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "MaximumHitPoints": {
+          "type": "integer"
+        },
+        "PartyMemberId": {
+          "type": "string"
+        },
+        "PreparedSpellIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "RaceId": {
+          "type": "string"
+        },
+        "SelectedSkillIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "TemporaryHitPoints": {
+          "type": "integer"
+        },
+        "ZeroHitPointPolicy": {
+          "type": "string",
+          "enum": [
+            "DeathSavingThrows",
+            "Defeated"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "AbilityScores",
+        "BackgroundId",
+        "CharacterDefinitionId",
+        "ClassId",
+        "CurrentHitPoints",
+        "DisplayName",
+        "EquippedWeaponIds",
+        "MaximumHitPoints",
+        "PartyMemberId",
+        "RaceId",
+        "SelectedSkillIds",
+        "ZeroHitPointPolicy"
+      ]
+    },
+    "CampaignAmmunitionDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AmmunitionItemId": {
+          "type": "string"
+        },
+        "Quantity": {
+          "type": "integer"
+        },
+        "WeaponId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "AmmunitionItemId",
+        "Quantity",
+        "WeaponId"
+      ]
+    }
+  }
+}

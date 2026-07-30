@@ -1,4 +1,5 @@
 {
+    "$schema": "../../schemas/campaign-pack.schema.json",
     "FormatVersion": 1,
     "CampaignId": "campaign.frontier",
     "DisplayName": "The Frontier Commission",

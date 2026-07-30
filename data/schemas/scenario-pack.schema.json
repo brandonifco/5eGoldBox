@@ -1,0 +1,584 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "5eGoldBox scenario content pack",
+  "type": "object",
+  "properties": {
+    "Decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ScenarioDecisionDefinitionV1"
+      }
+    },
+    "DisplayName": {
+      "type": "string"
+    },
+    "Encounters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EncounterDefinitionV1"
+      }
+    },
+    "FormatVersion": {
+      "type": "integer"
+    },
+    "Locations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ScenarioLocationDefinitionV1"
+      }
+    },
+    "PartyRequirement": {
+      "$ref": "#/$defs/PartyRequirementDefinitionV1"
+    },
+    "Progress": {
+      "$ref": "#/$defs/ScenarioProgressDefinitionV1"
+    },
+    "Routes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/TravelRouteDefinitionV1"
+      }
+    },
+    "RulesetId": {
+      "type": "string"
+    },
+    "ScenarioId": {
+      "type": "string"
+    },
+    "StartingLocationId": {
+      "type": "string"
+    },
+    "Triggers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ScenarioTriggerDefinitionV1"
+      }
+    },
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "Decisions",
+    "DisplayName",
+    "Encounters",
+    "FormatVersion",
+    "Locations",
+    "PartyRequirement",
+    "Progress",
+    "Routes",
+    "RulesetId",
+    "ScenarioId",
+    "StartingLocationId",
+    "Triggers"
+  ],
+  "$defs": {
+    "ScenarioDecisionDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "DecisionId": {
+          "type": "string"
+        },
+        "DisplayName": {
+          "type": "string"
+        },
+        "LocationId": {
+          "type": "string"
+        },
+        "Options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScenarioDecisionOptionDefinitionV1"
+          }
+        },
+        "RequiredProgressIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "DecisionId",
+        "DisplayName",
+        "LocationId",
+        "Options",
+        "RequiredProgressIds"
+      ]
+    },
+    "ScenarioDecisionOptionDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "DisplayName": {
+          "type": "string"
+        },
+        "OptionId": {
+          "type": "string"
+        },
+        "ResultingProgressId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "DisplayName",
+        "OptionId"
+      ]
+    },
+    "EncounterDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "BattlefieldId": {
+          "type": "string"
+        },
+        "BlockedPositions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GridPositionV1"
+          }
+        },
+        "Combatants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CombatantDefinitionV1"
+          }
+        },
+        "EncounterId": {
+          "type": "string"
+        },
+        "Height": {
+          "type": "integer"
+        },
+        "Outcome": {
+          "$ref": "#/$defs/EncounterOutcomeDefinitionV1"
+        },
+        "PartySideId": {
+          "type": "string"
+        },
+        "PartyStartingPositions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GridPositionV1"
+          }
+        },
+        "Width": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "BattlefieldId",
+        "BlockedPositions",
+        "Combatants",
+        "EncounterId",
+        "Height",
+        "Outcome",
+        "PartySideId",
+        "PartyStartingPositions",
+        "Width"
+      ]
+    },
+    "GridPositionV1": {
+      "type": "object",
+      "properties": {
+        "X": {
+          "type": "integer"
+        },
+        "Y": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "X",
+        "Y"
+      ]
+    },
+    "CombatantDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AbilityModifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CombatantAbilityModifierV1"
+          }
+        },
+        "ArmorClass": {
+          "type": "integer"
+        },
+        "CombatantId": {
+          "type": "string"
+        },
+        "DisplayName": {
+          "type": "string"
+        },
+        "IsProficientWithWeapons": {
+          "type": "boolean"
+        },
+        "MaximumHitPoints": {
+          "type": "integer"
+        },
+        "MovementSpeedFeet": {
+          "type": "integer"
+        },
+        "ProficiencyBonus": {
+          "type": "integer"
+        },
+        "SideId": {
+          "type": "string"
+        },
+        "StartingPosition": {
+          "$ref": "#/$defs/GridPositionV1"
+        },
+        "Weapons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CombatantWeaponDefinitionV1"
+          }
+        },
+        "ZeroHitPointPolicy": {
+          "type": "string",
+          "enum": [
+            "DeathSavingThrows",
+            "Defeated"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "AbilityModifiers",
+        "ArmorClass",
+        "CombatantId",
+        "DisplayName",
+        "MaximumHitPoints",
+        "MovementSpeedFeet",
+        "ProficiencyBonus",
+        "SideId",
+        "StartingPosition",
+        "Weapons",
+        "ZeroHitPointPolicy"
+      ]
+    },
+    "CombatantAbilityModifierV1": {
+      "type": "object",
+      "properties": {
+        "Ability": {
+          "type": "string",
+          "enum": [
+            "Strength",
+            "Dexterity",
+            "Constitution",
+            "Intelligence",
+            "Wisdom",
+            "Charisma"
+          ]
+        },
+        "Modifier": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Ability",
+        "Modifier"
+      ]
+    },
+    "CombatantWeaponDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AmmunitionItemId": {
+          "type": "string"
+        },
+        "AmmunitionQuantity": {
+          "type": "integer"
+        },
+        "WeaponId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "WeaponId"
+      ]
+    },
+    "EncounterOutcomeDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "DefeatProgressId": {
+          "type": "string"
+        },
+        "VictoryProgressId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "DefeatProgressId",
+        "VictoryProgressId"
+      ]
+    },
+    "ScenarioLocationDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "DisplayName": {
+          "type": "string"
+        },
+        "ExplorableProgressIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExplorationMap": {
+          "$ref": "#/$defs/ExplorationMapDefinitionV1"
+        },
+        "LocationId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "DisplayName",
+        "LocationId"
+      ]
+    },
+    "ExplorationMapDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "Floors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExplorationFloorDefinitionV1"
+          }
+        },
+        "Height": {
+          "type": "integer"
+        },
+        "MapId": {
+          "type": "string"
+        },
+        "StartingFacing": {
+          "type": "string",
+          "enum": [
+            "North",
+            "East",
+            "South",
+            "West"
+          ]
+        },
+        "StartingFloor": {
+          "type": "string"
+        },
+        "StartingPosition": {
+          "$ref": "#/$defs/GridPositionV1"
+        },
+        "Width": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Floors",
+        "Height",
+        "MapId",
+        "StartingFacing",
+        "StartingFloor",
+        "StartingPosition",
+        "Width"
+      ]
+    },
+    "ExplorationFloorDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "Floor": {
+          "type": "string"
+        },
+        "Stairs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StairDefinitionV1"
+          }
+        },
+        "TraversablePositions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GridPositionV1"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Floor",
+        "Stairs",
+        "TraversablePositions"
+      ]
+    },
+    "StairDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "DestinationFloor": {
+          "type": "string"
+        },
+        "DestinationPosition": {
+          "$ref": "#/$defs/GridPositionV1"
+        },
+        "Position": {
+          "$ref": "#/$defs/GridPositionV1"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "DestinationFloor",
+        "DestinationPosition",
+        "Position"
+      ]
+    },
+    "PartyRequirementDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "MaximumMembers": {
+          "type": "integer"
+        },
+        "MinimumConsciousMembers": {
+          "type": "integer"
+        },
+        "MinimumMembers": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "MaximumMembers",
+        "MinimumConsciousMembers",
+        "MinimumMembers"
+      ]
+    },
+    "ScenarioProgressDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "Conclusions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScenarioConclusionDefinitionV1"
+          }
+        },
+        "InitialProgressId": {
+          "type": "string"
+        },
+        "ProgressIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Conclusions",
+        "InitialProgressId",
+        "ProgressIds"
+      ]
+    },
+    "ScenarioConclusionDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "IsSuccess": {
+          "type": "boolean"
+        },
+        "LocationId": {
+          "type": "string"
+        },
+        "ProgressId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "IsSuccess",
+        "LocationId",
+        "ProgressId"
+      ]
+    },
+    "TravelRouteDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "DestinationLocationId": {
+          "type": "string"
+        },
+        "FinalStepIndex": {
+          "type": "integer"
+        },
+        "OriginLocationId": {
+          "type": "string"
+        },
+        "RequiredProgressIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "RouteId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "DestinationLocationId",
+        "FinalStepIndex",
+        "OriginLocationId",
+        "RouteId"
+      ]
+    },
+    "ScenarioTriggerDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "DisplayName": {
+          "type": "string"
+        },
+        "EncounterId": {
+          "type": "string"
+        },
+        "Floor": {
+          "type": "string"
+        },
+        "LocationId": {
+          "type": "string"
+        },
+        "Position": {
+          "$ref": "#/$defs/GridPositionV1"
+        },
+        "RequiredFacing": {
+          "type": "string",
+          "enum": [
+            "North",
+            "East",
+            "South",
+            "West"
+          ]
+        },
+        "RequiredProgressIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ResultingProgressId": {
+          "type": "string"
+        },
+        "TriggerId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "DisplayName",
+        "LocationId",
+        "RequiredProgressIds",
+        "ResultingProgressId",
+        "TriggerId"
+      ]
+    }
+  }
+}

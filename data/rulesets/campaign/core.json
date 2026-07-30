@@ -1,4 +1,5 @@
 {
+    "$schema": "../../schemas/ruleset-pack.schema.json",
     "FormatVersion": 1,
     "Id": "ruleset.campaign",
     "Name": "Campaign Ruleset",

@@ -1,4 +1,5 @@
 {
+    "$schema": "../../schemas/scenario-pack.schema.json",
     "FormatVersion": 1,
     "ScenarioId": "scenario.hollow-mill",
     "DisplayName": "The Hollow Mill",
