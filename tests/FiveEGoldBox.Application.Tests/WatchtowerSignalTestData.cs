@@ -3,6 +3,7 @@ using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Parties;
+using FiveEGoldBox.Application.Randomness;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
@@ -154,8 +155,9 @@ internal static class WatchtowerSignalTestData
     internal static ValidatedRuleset CreateRuleset(
         bool includeBow = true)
     {
-        RulesetDefinition definition =
-            CampaignRulesetContent.CreateRulesetDefinition();
+        RulesetDefinition definition = RulesetRegistry
+            .Resolve(RulesetRegistry.CampaignRulesetId)
+            .Definition;
 
         if (!includeBow)
         {
@@ -164,13 +166,13 @@ internal static class WatchtowerSignalTestData
                 Weapons = definition.Weapons
                     .Where(weapon => !string.Equals(
                         weapon.Id,
-                        CampaignRulesetContent.RogueWeaponId,
+                        CampaignRulesetIds.RogueWeaponId,
                         StringComparison.Ordinal))
                     .ToArray()
             };
         }
 
-        return CampaignRulesetContent.Load(definition);
+        return ApplicationRulesetLoader.LoadOrThrow(definition);
     }
 
     /// The draft the mapper should have produced for this member, built from

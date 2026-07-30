@@ -110,7 +110,7 @@ internal static class FrontierCampaignContent
             CharacterDefinitionId = "character.rogue",
             DisplayName = "Rogue",
             RaceId = HumanRaceId,
-            ClassId = CampaignRulesetContent.RogueClassId,
+            ClassId = CampaignRulesetIds.RogueClassId,
             BackgroundId = SoldierBackgroundId,
             AbilityScores = new Dictionary<Ability, int>
             {
@@ -128,8 +128,8 @@ internal static class FrontierCampaignContent
             ],
             EquippedWeaponIds =
             [
-                CampaignRulesetContent.RogueWeaponId,
-                CampaignRulesetContent.RogueSidearmWeaponId
+                CampaignRulesetIds.RogueWeaponId,
+                CampaignRulesetIds.RogueSidearmWeaponId
             ],
             ZeroHitPointPolicy =
                 CombatantZeroHitPointPolicy.DeathSavingThrows,
@@ -137,7 +137,7 @@ internal static class FrontierCampaignContent
             CurrentHitPoints = 10,
             Ammunition = new CampaignAmmunitionDefinition
             {
-                WeaponId = CampaignRulesetContent.RogueWeaponId,
+                WeaponId = CampaignRulesetIds.RogueWeaponId,
                 AmmunitionItemId = "item.arrow",
                 Quantity = 12
             }
@@ -155,7 +155,7 @@ internal static class FrontierCampaignContent
             CharacterDefinitionId = "character.cleric",
             DisplayName = "Cleric",
             RaceId = HumanRaceId,
-            ClassId = CampaignRulesetContent.ClericClassId,
+            ClassId = CampaignRulesetIds.ClericClassId,
             BackgroundId = SoldierBackgroundId,
             AbilityScores = new Dictionary<Ability, int>
             {
@@ -173,7 +173,7 @@ internal static class FrontierCampaignContent
             ],
             EquippedWeaponIds =
             [
-                CampaignRulesetContent.ClericWeaponId
+                CampaignRulesetIds.ClericWeaponId
             ],
             ZeroHitPointPolicy =
                 CombatantZeroHitPointPolicy.DeathSavingThrows,
@@ -181,10 +181,10 @@ internal static class FrontierCampaignContent
             CurrentHitPoints = 10,
             PreparedSpellIds =
             [
-                CampaignRulesetContent.SacredFlameId,
-                CampaignRulesetContent.CureWoundsId,
-                CampaignRulesetContent.HealingWordId,
-                CampaignRulesetContent.BlessId
+                CampaignRulesetIds.SacredFlameId,
+                CampaignRulesetIds.CureWoundsId,
+                CampaignRulesetIds.HealingWordId,
+                CampaignRulesetIds.BlessId
             ]
         };
     }
@@ -199,7 +199,7 @@ internal static class FrontierCampaignContent
             CharacterDefinitionId = "character.wizard",
             DisplayName = "Wizard",
             RaceId = HumanRaceId,
-            ClassId = CampaignRulesetContent.WizardClassId,
+            ClassId = CampaignRulesetIds.WizardClassId,
             BackgroundId = SoldierBackgroundId,
             AbilityScores = new Dictionary<Ability, int>
             {
@@ -217,7 +217,7 @@ internal static class FrontierCampaignContent
             ],
             EquippedWeaponIds =
             [
-                CampaignRulesetContent.RogueSidearmWeaponId
+                CampaignRulesetIds.RogueSidearmWeaponId
             ],
             ZeroHitPointPolicy =
                 CombatantZeroHitPointPolicy.DeathSavingThrows,
@@ -225,8 +225,8 @@ internal static class FrontierCampaignContent
             CurrentHitPoints = 7,
             PreparedSpellIds =
             [
-                CampaignRulesetContent.FireBoltId,
-                CampaignRulesetContent.MagicMissileId
+                CampaignRulesetIds.FireBoltId,
+                CampaignRulesetIds.MagicMissileId
             ]
         };
     }

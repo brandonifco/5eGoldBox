@@ -25,11 +25,11 @@ public sealed class WatchtowerCombatSpellAttackTests
         Assert.Contains(
             decision.SpellAttacks,
             spell => spell.SpellId
-                == CampaignRulesetContent.FireBoltId);
+                == CampaignRulesetIds.FireBoltId);
         Assert.Contains(
             decision.SpellAttacks,
             spell => spell.SpellId
-                == CampaignRulesetContent.MagicMissileId);
+                == CampaignRulesetIds.MagicMissileId);
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatSpellAttackOption magicMissile = Assert.Single(
             decision.SpellAttacks,
             spell => spell.SpellId
-                == CampaignRulesetContent.MagicMissileId);
+                == CampaignRulesetIds.MagicMissileId);
         WatchtowerCombatTargetOption target =
             magicMissile.Targets.First(
                 candidate => candidate.IsAvailable);
@@ -57,7 +57,7 @@ public sealed class WatchtowerCombatSpellAttackTests
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
-                    SpellId = CampaignRulesetContent.MagicMissileId,
+                    SpellId = CampaignRulesetIds.MagicMissileId,
                     TargetCombatantId = target.TargetCombatantId
                 });
 
@@ -84,7 +84,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatSpellAttackOption healingWord = Assert.Single(
             decision.SpellAttacks,
             spell => spell.SpellId
-                == CampaignRulesetContent.HealingWordId);
+                == CampaignRulesetIds.HealingWordId);
         WatchtowerCombatTargetOption target =
             healingWord.Targets.First(
                 candidate => candidate.IsAvailable);
@@ -97,7 +97,7 @@ public sealed class WatchtowerCombatSpellAttackTests
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
-                    SpellId = CampaignRulesetContent.HealingWordId,
+                    SpellId = CampaignRulesetIds.HealingWordId,
                     TargetCombatantId = target.TargetCombatantId
                 });
 
@@ -121,7 +121,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatSpellAttackOption bless = Assert.Single(
             decision.SpellAttacks,
             spell => spell.SpellId
-                == CampaignRulesetContent.BlessId);
+                == CampaignRulesetIds.BlessId);
         WatchtowerCombatTargetOption target =
             bless.Targets.Single(
                 candidate => string.Equals(
@@ -139,7 +139,7 @@ public sealed class WatchtowerCombatSpellAttackTests
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
-                    SpellId = CampaignRulesetContent.BlessId,
+                    SpellId = CampaignRulesetIds.BlessId,
                     TargetCombatantId = "party-member.cleric"
                 });
 
@@ -150,7 +150,7 @@ public sealed class WatchtowerCombatSpellAttackTests
 
         Assert.Single(cleric.ActiveEffects);
         Assert.Equal(
-            CampaignRulesetContent.BlessEffectId,
+            CampaignRulesetIds.BlessEffectId,
             cleric.ConcentratingOnEffectId);
     }
 
@@ -166,7 +166,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatSpellAttackOption bless = Assert.Single(
             decision.SpellAttacks,
             spell => spell.SpellId
-                == CampaignRulesetContent.BlessId);
+                == CampaignRulesetIds.BlessId);
 
         Assert.NotEmpty(bless.TargetCombinations);
         Assert.All(
@@ -184,7 +184,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatSpellAttackOption fireBolt = Assert.Single(
             wizardDecision.SpellAttacks,
             spell => spell.SpellId
-                == CampaignRulesetContent.FireBoltId);
+                == CampaignRulesetIds.FireBoltId);
 
         Assert.Empty(fireBolt.TargetCombinations);
     }
@@ -201,7 +201,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatSpellAttackOption bless = Assert.Single(
             decision.SpellAttacks,
             spell => spell.SpellId
-                == CampaignRulesetContent.BlessId);
+                == CampaignRulesetIds.BlessId);
         WatchtowerCombatTargetCombinationOption combination =
             bless.TargetCombinations.First(
                 candidate => candidate.TargetCombatantIds.Contains(
@@ -220,7 +220,7 @@ public sealed class WatchtowerCombatSpellAttackTests
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
-                    SpellId = CampaignRulesetContent.BlessId,
+                    SpellId = CampaignRulesetIds.BlessId,
                     TargetCombatantId = primaryTarget,
                     AdditionalTargetCombatantIds = additionalTargets
                 });
@@ -253,7 +253,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatSpellAttackOption magicMissile = Assert.Single(
             decision.SpellAttacks,
             spell => spell.SpellId
-                == CampaignRulesetContent.MagicMissileId);
+                == CampaignRulesetIds.MagicMissileId);
         WatchtowerCombatTargetOption targetOption =
             magicMissile.Targets.First(
                 candidate => candidate.IsAvailable);
@@ -270,7 +270,7 @@ public sealed class WatchtowerCombatSpellAttackTests
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
                     ActorCombatantId = decision.ActiveCombatantId!,
-                    SpellId = CampaignRulesetContent.MagicMissileId,
+                    SpellId = CampaignRulesetIds.MagicMissileId,
                     TargetCombatantId = targetOption.TargetCombatantId
                 });
 

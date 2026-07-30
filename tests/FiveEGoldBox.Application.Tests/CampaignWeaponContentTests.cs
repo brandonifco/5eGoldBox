@@ -16,17 +16,17 @@ public sealed class CampaignWeaponContentTests
     public void TheShortbow_IsAnAmmunitionWeaponForSomebodyOtherThanTheRanger()
     {
         WeaponDefinition shortbow = Weapon(
-            CampaignRulesetContent.RogueWeaponId);
+            CampaignRulesetIds.RogueWeaponId);
 
         Assert.Equal(WeaponAttackKind.Ranged, shortbow.AttackKind);
         Assert.Equal(
-            CampaignRulesetContent.RangerAmmunitionItemId,
+            CampaignRulesetIds.RangerAmmunitionItemId,
             shortbow.AmmunitionItemId);
         Assert.Contains(
             RuleIds.WeaponProperties.Ammunition,
             shortbow.Properties);
         Assert.NotEqual(
-            CampaignRulesetContent.RangerWeaponId,
+            CampaignRulesetIds.RangerWeaponId,
             shortbow.Id);
     }
 
@@ -37,10 +37,10 @@ public sealed class CampaignWeaponContentTests
     {
         Assert.Equal(
             WeaponCategory.Simple,
-            Weapon(CampaignRulesetContent.RogueWeaponId).Category);
+            Weapon(CampaignRulesetIds.RogueWeaponId).Category);
         Assert.Equal(
             WeaponCategory.Martial,
-            Weapon(CampaignRulesetContent.RangerWeaponId).Category);
+            Weapon(CampaignRulesetIds.RangerWeaponId).Category);
     }
 
     /// Sneak Attack asks for a finesse or ranged weapon, so a rogue needs one
@@ -50,7 +50,7 @@ public sealed class CampaignWeaponContentTests
     {
         Assert.Contains(
             RuleIds.WeaponProperties.Finesse,
-            Weapon(CampaignRulesetContent.RogueSidearmWeaponId)
+            Weapon(CampaignRulesetIds.RogueSidearmWeaponId)
                 .Properties);
     }
 
@@ -58,7 +58,7 @@ public sealed class CampaignWeaponContentTests
     public void TheMace_IsABludgeoningMeleeWeapon()
     {
         WeaponDefinition mace = Weapon(
-            CampaignRulesetContent.ClericWeaponId);
+            CampaignRulesetIds.ClericWeaponId);
 
         Assert.Equal(WeaponAttackKind.Melee, mace.AttackKind);
         Assert.Equal("damage.bludgeoning", mace.DamageType);
@@ -72,7 +72,7 @@ public sealed class CampaignWeaponContentTests
     public void EveryWeaponDieCanBeRolled()
     {
         Assert.All(
-            CampaignRulesetContent.CreateRulesetDefinition().Weapons,
+            RulesetRegistry.Resolve(RulesetRegistry.CampaignRulesetId).Definition.Weapons,
             weapon => Assert.True(Enum.IsDefined(weapon.Damage.Die)));
     }
 
@@ -80,7 +80,7 @@ public sealed class CampaignWeaponContentTests
         string weaponId)
     {
         return Assert.Single(
-            CampaignRulesetContent.CreateRulesetDefinition().Weapons,
+            RulesetRegistry.Resolve(RulesetRegistry.CampaignRulesetId).Definition.Weapons,
             weapon => weapon.Id == weaponId);
     }
 }
