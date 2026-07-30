@@ -8,8 +8,17 @@ internal static class Program
     /// scenario, not anything about its content.
     private const string ScenarioId = "scenario.watchtower";
 
-    private static int Main()
+    private static int Main(string[] args)
     {
+        if (args.Length > 0
+            && string.Equals(args[0], "validate", StringComparison.OrdinalIgnoreCase))
+        {
+            return ContentPackValidationCommand.Run(
+                args[1..],
+                System.Console.Out,
+                System.Console.Error);
+        }
+
         string savePath = Path.Combine(
             Environment.CurrentDirectory,
             "savegame.json");
