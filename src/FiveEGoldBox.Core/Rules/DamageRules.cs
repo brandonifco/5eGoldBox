@@ -247,19 +247,25 @@ public static class DamageRules
             return 0;
         }
 
-        int result = damageAmount;
+        bool hasResistance = responseTypes.Contains(DamageResponseType.Resistance);
+        bool hasVulnerability = responseTypes.Contains(DamageResponseType.Vulnerability);
 
-        if (responseTypes.Contains(DamageResponseType.Resistance))
+        if (hasResistance && hasVulnerability)
         {
-            result /= 2;
+            return damageAmount;
         }
 
-        if (responseTypes.Contains(DamageResponseType.Vulnerability))
+        if (hasResistance)
         {
-            result = checked(result * 2);
+            return damageAmount / 2;
         }
 
-        return result;
+        if (hasVulnerability)
+        {
+            return checked(damageAmount * 2);
+        }
+
+        return damageAmount;
     }
 
     private static void ValidateDamageAmount(int damageAmount)

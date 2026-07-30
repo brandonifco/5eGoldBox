@@ -107,7 +107,7 @@ public sealed class DamageRulesTests
     }
 
     [Fact]
-    public void ApplyDamageResponses_WithResistanceAndVulnerability_AppliesResistanceThenVulnerability()
+    public void ApplyDamageResponses_WithResistanceAndVulnerability_CancelsToNormalDamage()
     {
         int result = DamageRules.ApplyDamageResponses(
             11,
@@ -116,7 +116,7 @@ public sealed class DamageRulesTests
                 DamageResponseType.Vulnerability
             ]);
 
-        Assert.Equal(10, result);
+        Assert.Equal(11, result);
     }
 
     [Fact]
@@ -719,7 +719,7 @@ public sealed class DamageRulesTests
             [DamageResponseType.Resistance, DamageResponseType.Vulnerability],
             result.ResponseTypes);
         Assert.Equal(9, result.DamageRoll.Total);
-        Assert.Equal(8, result.FinalDamage);
+        Assert.Equal(9, result.FinalDamage);
         Assert.False(result.ResponseTypes is DamageResponseType[]);
         Assert.False(result.ResponseTypes is List<DamageResponseType>);
 
@@ -727,7 +727,7 @@ public sealed class DamageRulesTests
             Assert.IsAssignableFrom<IList<DamageResponseType>>(result.ResponseTypes);
 
         Assert.Throws<NotSupportedException>(() => mutableResponses[0] = DamageResponseType.Immunity);
-        Assert.Equal(8, result.FinalDamage);
+        Assert.Equal(9, result.FinalDamage);
     }
 
     [Fact]
