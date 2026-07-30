@@ -20,10 +20,10 @@ using EncounterView = FiveEGoldBox.Application.Combat.CombatView;
 // drives end to end; this ports that state machine into per-call methods
 // since Godot re-enters on each command instead of blocking in a loop.
 //
-// Scoped deliberately to the vertical slice's basics: Move, single-target
-// Weapon Attack, End Turn. Spellcasting, multi-target spells, and any
-// player-facing death-saving-throw decision are proven at the backend but
-// not wired here yet.
+// Scoped deliberately to single-target actions: Move, Weapon Attack, Spell
+// Attack, End Turn. Multi-target spells (Bless's TargetCombinations) and
+// any player-facing death-saving-throw decision are proven at the backend
+// but not wired here yet.
 internal sealed class RealCombatSession
 {
 	private ApplicationSessionState _state;
@@ -107,6 +107,28 @@ internal sealed class RealCombatSession
 		return Advance(result);
 	}
 
+	// Single-target only, matching SubmitWeaponAttack — a spell that can
+	// name additional targets (Bless) is offered here one target at a
+	// time via its own Targets list; TargetCombinations (casting on 2+ at
+	// once) is a fast-follow, same scope cut as multi-target attacks.
+	internal string SubmitSpellAttack(string spellId, string targetCombatantId)
+	{
+		CombatDecision decision = CombatOperations.Query(_state).Decision;
+
+		CombatResolutionResult result = CombatOperations.Execute(
+			_state,
+			new CombatSpellAttackIntent
+			{
+				ExpectedEncounterRevision = decision.EncounterRevision,
+				ActorCombatantId = decision.ActiveCombatantId!,
+				SpellId = spellId,
+				TargetCombatantId = targetCombatantId,
+				AdditionalTargetCombatantIds = Array.Empty<string>(),
+			});
+
+		return Advance(result);
+	}
+
 	// Every Execute is immediately followed by AdvanceToDecision — this is
 	// what makes enemy AI turns actually run and land the caller back at
 	// the next real player decision (or combat completion) in one round
@@ -173,6 +195,7 @@ internal sealed class RealCombatSession
 			isPlayerTurn,
 			isPlayerTurn ? decision.Movement!.DestinationOptions : Array.Empty<CombatMovementDestinationOption>(),
 			isPlayerTurn ? decision.WeaponAttacks : Array.Empty<CombatWeaponAttackOption>(),
+			isPlayerTurn ? decision.SpellAttacks : Array.Empty<CombatSpellAttackOption>(),
 			isPlayerTurn && decision.EndTurn!.IsAvailable,
 			isCompleted,
 			statusMessage);
@@ -184,6 +207,9 @@ internal sealed class RealCombatSession
 		{
 			case CombatStepKind.WeaponAttack:
 				lines.Add(DescribeWeaponAttack(step));
+				break;
+			case CombatStepKind.SpellAttack:
+				lines.Add(DescribeSpellAttack(step));
 				break;
 			case CombatStepKind.TurnAdvanced:
 				lines.Add(
@@ -210,17 +236,82 @@ internal sealed class RealCombatSession
 			: "hits";
 		string result = $"{actor} {hitWord} {target} for {attack.FinalDamage} damage.";
 
-		if (attack.DamagedTarget is
+		return AppendDownSuffix(result, target, attack.DamagedTarget);
+	}
+
+	// spell.AttackRollMode set means Core resolved it like a weapon attack
+	// (Fire Bolt); spell.SaveAbility set means a saving throw (Sacred
+	// Flame); neither set means it just happens (Cure Wounds, Healing
+	// Word, Magic Missile, single-target Bless) — CombatSpellAttackStepDetail's
+	// own doc comment guarantees at most one of the two is ever set.
+	private string DescribeSpellAttack(CombatStepResult step)
+	{
+		CombatSpellAttackStepDetail spell = step.SpellAttack!;
+		string actor = DescribeLabel(step.ActorCombatantId!);
+		string target = DescribeLabel(step.TargetCombatantId!);
+
+		if (spell.AttackRollMode is not null)
+		{
+			if (spell.AttackOutcome == AttackRollOutcome.Miss)
+			{
+				return $"{actor} casts {spell.SpellId} at {target} and misses.";
+			}
+
+			string hitWord = spell.AttackOutcome == AttackRollOutcome.CriticalHit
+				? "critically hits"
+				: "hits";
+			return AppendDownSuffix(
+				$"{actor} {hitWord} {target} with {spell.SpellId} for {spell.DamageDealt} damage.",
+				target,
+				spell.DamagedTarget);
+		}
+
+		if (spell.SaveAbility is not null)
+		{
+			string outcome = spell.SaveOutcome == D20TestOutcome.Failure
+				? "fails"
+				: "succeeds on";
+			string result =
+				$"{actor} casts {spell.SpellId} on {target} — {target} {outcome} the save";
+			result += spell.DamageDealt > 0
+				? $", taking {spell.DamageDealt} damage."
+				: ".";
+
+			return AppendDownSuffix(result, target, spell.DamagedTarget);
+		}
+
+		if (spell.HealingDone > 0)
+		{
+			return $"{actor} casts {spell.SpellId} on {target}, healing {spell.HealingDone} HP.";
+		}
+
+		if (spell.DamageDealt > 0)
+		{
+			return AppendDownSuffix(
+				$"{actor} casts {spell.SpellId} on {target} for {spell.DamageDealt} damage.",
+				target,
+				spell.DamagedTarget);
+		}
+
+		return $"{actor} casts {spell.SpellId} on {target}.";
+	}
+
+	private static string AppendDownSuffix(
+		string message,
+		string targetLabel,
+		CombatDamagedTargetDetail? damagedTarget)
+	{
+		if (damagedTarget is
 			{
 				LifecycleState: CombatantLifecycleState.Dying
 					or CombatantLifecycleState.Dead
 					or CombatantLifecycleState.Defeated,
 			})
 		{
-			result += $" {target} is down!";
+			return message + $" {targetLabel} is down!";
 		}
 
-		return result;
+		return message;
 	}
 
 	// Party member labels use the real, public display name
@@ -242,6 +333,7 @@ internal sealed record RealCombatSnapshot(
 	bool IsPlayerTurn,
 	IReadOnlyList<CombatMovementDestinationOption> MoveDestinations,
 	IReadOnlyList<CombatWeaponAttackOption> WeaponAttacks,
+	IReadOnlyList<CombatSpellAttackOption> SpellAttacks,
 	bool CanEndTurn,
 	bool IsCompleted,
 	string? StatusMessage);

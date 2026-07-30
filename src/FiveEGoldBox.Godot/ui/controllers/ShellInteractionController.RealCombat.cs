@@ -7,10 +7,10 @@ using Godot;
 // The real integration seam's own combat handling — split out of
 // ShellInteractionController.cs the same way .RealSession.cs/.Combat.cs
 // were, once combat needed its own command bar and targeting flow driven
-// by real backend state instead of MockCombatContent. Scoped to the
-// vertical slice's basics: Move, single-target Weapon Attack, End Turn —
-// spellcasting and multi-target attacks are proven at the backend
-// (RealCombatSession could be extended to reach them) but not wired here.
+// by real backend state instead of MockCombatContent. Scoped to
+// single-target actions: Move, Weapon Attack, Spell Attack, End Turn —
+// multi-target spells are proven at the backend (RealCombatSession could
+// be extended to reach them) but not wired here.
 internal sealed partial class ShellInteractionController
 {
 	// Both fields live for exactly one encounter's duration, set together
@@ -26,6 +26,16 @@ internal sealed partial class ShellInteractionController
 	private string? _pendingRealCombatCommand;
 	private IReadOnlyList<CombatMovementDestinationOption>? _pendingRealMoveDestinations;
 	private IReadOnlyList<CombatWeaponAttackOption>? _pendingRealWeaponAttacks;
+
+	// Set together with _pendingRealCombatCommand == "cast" — which spell
+	// is being targeted and its own legal targets. Unlike weapon attacks
+	// (usually one weapon, so flattening targets across every available
+	// weapon is unambiguous), a caster routinely knows several spells with
+	// overlapping legal targets, so each spell gets its own command-bar
+	// button and its own single-spell targeting pass rather than a
+	// flattened, ambiguous one.
+	private string? _pendingRealSpellId;
+	private IReadOnlyList<CombatTargetOption>? _pendingRealSpellTargets;
 
 	// Called from ShellInteractionController.RealSession.cs's
 	// ApplicationMode.Encounter case. Renders whatever RealCombatSession.
@@ -67,6 +77,30 @@ internal sealed partial class ShellInteractionController
 				"[b]A[/b]ttack",
 				Key.A,
 				() => EnterRealCombatAttackTargeting(combatSnapshot)));
+		}
+
+		// One command per available spell, not a single "Cast" that opens
+		// a sub-menu — see the _pendingRealSpellId field comment for why
+		// flattening targets across spells the way Attack flattens them
+		// across weapons would be ambiguous here.
+		HashSet<char> usedHotkeys = new() { 'M', 'A', 'E' };
+
+		foreach (CombatSpellAttackOption spell in combatSnapshot.SpellAttacks)
+		{
+			if (!spell.IsAvailable)
+			{
+				continue;
+			}
+
+			string spellId = spell.SpellId;
+			CommandViewModel commandViewModel = new(
+				spellId,
+				spellId,
+				AssignSpellHotkey(spellId, usedHotkeys));
+
+			commands.Add(CommandViewModelTranslator.ToCommandDefinition(
+				commandViewModel,
+				() => EnterRealCombatSpellTargeting(combatSnapshot, spellId)));
 		}
 
 		if (combatSnapshot.CanEndTurn)
@@ -147,6 +181,52 @@ internal sealed partial class ShellInteractionController
 			"Choose a target to attack. Press Esc to cancel.");
 	}
 
+	// One spell's own Targets only — no cross-option flattening needed,
+	// since each spell already got its own command-bar button (see
+	// ShowRealCombatCommands).
+	private void EnterRealCombatSpellTargeting(
+		RealCombatSnapshot combatSnapshot,
+		string spellId)
+	{
+		CombatSpellAttackOption? spell = combatSnapshot.SpellAttacks
+			.FirstOrDefault(candidate => candidate.SpellId == spellId);
+
+		if (spell is null)
+		{
+			return;
+		}
+
+		_pendingRealCombatCommand = "cast";
+		_pendingRealSpellId = spellId;
+		_pendingRealSpellTargets = spell.Targets;
+
+		Dictionary<string, CombatantMarkerViewModel> combatantsById =
+			combatSnapshot.View.Combatants
+				.ToDictionary(combatant => combatant.Id, StringComparer.Ordinal);
+		List<CombatHighlightViewModel> highlights = new();
+
+		foreach (CombatTargetOption target in spell.Targets)
+		{
+			if (!target.IsAvailable)
+			{
+				continue;
+			}
+
+			if (combatantsById.TryGetValue(
+				target.TargetCombatantId,
+				out CombatantMarkerViewModel? combatant))
+			{
+				highlights.Add(new CombatHighlightViewModel(
+					combatant.GridX, combatant.GridY, "valid-target"));
+			}
+		}
+
+		PushContext(ShellInteractionContext.Targeting);
+		_presentationController.ShowCombatHighlights(highlights);
+		_presentationController.SetMessage(
+			$"Choose a target for {spellId}. Press Esc to cancel.");
+	}
+
 	// Called from ShellInteractionController.Combat.cs's
 	// OnCombatCellTargeted, ahead of the mock-content handling, whenever
 	// real combat owns the pending targeting flow.
@@ -179,6 +259,12 @@ internal sealed partial class ShellInteractionController
 	// OnCombatantTargeted, ahead of the mock-content handling.
 	private void ResolveRealCombatantTargeted(string combatantId)
 	{
+		if (_pendingRealCombatCommand == "cast")
+		{
+			ResolveRealSpellTargeted(combatantId);
+			return;
+		}
+
 		if (_pendingRealCombatCommand != "attack" ||
 			_pendingRealWeaponAttacks is null)
 		{
@@ -208,6 +294,28 @@ internal sealed partial class ShellInteractionController
 		}
 	}
 
+	private void ResolveRealSpellTargeted(string combatantId)
+	{
+		if (_pendingRealSpellId is not string spellId ||
+			_pendingRealSpellTargets is null)
+		{
+			return;
+		}
+
+		bool isLegalTarget = _pendingRealSpellTargets.Any(
+			candidate => candidate.IsAvailable &&
+				candidate.TargetCombatantId == combatantId);
+
+		if (!isLegalTarget)
+		{
+			return;
+		}
+
+		PopContext(ShellInteractionContext.Targeting);
+		ClearRealCombatTargeting();
+		ShowRealSpellCastConfirmation(spellId, combatantId);
+	}
+
 	// Shared by both cancel paths (Esc via ShellInputRouter's
 	// CancelCombatTargeting and a resolved targeting choice above) — the
 	// same "clear pending state and the highlight overlay in one place"
@@ -217,6 +325,8 @@ internal sealed partial class ShellInteractionController
 		_pendingRealCombatCommand = null;
 		_pendingRealMoveDestinations = null;
 		_pendingRealWeaponAttacks = null;
+		_pendingRealSpellId = null;
+		_pendingRealSpellTargets = null;
 		_presentationController.ShowCombatHighlights(null);
 	}
 
@@ -252,6 +362,64 @@ internal sealed partial class ShellInteractionController
 				PopContext(ShellInteractionContext.Confirmation);
 				_presentationController.SelectCombatTarget(null);
 			});
+	}
+
+	// Mirrors ShowRealAttackConfirmation exactly, for a spell cast instead
+	// of a weapon attack.
+	private void ShowRealSpellCastConfirmation(
+		string spellId,
+		string targetCombatantId)
+	{
+		PushContext(ShellInteractionContext.Confirmation);
+		_presentationController.SelectCombatTarget(targetCombatantId);
+
+		_confirmation.ShowConfirmation(
+			"Cast",
+			$"Cast {spellId} on {targetCombatantId}?",
+			"Cast",
+			"Cancel",
+			onConfirmed: () =>
+			{
+				string message = _activeCombatSession!.SubmitSpellAttack(
+					spellId, targetCombatantId);
+				ShowRealSession(_activeCombatGameSession!, message);
+			},
+			onClosed: () =>
+			{
+				PopContext(ShellInteractionContext.Confirmation);
+				_presentationController.SelectCombatTarget(null);
+			});
+	}
+
+	// Same collision-free letter-then-digit algorithm RealGameSession.
+	// AssignHotkey uses for real SessionAction labels — duplicated rather
+	// than shared, since that one lives in a file with no combat
+	// dependency and this one is combat-only.
+	private static string AssignSpellHotkey(
+		string spellId,
+		HashSet<char> usedHotkeys)
+	{
+		foreach (char candidate in spellId
+			.Where(char.IsLetter)
+			.Select(char.ToUpperInvariant))
+		{
+			if (usedHotkeys.Add(candidate))
+			{
+				return candidate.ToString();
+			}
+		}
+
+		for (char digit = '1'; digit <= '9'; digit++)
+		{
+			if (usedHotkeys.Add(digit))
+			{
+				return digit.ToString();
+			}
+		}
+
+		throw new InvalidOperationException(
+			$"Could not assign a hotkey for '{spellId}'; every letter and " +
+				"digit is already taken in this command set.");
 	}
 
 	// CombatOutcomeRules.Finalize already leaves the session in
