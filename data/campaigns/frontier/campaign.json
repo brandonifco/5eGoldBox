@@ -1,0 +1,162 @@
+{
+    "FormatVersion": 1,
+    "CampaignId": "campaign.frontier",
+    "DisplayName": "The Frontier Commission",
+    "RulesetId": "ruleset.campaign",
+    "ActivePartySize": 4,
+    "Roster": [
+        {
+            "PartyMemberId": "party-member.fighter",
+            "CharacterDefinitionId": "character.fighter",
+            "DisplayName": "Fighter",
+            "RaceId": "race.human",
+            "ClassId": "class.fighter",
+            "BackgroundId": "background.soldier",
+            "AbilityScores": {
+                "Strength": 15,
+                "Dexterity": 11,
+                "Constitution": 13,
+                "Intelligence": 7,
+                "Wisdom": 9,
+                "Charisma": 12
+            },
+            "SelectedSkillIds": [ "skill.athletics", "skill.perception" ],
+            "EquippedWeaponIds": [ "weapon.longsword" ],
+            "ZeroHitPointPolicy": "DeathSavingThrows",
+            "MaximumHitPoints": 12,
+            "CurrentHitPoints": 8,
+            "TemporaryHitPoints": 2
+        },
+        {
+            "PartyMemberId": "party-member.rogue",
+            "CharacterDefinitionId": "character.rogue",
+            "DisplayName": "Rogue",
+            "RaceId": "race.human",
+            "ClassId": "class.rogue",
+            "BackgroundId": "background.soldier",
+            "AbilityScores": {
+                "Strength": 9,
+                "Dexterity": 15,
+                "Constitution": 13,
+                "Intelligence": 12,
+                "Wisdom": 11,
+                "Charisma": 7
+            },
+            "SelectedSkillIds": [ "skill.perception", "skill.stealth" ],
+            "EquippedWeaponIds": [ "weapon.shortbow", "weapon.dagger" ],
+            "ZeroHitPointPolicy": "DeathSavingThrows",
+            "MaximumHitPoints": 10,
+            "CurrentHitPoints": 10,
+            "Ammunition": {
+                "WeaponId": "weapon.shortbow",
+                "AmmunitionItemId": "item.arrow",
+                "Quantity": 12
+            }
+        },
+        {
+            "PartyMemberId": "party-member.cleric",
+            "CharacterDefinitionId": "character.cleric",
+            "DisplayName": "Cleric",
+            "RaceId": "race.human",
+            "ClassId": "class.cleric",
+            "BackgroundId": "background.soldier",
+            "AbilityScores": {
+                "Strength": 11,
+                "Dexterity": 9,
+                "Constitution": 13,
+                "Intelligence": 7,
+                "Wisdom": 15,
+                "Charisma": 12
+            },
+            "SelectedSkillIds": [ "skill.perception", "skill.survival" ],
+            "EquippedWeaponIds": [ "weapon.mace" ],
+            "ZeroHitPointPolicy": "DeathSavingThrows",
+            "MaximumHitPoints": 10,
+            "CurrentHitPoints": 10,
+            "PreparedSpellIds": [
+                "spell.sacred-flame",
+                "spell.cure-wounds",
+                "spell.healing-word",
+                "spell.bless"
+            ]
+        },
+        {
+            "PartyMemberId": "party-member.wizard",
+            "CharacterDefinitionId": "character.wizard",
+            "DisplayName": "Wizard",
+            "RaceId": "race.human",
+            "ClassId": "class.wizard",
+            "BackgroundId": "background.soldier",
+            "AbilityScores": {
+                "Strength": 7,
+                "Dexterity": 13,
+                "Constitution": 11,
+                "Intelligence": 15,
+                "Wisdom": 12,
+                "Charisma": 9
+            },
+            "SelectedSkillIds": [ "skill.perception", "skill.stealth" ],
+            "EquippedWeaponIds": [ "weapon.dagger" ],
+            "ZeroHitPointPolicy": "DeathSavingThrows",
+            "MaximumHitPoints": 7,
+            "CurrentHitPoints": 7,
+            "PreparedSpellIds": [ "spell.fire-bolt", "spell.magic-missile" ]
+        },
+        {
+            "PartyMemberId": "party-member.barbarian",
+            "CharacterDefinitionId": "character.barbarian",
+            "DisplayName": "Barbarian",
+            "RaceId": "race.human",
+            "ClassId": "class.barbarian",
+            "BackgroundId": "background.soldier",
+            "AbilityScores": {
+                "Strength": 15,
+                "Dexterity": 13,
+                "Constitution": 13,
+                "Intelligence": 7,
+                "Wisdom": 11,
+                "Charisma": 9
+            },
+            "SelectedSkillIds": [ "skill.athletics", "skill.survival" ],
+            "EquippedWeaponIds": [ "weapon.greataxe" ],
+            "ZeroHitPointPolicy": "DeathSavingThrows",
+            "MaximumHitPoints": 14,
+            "CurrentHitPoints": 14
+        },
+        {
+            "PartyMemberId": "party-member.ranger",
+            "CharacterDefinitionId": "character.ranger",
+            "DisplayName": "Ranger",
+            "RaceId": "race.human",
+            "ClassId": "class.ranger",
+            "BackgroundId": "background.soldier",
+            "AbilityScores": {
+                "Strength": 11,
+                "Dexterity": 15,
+                "Constitution": 11,
+                "Intelligence": 9,
+                "Wisdom": 15,
+                "Charisma": 7
+            },
+            "SelectedSkillIds": [
+                "skill.perception",
+                "skill.stealth",
+                "skill.survival"
+            ],
+            "EquippedWeaponIds": [ "weapon.longbow" ],
+            "ZeroHitPointPolicy": "DeathSavingThrows",
+            "MaximumHitPoints": 11,
+            "CurrentHitPoints": 11,
+            "Ammunition": {
+                "WeaponId": "weapon.longbow",
+                "AmmunitionItemId": "item.arrow",
+                "Quantity": 7
+            }
+        }
+    ],
+    "ScenarioIds": [
+        "scenario.watchtower",
+        "scenario.sunken-chapel",
+        "scenario.hollow-mill"
+    ]
+}
