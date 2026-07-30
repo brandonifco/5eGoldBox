@@ -107,18 +107,45 @@ against a real, validated, schema-documented format that's already on disk."** N
 to invent or wait on a wire format anymore — `data/scenarios/*/scenario.json` and the matching
 schema are the concrete target today.
 
-### Phase E — Tiled importer
+### Phase E — Tiled importer (done)
 
-A small standalone console tool that reads Tiled's JSON (`.tmj`) export — tile layers become
-`TraversablePositions`/wall tiles, object layers with custom properties become
-`ScenarioTriggerDefinition`/`ScenarioDecisionDefinition` placements and (once Phase B lands)
-doors/secret doors/treasure — and emits `scenario.json` in the exact shape
-`data/schemas/scenario-pack.schema.json` documents. Validate its own output with the Phase D
-`validate scenario <path>` command rather than hand-rolling validation. This is the actual "map
-maker" from the user's ask: Tiled provides the drawing/tagging UI, this tool provides the
-translation. **A first version can ship before Phase B**, scoped to walkable/wall tiles, stairs,
-and trigger/decision points — doors/secret doors/treasure layer in once that content exists to
-target.
+A new `import-map` verb in `FiveEGoldBox.Console` (`TiledMapConverter.cs` + `TiledMapImportCommand.cs`,
+mirroring the `validate` verb's own shape exactly): reads a Tiled `.tmj` export and merges it into
+an existing scenario's JSON file as one location's `ExplorationMap` plus tile-anchored `Triggers`,
+then reports whether the result validates via the Phase D `ContentPackValidation.ValidateScenarioPack`
+facade — the same "report, don't gatekeep" philosophy `validate` already uses. Scoped to walkable
+tiles, stairs, and triggers (encounter/interaction points), per the plan's own call to ship before
+Phase B (doors/secret doors/treasure) rather than wait on it — those layer in once that content
+exists to target. `V1` DTOs/mapper/loader are all `internal` to `Application` with no
+`InternalsVisibleTo` reaching `Console`, so this works purely at the plain-JSON
+(`System.Text.Json.Nodes`) level, never touching the internal pack types.
+
+```
+dotnet run --project src/FiveEGoldBox.Console -- import-map <tiled-file> <scenario-file> <location-id> <map-id> [<display-name>]
+```
+
+**The Tiled authoring convention** (one `.tmj` = one location's map):
+- **Floors are tile layers** with a custom boolean property `IsFloor: true`; the layer's own `name`
+  is the floor id string (any string, not just `GroundFloor`/`UpperFloor` — Phase A generalized
+  that). A cell is traversable iff its GID, masked to clear Tiled's 3 high flip-flag bits
+  (`gid & 0x1FFFFFFF`), is non-zero.
+- **Exactly one `Start` object** (type/class `Start`, checked against both Tiled's `type` and newer
+  `class` object fields for version resilience), properties `Floor` + `Facing`
+  (`North|East|South|West`) — its own tile position (pixel ÷ tile size) becomes `StartingPosition`.
+  Zero or more than one is a hard failure, nothing is written.
+- **`Stair` objects**: properties `Floor` (source), `DestinationFloor`, `DestinationX`,
+  `DestinationY` (ints — the destination isn't a placed object with its own pixel position).
+- **`Trigger` objects**: properties `Floor`, `TriggerId`, `ResultingProgressId` required;
+  `DisplayName` (defaults to the object's own Tiled `name`), `RequiredProgressIds`
+  (comma-separated), `EncounterId`, `RequiredFacing` optional.
+
+**Re-importing is idempotent by design, not by accident**: on merge, every existing top-level
+`Triggers[]` entry for the target location that's *tile-anchored* (has both `Floor` and `Position`)
+is removed before the freshly generated ones are appended — re-running the tool after editing the
+Tiled map replaces its own output rather than duplicating it. Non-spatial triggers for the same
+location (hand-authored story beats with no `Floor`/`Position`) are left untouched; they're not map
+geometry. Verified end-to-end against a temp copy of the real `data/scenarios/hollow-mill/scenario.json`
+(never the committed file itself).
 
 ### Phase F — Form-based content editor
 
@@ -141,16 +168,15 @@ none exists today; scope that separately once it's clear flat colors aren't enou
 - Leveling/multiclassing, condition-immunity enforcement, and the other product-backlog items
   already tracked in CLAUDE.md.
 
-## Status (2026-07-30, regrouped after Phases A and D both landed)
+## Status (2026-07-30, regrouped after Phases A and D landed, updated after Phase E)
 
-Phases A and D are done. Remaining, in no particular committed order — see CLAUDE.md or ask before
-picking one:
+Phases A, D, and E are done. Remaining, in no particular committed order — see CLAUDE.md or ask
+before picking one:
 
 - **Phase B** (door/secret door/treasure runtime state) — bounded engine work, no decision needed
-  beyond what's already recorded above.
+  beyond what's already recorded above. Doing this unlocks extending Phase E's Tiled convention to
+  cover doors/secret doors/treasure objects too.
 - **Phase C** (monster/NPC bestiary extraction) — needs a user decision before starting.
-- **Phase E** (Tiled importer) — the actual map maker; can start now in a reduced form (no
-  doors/treasure) or wait for Phase B to do it once.
 - **Phase F** (form-based content editor) — can start now for weapons/spells/items; monsters wait
   on Phase C.
 - **Phase G** (Godot tile rendering) — waits on Phase B.

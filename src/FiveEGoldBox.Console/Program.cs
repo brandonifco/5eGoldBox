@@ -19,6 +19,15 @@ internal static class Program
                 System.Console.Error);
         }
 
+        if (args.Length > 0
+            && string.Equals(args[0], "import-map", StringComparison.OrdinalIgnoreCase))
+        {
+            return TiledMapImportCommand.Run(
+                args[1..],
+                System.Console.Out,
+                System.Console.Error);
+        }
+
         string savePath = Path.Combine(
             Environment.CurrentDirectory,
             "savegame.json");
