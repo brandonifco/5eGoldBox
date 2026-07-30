@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Core.Rules;
 
-public enum D20ContestOutcome
+internal enum D20ContestOutcome
 {
     FirstWins,
     SecondWins,

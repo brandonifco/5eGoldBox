@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Core.Rules;
 
-public sealed record D20ContestantResult
+internal sealed record D20ContestantResult
 {
     public required D20RollMode RollMode { get; init; }
 

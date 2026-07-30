@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Core.Rules;
 
-public sealed record AbilityContestResult
+internal sealed record AbilityContestResult
 {
     public required AbilityContestantResult FirstContestant { get; init; }
 

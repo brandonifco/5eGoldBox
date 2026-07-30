@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Core.Rules;
 
-public static class AbilityContestRules
+internal static class AbilityContestRules
 {
     public static AbilityContestResult ResolveAbilityContest(
         Ability firstAbility,
