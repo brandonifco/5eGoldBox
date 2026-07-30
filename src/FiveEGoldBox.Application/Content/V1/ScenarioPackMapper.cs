@@ -302,7 +302,7 @@ internal static class ScenarioPackMapper
         };
     }
 
-    private static CombatantZeroHitPointPolicy
+    internal static CombatantZeroHitPointPolicy
         ToRuntimeZeroHitPointPolicy(
             CombatantZeroHitPointPolicyV1 policy)
     {
