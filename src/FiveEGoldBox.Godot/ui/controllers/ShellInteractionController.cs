@@ -91,6 +91,11 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 			RealGameSession session = _activeRealMovementSession;
 
 			_activeRealMovementSession = null;
+			// Only ever set alongside _activeRealMovementSession when
+			// movement was entered via the area map (EnterAreaMapMode) —
+			// plain front-facing movement (EnterRealMovementMode) never
+			// sets it, so this is a no-op there.
+			_activeAreaMapSession = null;
 			ShowRealSession(session, "Movement mode ended.");
 			return;
 		}

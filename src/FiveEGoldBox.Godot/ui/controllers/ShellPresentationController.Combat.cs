@@ -40,6 +40,7 @@ internal sealed partial class ShellPresentationController
 		_explorationView.Hide();
 		_regionalMapView.Hide();
 		_combatView.Show();
+		_areaMapView.Hide();
 
 		_combatIsRealSession = false;
 		_combatGridWidth = MockCombatContent.GridWidth;
@@ -72,6 +73,7 @@ internal sealed partial class ShellPresentationController
 		_explorationView.Hide();
 		_regionalMapView.Hide();
 		_combatView.Show();
+		_areaMapView.Hide();
 
 		_combatIsRealSession = true;
 		_combatGridWidth = model.GridWidth;

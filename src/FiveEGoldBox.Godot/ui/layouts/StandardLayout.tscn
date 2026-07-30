@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://n4q7t1w3z6c9f"]
+[gd_scene load_steps=10 format=3 uid="uid://n4q7t1w3z6c9f"]
 
 [ext_resource type="Script" uid="uid://m3k5p8s1v4y7b" path="res://ui/layouts/StandardLayout.cs" id="1_standard_layout"]
 
@@ -15,6 +15,8 @@
 [ext_resource type="PackedScene" path="res://ui/presentation/RegionalMapView.tscn" id="7_regional_map"]
 
 [ext_resource type="PackedScene" path="res://ui/presentation/CombatView.tscn" id="8_combat"]
+
+[ext_resource type="PackedScene" path="res://ui/presentation/AreaMapView.tscn" id="9_area_map"]
 
 [node name="StandardLayout" type="MarginContainer"]
 layout_mode = 1
@@ -70,6 +72,11 @@ visible = false
 layout_mode = 1
 
 [node name="CombatView" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("8_combat")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+
+[node name="AreaMapView" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("9_area_map")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1

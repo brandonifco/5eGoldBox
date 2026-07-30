@@ -7,6 +7,7 @@ public partial class StandardLayout : MarginContainer
 	public ExplorationView ExplorationView { get; private set; } = null!;
 	public RegionalMapView RegionalMapView { get; private set; } = null!;
 	public CombatView CombatView { get; private set; } = null!;
+	public AreaMapView AreaMapView { get; private set; } = null!;
 	public HeaderBar HeaderBar { get; private set; } = null!;
 	public PartySidebar PartySidebar { get; private set; } = null!;
 	public MessageLog MessageLog { get; private set; } = null!;
@@ -21,6 +22,7 @@ public partial class StandardLayout : MarginContainer
 		ExplorationView = GetNode<ExplorationView>("%ExplorationView");
 		RegionalMapView = GetNode<RegionalMapView>("%RegionalMapView");
 		CombatView = GetNode<CombatView>("%CombatView");
+		AreaMapView = GetNode<AreaMapView>("%AreaMapView");
 		HeaderBar = GetNode<HeaderBar>("%HeaderBar");
 		PartySidebar = GetNode<PartySidebar>("%PartySidebar");
 		MessageLog = GetNode<MessageLog>("%MessageLog");

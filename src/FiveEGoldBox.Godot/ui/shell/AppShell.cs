@@ -40,6 +40,7 @@ public partial class AppShell : Control
 			_standardLayout.ExplorationView,
 			_standardLayout.RegionalMapView,
 			_standardLayout.CombatView,
+			_standardLayout.AreaMapView,
 			_standardLayout.HeaderBar,
 			_immersiveLayout.HeaderBar,
 			_standardLayout.MessageLog,

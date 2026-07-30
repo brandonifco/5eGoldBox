@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using FiveEGoldBox.Application.Sessions;
 using Godot;
 
@@ -21,6 +23,7 @@ internal sealed partial class ShellInteractionController
 	private const string TurnRightLabel = "Turn right";
 
 	private RealGameSession? _activeRealMovementSession;
+	private RealGameSession? _activeAreaMapSession;
 
 	// The real integration seam. Renders whatever RealGameSession.Describe()
 	// reports, rather than the mock content ShowExploration()/ShowCombat()
@@ -126,7 +129,112 @@ internal sealed partial class ShellInteractionController
 					() => EnterRealMovementMode(session)));
 		}
 
+		// Area is a client-side view toggle, not a SessionAction — real
+		// exploration content never offers it (RealGameSession's own
+		// header comment says so), so it's synthesized here the same way
+		// the collapsed "Move" entry above already is. Scoped to
+		// Exploration only, not Outpost/RegionalTravel, matching the
+		// user's own framing ("an Area view in exploration mode").
+		if (snapshot.Mode == ApplicationMode.Exploration)
+		{
+			HashSet<char> usedHotkeys = snapshot.Commands.Commands
+				.Select(command => char.ToUpperInvariant(command.Hotkey![0]))
+				.ToHashSet();
+
+			if (offersMovement)
+			{
+				usedHotkeys.Add('M');
+			}
+
+			CommandViewModel areaCommand = new(
+				"area-map",
+				"Area",
+				AssignAreaHotkey(usedHotkeys));
+
+			commands.Add(CommandViewModelTranslator.ToCommandDefinition(
+				areaCommand,
+				() => EnterAreaMapMode(session)));
+		}
+
 		_commandBarController.ShowCommands(commands.ToArray());
+	}
+
+	// Same collision-free letter-then-digit algorithm RealGameSession.
+	// AssignHotkey uses for real SessionAction labels — duplicated rather
+	// than shared, matching this file's existing "own the real session's
+	// command bar" scope rather than reaching into RealGameSession for a
+	// presentation-only concern.
+	private static string AssignAreaHotkey(HashSet<char> usedHotkeys)
+	{
+		foreach (char candidate in "Area".Select(char.ToUpperInvariant))
+		{
+			if (usedHotkeys.Add(candidate))
+			{
+				return candidate.ToString();
+			}
+		}
+
+		for (char digit = '1'; digit <= '9'; digit++)
+		{
+			if (usedHotkeys.Add(digit))
+			{
+				return digit.ToString();
+			}
+		}
+
+		throw new InvalidOperationException(
+			"Could not assign a hotkey for 'Area'; every candidate " +
+				"letter and digit is already taken in this command set.");
+	}
+
+	// Look-only: opens the real area map, replacing the front-facing view
+	// while it's shown. Null from DescribeAreaMap means there's no
+	// explorable floor here (shouldn't happen while snapshot.Mode is
+	// Exploration, but handled honestly rather than assumed away) — the
+	// command simply does nothing rather than show an empty screen.
+	// Opening the area map drops straight into the same DirectMovement
+	// context/input pipeline EnterRealMovementMode uses for the
+	// front-facing view — the user asked to move while looking at the
+	// map, not to open a look-only screen and have to close it first to
+	// walk. Setting _activeRealMovementSession alongside _activeAreaMapSession
+	// means ShellInputRouter/ReportMovement need no changes at all to
+	// start driving real movement here; ReportMovement itself just also
+	// refreshes the map (RefreshAreaMap) instead of nothing, whenever
+	// _activeAreaMapSession is set. Esc/Space's existing
+	// ExitExplorationMovementMode path already returns to the
+	// front-facing view via ShowRealSession once _activeRealMovementSession
+	// is set, which doubles as "Close" — no separate close command needed.
+	private void EnterAreaMapMode(RealGameSession session)
+	{
+		AreaMapViewModel? model = session.DescribeAreaMap();
+
+		if (model is null)
+		{
+			return;
+		}
+
+		_activeAreaMapSession = session;
+		_activeRealMovementSession = session;
+		PushContext(ShellInteractionContext.DirectMovement);
+		_presentationController.ShowAreaMap(model);
+		_commandBarController.ShowMovementPrompt();
+		_presentationController.SetMessage(
+			"Viewing the area map. Arrows or numpad 8 move forward; " +
+			"4/6 turn. Press Esc or Space to return.");
+	}
+
+	// Called from ReportMovement (ShellInteractionController.Exploration.cs)
+	// after a real move/turn lands, whenever the area map is the active
+	// view, so the grid/marker actually reflect the new position/facing
+	// rather than going stale until the player closes and reopens it.
+	private void RefreshAreaMap()
+	{
+		AreaMapViewModel? model = _activeAreaMapSession!.DescribeAreaMap();
+
+		if (model is not null)
+		{
+			_presentationController.ShowAreaMap(model);
+		}
 	}
 
 	private void SubmitRealCommand(RealGameSession session, string commandId)

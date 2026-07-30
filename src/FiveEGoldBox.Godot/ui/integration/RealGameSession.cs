@@ -152,6 +152,35 @@ internal sealed class RealGameSession
 			});
 	}
 
+	// A read-only snapshot of the area map — real movement while it's
+	// open still goes through SubmitMovement above, this just re-describes
+	// afterward. ExplorationRules.Query is the public projection this
+	// mirrors CombatOperations.Query for. Null whenever there's no
+	// explorable floor to show (shouldn't happen while a caller is in
+	// Exploration mode, but handled honestly rather than assumed away).
+	internal AreaMapViewModel? DescribeAreaMap()
+	{
+		ExplorationMapView? map = ExplorationRules.Query(_state);
+
+		if (map is null)
+		{
+			return null;
+		}
+
+		return new AreaMapViewModel(
+			map.Width,
+			map.Height,
+			map.TraversablePositions
+				.Select(position => new AreaMapPointViewModel(position.X, position.Y))
+				.ToArray(),
+			map.StairPositions
+				.Select(position => new AreaMapPointViewModel(position.X, position.Y))
+				.ToArray(),
+			map.PartyPosition.X,
+			map.PartyPosition.Y,
+			map.PartyFacing.ToString());
+	}
+
 	internal string Submit(string commandId)
 	{
 		if (!_lastActions.TryGetValue(commandId, out SessionAction? action))

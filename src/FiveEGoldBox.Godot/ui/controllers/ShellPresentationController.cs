@@ -25,6 +25,7 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 	private readonly ExplorationView _explorationView;
 	private readonly RegionalMapView _regionalMapView;
 	private readonly CombatView _combatView;
+	private readonly AreaMapView _areaMapView;
 	private readonly HeaderBar _headerBar;
 	private readonly HeaderBar _immersiveHeaderBar;
 	private readonly MessageLog _messageLog;
@@ -38,6 +39,7 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		ExplorationView explorationView,
 		RegionalMapView regionalMapView,
 		CombatView combatView,
+		AreaMapView areaMapView,
 		HeaderBar headerBar,
 		HeaderBar immersiveHeaderBar,
 		MessageLog messageLog,
@@ -46,6 +48,7 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		_explorationView = explorationView;
 		_regionalMapView = regionalMapView;
 		_combatView = combatView;
+		_areaMapView = areaMapView;
 		_headerBar = headerBar;
 		_immersiveHeaderBar = immersiveHeaderBar;
 		_messageLog = messageLog;
@@ -81,6 +84,7 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		_explorationView.Show();
 		_regionalMapView.Hide();
 		_combatView.Hide();
+		_areaMapView.Hide();
 
 		_currentSceneKey = location.ExplorationSceneKey;
 		_facing = CompassDirection.North;
@@ -107,6 +111,7 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		_explorationView.Show();
 		_regionalMapView.Hide();
 		_combatView.Hide();
+		_areaMapView.Hide();
 
 		_currentSceneKey = sceneKey;
 		_facing = CompassDirection.North;

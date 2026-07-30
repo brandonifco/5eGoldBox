@@ -20,6 +20,7 @@ internal sealed partial class ShellPresentationController
 		_explorationView.Hide();
 		_regionalMapView.Show();
 		_combatView.Hide();
+		_areaMapView.Hide();
 
 		_selectedRegionalLocationId = null;
 		_regionalMapIsRealSession = false;
