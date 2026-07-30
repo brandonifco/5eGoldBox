@@ -12,8 +12,14 @@ namespace FiveEGoldBox.Application.Content.Schema;
 /// ContentPackSchemaTests checks for.
 internal static class ContentPackSchemas
 {
+    // Derived from Default rather than a bare `new()` so it inherits a
+    // populated TypeInfoResolver -- a JsonSerializerOptions used for
+    // serialization needs one, and only Default guarantees it is set.
     private static readonly JsonSerializerOptions
-        WriteOptions = new() { WriteIndented = true };
+        WriteOptions = new(JsonSerializerOptions.Default)
+        {
+            WriteIndented = true
+        };
 
     internal static string RulesetPackSchema()
     {
