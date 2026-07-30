@@ -136,7 +136,7 @@ public sealed class CampaignFeatureContentTests
             encounter.Revision,
             "combatant.rogue",
             "combatant.target",
-            SunkenChapelScenarioDefinitionProvider.GuardianDaggerId,
+            SunkenChapelScenarioIds.GuardianDaggerId,
             firstAttackRoll: 15,
             secondAttackRoll: null,
             contributionRolls: Array.Empty<int>());
@@ -182,7 +182,7 @@ public sealed class CampaignFeatureContentTests
                 ],
                 EquippedWeaponIds =
                 [
-                    SunkenChapelScenarioDefinitionProvider.GuardianDaggerId
+                    SunkenChapelScenarioIds.GuardianDaggerId
                 ]
             });
     }

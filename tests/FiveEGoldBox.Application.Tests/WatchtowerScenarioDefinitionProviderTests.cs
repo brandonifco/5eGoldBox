@@ -17,7 +17,7 @@ public sealed class WatchtowerScenarioDefinitionProviderTests
     public void Definition_ValidatesWithoutErrors()
     {
         ValidationResult result = ScenarioDefinitionValidator.Validate(
-            WatchtowerScenarioDefinitionProvider.Create());
+            ScenarioDefinitionRegistry.Resolve(WatchtowerScenarioContent.ScenarioId));
 
         Assert.True(
             result.IsValid,
@@ -38,7 +38,7 @@ public sealed class WatchtowerScenarioDefinitionProviderTests
     public void Definition_DeclaresNoProgressItCannotReach()
     {
         ValidationResult result = ScenarioDefinitionValidator.Validate(
-            WatchtowerScenarioDefinitionProvider.Create());
+            ScenarioDefinitionRegistry.Resolve(WatchtowerScenarioContent.ScenarioId));
 
         Assert.DoesNotContain(
             result.Issues,
@@ -54,7 +54,7 @@ public sealed class WatchtowerScenarioDefinitionProviderTests
     {
         ExplorationMapDefinition map = Assert.IsType<ExplorationMapDefinition>(
             Assert.Single(
-                WatchtowerScenarioDefinitionProvider.Create().Locations,
+                ScenarioDefinitionRegistry.Resolve(WatchtowerScenarioContent.ScenarioId).Locations,
                 location => location.LocationId
                     == WatchtowerRegionalRoute.WatchtowerLocationId)
             .ExplorationMap);
@@ -88,7 +88,7 @@ public sealed class WatchtowerScenarioDefinitionProviderTests
     public void Definition_MatchesTheImplementationsAmbush()
     {
         EncounterDefinition encounter = Assert.Single(
-            WatchtowerScenarioDefinitionProvider.Create().Encounters);
+            ScenarioDefinitionRegistry.Resolve(WatchtowerScenarioContent.ScenarioId).Encounters);
 
         Assert.Equal(
             WatchtowerSignalEncounter.EncounterId,
@@ -119,7 +119,7 @@ public sealed class WatchtowerScenarioDefinitionProviderTests
     public void Definition_ExpressesTheMissionDecision()
     {
         ScenarioDecisionDefinition decision = Assert.Single(
-            WatchtowerScenarioDefinitionProvider.Create().Decisions);
+            ScenarioDefinitionRegistry.Resolve(WatchtowerScenarioContent.ScenarioId).Decisions);
 
         Assert.Equal(
             WatchtowerScenarioContent.OutpostLocationId,

@@ -24,7 +24,7 @@ public sealed class CampaignDefinitionTests
     /// rather than declared twice and left to drift.
     [Theory]
     [InlineData(WatchtowerScenarioContent.ScenarioId)]
-    [InlineData(SunkenChapelScenarioDefinitionProvider.ScenarioId)]
+    [InlineData(SunkenChapelScenarioIds.ScenarioId)]
     public void ResolveForScenario_FindsTheCampaignThatContainsIt(
         string scenarioId)
     {
@@ -49,7 +49,7 @@ public sealed class CampaignDefinitionTests
             WatchtowerScenarioContent.ScenarioId,
             randomSeed: 3).Party;
         PartyState chapel = ScenarioSessionFactory.CreateNew(
-            SunkenChapelScenarioDefinitionProvider.ScenarioId,
+            SunkenChapelScenarioIds.ScenarioId,
             randomSeed: 3).Party;
 
         Assert.Equal(

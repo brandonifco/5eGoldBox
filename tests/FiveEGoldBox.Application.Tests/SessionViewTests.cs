@@ -14,7 +14,7 @@ public sealed class SessionViewTests
 {
     [Theory]
     [InlineData(WatchtowerScenarioContent.ScenarioId)]
-    [InlineData(SunkenChapelScenarioDefinitionProvider.ScenarioId)]
+    [InlineData(SunkenChapelScenarioIds.ScenarioId)]
     public void Describe_AtTheStart_OffersTheScenariosOwnDecision(
         string scenarioId)
     {
@@ -52,7 +52,7 @@ public sealed class SessionViewTests
                 randomSeed: 7));
         SessionViewModel chapel = SessionView.Describe(
             ScenarioSessionFactory.CreateNew(
-                SunkenChapelScenarioDefinitionProvider.ScenarioId,
+                SunkenChapelScenarioIds.ScenarioId,
                 randomSeed: 7));
 
         Assert.Equal("The Ruined Watchtower", watchtower.ScenarioDisplayName);
@@ -71,7 +71,7 @@ public sealed class SessionViewTests
     {
         SessionViewModel view = SessionView.Describe(Accept(
             ScenarioSessionFactory.CreateNew(
-                SunkenChapelScenarioDefinitionProvider.ScenarioId,
+                SunkenChapelScenarioIds.ScenarioId,
                 randomSeed: 7)));
 
         SessionAction journey = Assert.Single(
@@ -86,7 +86,7 @@ public sealed class SessionViewTests
     public void Describe_OnArrival_OffersTheWayIn()
     {
         ApplicationSessionState session = Arrive(
-            SunkenChapelScenarioDefinitionProvider.ScenarioId);
+            SunkenChapelScenarioIds.ScenarioId);
 
         SessionViewModel view = SessionView.Describe(session);
 
@@ -103,7 +103,7 @@ public sealed class SessionViewTests
     public void Describe_WhileExploring_OffersMovementAndAnyTriggerHere()
     {
         ApplicationSessionState session = ExplorationRules.EnterDestination(
-            Arrive(SunkenChapelScenarioDefinitionProvider.ScenarioId));
+            Arrive(SunkenChapelScenarioIds.ScenarioId));
 
         SessionViewModel standingAway = SessionView.Describe(session);
 
