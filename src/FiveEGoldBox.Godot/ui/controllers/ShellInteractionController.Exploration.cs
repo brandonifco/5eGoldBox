@@ -42,6 +42,15 @@ internal sealed partial class ShellInteractionController
 			_presentationController.SetHeader(
 				snapshot.LocationDisplayName,
 				snapshot.ModeLabel);
+
+			// Set only when movement was entered from the area map
+			// (EnterAreaMapMode) — keeps the grid/marker live instead of
+			// going stale until the player closes and reopens it.
+			if (_activeAreaMapSession is not null)
+			{
+				RefreshAreaMap();
+			}
+
 			_presentationController.SetMessage(message);
 			return;
 		}

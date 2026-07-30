@@ -854,6 +854,102 @@ WatchtowerScenarioProgress
             });
     }
 
+    [Fact]
+    public void Query_DuringExploration_ReturnsRealMapData()
+    {
+        ApplicationSessionState session = CreateExplorationSession();
+
+        ExplorationMapView? view = ExplorationRules.Query(session);
+
+        Assert.NotNull(view);
+        Assert.Equal("map.ruined-watchtower", view!.MapId);
+        Assert.Equal(ExplorationFloor.GroundFloor, view.Floor);
+        Assert.Equal(3, view.Width);
+        Assert.Equal(3, view.Height);
+        Assert.Equal(new GridPosition(0, 0), view.PartyPosition);
+        Assert.Equal(ExplorationFacing.East, view.PartyFacing);
+        Assert.Equal(
+            new HashSet<GridPosition>
+            {
+                new(0, 0), new(1, 0), new(2, 0),
+                new(0, 1), new(2, 1),
+                new(0, 2), new(1, 2), new(2, 2)
+            },
+            view.TraversablePositions.ToHashSet());
+        Assert.Equal(
+            new[] { new GridPosition(2, 0) },
+            view.StairPositions);
+    }
+
+    [Fact]
+    public void Query_AfterMovingAndTurning_ReflectsRealPositionAndFacing()
+    {
+        ApplicationSessionState session = CreateExplorationSession();
+        session = ExplorationRules.MoveForward(session).State;
+        session = ExplorationRules.Turn(
+            session,
+            ExplorationTurnDirection.Right);
+
+        ExplorationMapView? view = ExplorationRules.Query(session);
+
+        Assert.NotNull(view);
+        Assert.Equal(new GridPosition(1, 0), view!.PartyPosition);
+        Assert.Equal(ExplorationFacing.South, view.PartyFacing);
+    }
+
+    [Fact]
+    public void Query_AfterUsingStairs_ReflectsTheDestinationFloorOnly()
+    {
+        ApplicationSessionState atStairs = CreateAtGroundFloorStairs();
+        ApplicationSessionState upper =
+            ExplorationRules.UseStairs(atStairs);
+
+        ExplorationMapView? view = ExplorationRules.Query(upper);
+
+        Assert.NotNull(view);
+        Assert.Equal(ExplorationFloor.UpperFloor, view!.Floor);
+        Assert.Equal(
+            new HashSet<GridPosition>
+            {
+                new(0, 0), new(1, 0), new(2, 0),
+                new(0, 1), new(1, 1), new(2, 1)
+            },
+            view.TraversablePositions.ToHashSet());
+    }
+
+    [Fact]
+    public void Query_OutsideExploration_ReturnsNull()
+    {
+        Assert.Null(
+            ExplorationRules.Query(CreateMissionNotAcceptedSession()));
+        Assert.Null(
+            ExplorationRules.Query(CreateTravelingSession()));
+    }
+
+    [Fact]
+    public void Query_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            ExplorationRules.Query(null!));
+    }
+
+    [Fact]
+    public void Query_DoesNotMutateOrConsumeRandomness()
+    {
+        ApplicationSessionState session = CreateExplorationSession();
+        ExplorationState original = AssertExploration(session);
+        int randomValuesConsumedBefore = session.RandomValuesConsumed;
+
+        _ = ExplorationRules.Query(session);
+
+        Assert.Equal(
+            original,
+            AssertExploration(session));
+        Assert.Equal(
+            randomValuesConsumedBefore,
+            session.RandomValuesConsumed);
+    }
+
     private static void AssertInvalidExplorationActionThrows(
         Action<ApplicationSessionState> action,
         Func<ExplorationState, ExplorationState?>

@@ -1,0 +1,149 @@
+using System.Collections.Generic;
+using System.Linq;
+using Godot;
+
+// A real top-down grid map for exploration — a straight axis-aligned
+// grid (not CombatView's isometric one; a different visual register from
+// tactical combat, closer to a classic dungeon-crawl automap), showing
+// the current floor's real walkable/blocked cells, stairs, and the
+// party's real position/facing. This Control itself is purely a
+// renderer — no click-to-move, no pan/zoom, the whole floor is auto-fit
+// to the viewport in one shot; real movement while it's shown is driven
+// externally (ShellInteractionController.RealSession.cs's
+// EnterAreaMapMode reuses the same arrow-key DirectMovement pipeline the
+// front-facing view uses) and reaches this view only through repeated
+// Configure calls, not through any input this Control handles itself.
+public partial class AreaMapView : Control
+{
+	private Control _gridLayer = null!;
+	private Control _partyMarkerLayer = null!;
+	private PartyDirectionMarker? _partyMarker;
+
+	private int _width = 1;
+	private int _height = 1;
+	private HashSet<(int X, int Y)> _walkable = new();
+	private HashSet<(int X, int Y)> _stairs = new();
+	private int _partyX;
+	private int _partyY;
+
+	public override void _Ready()
+	{
+		_gridLayer = GetNode<Control>("%GridLayer");
+		_partyMarkerLayer = GetNode<Control>("%PartyMarkerLayer");
+
+		_gridLayer.Draw += DrawGrid;
+		Resized += RefreshLayout;
+	}
+
+	internal void Configure(AreaMapViewModel model)
+	{
+		_width = model.Width;
+		_height = model.Height;
+		_walkable = model.WalkableCells
+			.Select(cell => (cell.X, cell.Y))
+			.ToHashSet();
+		_stairs = model.StairCells
+			.Select(cell => (cell.X, cell.Y))
+			.ToHashSet();
+		_partyX = model.PartyX;
+		_partyY = model.PartyY;
+
+		if (_partyMarker is null)
+		{
+			_partyMarker = new PartyDirectionMarker();
+			_partyMarkerLayer.AddChild(_partyMarker);
+		}
+
+		_partyMarker.Configure(model.PartyFacing);
+
+		RefreshLayout();
+	}
+
+	private void RefreshLayout()
+	{
+		PositionPartyMarker();
+		_gridLayer.QueueRedraw();
+	}
+
+	// Fits the whole floor to the viewport in one shot, centered — no
+	// independent X/Y fit, so a cell is always square regardless of the
+	// floor's own aspect ratio.
+	private (float CellSize, float OffsetX, float OffsetY) Metrics
+	{
+		get
+		{
+			Vector2 viewportSize = Size;
+			float cellSize = Mathf.Min(
+				viewportSize.X / Mathf.Max(_width, 1),
+				viewportSize.Y / Mathf.Max(_height, 1));
+			float offsetX = (viewportSize.X - (cellSize * _width)) / 2f;
+			float offsetY = (viewportSize.Y - (cellSize * _height)) / 2f;
+
+			return (cellSize, offsetX, offsetY);
+		}
+	}
+
+	private void PositionPartyMarker()
+	{
+		if (_partyMarker is null)
+		{
+			return;
+		}
+
+		(float cellSize, float offsetX, float offsetY) = Metrics;
+		float diameter = cellSize * 0.7f;
+		Vector2 cellCenter = new(
+			offsetX + ((_partyX + 0.5f) * cellSize),
+			offsetY + ((_partyY + 0.5f) * cellSize));
+
+		_partyMarker.Size = new Vector2(diameter, diameter);
+		_partyMarker.Position = cellCenter - (_partyMarker.Size / 2f);
+		_partyMarker.PivotOffset = _partyMarker.Size / 2f;
+	}
+
+	private void DrawGrid()
+	{
+		(float cellSize, float offsetX, float offsetY) = Metrics;
+		Color walkableColor = new(0.55f, 0.5f, 0.42f, 1f);
+		Color blockedColor = new(0.12f, 0.11f, 0.1f, 1f);
+		Color stairColor = new(0.35f, 0.6f, 0.85f, 1f);
+		Color gridLineColor = new(0f, 0f, 0f, 0.25f);
+
+		for (int y = 0; y < _height; y++)
+		{
+			for (int x = 0; x < _width; x++)
+			{
+				bool isStair = _stairs.Contains((x, y));
+				bool isWalkable = _walkable.Contains((x, y));
+				Color fill = isStair
+					? stairColor
+					: isWalkable
+						? walkableColor
+						: blockedColor;
+				Vector2 topLeft = new(
+					offsetX + (x * cellSize),
+					offsetY + (y * cellSize));
+
+				_gridLayer.DrawRect(
+					new Rect2(topLeft, new Vector2(cellSize, cellSize)),
+					fill);
+			}
+		}
+
+		for (int gy = 0; gy <= _height; gy++)
+		{
+			_gridLayer.DrawLine(
+				new Vector2(offsetX, offsetY + (gy * cellSize)),
+				new Vector2(offsetX + (_width * cellSize), offsetY + (gy * cellSize)),
+				gridLineColor);
+		}
+
+		for (int gx = 0; gx <= _width; gx++)
+		{
+			_gridLayer.DrawLine(
+				new Vector2(offsetX + (gx * cellSize), offsetY),
+				new Vector2(offsetX + (gx * cellSize), offsetY + (_height * cellSize)),
+				gridLineColor);
+		}
+	}
+}

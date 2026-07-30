@@ -28,6 +28,13 @@ internal interface IShellPresentation
 	// ShowCombat()'s mock content. Call instead of ShowCombat().
 	void ConfigureCombat(CombatViewModel model);
 
+	// A real top-down grid of the current exploration floor — walkable/
+	// blocked cells, stairs, and the party's real position/facing.
+	// EnterAreaMapMode calls this to open it and again after every real
+	// move/turn while it's shown, so the marker tracks the party live;
+	// ShowExploration(...) (via ExitExplorationMovementMode) closes it.
+	void ShowAreaMap(AreaMapViewModel model);
+
 	string? SelectedRegionalLocationId { get; }
 
 	void EnterRegionalLocation(string locationId);

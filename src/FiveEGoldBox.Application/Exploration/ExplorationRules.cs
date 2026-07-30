@@ -201,6 +201,34 @@ public static class ExplorationRules
             });
     }
 
+    /// A read-only projection of the current floor's grid geometry plus
+    /// the party's real position/facing, for a client to draw a real area
+    /// map from — the same "public Query wrapping otherwise-internal
+    /// definitions" shape CombatOperations.Query establishes for combat.
+    /// Null outside exploration, or at a location with no explorable
+    /// floor (a hub).
+    public static ExplorationMapView? Query(
+        ApplicationSessionState session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        ApplicationSessionState canonicalSession =
+            ApplicationSessionRules.CreateCanonical(session);
+
+        if (canonicalSession.CurrentMode != ApplicationMode.Exploration
+            || canonicalSession.Exploration is not ExplorationState exploration)
+        {
+            return null;
+        }
+
+        ExplorationMapDefinition? map =
+            ScenarioExplorationMap.FindCurrent(canonicalSession);
+
+        return map is null
+            ? null
+            : ExplorationMapViewFactory.Create(map, exploration);
+    }
+
     private static DestinationEntryAvailability
         GetDestinationEntryAvailability(
             ApplicationSessionState session)
