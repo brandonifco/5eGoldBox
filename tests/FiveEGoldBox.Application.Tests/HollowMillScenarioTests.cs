@@ -28,7 +28,8 @@ public sealed class HollowMillScenarioTests
     {
         ValidationResult validation =
             ScenarioDefinitionValidator.Validate(
-                HollowMillScenarioDefinitionProvider.Create());
+                ScenarioDefinitionRegistry.Resolve(
+                    HollowMillScenarioIds.ScenarioId));
 
         Assert.True(validation.IsValid);
         Assert.Empty(validation.Issues);
@@ -40,13 +41,13 @@ public sealed class HollowMillScenarioTests
         ApplicationSessionState session = CreateSession();
 
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.ScenarioId,
+            HollowMillScenarioIds.ScenarioId,
             session.ScenarioId);
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.VillageLocationId,
+            HollowMillScenarioIds.VillageLocationId,
             session.CurrentLocationId);
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.RumorHeard,
+            HollowMillScenarioIds.RumorHeard,
             session.Scenario.ProgressId);
         Assert.Equal(ApplicationMode.Outpost, session.CurrentMode);
     }
@@ -59,7 +60,8 @@ public sealed class HollowMillScenarioTests
     public void TheTwoCellarTriggers_HaveDisjointRequiredProgress()
     {
         ScenarioDefinition definition =
-            HollowMillScenarioDefinitionProvider.Create();
+            ScenarioDefinitionRegistry.Resolve(
+                HollowMillScenarioIds.ScenarioId);
 
         ScenarioTriggerDefinition informed = definition.Triggers.Single(
             trigger => trigger.TriggerId == "trigger.cellar-informed-approach");
@@ -86,7 +88,7 @@ public sealed class HollowMillScenarioTests
             "AcceptMission")
             .State;
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.CommissionAccepted,
+            HollowMillScenarioIds.CommissionAccepted,
             session.Scenario.ProgressId);
 
         session = TravelToTheMill(session);
@@ -106,7 +108,7 @@ public sealed class HollowMillScenarioTests
         Assert.True(ScenarioTriggerRules.CanActivate(session));
         session = ScenarioTriggerRules.Activate(session);
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.HerbalistConsulted,
+            HollowMillScenarioIds.HerbalistConsulted,
             session.Scenario.ProgressId);
         Assert.Equal(ApplicationMode.Exploration, session.CurrentMode);
 
@@ -133,24 +135,24 @@ public sealed class HollowMillScenarioTests
         session = ScenarioTriggerRules.Activate(session);
         Assert.Equal(ApplicationMode.Encounter, session.CurrentMode);
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.VerminRoused,
+            HollowMillScenarioIds.VerminRoused,
             session.Scenario.ProgressId);
 
         EncounterState encounter = Assert
             .IsType<ActiveEncounterState>(session.ActiveEncounter)
             .Encounter;
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.InformedEncounterId,
+            HollowMillScenarioIds.InformedEncounterId,
             encounter.EncounterId);
         Assert.Equal(
             2,
             encounter.Participants.Count(participant =>
                 participant.SideId
-                    == HollowMillScenarioDefinitionProvider.VerminSideId));
+                    == HollowMillScenarioIds.VerminSideId));
 
         session = WinTheFight(session);
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.VerminRoused,
+            HollowMillScenarioIds.VerminRoused,
             session.Scenario.ProgressId);
         Assert.Equal(ApplicationMode.Exploration, session.CurrentMode);
         Assert.Equal(new GridPosition(2, 0), session.Exploration!.Position);
@@ -163,7 +165,7 @@ public sealed class HollowMillScenarioTests
         Assert.True(ScenarioTriggerRules.CanActivate(session));
         session = ScenarioTriggerRules.Activate(session);
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.BlightSevered,
+            HollowMillScenarioIds.BlightSevered,
             session.Scenario.ProgressId);
         Assert.Equal(ApplicationMode.ScenarioConclusion, session.CurrentMode);
     }
@@ -192,7 +194,7 @@ public sealed class HollowMillScenarioTests
         Assert.True(ScenarioTriggerRules.CanActivate(session));
         session = ScenarioTriggerRules.Activate(session);
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.MillerConfronted,
+            HollowMillScenarioIds.MillerConfronted,
             session.Scenario.ProgressId);
 
         // Down to the stairs.
@@ -221,13 +223,13 @@ public sealed class HollowMillScenarioTests
             .IsType<ActiveEncounterState>(session.ActiveEncounter)
             .Encounter;
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.BlindEncounterId,
+            HollowMillScenarioIds.BlindEncounterId,
             encounter.EncounterId);
         Assert.Equal(
             3,
             encounter.Participants.Count(participant =>
                 participant.SideId
-                    == HollowMillScenarioDefinitionProvider.VerminSideId));
+                    == HollowMillScenarioIds.VerminSideId));
         Assert.Contains(
             encounter.Participants,
             participant => participant.Combatant.CombatantId
@@ -235,7 +237,7 @@ public sealed class HollowMillScenarioTests
 
         session = LoseTheFight(session);
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.MillersLost,
+            HollowMillScenarioIds.MillersLost,
             session.Scenario.ProgressId);
         Assert.Equal(ApplicationMode.ScenarioConclusion, session.CurrentMode);
     }
@@ -260,11 +262,11 @@ public sealed class HollowMillScenarioTests
         Assert.Contains(
             available,
             route => route.RouteId
-                == HollowMillScenarioDefinitionProvider.RouteId);
+                == HollowMillScenarioIds.RouteId);
         Assert.Contains(
             available,
             route => route.RouteId
-                == HollowMillScenarioDefinitionProvider.ShortcutRouteId);
+                == HollowMillScenarioIds.ShortcutRouteId);
 
         // Ambiguous without a route ID now that more than one road is open.
         Assert.Throws<InvalidOperationException>(() =>
@@ -272,20 +274,20 @@ public sealed class HollowMillScenarioTests
 
         ApplicationSessionState shortcut = RegionalTravelRules.BeginJourney(
             session,
-            HollowMillScenarioDefinitionProvider.ShortcutRouteId);
+            HollowMillScenarioIds.ShortcutRouteId);
 
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.ShortcutRouteId,
+            HollowMillScenarioIds.ShortcutRouteId,
             shortcut.RegionalTravel!.RouteId);
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.MillLocationId,
+            HollowMillScenarioIds.MillLocationId,
             shortcut.RegionalTravel!.DestinationLocationId);
         Assert.True(
             shortcut.RegionalTravel!.FinalStepIndex
                 < RegionalTravelRules
                     .GetAvailableRoutes(session)
                     .Single(route => route.RouteId
-                        == HollowMillScenarioDefinitionProvider.RouteId)
+                        == HollowMillScenarioIds.RouteId)
                     .FinalStepIndex);
 
         while (RegionalTravelRules.CanAdvance(shortcut))
@@ -294,7 +296,7 @@ public sealed class HollowMillScenarioTests
         }
 
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.MillLocationId,
+            HollowMillScenarioIds.MillLocationId,
             shortcut.CurrentLocationId);
     }
 
@@ -333,7 +335,7 @@ public sealed class HollowMillScenarioTests
 
         Assert.False(asked.DidProgressChange);
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.RumorHeard,
+            HollowMillScenarioIds.RumorHeard,
             asked.State.Scenario.ProgressId);
         Assert.Equal(
             3,
@@ -345,7 +347,7 @@ public sealed class HollowMillScenarioTests
 
         Assert.True(accepted.DidProgressChange);
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.CommissionAccepted,
+            HollowMillScenarioIds.CommissionAccepted,
             accepted.State.Scenario.ProgressId);
     }
 
@@ -353,13 +355,13 @@ public sealed class HollowMillScenarioTests
     public void Registry_ResolvesTheScenario()
     {
         Assert.True(ScenarioDefinitionRegistry.IsRegistered(
-            HollowMillScenarioDefinitionProvider.ScenarioId));
+            HollowMillScenarioIds.ScenarioId));
 
         ScenarioDefinition definition = ScenarioDefinitionRegistry.Resolve(
-            HollowMillScenarioDefinitionProvider.ScenarioId);
+            HollowMillScenarioIds.ScenarioId);
 
         Assert.Equal(
-            HollowMillScenarioDefinitionProvider.ScenarioId,
+            HollowMillScenarioIds.ScenarioId,
             definition.ScenarioId);
     }
 
@@ -367,7 +369,7 @@ public sealed class HollowMillScenarioTests
     public void Campaign_ClaimsTheScenario()
     {
         CampaignDefinition campaign = CampaignRegistry.ResolveForScenario(
-            HollowMillScenarioDefinitionProvider.ScenarioId);
+            HollowMillScenarioIds.ScenarioId);
 
         Assert.Equal(FrontierCampaignContent.CampaignId, campaign.CampaignId);
     }
@@ -375,7 +377,7 @@ public sealed class HollowMillScenarioTests
     private static ApplicationSessionState CreateSession()
     {
         return ScenarioSessionFactory.CreateNew(
-            HollowMillScenarioDefinitionProvider.ScenarioId,
+            HollowMillScenarioIds.ScenarioId,
             RandomSeed);
     }
 
@@ -388,7 +390,7 @@ public sealed class HollowMillScenarioTests
         // the cart track is the one every branch test before this one walks.
         session = RegionalTravelRules.BeginJourney(
             session,
-            HollowMillScenarioDefinitionProvider.RouteId);
+            HollowMillScenarioIds.RouteId);
 
         while (RegionalTravelRules.CanAdvance(session))
         {
@@ -435,7 +437,7 @@ public sealed class HollowMillScenarioTests
     {
         return ResolveFight(
             session,
-            winningSideId: HollowMillScenarioDefinitionProvider.VerminSideId);
+            winningSideId: HollowMillScenarioIds.VerminSideId);
     }
 
     private static ApplicationSessionState ResolveFight(

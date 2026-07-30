@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using FiveEGoldBox.Application.Content;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Validation;
@@ -21,12 +22,9 @@ internal static class ScenarioDefinitionRegistry
         Factories = new Dictionary<string, Func<ScenarioDefinition>>(
             StringComparer.Ordinal)
         {
-            [WatchtowerScenarioContent.ScenarioId] =
-                WatchtowerScenarioDefinitionProvider.Create,
-            [SunkenChapelScenarioDefinitionProvider.ScenarioId] =
-                SunkenChapelScenarioDefinitionProvider.Create,
-            [HollowMillScenarioDefinitionProvider.ScenarioId] =
-                HollowMillScenarioDefinitionProvider.Create
+            [WatchtowerScenarioContent.ScenarioId] = LoadWatchtowerScenario,
+            [SunkenChapelScenarioIds.ScenarioId] = LoadSunkenChapelScenario,
+            [HollowMillScenarioIds.ScenarioId] = LoadHollowMillScenario
         };
 
     private static readonly ConcurrentDictionary<string, ScenarioDefinition>
@@ -88,5 +86,29 @@ internal static class ScenarioDefinitionRegistry
         }
 
         return definition;
+    }
+
+    private static ScenarioDefinition LoadWatchtowerScenario()
+    {
+        return LoadScenario("watchtower");
+    }
+
+    private static ScenarioDefinition LoadSunkenChapelScenario()
+    {
+        return LoadScenario("sunken-chapel");
+    }
+
+    private static ScenarioDefinition LoadHollowMillScenario()
+    {
+        return LoadScenario("hollow-mill");
+    }
+
+    private static ScenarioDefinition LoadScenario(
+        string scenarioDirectoryName)
+    {
+        string packPath = DataDirectoryLocator.ResolveDataFilePath(
+            Path.Combine("scenarios", scenarioDirectoryName, "scenario.json"));
+
+        return ScenarioPackLoader.Load(packPath);
     }
 }

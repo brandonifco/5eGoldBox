@@ -30,7 +30,8 @@ public sealed class SecondScenarioTests
     {
         ValidationResult validation =
             ScenarioDefinitionValidator.Validate(
-                SunkenChapelScenarioDefinitionProvider.Create());
+                ScenarioDefinitionRegistry.Resolve(
+                    SunkenChapelScenarioIds.ScenarioId));
 
         Assert.True(validation.IsValid);
         Assert.Empty(validation.Issues);
@@ -44,13 +45,13 @@ public sealed class SecondScenarioTests
         ApplicationSessionState session = CreateSession();
 
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.ScenarioId,
+            SunkenChapelScenarioIds.ScenarioId,
             session.ScenarioId);
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.HarborLocationId,
+            SunkenChapelScenarioIds.HarborLocationId,
             session.CurrentLocationId);
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.RumourHeard,
+            SunkenChapelScenarioIds.RumourHeard,
             session.Scenario.ProgressId);
         Assert.Equal(ApplicationMode.Outpost, session.CurrentMode);
     }
@@ -71,13 +72,13 @@ public sealed class SecondScenarioTests
             "AcceptMission")
             .State;
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.CharterSigned,
+            SunkenChapelScenarioIds.CharterSigned,
             session.Scenario.ProgressId);
 
         Assert.True(RegionalTravelRules.CanBeginJourney(session));
         session = RegionalTravelRules.BeginJourney(session);
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.RouteId,
+            SunkenChapelScenarioIds.RouteId,
             session.RegionalTravel!.RouteId);
 
         while (RegionalTravelRules.CanAdvance(session))
@@ -86,7 +87,7 @@ public sealed class SecondScenarioTests
         }
 
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.ChapelLocationId,
+            SunkenChapelScenarioIds.ChapelLocationId,
             session.CurrentLocationId);
 
         Assert.True(ExplorationRules.CanEnterDestination(session));
@@ -109,7 +110,7 @@ public sealed class SecondScenarioTests
         // A trigger that starts no encounter advances the scenario and leaves
         // the party exploring exactly where it stood.
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.SealBroken,
+            SunkenChapelScenarioIds.SealBroken,
             session.Scenario.ProgressId);
         Assert.Equal(ApplicationMode.Exploration, session.CurrentMode);
         Assert.Equal(
@@ -131,14 +132,14 @@ public sealed class SecondScenarioTests
         // This scenario's own fight, on its own ground.
         Assert.Equal(ApplicationMode.Encounter, session.CurrentMode);
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.GuardiansRoused,
+            SunkenChapelScenarioIds.GuardiansRoused,
             session.Scenario.ProgressId);
 
         EncounterState encounter = Assert
             .IsType<ActiveEncounterState>(session.ActiveEncounter)
             .Encounter;
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.EncounterId,
+            SunkenChapelScenarioIds.EncounterId,
             encounter.EncounterId);
         Assert.Equal(
             "battlefield.chapel-nave",
@@ -147,14 +148,14 @@ public sealed class SecondScenarioTests
             2,
             encounter.Participants.Count(participant =>
                 participant.SideId
-                    == SunkenChapelScenarioDefinitionProvider.GuardianSideId));
+                    == SunkenChapelScenarioIds.GuardianSideId));
 
         session = WinTheFight(session);
 
         // Winning carries the scenario to the marker its own encounter
         // declares, and puts the party back where it was standing.
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.GuardiansBanished,
+            SunkenChapelScenarioIds.GuardiansBanished,
             session.Scenario.ProgressId);
         Assert.Equal(ApplicationMode.Exploration, session.CurrentMode);
         Assert.Equal(
@@ -167,7 +168,7 @@ public sealed class SecondScenarioTests
         // A trigger whose resulting marker is a declared conclusion ends the
         // scenario, the same way winning an encounter does.
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.RelicRecovered,
+            SunkenChapelScenarioIds.RelicRecovered,
             session.Scenario.ProgressId);
         Assert.Equal(
             ApplicationMode.ScenarioConclusion,
@@ -193,7 +194,7 @@ public sealed class SecondScenarioTests
                 == "combatant.chapel-guardian.first");
 
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.GuardianSideId,
+            SunkenChapelScenarioIds.GuardianSideId,
             guardian.SideId);
         Assert.Equal(7, guardian.Combatant.Health.HitPoints.MaximumHitPoints);
         Assert.Equal(12, guardian.CombatProfile.ArmorClass);
@@ -201,7 +202,7 @@ public sealed class SecondScenarioTests
         WeaponAttack dagger = Assert.Single(
             guardian.CombatProfile.WeaponAttacks);
         Assert.Equal(
-            SunkenChapelScenarioDefinitionProvider.GuardianDaggerId,
+            SunkenChapelScenarioIds.GuardianDaggerId,
             dagger.WeaponId);
         Assert.Equal(DieType.D4, dagger.Damage.Die);
 
@@ -289,7 +290,7 @@ public sealed class SecondScenarioTests
     public void BothScenariosResolveTheirOwnContent()
     {
         ScenarioDefinition chapel = ScenarioDefinitionRegistry.Resolve(
-            SunkenChapelScenarioDefinitionProvider.ScenarioId);
+            SunkenChapelScenarioIds.ScenarioId);
         ScenarioDefinition watchtower = ScenarioDefinitionRegistry.Resolve(
             WatchtowerScenarioContent.ScenarioId);
 
@@ -339,7 +340,7 @@ public sealed class SecondScenarioTests
     private static ApplicationSessionState CreateSession()
     {
         return ScenarioSessionFactory.CreateNew(
-            SunkenChapelScenarioDefinitionProvider.ScenarioId,
+            SunkenChapelScenarioIds.ScenarioId,
             RandomSeed);
     }
 
@@ -439,7 +440,7 @@ public sealed class SecondScenarioTests
     {
         EncounterParticipantState[] participants = encounter.Participants
             .Select(participant => participant.SideId
-                    == SunkenChapelScenarioDefinitionProvider.GuardianSideId
+                    == SunkenChapelScenarioIds.GuardianSideId
                 ? participant with
                 {
                     Combatant = participant.Combatant with
