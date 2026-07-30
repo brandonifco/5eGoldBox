@@ -12,12 +12,12 @@ public sealed class CampaignDefinitionTests
     public void Resolve_ValidatesAndCachesTheCampaign()
     {
         CampaignDefinition campaign = CampaignRegistry.Resolve(
-            FrontierCampaignContent.CampaignId);
+            FrontierCampaignIds.CampaignId);
 
-        Assert.Equal(FrontierCampaignContent.CampaignId, campaign.CampaignId);
+        Assert.Equal(FrontierCampaignIds.CampaignId, campaign.CampaignId);
         Assert.Same(
             campaign,
-            CampaignRegistry.Resolve(FrontierCampaignContent.CampaignId));
+            CampaignRegistry.Resolve(FrontierCampaignIds.CampaignId));
     }
 
     /// A campaign names its scenarios; the reverse lookup is derived from that
@@ -29,7 +29,7 @@ public sealed class CampaignDefinitionTests
         string scenarioId)
     {
         Assert.Equal(
-            FrontierCampaignContent.CampaignId,
+            FrontierCampaignIds.CampaignId,
             CampaignRegistry.ResolveForScenario(scenarioId).CampaignId);
     }
 
@@ -61,7 +61,7 @@ public sealed class CampaignDefinitionTests
     public void StartingParty_FieldsExactlyTheActivePartySize()
     {
         CampaignDefinition campaign = CampaignRegistry.Resolve(
-            FrontierCampaignContent.CampaignId);
+            FrontierCampaignIds.CampaignId);
 
         PartyState party =
             CampaignPartyFactory.CreateStartingParty(campaign);
@@ -170,6 +170,6 @@ public sealed class CampaignDefinitionTests
 
     private static CampaignDefinition Base()
     {
-        return FrontierCampaignContent.CreateDefinition();
+        return CampaignRegistry.Resolve(FrontierCampaignIds.CampaignId);
     }
 }

@@ -100,7 +100,7 @@ public sealed class CampaignCharacterDraftFactoryTests
     private static CampaignDefinition Campaign()
     {
         return CampaignRegistry.Resolve(
-            FrontierCampaignContent.CampaignId);
+            FrontierCampaignIds.CampaignId);
     }
 
     private static PartyMemberState Fighter()

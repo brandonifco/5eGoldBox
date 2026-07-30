@@ -184,7 +184,7 @@ internal static class WatchtowerSignalTestData
     {
         CampaignCharacterDefinition character =
             CampaignRegistry.Resolve(
-                FrontierCampaignContent.CampaignId)
+                FrontierCampaignIds.CampaignId)
                 .Roster
                 .Single(candidate => string.Equals(
                     candidate.CharacterDefinitionId,
@@ -253,7 +253,7 @@ internal static class WatchtowerSignalTestData
             currentLocationId: "location.outpost",
             party: CampaignPartyFactory.CreateStartingParty(
                 CampaignRegistry.Resolve(
-                    FrontierCampaignContent.CampaignId)),
+                    FrontierCampaignIds.CampaignId)),
             randomSeed: 8675309);
     }
 

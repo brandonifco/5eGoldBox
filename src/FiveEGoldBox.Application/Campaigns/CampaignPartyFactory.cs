@@ -19,7 +19,7 @@ internal static class CampaignPartyFactory
 
         return new PartyState
         {
-            PartyId = FrontierCampaignContent.StartingPartyId,
+            PartyId = FrontierCampaignIds.PartyId,
             Members = campaign.Roster
                 .Take(campaign.ActivePartySize)
                 .Select(character => ToMember(character, ruleset))
