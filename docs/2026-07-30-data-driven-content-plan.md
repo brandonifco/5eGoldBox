@@ -165,14 +165,43 @@ lines, one file, no merge semantics).
     no `export_presets.cfg` configured. So "how does a shipped build locate `/data/`" has an
     *override mechanism* now, but no actual packaging convention to set that override *to* — that
     packaging work doesn't exist yet for either client and is out of scope here.
-  - **Godot's export-specific behavior is unverified, not assumed solved.** This sandbox has no
-    Godot binary installed, so the original concern this phase raised — whether an *exported*
-    Godot build can read an arbitrary filesystem path the way a plain .NET console app can, and
-    whether `FIVEEGOLDBOX_DATA_ROOT` is inherited the same way in Godot's embedded-runtime process
-    model — was not and could not be tested here. `dotnet build
-    src/FiveEGoldBox.Godot/FiveEGoldBox.Godot.sln` (compile-only) is green, which confirms nothing
-    broke, but is not evidence about export-time behavior. Whoever next has access to the Godot
-    editor/export templates should verify this before relying on it for a real export.
+  - ~~Godot's export-specific behavior is unverified, not assumed solved.~~ — **the core question
+    resolved (2026-07-30), the export-packaging question did not.** The user had Godot installed
+    on the actual dev machine, which surfaced two real environment problems that had nothing to do
+    with this codebase: the installed engine was a third-party, unofficial snap
+    (`godot4-mono`, published by an individual, not the Godot Foundation) capped at 4.2.2 against a
+    project authored for 4.7, and the machine had no .NET 8 runtime installed at all (only .NET
+    10). Both compounded into the same misleading symptom — `System.IO.FileNotFoundException:
+    Could not load file or assembly 'System.Runtime, Version=8.0.0.0'` — that installing the .NET 8
+    runtime alone didn't fix, because snap confinement almost certainly hid it from the sandboxed
+    process regardless of version. Switching to the official Godot 4.7 mono build (direct download
+    from godotengine.org, no snap sandboxing) resolved both at once.
+  - With a real, matching, unconfined engine, `godot --headless --path src/FiveEGoldBox.Godot
+    --quit-after 15` now genuinely proves what this phase asked: exit 0, zero bytes of stderr,
+    three separate runs (no override, a deliberately-wrong `FIVEEGOLDBOX_DATA_ROOT`, and a correct
+    one pointed straight at `data/`). The wrong-path run produced the exact
+    `FIVEEGOLDBOX_DATA_ROOT is set to '...', but '...' was not found there` exception, proving the
+    variable really is inherited by Godot's process and really does take precedence. `AppShell`
+    constructs a real session in `_Ready()` by default, which resolves the ruleset, all three
+    scenarios, and the campaign roster on every boot — so this is not a boot check that happens to
+    pass while skipping the interesting code path; it is the interesting code path. This confirms
+    Godot's embedded .NET runtime supports arbitrary filesystem access and environment-variable
+    inheritance the same way a plain console app does, for both the walk-up and the explicit
+    override.
+  - **Still open, and now the only thing that is:** actual *export* (a packaged, standalone build,
+    as opposed to `godot --headless` running the project directly) was not attempted — no export
+    templates are installed, and none of this phase's scope required producing one. Whether an
+    exported build's own directory layout plays nicely with the dev-checkout walk-up, or needs
+    `FIVEEGOLDBOX_DATA_ROOT` set explicitly (the more likely answer, since an export has no
+    checkout above it), is real, separate work for whenever an actual packaging pipeline gets
+    built — this phase's job was proving the mechanism works in Godot at all, and it does.
+  - One incidental finding worth recording for its own sake: running the *older*, mismatched 4.2.2
+    engine against this project first — before the 4.7 install — left the working tree with a
+    downgraded `Godot.NET.Sdk` reference in `FiveEGoldBox.Godot.csproj` (`4.7.0` → `4.2.2`) and
+    several regenerated `.import` files, plus a stray `.csproj.old` backup Godot writes on an
+    SDK-version change. All reverted before verifying; flagged here because it's a real, repeatable
+    hazard for anyone who opens this project with a Godot version older than what it's authored
+    against; `git status` before and after any Godot invocation is the safeguard.
 
 ### Phase 5 — Content-pack authoring ergonomics (future, not scoped in detail here)
 
