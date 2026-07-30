@@ -19,10 +19,20 @@
   <ItemGroup>
     <None Include="Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Fixtures\**\*.txt" CopyToOutputDirectory="PreserveNewest" />
-    <!-- The real content pack, not a copy of it: proves the actual file
-         that will replace CampaignRulesetContent is equivalent to it. -->
+    <!-- The real content packs, not copies of them: proves the actual files
+         that will replace the hardcoded *ScenarioDefinitionProvider classes
+         are equivalent to what those classes build today. -->
     <None Include="..\..\data\rulesets\campaign\core.json"
           Link="Fixtures\data-rulesets-campaign-core.json"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\data\scenarios\watchtower\scenario.json"
+          Link="Fixtures\data-scenarios-watchtower-scenario.json"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\data\scenarios\sunken-chapel\scenario.json"
+          Link="Fixtures\data-scenarios-sunken-chapel-scenario.json"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\data\scenarios\hollow-mill\scenario.json"
+          Link="Fixtures\data-scenarios-hollow-mill-scenario.json"
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

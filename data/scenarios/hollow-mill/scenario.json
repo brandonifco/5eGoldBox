@@ -1,0 +1,341 @@
+{
+    "FormatVersion": 1,
+    "ScenarioId": "scenario.hollow-mill",
+    "DisplayName": "The Hollow Mill",
+    "RulesetId": "ruleset.campaign",
+    "StartingLocationId": "location.hollow-mill-village",
+    "Progress": {
+        "InitialProgressId": "mill.rumor-heard",
+        "ProgressIds": [
+            "mill.rumor-heard",
+            "mill.commission-accepted",
+            "mill.herbalist-consulted",
+            "mill.miller-confronted",
+            "mill.vermin-roused",
+            "mill.millers-lost",
+            "mill.blight-severed"
+        ],
+        "Conclusions": [
+            {
+                "ProgressId": "mill.blight-severed",
+                "IsSuccess": true,
+                "LocationId": "location.hollow-mill-house"
+            },
+            {
+                "ProgressId": "mill.millers-lost",
+                "IsSuccess": false,
+                "LocationId": "location.hollow-mill-house"
+            }
+        ]
+    },
+    "PartyRequirement": {
+        "MinimumMembers": 4,
+        "MaximumMembers": 4,
+        "MinimumConsciousMembers": 1
+    },
+    "Locations": [
+        {
+            "LocationId": "location.hollow-mill-village",
+            "DisplayName": "Hollow Mill Village"
+        },
+        {
+            "LocationId": "location.hollow-mill-house",
+            "DisplayName": "The Old Mill",
+            "ExplorationMap": {
+                "MapId": "map.hollow-mill",
+                "Width": 3,
+                "Height": 3,
+                "StartingFloor": "GroundFloor",
+                "StartingPosition": { "X": 1, "Y": 0 },
+                "StartingFacing": "South",
+                "Floors": [
+                    {
+                        "Floor": "GroundFloor",
+                        "TraversablePositions": [
+                            { "X": 0, "Y": 0 },
+                            { "X": 1, "Y": 0 },
+                            { "X": 2, "Y": 0 },
+                            { "X": 0, "Y": 1 },
+                            { "X": 1, "Y": 1 },
+                            { "X": 2, "Y": 1 },
+                            { "X": 0, "Y": 2 },
+                            { "X": 1, "Y": 2 },
+                            { "X": 2, "Y": 2 }
+                        ],
+                        "Stairs": [
+                            {
+                                "Position": { "X": 1, "Y": 2 },
+                                "DestinationFloor": "UpperFloor",
+                                "DestinationPosition": { "X": 0, "Y": 0 }
+                            }
+                        ]
+                    },
+                    {
+                        "Floor": "UpperFloor",
+                        "TraversablePositions": [
+                            { "X": 0, "Y": 0 },
+                            { "X": 1, "Y": 0 },
+                            { "X": 2, "Y": 0 },
+                            { "X": 0, "Y": 1 },
+                            { "X": 1, "Y": 1 },
+                            { "X": 2, "Y": 1 }
+                        ],
+                        "Stairs": [
+                            {
+                                "Position": { "X": 0, "Y": 0 },
+                                "DestinationFloor": "GroundFloor",
+                                "DestinationPosition": { "X": 1, "Y": 2 }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "ExplorableProgressIds": [
+                "mill.commission-accepted",
+                "mill.herbalist-consulted",
+                "mill.miller-confronted",
+                "mill.vermin-roused"
+            ]
+        }
+    ],
+    "Routes": [
+        {
+            "RouteId": "route.village-to-mill",
+            "OriginLocationId": "location.hollow-mill-village",
+            "DestinationLocationId": "location.hollow-mill-house",
+            "FinalStepIndex": 2,
+            "RequiredProgressIds": [ "mill.commission-accepted" ]
+        },
+        {
+            "RouteId": "route.village-to-mill.shortcut",
+            "OriginLocationId": "location.hollow-mill-village",
+            "DestinationLocationId": "location.hollow-mill-house",
+            "FinalStepIndex": 1,
+            "RequiredProgressIds": [ "mill.commission-accepted" ]
+        }
+    ],
+    "Encounters": [
+        {
+            "EncounterId": "encounter.mill-vermin-swarm",
+            "BattlefieldId": "battlefield.mill-vault-rats",
+            "Width": 4,
+            "Height": 4,
+            "PartySideId": "side.party",
+            "BlockedPositions": [],
+            "PartyStartingPositions": [
+                { "X": 0, "Y": 0 },
+                { "X": 0, "Y": 1 },
+                { "X": 0, "Y": 2 },
+                { "X": 0, "Y": 3 }
+            ],
+            "Combatants": [
+                {
+                    "CombatantId": "combatant.mill-rat.first",
+                    "DisplayName": "Giant rat",
+                    "SideId": "side.mill-vermin",
+                    "MaximumHitPoints": 6,
+                    "ArmorClass": 11,
+                    "MovementSpeedFeet": 30,
+                    "StartingPosition": { "X": 3, "Y": 1 },
+                    "ZeroHitPointPolicy": "Defeated",
+                    "AbilityModifiers": [
+                        { "Ability": "Strength", "Modifier": -1 },
+                        { "Ability": "Dexterity", "Modifier": 1 },
+                        { "Ability": "Constitution", "Modifier": 0 },
+                        { "Ability": "Intelligence", "Modifier": -4 },
+                        { "Ability": "Wisdom", "Modifier": 0 },
+                        { "Ability": "Charisma", "Modifier": -3 }
+                    ],
+                    "ProficiencyBonus": 2,
+                    "Weapons": [
+                        { "WeaponId": "weapon.mill-rat.bite" }
+                    ]
+                },
+                {
+                    "CombatantId": "combatant.mill-rat.second",
+                    "DisplayName": "Giant rat",
+                    "SideId": "side.mill-vermin",
+                    "MaximumHitPoints": 6,
+                    "ArmorClass": 11,
+                    "MovementSpeedFeet": 30,
+                    "StartingPosition": { "X": 3, "Y": 2 },
+                    "ZeroHitPointPolicy": "Defeated",
+                    "AbilityModifiers": [
+                        { "Ability": "Strength", "Modifier": -1 },
+                        { "Ability": "Dexterity", "Modifier": 1 },
+                        { "Ability": "Constitution", "Modifier": 0 },
+                        { "Ability": "Intelligence", "Modifier": -4 },
+                        { "Ability": "Wisdom", "Modifier": 0 },
+                        { "Ability": "Charisma", "Modifier": -3 }
+                    ],
+                    "ProficiencyBonus": 2,
+                    "Weapons": [
+                        { "WeaponId": "weapon.mill-rat.bite" }
+                    ]
+                }
+            ],
+            "Outcome": {
+                "VictoryProgressId": "mill.vermin-roused",
+                "DefeatProgressId": "mill.millers-lost"
+            }
+        },
+        {
+            "EncounterId": "encounter.mill-thrall-ambush",
+            "BattlefieldId": "battlefield.mill-vault-ambush",
+            "Width": 4,
+            "Height": 4,
+            "PartySideId": "side.party",
+            "BlockedPositions": [],
+            "PartyStartingPositions": [
+                { "X": 0, "Y": 0 },
+                { "X": 0, "Y": 1 },
+                { "X": 0, "Y": 2 },
+                { "X": 0, "Y": 3 }
+            ],
+            "Combatants": [
+                {
+                    "CombatantId": "combatant.mill-rat.first",
+                    "DisplayName": "Giant rat",
+                    "SideId": "side.mill-vermin",
+                    "MaximumHitPoints": 6,
+                    "ArmorClass": 11,
+                    "MovementSpeedFeet": 30,
+                    "StartingPosition": { "X": 3, "Y": 1 },
+                    "ZeroHitPointPolicy": "Defeated",
+                    "AbilityModifiers": [
+                        { "Ability": "Strength", "Modifier": -1 },
+                        { "Ability": "Dexterity", "Modifier": 1 },
+                        { "Ability": "Constitution", "Modifier": 0 },
+                        { "Ability": "Intelligence", "Modifier": -4 },
+                        { "Ability": "Wisdom", "Modifier": 0 },
+                        { "Ability": "Charisma", "Modifier": -3 }
+                    ],
+                    "ProficiencyBonus": 2,
+                    "Weapons": [
+                        { "WeaponId": "weapon.mill-rat.bite" }
+                    ]
+                },
+                {
+                    "CombatantId": "combatant.mill-rat.second",
+                    "DisplayName": "Giant rat",
+                    "SideId": "side.mill-vermin",
+                    "MaximumHitPoints": 6,
+                    "ArmorClass": 11,
+                    "MovementSpeedFeet": 30,
+                    "StartingPosition": { "X": 3, "Y": 2 },
+                    "ZeroHitPointPolicy": "Defeated",
+                    "AbilityModifiers": [
+                        { "Ability": "Strength", "Modifier": -1 },
+                        { "Ability": "Dexterity", "Modifier": 1 },
+                        { "Ability": "Constitution", "Modifier": 0 },
+                        { "Ability": "Intelligence", "Modifier": -4 },
+                        { "Ability": "Wisdom", "Modifier": 0 },
+                        { "Ability": "Charisma", "Modifier": -3 }
+                    ],
+                    "ProficiencyBonus": 2,
+                    "Weapons": [
+                        { "WeaponId": "weapon.mill-rat.bite" }
+                    ]
+                },
+                {
+                    "CombatantId": "combatant.mill-thrall",
+                    "DisplayName": "Miller's thrall",
+                    "SideId": "side.mill-vermin",
+                    "MaximumHitPoints": 14,
+                    "ArmorClass": 13,
+                    "MovementSpeedFeet": 25,
+                    "StartingPosition": { "X": 3, "Y": 0 },
+                    "ZeroHitPointPolicy": "Defeated",
+                    "AbilityModifiers": [
+                        { "Ability": "Strength", "Modifier": 2 },
+                        { "Ability": "Dexterity", "Modifier": 0 },
+                        { "Ability": "Constitution", "Modifier": 2 },
+                        { "Ability": "Intelligence", "Modifier": -2 },
+                        { "Ability": "Wisdom", "Modifier": -1 },
+                        { "Ability": "Charisma", "Modifier": -2 }
+                    ],
+                    "ProficiencyBonus": 2,
+                    "Weapons": [
+                        { "WeaponId": "weapon.mill-thrall.cleaver" }
+                    ]
+                }
+            ],
+            "Outcome": {
+                "VictoryProgressId": "mill.vermin-roused",
+                "DefeatProgressId": "mill.millers-lost"
+            }
+        }
+    ],
+    "Triggers": [
+        {
+            "TriggerId": "trigger.herbalist-alcove",
+            "DisplayName": "Old Rosa's alcove",
+            "LocationId": "location.hollow-mill-house",
+            "Floor": "GroundFloor",
+            "Position": { "X": 0, "Y": 1 },
+            "RequiredProgressIds": [ "mill.commission-accepted" ],
+            "ResultingProgressId": "mill.herbalist-consulted"
+        },
+        {
+            "TriggerId": "trigger.confront-miller",
+            "DisplayName": "The mill floor",
+            "LocationId": "location.hollow-mill-house",
+            "Floor": "GroundFloor",
+            "Position": { "X": 2, "Y": 1 },
+            "RequiredProgressIds": [ "mill.commission-accepted" ],
+            "ResultingProgressId": "mill.miller-confronted"
+        },
+        {
+            "TriggerId": "trigger.cellar-informed-approach",
+            "DisplayName": "The flooded grain vault",
+            "LocationId": "location.hollow-mill-house",
+            "Floor": "UpperFloor",
+            "Position": { "X": 2, "Y": 0 },
+            "RequiredProgressIds": [ "mill.herbalist-consulted" ],
+            "ResultingProgressId": "mill.vermin-roused",
+            "EncounterId": "encounter.mill-vermin-swarm"
+        },
+        {
+            "TriggerId": "trigger.cellar-blind-approach",
+            "DisplayName": "The flooded grain vault",
+            "LocationId": "location.hollow-mill-house",
+            "Floor": "UpperFloor",
+            "Position": { "X": 2, "Y": 0 },
+            "RequiredProgressIds": [ "mill.commission-accepted", "mill.miller-confronted" ],
+            "ResultingProgressId": "mill.vermin-roused",
+            "EncounterId": "encounter.mill-thrall-ambush"
+        },
+        {
+            "TriggerId": "trigger.blight-root",
+            "DisplayName": "The blighted root",
+            "LocationId": "location.hollow-mill-house",
+            "Floor": "UpperFloor",
+            "Position": { "X": 2, "Y": 1 },
+            "RequiredProgressIds": [ "mill.vermin-roused" ],
+            "ResultingProgressId": "mill.blight-severed"
+        }
+    ],
+    "Decisions": [
+        {
+            "DecisionId": "decision.mill-commission",
+            "DisplayName": "Look into the spoiled grain",
+            "LocationId": "location.hollow-mill-village",
+            "RequiredProgressIds": [ "mill.rumor-heard" ],
+            "Options": [
+                {
+                    "OptionId": "AcceptMission",
+                    "DisplayName": "Take the commission",
+                    "ResultingProgressId": "mill.commission-accepted"
+                },
+                {
+                    "OptionId": "AskAboutPay",
+                    "DisplayName": "Ask what it pays before deciding"
+                },
+                {
+                    "OptionId": "NotYet",
+                    "DisplayName": "Not yet"
+                }
+            ]
+        }
+    ]
+}

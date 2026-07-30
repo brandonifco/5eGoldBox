@@ -1,0 +1,199 @@
+{
+    "FormatVersion": 1,
+    "ScenarioId": "scenario.watchtower",
+    "DisplayName": "The Ruined Watchtower",
+    "RulesetId": "ruleset.campaign",
+    "StartingLocationId": "location.outpost",
+    "Progress": {
+        "InitialProgressId": "MissionNotAccepted",
+        "ProgressIds": [
+            "MissionNotAccepted",
+            "MissionAccepted",
+            "SignalActivated",
+            "RaidersDefeated",
+            "PartyDefeated"
+        ],
+        "Conclusions": [
+            {
+                "ProgressId": "PartyDefeated",
+                "IsSuccess": false,
+                "LocationId": "location.ruined-watchtower"
+            }
+        ]
+    },
+    "PartyRequirement": {
+        "MinimumMembers": 4,
+        "MaximumMembers": 4,
+        "MinimumConsciousMembers": 1
+    },
+    "Locations": [
+        {
+            "LocationId": "location.outpost",
+            "DisplayName": "Frontier Outpost"
+        },
+        {
+            "LocationId": "location.ruined-watchtower",
+            "DisplayName": "Ruined Watchtower",
+            "ExplorationMap": {
+                "MapId": "map.ruined-watchtower",
+                "Width": 3,
+                "Height": 3,
+                "StartingFloor": "GroundFloor",
+                "StartingPosition": { "X": 0, "Y": 0 },
+                "StartingFacing": "East",
+                "Floors": [
+                    {
+                        "Floor": "GroundFloor",
+                        "TraversablePositions": [
+                            { "X": 0, "Y": 0 },
+                            { "X": 1, "Y": 0 },
+                            { "X": 2, "Y": 0 },
+                            { "X": 0, "Y": 1 },
+                            { "X": 2, "Y": 1 },
+                            { "X": 0, "Y": 2 },
+                            { "X": 1, "Y": 2 },
+                            { "X": 2, "Y": 2 }
+                        ],
+                        "Stairs": [
+                            {
+                                "Position": { "X": 2, "Y": 0 },
+                                "DestinationFloor": "UpperFloor",
+                                "DestinationPosition": { "X": 2, "Y": 0 }
+                            }
+                        ]
+                    },
+                    {
+                        "Floor": "UpperFloor",
+                        "TraversablePositions": [
+                            { "X": 0, "Y": 0 },
+                            { "X": 1, "Y": 0 },
+                            { "X": 2, "Y": 0 },
+                            { "X": 0, "Y": 1 },
+                            { "X": 1, "Y": 1 },
+                            { "X": 2, "Y": 1 }
+                        ],
+                        "Stairs": [
+                            {
+                                "Position": { "X": 2, "Y": 0 },
+                                "DestinationFloor": "GroundFloor",
+                                "DestinationPosition": { "X": 2, "Y": 0 }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "ExplorableProgressIds": [ "MissionAccepted", "RaidersDefeated" ]
+        }
+    ],
+    "Routes": [
+        {
+            "RouteId": "route.outpost-watchtower",
+            "OriginLocationId": "location.outpost",
+            "DestinationLocationId": "location.ruined-watchtower",
+            "FinalStepIndex": 3,
+            "RequiredProgressIds": [ "MissionAccepted" ]
+        }
+    ],
+    "Encounters": [
+        {
+            "EncounterId": "encounter.watchtower-signal-ambush",
+            "BattlefieldId": "battlefield.watchtower-signal-chamber",
+            "Width": 5,
+            "Height": 4,
+            "PartySideId": "side.party",
+            "BlockedPositions": [],
+            "PartyStartingPositions": [
+                { "X": 1, "Y": 1 },
+                { "X": 1, "Y": 2 },
+                { "X": 0, "Y": 2 },
+                { "X": 0, "Y": 1 }
+            ],
+            "Combatants": [
+                {
+                    "CombatantId": "combatant.watchtower-raider.melee",
+                    "DisplayName": "Raider marauder",
+                    "SideId": "side.watchtower-raiders",
+                    "MaximumHitPoints": 9,
+                    "ArmorClass": 13,
+                    "MovementSpeedFeet": 30,
+                    "StartingPosition": { "X": 2, "Y": 1 },
+                    "ZeroHitPointPolicy": "Defeated",
+                    "AbilityModifiers": [
+                        { "Ability": "Strength", "Modifier": 1 },
+                        { "Ability": "Dexterity", "Modifier": 2 },
+                        { "Ability": "Constitution", "Modifier": 1 },
+                        { "Ability": "Intelligence", "Modifier": 0 },
+                        { "Ability": "Wisdom", "Modifier": 0 },
+                        { "Ability": "Charisma", "Modifier": 0 }
+                    ],
+                    "ProficiencyBonus": 2,
+                    "Weapons": [
+                        { "WeaponId": "weapon.watchtower-raider.scimitar" }
+                    ]
+                },
+                {
+                    "CombatantId": "combatant.watchtower-raider.ranged",
+                    "DisplayName": "Raider archer",
+                    "SideId": "side.watchtower-raiders",
+                    "MaximumHitPoints": 8,
+                    "ArmorClass": 13,
+                    "MovementSpeedFeet": 30,
+                    "StartingPosition": { "X": 4, "Y": 2 },
+                    "ZeroHitPointPolicy": "Defeated",
+                    "AbilityModifiers": [
+                        { "Ability": "Strength", "Modifier": 1 },
+                        { "Ability": "Dexterity", "Modifier": 2 },
+                        { "Ability": "Constitution", "Modifier": 1 },
+                        { "Ability": "Intelligence", "Modifier": 0 },
+                        { "Ability": "Wisdom", "Modifier": 0 },
+                        { "Ability": "Charisma", "Modifier": 0 }
+                    ],
+                    "ProficiencyBonus": 2,
+                    "Weapons": [
+                        {
+                            "WeaponId": "weapon.watchtower-raider.shortbow",
+                            "AmmunitionItemId": "item.arrow",
+                            "AmmunitionQuantity": 12
+                        }
+                    ]
+                }
+            ],
+            "Outcome": {
+                "VictoryProgressId": "RaidersDefeated",
+                "DefeatProgressId": "PartyDefeated"
+            }
+        }
+    ],
+    "Triggers": [
+        {
+            "TriggerId": "trigger.watchtower-signal",
+            "DisplayName": "Signal mechanism",
+            "LocationId": "location.ruined-watchtower",
+            "Floor": "UpperFloor",
+            "Position": { "X": 1, "Y": 1 },
+            "RequiredFacing": "East",
+            "RequiredProgressIds": [ "MissionAccepted" ],
+            "ResultingProgressId": "SignalActivated",
+            "EncounterId": "encounter.watchtower-signal-ambush"
+        }
+    ],
+    "Decisions": [
+        {
+            "DecisionId": "decision.watchtower-mission",
+            "DisplayName": "Investigate the ruined watchtower",
+            "LocationId": "location.outpost",
+            "RequiredProgressIds": [ "MissionNotAccepted" ],
+            "Options": [
+                {
+                    "OptionId": "AcceptMission",
+                    "DisplayName": "Accept the commission",
+                    "ResultingProgressId": "MissionAccepted"
+                },
+                {
+                    "OptionId": "NotYet",
+                    "DisplayName": "Not yet"
+                }
+            ]
+        }
+    ]
+}
