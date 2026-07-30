@@ -120,7 +120,7 @@ public sealed class HollowMillScenarioTests
 
         Assert.True(ExplorationRules.CanUseStairs(session));
         session = ExplorationRules.UseStairs(session);
-        Assert.Equal(ExplorationFloor.UpperFloor, session.Exploration!.Floor);
+        Assert.Equal("UpperFloor", session.Exploration!.Floor);
         Assert.Equal(new GridPosition(0, 0), session.Exploration!.Position);
 
         // Face east and cross the cellar to the vault.
@@ -205,7 +205,7 @@ public sealed class HollowMillScenarioTests
 
         Assert.True(ExplorationRules.CanUseStairs(session));
         session = ExplorationRules.UseStairs(session);
-        Assert.Equal(ExplorationFloor.UpperFloor, session.Exploration!.Floor);
+        Assert.Equal("UpperFloor", session.Exploration!.Floor);
         Assert.Equal(new GridPosition(0, 0), session.Exploration!.Position);
 
         session = FaceEast(session);

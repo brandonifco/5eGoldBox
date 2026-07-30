@@ -16,7 +16,7 @@ internal sealed record ScenarioTriggerDefinition
 
     internal required string LocationId { get; init; }
 
-    internal ExplorationFloor? Floor { get; init; }
+    internal string? Floor { get; init; }
 
     internal GridPosition? Position { get; init; }
 

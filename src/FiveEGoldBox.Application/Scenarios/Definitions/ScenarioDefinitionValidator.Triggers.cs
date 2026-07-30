@@ -103,7 +103,10 @@ internal static partial class ScenarioDefinitionValidator
         ExplorationFloorDefinition? floor = trigger.Floor is null
             ? null
             : location.ExplorationMap.Floors.FirstOrDefault(
-                candidate => candidate.Floor == trigger.Floor);
+                candidate => string.Equals(
+                    candidate.Floor,
+                    trigger.Floor,
+                    StringComparison.Ordinal));
 
         if (trigger.Floor is not null && floor is null)
         {

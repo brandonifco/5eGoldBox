@@ -66,12 +66,11 @@ internal static class ScenarioExplorationMap
                 nameof(state));
         }
 
-        if (!Enum.IsDefined(state.Floor))
+        if (string.IsNullOrWhiteSpace(state.Floor))
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(state),
-                state.Floor,
-                "Unsupported exploration floor.");
+            throw new ArgumentException(
+                "Exploration floor ID is required.",
+                nameof(state));
         }
 
         if (!Enum.IsDefined(state.Facing))
@@ -92,7 +91,7 @@ internal static class ScenarioExplorationMap
 
     internal static bool IsTraversable(
         ExplorationMapDefinition map,
-        ExplorationFloor floor,
+        string floor,
         GridPosition position)
     {
         return FindFloor(map, floor)
@@ -102,9 +101,9 @@ internal static class ScenarioExplorationMap
 
     internal static bool TryGetStairDestination(
         ExplorationMapDefinition map,
-        ExplorationFloor floor,
+        string floor,
         GridPosition position,
-        out ExplorationFloor destinationFloor,
+        out string destinationFloor,
         out GridPosition destinationPosition)
     {
         StairDefinition? stair = FindFloor(map, floor)
@@ -113,7 +112,7 @@ internal static class ScenarioExplorationMap
 
         if (stair is null)
         {
-            destinationFloor = default;
+            destinationFloor = string.Empty;
             destinationPosition = default;
             return false;
         }
@@ -125,9 +124,12 @@ internal static class ScenarioExplorationMap
 
     private static ExplorationFloorDefinition? FindFloor(
         ExplorationMapDefinition map,
-        ExplorationFloor floor)
+        string floor)
     {
         return map.Floors.FirstOrDefault(
-            candidate => candidate.Floor == floor);
+            candidate => string.Equals(
+                candidate.Floor,
+                floor,
+                StringComparison.Ordinal));
     }
 }

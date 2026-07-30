@@ -140,7 +140,7 @@ internal static class WatchtowerScenarioDefinitionProvider
             LocationId = WatchtowerRegionalRoute.WatchtowerLocationId,
             // The definition is now the authority for where the mechanism is
             // and which way the party must face to work it.
-            Floor = ExplorationFloor.UpperFloor,
+            Floor = "UpperFloor",
             Position = new GridPosition(1, 1),
             RequiredFacing = ExplorationFacing.East,
             RequiredProgressIds =
@@ -238,14 +238,14 @@ internal static class WatchtowerScenarioDefinitionProvider
             MapId = "map.ruined-watchtower",
             Width = MapWidth,
             Height = MapHeight,
-            StartingFloor = ExplorationFloor.GroundFloor,
+            StartingFloor = "GroundFloor",
             StartingPosition = new GridPosition(0, 0),
             StartingFacing = ExplorationFacing.East,
             Floors =
             [
                 new ExplorationFloorDefinition
                 {
-                    Floor = ExplorationFloor.GroundFloor,
+                    Floor = "GroundFloor",
                     TraversablePositions =
                     [
                         new GridPosition(0, 0),
@@ -262,14 +262,14 @@ internal static class WatchtowerScenarioDefinitionProvider
                         new StairDefinition
                         {
                             Position = new GridPosition(2, 0),
-                            DestinationFloor = ExplorationFloor.UpperFloor,
+                            DestinationFloor = "UpperFloor",
                             DestinationPosition = new GridPosition(2, 0)
                         }
                     ]
                 },
                 new ExplorationFloorDefinition
                 {
-                    Floor = ExplorationFloor.UpperFloor,
+                    Floor = "UpperFloor",
                     TraversablePositions =
                     [
                         new GridPosition(0, 0),
@@ -284,7 +284,7 @@ internal static class WatchtowerScenarioDefinitionProvider
                         new StairDefinition
                         {
                             Position = new GridPosition(2, 0),
-                            DestinationFloor = ExplorationFloor.GroundFloor,
+                            DestinationFloor = "GroundFloor",
                             DestinationPosition = new GridPosition(2, 0)
                         }
                     ]

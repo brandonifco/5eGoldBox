@@ -187,7 +187,7 @@ internal static class SunkenChapelScenarioDefinitionProvider
             TriggerId = "trigger.chapel-seal",
             DisplayName = "Tide seal",
             LocationId = ChapelLocationId,
-            Floor = ExplorationFloor.GroundFloor,
+            Floor = "GroundFloor",
             Position = new GridPosition(1, 0),
             RequiredFacing = ExplorationFacing.East,
             RequiredProgressIds = [CharterSigned],
@@ -205,7 +205,7 @@ internal static class SunkenChapelScenarioDefinitionProvider
             TriggerId = "trigger.chapel-relic",
             DisplayName = "Drowned reliquary",
             LocationId = ChapelLocationId,
-            Floor = ExplorationFloor.GroundFloor,
+            Floor = "GroundFloor",
             Position = new GridPosition(1, 1),
             RequiredFacing = null,
             RequiredProgressIds = [GuardiansBanished],
@@ -223,7 +223,7 @@ internal static class SunkenChapelScenarioDefinitionProvider
             TriggerId = "trigger.chapel-guardians",
             DisplayName = "Flooded nave",
             LocationId = ChapelLocationId,
-            Floor = ExplorationFloor.GroundFloor,
+            Floor = "GroundFloor",
             Position = new GridPosition(1, 1),
             RequiredFacing = null,
             RequiredProgressIds = [SealBroken],
@@ -322,14 +322,14 @@ internal static class SunkenChapelScenarioDefinitionProvider
             MapId = "map.sunken-chapel",
             Width = MapWidth,
             Height = MapHeight,
-            StartingFloor = ExplorationFloor.GroundFloor,
+            StartingFloor = "GroundFloor",
             StartingPosition = new GridPosition(0, 0),
             StartingFacing = ExplorationFacing.East,
             Floors =
             [
                 new ExplorationFloorDefinition
                 {
-                    Floor = ExplorationFloor.GroundFloor,
+                    Floor = "GroundFloor",
                     TraversablePositions =
                     [
                         new GridPosition(0, 0),

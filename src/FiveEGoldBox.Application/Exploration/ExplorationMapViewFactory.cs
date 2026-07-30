@@ -13,7 +13,10 @@ internal static class ExplorationMapViewFactory
         ExplorationState state)
     {
         ExplorationFloorDefinition floor = map.Floors
-            .First(candidate => candidate.Floor == state.Floor);
+            .First(candidate => string.Equals(
+                candidate.Floor,
+                state.Floor,
+                StringComparison.Ordinal));
 
         return new ExplorationMapView(
             map.MapId,

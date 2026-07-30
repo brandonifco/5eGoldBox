@@ -6,7 +6,7 @@ public sealed record ExplorationState
 {
     public required string MapId { get; init; }
 
-    public required ExplorationFloor Floor { get; init; }
+    public required string Floor { get; init; }
 
     public required GridPosition Position { get; init; }
 

@@ -68,16 +68,16 @@ public sealed class WatchtowerScenarioDefinitionProviderTests
         StairDefinition up = Assert.Single(
             Assert.Single(
                 map.Floors,
-                floor => floor.Floor == ExplorationFloor.GroundFloor)
+                floor => floor.Floor == "GroundFloor")
             .Stairs);
         StairDefinition down = Assert.Single(
             Assert.Single(
                 map.Floors,
-                floor => floor.Floor == ExplorationFloor.UpperFloor)
+                floor => floor.Floor == "UpperFloor")
             .Stairs);
 
-        Assert.Equal(ExplorationFloor.UpperFloor, up.DestinationFloor);
-        Assert.Equal(ExplorationFloor.GroundFloor, down.DestinationFloor);
+        Assert.Equal("UpperFloor", up.DestinationFloor);
+        Assert.Equal("GroundFloor", down.DestinationFloor);
 
         // Going up and back down returns the party where it started.
         Assert.Equal(up.Position, down.DestinationPosition);
