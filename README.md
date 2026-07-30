@@ -2,19 +2,19 @@
 
 A from-scratch C#/.NET 8 implementation of Dungeons & Dragons 5th edition (2014 ruleset) combat and character mechanics, wrapped in a Gold Box–inspired turn-based CRPG.
 
-> **Project status: engine vertical slice, not a finished game.**
-> One complete, deterministic, save/loadable scenario ("Watchtower") plays end to end through a text console client. The engine is not yet scenario-agnostic, and the Godot UI is an unwired shell. See [Roadmap](#roadmap) for what that means and what's next.
+> **Project status: engine and both clients are playable, production polish is ongoing.**
+> Three deterministic, save/loadable scenarios ("Watchtower," "The Sunken Chapel," "The Hollow Mill") play end to end — the engine is scenario-agnostic, proven by authoring a second and third scenario that share no code with the first. Two real clients exist: a text console client, and a Godot desktop UI wired to the same backend (outpost decisions, exploration, regional travel, tactical combat, spellcasting, and a real top-down area map). See [Roadmap](#roadmap) for what's still open.
 
 ## What works today
 
-A full playthrough loop, covered by ~1,780 tests:
+A full playthrough loop, covered by 2,105 tests:
 
-1. **Party** — a fixed three-member party (Fighter, Barbarian, Ranger) with real 5e character resolution: ability scores, proficiencies, hit points, equipment, currency, carrying capacity.
-2. **Outpost** — accept or decline the Watchtower mission.
-3. **Regional travel** — a step-indexed, resumable route to the watchtower.
-4. **Exploration** — grid movement across floors with facing and stairs, up to a signal mechanism.
-5. **Encounter** — turn-based tactical combat: movement and pathfinding, weapon attacks, ammunition, cover, line of sight, death saving throws, enemy AI, and win/loss resolution.
-6. **Conclusion** — scenario wrap-up (defeat path is the validated one today).
+1. **Party** — a four-member active roster (Fighter, Rogue, Cleric, Wizard — Barbarian and Ranger held in reserve) with real 5e character resolution: ability scores, proficiencies, hit points, equipment, currency, carrying capacity.
+2. **Outpost** — an N-way scenario-declared decision (not a hardcoded accept/decline), resolved by content-authored option ID.
+3. **Regional travel** — a step-indexed, resumable route to the destination, with support for more than one route out of a location.
+4. **Exploration** — grid movement across floors with facing and stairs, up to a scenario-declared trigger; a real top-down area map (Godot) shows the floor's walkable cells, stairs, and the party's live position/facing, navigable while open.
+5. **Encounter** — turn-based tactical combat: movement and pathfinding, weapon attacks, single-target spellcasting (attack-roll, saving-throw, and automatic resolution), ammunition, cover, line of sight, concentration checks, death saving throws, enemy AI, and win/loss resolution.
+6. **Conclusion** — scenario wrap-up, both victory and defeat paths.
 7. **Save / load** — a versioned JSON format with validated, tamper-resistant loading and atomic writes.
 
 ## Architecture
@@ -25,9 +25,10 @@ FiveEGoldBox.Core         Pure 5e rules engine. No randomness, no I/O, no orches
 FiveEGoldBox.Application  Session lifecycle, scenario orchestration, combat, persistence,
                           deterministic randomness.
       ↑
-FiveEGoldBox.Console      Text reference client. The playable surface today.
+FiveEGoldBox.Console      Text reference client, wired to the real engine end to end.
 
-FiveEGoldBox.Godot        Early UI shell. Separate solution, not yet wired to the engine.
+FiveEGoldBox.Godot        Godot 4 desktop client, wired to the real engine end to end.
+                          Separate solution, not part of the main build/CI (see below).
 ```
 
 Two design decisions shape most of the codebase:
@@ -59,20 +60,31 @@ Zero warnings are expected in both configurations — `Directory.Build.props` se
 
 ## Play it
 
+Text console client:
+
 ```bash
 dotnet run --project src/FiveEGoldBox.Console
 ```
 
 Numbered menus throughout; save and load are available from the main menu.
 
+Godot desktop client (requires the [Godot 4 .NET/Mono editor](https://godotengine.org/download)):
+
+```bash
+godot --path src/FiveEGoldBox.Godot
+```
+
+Boots straight into a real session (the Watchtower scenario by default) — no `-e`/`--editor` flag, which opens the editor instead of running the game. First run on a fresh checkout needs `godot --headless --path src/FiveEGoldBox.Godot --import` once to import assets.
+
 ## Roadmap
 
 | Document | Purpose |
 |---|---|
 | [docs/priority-1-development-plan.md](docs/priority-1-development-plan.md) | Phases 1–8: public API stabilization, versioned persistence, session validation, combat decomposition. All eight complete. |
-| [CLAUDE.md](CLAUDE.md) | Working conventions, current phase status, and repo hygiene notes — the authoritative source for what's actually in progress now (Priority 2, Phases 9–12), since `docs/priority-2-development-plan.md` was removed. |
+| [CLAUDE.md](CLAUDE.md) | Working conventions and current status — the authoritative source for what's actually in progress now, since `docs/priority-2-development-plan.md` was removed. |
+| [docs/2026-07-30-codebase-reevaluation-and-development-plan.md](docs/2026-07-30-codebase-reevaluation-and-development-plan.md) | A from-scratch, independently-verified audit of the whole codebase (form, function, economy, modularity) and the phased plan it produced — documentation accuracy, a rules-correctness question, CI coverage for the Godot client, and several architectural decisions still awaiting a call. |
 
-Phases 1–8 are done: the engine is loadable with any scenario, proven by a second one (the Sunken Chapel) that shares nothing with the first. See CLAUDE.md for what's in progress now.
+Phases 1–8 are done: the engine is loadable with any scenario, proven by two more (the Sunken Chapel, the Hollow Mill) that share no code with the first. See CLAUDE.md for what's in progress now.
 
 ## License
 
