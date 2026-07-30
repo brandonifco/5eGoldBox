@@ -8,10 +8,13 @@ decision tiles, doors, secret doors, treasure, entrances/exits/stairs between le
 to author new items/weapons/spells and new monsters/NPCs, and tile art.
 
 This sits directly on top of [`2026-07-30-data-driven-content-plan.md`](2026-07-30-data-driven-content-plan.md),
-which is the locked-in plan for externalizing content into versioned JSON packs. That plan's
-Phase 1 (ruleset content DTOs/mapper/loader) is being implemented on its own branch,
-`feature/ruleset-pack-dto-mapper-loader`, concurrently with this plan's authorship. This document
-sequences around that rather than duplicating it.
+which is the locked-in plan for externalizing content into versioned JSON packs. **That plan is
+now fully complete** (Phases 1–5, PRs #182–#198, landed concurrently with this plan's authorship
+and Phase A below): ruleset, scenario, and campaign content are all real JSON under `data/`, loaded
+through versioned DTOs/mappers, with generated JSON Schemas at `data/schemas/*.schema.json` and a
+standalone `validate` console command. This document's own Phase D (below) described doing that
+work for scenario content specifically — it's done, and done more completely than scoped (campaign
+content got the same treatment too, which this plan hadn't called out by name).
 
 ## Decisions locked in (2026-07-30, via user confirmation)
 
@@ -58,15 +61,20 @@ sequences around that rather than duplicating it.
 
 ## Phased plan
 
-### Phase A — Generalize `ExplorationFloor` (in progress, branch `refactor/generalize-exploration-floor-identifier`)
+### Phase A — Generalize `ExplorationFloor` (done, PR #187)
 
 Mirrors the precedent already used for scenario progress (`ApplicationSessionState.Scenario`'s
 `ProgressId` — an opaque string instead of a scenario-specific enum, Priority 1 Phase 6).
-`ExplorationFloor` becomes a `string` floor identifier instead of a fixed 2-value enum, so a map
-can declare any number of floors. Existing two-floor content keeps working unchanged —
-`"GroundFloor"`/`"UpperFloor"` become literal string values instead of enum members, no behavior
-change. Unblocks everything else map-related: doors, stairs, and the Tiled importer all need "more
-than 2 floors" to be real before they're worth building against.
+`ExplorationFloor` is gone; `Floor`/`StartingFloor`/`DestinationFloor` are plain `string`s, so a map
+can declare any number of floors. Existing two-floor content kept working unchanged —
+`"GroundFloor"`/`"UpperFloor"` are now literal string values instead of enum members, no behavior
+change; the V1 save format stayed byte-identical. Public API 64 → 63 (the enum's removal),
+reflection-diffed against `main` — confirmed nothing else moved. Landed *before* the scenario-pack
+DTOs (Phase D, below), so the JSON scenario packs already carry `"Floor": "GroundFloor"` etc. as
+plain strings — confirmed directly in `data/schemas/scenario-pack.schema.json`
+(`ExplorationFloorDefinitionV1.Floor`, `StairDefinitionV1.DestinationFloor`,
+`ScenarioTriggerDefinitionV1.Floor` are all `"type": "string"`, not an enum). No further work needed
+here before a map can declare 3+ floors.
 
 ### Phase B — Door / secret door / treasure runtime state
 
@@ -83,28 +91,43 @@ referenced by ID from `EncounterDefinition.Combatants`, so monsters become reusa
 content instead of copy-authored per encounter — mirrors how
 `CombatantWeaponDefinition.WeaponId` already references the ruleset's `WeaponDefinition`.
 
-### Phase D — Scenario content pack loader
+### Phase D — Scenario (and campaign) content pack loader (done, PRs #188–#198)
 
-Once the ruleset-pack loader (`feature/ruleset-pack-dto-mapper-loader`, the data-driven-content
-plan's own Phase 1) lands, do the equivalent for scenario content (that plan's Phase 2): versioned
-DTOs for all ~17 scenario definition types plus the new Phase B/C types, a `ScenarioPackMapper`,
-structural-equality verification against the three existing hardcoded providers, then point
-`ScenarioDefinitionRegistry` at the file-based loader.
+Done by the concurrent session working the data-driven-content plan itself, and done for all three
+pack kinds, not just scenario: `ScenarioPackMapper`/`ScenarioPackLoader` (PRs #188–190),
+`CampaignPackMapper`/loader (PRs #191–193), a `FIVEEGOLDBOX_DATA_ROOT` runtime override verified
+against the real Godot engine (PRs #194–195), and — directly useful to Phases E/F below — generated
+JSON Schemas for all three pack kinds at `data/schemas/{ruleset,scenario,campaign}-pack.schema.json`
+plus a standalone `dotnet run --project src/FiveEGoldBox.Console -- validate <kind> <path>` command
+(PRs #197–198). The three hardcoded scenario providers and the hardcoded campaign roster are
+deleted; everything under `data/` is the only copy of that content now.
+
+**This changes Phases E and F below from "build against a format that doesn't exist yet" to "build
+against a real, validated, schema-documented format that's already on disk."** Neither phase needs
+to invent or wait on a wire format anymore — `data/scenarios/*/scenario.json` and the matching
+schema are the concrete target today.
 
 ### Phase E — Tiled importer
 
 A small standalone console tool that reads Tiled's JSON (`.tmj`) export — tile layers become
-`TraversablePositions`/wall tiles, object layers with custom properties become doors/secret
-doors/treasure/stairs/`ScenarioTriggerDefinition`/`ScenarioDecisionDefinition` placements — and
-emits the scenario-pack JSON from Phase D. This is the actual "map maker" from the user's ask:
-Tiled provides the drawing/tagging UI, this tool provides the translation.
+`TraversablePositions`/wall tiles, object layers with custom properties become
+`ScenarioTriggerDefinition`/`ScenarioDecisionDefinition` placements and (once Phase B lands)
+doors/secret doors/treasure — and emits `scenario.json` in the exact shape
+`data/schemas/scenario-pack.schema.json` documents. Validate its own output with the Phase D
+`validate scenario <path>` command rather than hand-rolling validation. This is the actual "map
+maker" from the user's ask: Tiled provides the drawing/tagging UI, this tool provides the
+translation. **A first version can ship before Phase B**, scoped to walkable/wall tiles, stairs,
+and trigger/decision points — doors/secret doors/treasure layer in once that content exists to
+target.
 
 ### Phase F — Form-based content editor
 
 A small tool (likely a minimal ASP.NET Core web app, referencing `FiveEGoldBox.Application`/`Core`
 directly so it validates through the exact same `RulesetValidator`/`ScenarioDefinitionValidator`
-the engine uses, rather than reimplementing validation) with forms for weapons/spells/items/
-monsters, reading and writing the JSON packs from Phases D/C directly.
+the engine uses, rather than reimplementing validation — or, now that Phase D exists, at minimum
+the standalone `validate` command) with forms for weapons/spells/items/monsters, reading and
+writing `data/rulesets/**/*.json` directly. Monsters specifically wait on Phase C's decision;
+weapons/spells/items need nothing further and could start now.
 
 ### Phase G — Godot tile rendering for new map content
 
@@ -115,7 +138,19 @@ none exists today; scope that separately once it's clear flat colors aren't enou
 
 ## Out of scope for this plan
 
-- The ruleset content pack loader itself (`Content/V1/`, `RulesetPackMapper`) — owned by
-  `feature/ruleset-pack-dto-mapper-loader`, cited here only as the dependency Phase D waits on.
 - Leveling/multiclassing, condition-immunity enforcement, and the other product-backlog items
   already tracked in CLAUDE.md.
+
+## Status (2026-07-30, regrouped after Phases A and D both landed)
+
+Phases A and D are done. Remaining, in no particular committed order — see CLAUDE.md or ask before
+picking one:
+
+- **Phase B** (door/secret door/treasure runtime state) — bounded engine work, no decision needed
+  beyond what's already recorded above.
+- **Phase C** (monster/NPC bestiary extraction) — needs a user decision before starting.
+- **Phase E** (Tiled importer) — the actual map maker; can start now in a reduced form (no
+  doors/treasure) or wait for Phase B to do it once.
+- **Phase F** (form-based content editor) — can start now for weapons/spells/items; monsters wait
+  on Phase C.
+- **Phase G** (Godot tile rendering) — waits on Phase B.
