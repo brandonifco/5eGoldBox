@@ -1,0 +1,876 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "5eGoldBox ruleset content pack",
+  "type": "object",
+  "properties": {
+    "Armors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ArmorDefinitionV1"
+      }
+    },
+    "Backgrounds": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/BackgroundDefinitionV1"
+      }
+    },
+    "Classes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ClassDefinitionV1"
+      }
+    },
+    "Effects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EffectDefinitionV1"
+      }
+    },
+    "EquipmentItems": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EquipmentItemDefinitionV1"
+      }
+    },
+    "Features": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/FeatureDefinitionV1"
+      }
+    },
+    "FormatVersion": {
+      "type": "integer"
+    },
+    "Id": {
+      "type": "string"
+    },
+    "Name": {
+      "type": "string"
+    },
+    "Races": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RaceDefinitionV1"
+      }
+    },
+    "Skills": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SkillDefinitionV1"
+      }
+    },
+    "Spells": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SpellDefinitionV1"
+      }
+    },
+    "Weapons": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/WeaponDefinitionV1"
+      }
+    },
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "FormatVersion"
+  ],
+  "$defs": {
+    "ArmorDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AddsDexterityModifier": {
+          "type": "boolean"
+        },
+        "ArmorClassBonus": {
+          "type": "integer"
+        },
+        "BaseArmorClass": {
+          "type": "integer"
+        },
+        "Category": {
+          "type": "string",
+          "enum": [
+            "Light",
+            "Medium",
+            "Heavy",
+            "Shield"
+          ]
+        },
+        "CostInCopperPieces": {
+          "type": "integer"
+        },
+        "HasStealthDisadvantage": {
+          "type": "boolean"
+        },
+        "Id": {
+          "type": "string"
+        },
+        "MaximumDexterityModifier": {
+          "type": "integer"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "StrengthRequirement": {
+          "type": "integer"
+        },
+        "WeightPounds": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "BaseArmorClass",
+        "Category",
+        "Id",
+        "Name"
+      ]
+    },
+    "BackgroundDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "FeatureId": {
+          "type": "string"
+        },
+        "Id": {
+          "type": "string"
+        },
+        "Languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "Name": {
+          "type": "string"
+        },
+        "SkillProficiencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ToolProficiencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Name"
+      ]
+    },
+    "ClassDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "ArmorProficiencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "FeaturesByLevel": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "HitDie": {
+          "type": "string",
+          "enum": [
+            "D4",
+            "D6",
+            "D8",
+            "D10",
+            "D12",
+            "D20"
+          ]
+        },
+        "Id": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "NumberOfSkillChoices": {
+          "type": "integer"
+        },
+        "SavingThrowProficiencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Strength",
+              "Dexterity",
+              "Constitution",
+              "Intelligence",
+              "Wisdom",
+              "Charisma"
+            ]
+          }
+        },
+        "SkillChoices": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "SpellSlotsByLevel": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "SpellcastingAbility": {
+          "type": "string",
+          "enum": [
+            "Strength",
+            "Dexterity",
+            "Constitution",
+            "Intelligence",
+            "Wisdom",
+            "Charisma"
+          ]
+        },
+        "ToolProficiencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "WeaponProficiencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "HitDie",
+        "Id",
+        "Name"
+      ]
+    },
+    "EffectDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "Contributions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RollContributionDefinitionV1"
+          }
+        },
+        "Id": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Name"
+      ]
+    },
+    "RollContributionDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "Conditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "AdvantageOrAdjacentEnemy",
+              "FinesseOrRangedWeapon"
+            ]
+          }
+        },
+        "Dice": {
+          "$ref": "#/$defs/DamageDiceV1"
+        },
+        "FlatBonus": {
+          "type": "integer"
+        },
+        "Target": {
+          "type": "string",
+          "enum": [
+            "AttackRoll",
+            "SavingThrow",
+            "DamageRoll"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Target"
+      ]
+    },
+    "DamageDiceV1": {
+      "type": "object",
+      "properties": {
+        "Count": {
+          "type": "integer"
+        },
+        "Die": {
+          "type": "string",
+          "enum": [
+            "D4",
+            "D6",
+            "D8",
+            "D10",
+            "D12",
+            "D20"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Count",
+        "Die"
+      ]
+    },
+    "EquipmentItemDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "CostInCopperPieces": {
+          "type": "integer"
+        },
+        "Id": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "WeightPounds": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Name"
+      ]
+    },
+    "FeatureDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "Contributions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RollContributionDefinitionV1"
+          }
+        },
+        "Id": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Name"
+      ]
+    },
+    "RaceDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AbilityScoreIncreases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AbilityScoreIncreaseV1"
+          }
+        },
+        "BaseSpeedFeet": {
+          "type": "integer"
+        },
+        "ConditionImmunities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConditionImmunityDefinitionV1"
+          }
+        },
+        "DamageResponses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DamageResponseDefinitionV1"
+          }
+        },
+        "Id": {
+          "type": "string"
+        },
+        "Languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "MovementSpeeds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MovementSpeedDefinitionV1"
+          }
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Senses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SenseDefinitionV1"
+          }
+        },
+        "Size": {
+          "type": "string",
+          "enum": [
+            "Medium",
+            "Small"
+          ]
+        },
+        "Subraces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SubraceDefinitionV1"
+          }
+        },
+        "Traits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "BaseSpeedFeet",
+        "Id",
+        "Name"
+      ]
+    },
+    "AbilityScoreIncreaseV1": {
+      "type": "object",
+      "properties": {
+        "Ability": {
+          "type": "string",
+          "enum": [
+            "Strength",
+            "Dexterity",
+            "Constitution",
+            "Intelligence",
+            "Wisdom",
+            "Charisma"
+          ]
+        },
+        "Amount": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Ability",
+        "Amount"
+      ]
+    },
+    "ConditionImmunityDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "Condition": {
+          "type": "string",
+          "enum": [
+            "Blinded",
+            "Charmed",
+            "Deafened",
+            "Exhaustion",
+            "Frightened",
+            "Grappled",
+            "Incapacitated",
+            "Invisible",
+            "Paralyzed",
+            "Petrified",
+            "Poisoned",
+            "Prone",
+            "Restrained",
+            "Stunned",
+            "Unconscious"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Condition"
+      ]
+    },
+    "DamageResponseDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "DamageType": {
+          "type": "string"
+        },
+        "ResponseType": {
+          "type": "string",
+          "enum": [
+            "Resistance",
+            "Vulnerability",
+            "Immunity"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "DamageType",
+        "ResponseType"
+      ]
+    },
+    "MovementSpeedDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "Mode": {
+          "type": "string",
+          "enum": [
+            "Walk",
+            "Climb",
+            "Swim",
+            "Fly",
+            "Burrow"
+          ]
+        },
+        "SpeedFeet": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Mode",
+        "SpeedFeet"
+      ]
+    },
+    "SenseDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "RangeFeet": {
+          "type": "integer"
+        },
+        "Type": {
+          "type": "string",
+          "enum": [
+            "Darkvision",
+            "Blindsight",
+            "Tremorsense",
+            "Truesight"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "RangeFeet",
+        "Type"
+      ]
+    },
+    "SubraceDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AbilityScoreIncreases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AbilityScoreIncreaseV1"
+          }
+        },
+        "ConditionImmunities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConditionImmunityDefinitionV1"
+          }
+        },
+        "DamageResponses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DamageResponseDefinitionV1"
+          }
+        },
+        "Id": {
+          "type": "string"
+        },
+        "Languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "MovementSpeeds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MovementSpeedDefinitionV1"
+          }
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Senses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SenseDefinitionV1"
+          }
+        },
+        "Traits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Name"
+      ]
+    },
+    "SkillDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "Ability": {
+          "type": "string",
+          "enum": [
+            "Strength",
+            "Dexterity",
+            "Constitution",
+            "Intelligence",
+            "Wisdom",
+            "Charisma"
+          ]
+        },
+        "Id": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Ability",
+        "Id",
+        "Name"
+      ]
+    },
+    "SpellDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AppliedEffectId": {
+          "type": "string"
+        },
+        "CastingTime": {
+          "type": "string",
+          "enum": [
+            "Action",
+            "BonusAction",
+            "Reaction"
+          ]
+        },
+        "Cost": {
+          "type": "string",
+          "enum": [
+            "Cantrip",
+            "Slot"
+          ]
+        },
+        "DurationRounds": {
+          "type": "integer"
+        },
+        "Effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SpellEffectDefinitionV1"
+          }
+        },
+        "Id": {
+          "type": "string"
+        },
+        "Level": {
+          "type": "integer"
+        },
+        "MaximumTargets": {
+          "type": "integer"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "RangeFeet": {
+          "type": "integer"
+        },
+        "RangeKind": {
+          "type": "string",
+          "enum": [
+            "SelfOnly",
+            "Touch",
+            "Ranged"
+          ]
+        },
+        "RequiresConcentration": {
+          "type": "boolean"
+        },
+        "Resolution": {
+          "type": "string",
+          "enum": [
+            "SpellAttack",
+            "SavingThrow",
+            "Automatic"
+          ]
+        },
+        "SaveAbility": {
+          "type": "string",
+          "enum": [
+            "Strength",
+            "Dexterity",
+            "Constitution",
+            "Intelligence",
+            "Wisdom",
+            "Charisma"
+          ]
+        },
+        "SaveOutcome": {
+          "type": "string",
+          "enum": [
+            "Negates",
+            "HalvesDamage"
+          ]
+        },
+        "Targets": {
+          "type": "string",
+          "enum": [
+            "Allies",
+            "Enemies",
+            "Any"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "CastingTime",
+        "Cost",
+        "Id",
+        "Level",
+        "Name",
+        "RangeKind",
+        "Resolution",
+        "Targets"
+      ]
+    },
+    "SpellEffectDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AddsSpellcastingModifier": {
+          "type": "boolean"
+        },
+        "DamageType": {
+          "type": "string"
+        },
+        "Dice": {
+          "$ref": "#/$defs/DamageDiceV1"
+        },
+        "Instances": {
+          "type": "integer"
+        },
+        "Kind": {
+          "type": "string",
+          "enum": [
+            "Damage",
+            "Healing"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Dice",
+        "Kind"
+      ]
+    },
+    "WeaponDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AmmunitionItemId": {
+          "type": "string"
+        },
+        "AttackKind": {
+          "type": "string",
+          "enum": [
+            "Melee",
+            "Ranged"
+          ]
+        },
+        "Category": {
+          "type": "string",
+          "enum": [
+            "Simple",
+            "Martial"
+          ]
+        },
+        "CostInCopperPieces": {
+          "type": "integer"
+        },
+        "Damage": {
+          "$ref": "#/$defs/DamageDiceV1"
+        },
+        "DamageType": {
+          "type": "string"
+        },
+        "Id": {
+          "type": "string"
+        },
+        "LongRangeFeet": {
+          "type": "integer"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "NormalRangeFeet": {
+          "type": "integer"
+        },
+        "Properties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ReachFeet": {
+          "type": "integer"
+        },
+        "VersatileDamage": {
+          "$ref": "#/$defs/DamageDiceV1"
+        },
+        "WeightPounds": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "AttackKind",
+        "Category",
+        "Damage",
+        "DamageType",
+        "Id",
+        "Name"
+      ]
+    }
+  }
+}

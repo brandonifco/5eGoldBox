@@ -203,12 +203,24 @@ lines, one file, no merge semantics).
     hazard for anyone who opens this project with a Godot version older than what it's authored
     against; `git status` before and after any Godot invocation is the safeguard.
 
-### Phase 5 — Content-pack authoring ergonomics (future, not scoped in detail here)
+### Phase 5 — Content-pack authoring ergonomics — done, 2026-07-30 (two PRs)
 
-- A JSON Schema file (or files) for editor autocomplete/validation while hand-authoring packs.
-- A standalone validation command ("does this pack load and validate cleanly") independent of
-  running the whole game.
-- Not blocking — flagged so it isn't forgotten once the core mechanism exists.
+- **A standalone validation command** ("does this pack load and validate cleanly") independent of
+  running the whole game (PR #197). `ContentPackValidation` is a new small public facade on
+  `Application` wrapping the existing internal loaders/validators for all three pack kinds,
+  collecting every issue instead of throwing on the first one. Console's `validate` verb
+  (`validate <ruleset|scenario|campaign> <path> [<path>...]`) is built on it.
+- **A JSON Schema file (or files) for editor autocomplete/validation** while hand-authoring packs
+  (PR #198). Rather than hand-maintain three schemas against ~60 DTO types (guaranteed to drift),
+  `JsonSchemaGenerator` derives one by reflecting over the V1 DTO graph itself — a C# `required`
+  member becomes a schema `required` entry, lists/dictionaries/enums map structurally, and the
+  loaders' own `JsonStringEnumConverter(namingPolicy: null)` convention is what the enum handling
+  matches. `ContentPackSchemaWriter` (skipped by default, matching `FixtureWriter`'s convention)
+  regenerates `data/schemas/{ruleset,scenario,campaign}-pack.schema.json`; `ContentPackSchemaTests`
+  is the always-on drift check. All five existing `data/**/*.json` files gained a top-level
+  `"$schema"` property (the VS Code/JetBrains instance-association convention, not a JSON Schema
+  keyword) pointing at the matching file.
+- See CLAUDE.md's own "Phase 5" entry for the fuller account of both.
 
 ## Sequencing rationale
 
