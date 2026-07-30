@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using FiveEGoldBox.Application.Content;
 using FiveEGoldBox.Core.Definitions;
 
 namespace FiveEGoldBox.Application.Scenarios;
@@ -20,12 +21,11 @@ internal static class RulesetRegistry
     /// gear both the party and the opposition draw on.
     internal const string CampaignRulesetId = "ruleset.campaign";
 
-    private static readonly IReadOnlyDictionary<string, Func<RulesetDefinition>>
-        Factories = new Dictionary<string, Func<RulesetDefinition>>(
+    private static readonly IReadOnlyDictionary<string, Func<ValidatedRuleset>>
+        Factories = new Dictionary<string, Func<ValidatedRuleset>>(
             StringComparer.Ordinal)
         {
-            [CampaignRulesetId] =
-                CampaignRulesetContent.CreateRulesetDefinition
+            [CampaignRulesetId] = LoadCampaignRuleset
         };
 
     private static readonly ConcurrentDictionary<string, ValidatedRuleset>
@@ -49,13 +49,21 @@ internal static class RulesetRegistry
     {
         if (!Factories.TryGetValue(
             rulesetId,
-            out Func<RulesetDefinition>? factory))
+            out Func<ValidatedRuleset>? factory))
         {
             throw new ArgumentException(
                 $"No ruleset is registered under '{rulesetId}'.",
                 nameof(rulesetId));
         }
 
-        return CampaignRulesetContent.Load(factory());
+        return factory();
+    }
+
+    private static ValidatedRuleset LoadCampaignRuleset()
+    {
+        string packPath = DataDirectoryLocator.ResolveDataFilePath(
+            Path.Combine("rulesets", "campaign", "core.json"));
+
+        return RulesetPackLoader.Load([packPath]);
     }
 }

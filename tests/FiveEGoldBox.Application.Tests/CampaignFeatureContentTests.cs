@@ -20,7 +20,9 @@ public sealed class CampaignFeatureContentTests
     public void TheCampaignRulesetValidatesWithNoIssuesAtAll()
     {
         ValidationResult validation = RulesetValidator.Validate(
-            CampaignRulesetContent.CreateRulesetDefinition());
+            RulesetRegistry
+                .Resolve(RulesetRegistry.CampaignRulesetId)
+                .Definition);
 
         Assert.Empty(validation.Issues);
     }
@@ -29,7 +31,7 @@ public sealed class CampaignFeatureContentTests
     public void SneakAttack_IsExtraDamageRatherThanAnythingSpellLike()
     {
         RollContributionDefinition contribution = Assert.Single(
-            Feature(CampaignRulesetContent.SneakAttackFeatureId)
+            Feature(CampaignRulesetIds.SneakAttackFeatureId)
                 .Contributions);
 
         Assert.Equal(
@@ -51,7 +53,7 @@ public sealed class CampaignFeatureContentTests
                 RollContributionCondition.FinesseOrRangedWeapon
             ],
             Assert.Single(
-                Feature(CampaignRulesetContent.SneakAttackFeatureId)
+                Feature(CampaignRulesetIds.SneakAttackFeatureId)
                     .Contributions)
                 .Conditions);
     }
@@ -60,12 +62,15 @@ public sealed class CampaignFeatureContentTests
     public void TheRogueClassNamesSneakAttackAtLevelOne()
     {
         ClassDefinition rogue = Assert.Single(
-            CampaignRulesetContent.CreateRulesetDefinition().Classes,
+            RulesetRegistry
+                .Resolve(RulesetRegistry.CampaignRulesetId)
+                .Definition
+                .Classes,
             characterClass => characterClass.Id
-                == CampaignRulesetContent.RogueClassId);
+                == CampaignRulesetIds.RogueClassId);
 
         Assert.Equal(
-            [CampaignRulesetContent.SneakAttackFeatureId],
+            [CampaignRulesetIds.SneakAttackFeatureId],
             rogue.FeaturesByLevel[1]);
     }
 
@@ -82,7 +87,7 @@ public sealed class CampaignFeatureContentTests
                     FrontierCampaignContent.CampaignId)
                     .ActivePartySize),
             character => character.ClassId
-                == CampaignRulesetContent.RogueClassId);
+                == CampaignRulesetIds.RogueClassId);
     }
 
     /// End to end on authored content: the ruleset declares the feature, the
@@ -94,7 +99,7 @@ public sealed class CampaignFeatureContentTests
         CharacterSnapshot rogue = ResolveRogue();
 
         Assert.Equal(
-            [CampaignRulesetContent.SneakAttackFeatureId],
+            [CampaignRulesetIds.SneakAttackFeatureId],
             rogue.ClassFeatures);
 
         Assert.Equal(
@@ -141,21 +146,23 @@ public sealed class CampaignFeatureContentTests
         string featureId)
     {
         return Assert.Single(
-            CampaignRulesetContent.CreateRulesetDefinition().Features,
+            RulesetRegistry
+                .Resolve(RulesetRegistry.CampaignRulesetId)
+                .Definition
+                .Features,
             feature => feature.Id == featureId);
     }
 
     private static CharacterSnapshot ResolveRogue()
     {
         return new CharacterResolver(
-            CampaignRulesetContent.Load(
-                CampaignRulesetContent.CreateRulesetDefinition()))
+            RulesetRegistry.Resolve(RulesetRegistry.CampaignRulesetId))
             .Resolve(new CharacterDraft
             {
                 Name = "Test Rogue",
                 Level = 1,
                 RaceId = "race.human",
-                ClassId = CampaignRulesetContent.RogueClassId,
+                ClassId = CampaignRulesetIds.RogueClassId,
                 BackgroundId = "background.soldier",
                 AbilityScoreGenerationMethod =
                     AbilityScoreGenerationMethod.Manual,

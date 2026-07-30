@@ -13,12 +13,12 @@ public sealed class CampaignSpellContentTests
     {
         Assert.Equal(
             [
-                CampaignRulesetContent.FireBoltId,
-                CampaignRulesetContent.SacredFlameId,
-                CampaignRulesetContent.CureWoundsId,
-                CampaignRulesetContent.HealingWordId,
-                CampaignRulesetContent.MagicMissileId,
-                CampaignRulesetContent.BlessId
+                CampaignRulesetIds.FireBoltId,
+                CampaignRulesetIds.SacredFlameId,
+                CampaignRulesetIds.CureWoundsId,
+                CampaignRulesetIds.HealingWordId,
+                CampaignRulesetIds.MagicMissileId,
+                CampaignRulesetIds.BlessId
             ],
             Spells().Select(spell => spell.Id));
     }
@@ -26,7 +26,7 @@ public sealed class CampaignSpellContentTests
     [Fact]
     public void FireBolt_IsAnAtWillSpellAttack()
     {
-        SpellDefinition spell = Spell(CampaignRulesetContent.FireBoltId);
+        SpellDefinition spell = Spell(CampaignRulesetIds.FireBoltId);
 
         Assert.Equal(SpellCostKind.Cantrip, spell.Cost);
         Assert.Equal(SpellResolutionKind.SpellAttack, spell.Resolution);
@@ -36,7 +36,7 @@ public sealed class CampaignSpellContentTests
     [Fact]
     public void SacredFlame_IsResolvedByTheTargetsSavingThrow()
     {
-        SpellDefinition spell = Spell(CampaignRulesetContent.SacredFlameId);
+        SpellDefinition spell = Spell(CampaignRulesetIds.SacredFlameId);
 
         Assert.Equal(SpellCostKind.Cantrip, spell.Cost);
         Assert.Equal(SpellResolutionKind.SavingThrow, spell.Resolution);
@@ -47,7 +47,7 @@ public sealed class CampaignSpellContentTests
     [Fact]
     public void CureWounds_HealsAtTouchRangeForASlot()
     {
-        SpellDefinition spell = Spell(CampaignRulesetContent.CureWoundsId);
+        SpellDefinition spell = Spell(CampaignRulesetIds.CureWoundsId);
 
         Assert.Equal(SpellCostKind.Slot, spell.Cost);
         Assert.Equal(SpellRangeKind.Touch, spell.RangeKind);
@@ -63,7 +63,7 @@ public sealed class CampaignSpellContentTests
     [Fact]
     public void HealingWord_IsCastAsABonusAction()
     {
-        SpellDefinition spell = Spell(CampaignRulesetContent.HealingWordId);
+        SpellDefinition spell = Spell(CampaignRulesetIds.HealingWordId);
 
         Assert.Equal(SpellCastingTime.BonusAction, spell.CastingTime);
         Assert.Equal(SpellRangeKind.Ranged, spell.RangeKind);
@@ -75,7 +75,7 @@ public sealed class CampaignSpellContentTests
     [Fact]
     public void MagicMissile_HitsAutomaticallyAndSeveralTimesOver()
     {
-        SpellDefinition spell = Spell(CampaignRulesetContent.MagicMissileId);
+        SpellDefinition spell = Spell(CampaignRulesetIds.MagicMissileId);
 
         Assert.Equal(SpellResolutionKind.Automatic, spell.Resolution);
         Assert.Equal(3, spell.MaximumTargets);
@@ -85,10 +85,10 @@ public sealed class CampaignSpellContentTests
     [Fact]
     public void Bless_IsHeldByConcentrationAndInstallsAnEffect()
     {
-        SpellDefinition spell = Spell(CampaignRulesetContent.BlessId);
+        SpellDefinition spell = Spell(CampaignRulesetIds.BlessId);
 
         Assert.True(spell.RequiresConcentration);
-        Assert.Equal(CampaignRulesetContent.BlessEffectId, spell.AppliedEffectId);
+        Assert.Equal(CampaignRulesetIds.BlessEffectId, spell.AppliedEffectId);
         Assert.Equal(10, spell.DurationRounds);
         Assert.Equal(3, spell.MaximumTargets);
         Assert.Empty(spell.Effects);
@@ -107,7 +107,10 @@ public sealed class CampaignSpellContentTests
 
     private static IReadOnlyList<SpellDefinition> Spells()
     {
-        return CampaignRulesetContent.CreateRulesetDefinition().Spells;
+        return RulesetRegistry
+            .Resolve(RulesetRegistry.CampaignRulesetId)
+            .Definition
+            .Spells;
     }
 
     private static SpellDefinition Spell(string spellId)

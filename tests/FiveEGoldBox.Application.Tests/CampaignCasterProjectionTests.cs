@@ -18,18 +18,18 @@ public sealed class CampaignCasterProjectionTests
     public void ACleric_ResolvesEveryPreparedSpell()
     {
         CharacterSnapshot cleric = ResolveCaster(
-            CampaignRulesetContent.ClericClassId,
+            CampaignRulesetIds.ClericClassId,
             [
-                CampaignRulesetContent.SacredFlameId,
-                CampaignRulesetContent.CureWoundsId,
-                CampaignRulesetContent.BlessId
+                CampaignRulesetIds.SacredFlameId,
+                CampaignRulesetIds.CureWoundsId,
+                CampaignRulesetIds.BlessId
             ]);
 
         Assert.Equal(
             [
-                CampaignRulesetContent.SacredFlameId,
-                CampaignRulesetContent.CureWoundsId,
-                CampaignRulesetContent.BlessId
+                CampaignRulesetIds.SacredFlameId,
+                CampaignRulesetIds.CureWoundsId,
+                CampaignRulesetIds.BlessId
             ],
             cleric.SpellAttacks.Select(spell => spell.SpellId));
     }
@@ -41,8 +41,8 @@ public sealed class CampaignCasterProjectionTests
     {
         Assert.Empty(
             ResolveCaster(
-                CampaignRulesetContent.FighterClassId,
-                [CampaignRulesetContent.FireBoltId])
+                CampaignRulesetIds.FighterClassId,
+                [CampaignRulesetIds.FireBoltId])
                 .SpellAttacks);
     }
 
@@ -54,8 +54,8 @@ public sealed class CampaignCasterProjectionTests
     {
         SpellAttack sacredFlame = Assert.Single(
             ResolveCaster(
-                CampaignRulesetContent.ClericClassId,
-                [CampaignRulesetContent.SacredFlameId])
+                CampaignRulesetIds.ClericClassId,
+                [CampaignRulesetIds.SacredFlameId])
                 .SpellAttacks);
 
         Assert.Equal(4, sacredFlame.AttackBonus);
@@ -69,10 +69,10 @@ public sealed class CampaignCasterProjectionTests
     public void ACantripSpendsNothingAndASlotSpellNamesItsSlot()
     {
         IReadOnlyList<SpellAttack> spells = ResolveCaster(
-            CampaignRulesetContent.ClericClassId,
+            CampaignRulesetIds.ClericClassId,
             [
-                CampaignRulesetContent.SacredFlameId,
-                CampaignRulesetContent.CureWoundsId
+                CampaignRulesetIds.SacredFlameId,
+                CampaignRulesetIds.CureWoundsId
             ])
             .SpellAttacks;
 
@@ -86,10 +86,10 @@ public sealed class CampaignCasterProjectionTests
     public void TheCastersModifierIsFoldedInWhereTheSpellAddsIt()
     {
         IReadOnlyList<SpellAttack> spells = ResolveCaster(
-            CampaignRulesetContent.ClericClassId,
+            CampaignRulesetIds.ClericClassId,
             [
-                CampaignRulesetContent.SacredFlameId,
-                CampaignRulesetContent.CureWoundsId
+                CampaignRulesetIds.SacredFlameId,
+                CampaignRulesetIds.CureWoundsId
             ])
             .SpellAttacks;
 
@@ -104,12 +104,12 @@ public sealed class CampaignCasterProjectionTests
     {
         SpellAttack bless = Assert.Single(
             ResolveCaster(
-                CampaignRulesetContent.ClericClassId,
-                [CampaignRulesetContent.BlessId])
+                CampaignRulesetIds.ClericClassId,
+                [CampaignRulesetIds.BlessId])
                 .SpellAttacks);
 
         Assert.Equal(
-            CampaignRulesetContent.BlessEffectId,
+            CampaignRulesetIds.BlessEffectId,
             bless.AppliedEffectId);
         Assert.True(bless.RequiresConcentration);
         Assert.Equal(
@@ -128,8 +128,8 @@ public sealed class CampaignCasterProjectionTests
     {
         SpellAttack fireBolt = Assert.Single(
             ResolveCaster(
-                CampaignRulesetContent.WizardClassId,
-                [CampaignRulesetContent.FireBoltId])
+                CampaignRulesetIds.WizardClassId,
+                [CampaignRulesetIds.FireBoltId])
                 .SpellAttacks);
 
         Assert.Equal(SpellResolutionKind.SpellAttack, fireBolt.Resolution);
@@ -142,13 +142,14 @@ public sealed class CampaignCasterProjectionTests
         string classId,
         IReadOnlyList<string> preparedSpellIds)
     {
+        ValidatedRuleset ruleset = RulesetRegistry.Resolve(
+            RulesetRegistry.CampaignRulesetId);
+
         ClassDefinition characterClass = Assert.Single(
-            CampaignRulesetContent.CreateRulesetDefinition().Classes,
+            ruleset.Definition.Classes,
             candidate => candidate.Id == classId);
 
-        return new CharacterResolver(
-            CampaignRulesetContent.Load(
-                CampaignRulesetContent.CreateRulesetDefinition()))
+        return new CharacterResolver(ruleset)
             .Resolve(new CharacterDraft
             {
                 Name = "Test Caster",
@@ -174,7 +175,7 @@ public sealed class CampaignCasterProjectionTests
                     .ToArray(),
                 EquippedWeaponIds =
                 [
-                    CampaignRulesetContent.ClericWeaponId
+                    CampaignRulesetIds.ClericWeaponId
                 ],
                 PreparedSpellIds = preparedSpellIds
             });

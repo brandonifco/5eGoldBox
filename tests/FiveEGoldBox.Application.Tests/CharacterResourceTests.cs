@@ -66,16 +66,17 @@ public sealed class CharacterResourceTests
     [Fact]
     public void TheClericAndWizardBothCastButWithDifferentAbilities()
     {
-        IReadOnlyList<ClassDefinition> classes = CampaignRulesetContent
-            .CreateRulesetDefinition()
+        IReadOnlyList<ClassDefinition> classes = RulesetRegistry
+            .Resolve(RulesetRegistry.CampaignRulesetId)
+            .Definition
             .Classes;
 
         ClassDefinition cleric = Assert.Single(
             classes,
-            candidate => candidate.Id == CampaignRulesetContent.ClericClassId);
+            candidate => candidate.Id == CampaignRulesetIds.ClericClassId);
         ClassDefinition wizard = Assert.Single(
             classes,
-            candidate => candidate.Id == CampaignRulesetContent.WizardClassId);
+            candidate => candidate.Id == CampaignRulesetIds.WizardClassId);
 
         Assert.Equal(Ability.Wisdom, cleric.SpellcastingAbility);
         Assert.Equal(Ability.Intelligence, wizard.SpellcastingAbility);
@@ -85,8 +86,8 @@ public sealed class CharacterResourceTests
         // Every other class casts nothing.
         Assert.All(
             classes.Where(candidate =>
-                candidate.Id != CampaignRulesetContent.ClericClassId
-                && candidate.Id != CampaignRulesetContent.WizardClassId),
+                candidate.Id != CampaignRulesetIds.ClericClassId
+                && candidate.Id != CampaignRulesetIds.WizardClassId),
             candidate =>
             {
                 Assert.Null(candidate.SpellcastingAbility);
@@ -256,11 +257,11 @@ public sealed class CharacterResourceTests
                     PartyMemberId = "party-member.cleric",
                     CharacterDefinitionId = "character.cleric",
                     DisplayName = "Cleric",
-                    ClassId = CampaignRulesetContent.ClericClassId,
+                    ClassId = CampaignRulesetIds.ClericClassId,
                     PreparedSpellIds =
                     [
-                        CampaignRulesetContent.CureWoundsId,
-                        CampaignRulesetContent.HealingWordId
+                        CampaignRulesetIds.CureWoundsId,
+                        CampaignRulesetIds.HealingWordId
                     ]
                 }
             ]

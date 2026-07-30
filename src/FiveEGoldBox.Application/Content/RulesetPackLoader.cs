@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using FiveEGoldBox.Application.Content.V1;
 using FiveEGoldBox.Application.Randomness;
 using FiveEGoldBox.Core.Definitions;
-using FiveEGoldBox.Core.Validation;
 
 namespace FiveEGoldBox.Application.Content;
 
@@ -44,21 +43,7 @@ internal static class RulesetPackLoader
 
         RulesetDefinition definition = Parse(packJson);
 
-        RulesetLoadResult load = ApplicationRulesetLoader.Load(definition);
-
-        if (!load.IsValid || load.Ruleset is null)
-        {
-            throw new InvalidOperationException(
-                "The packed ruleset could not be validated: "
-                    + string.Join(
-                        "; ",
-                        load.Validation.Issues
-                            .Where(issue =>
-                                issue.Severity == ValidationSeverity.Error)
-                            .Select(issue => $"{issue.Code} {issue.Message}")));
-        }
-
-        return load.Ruleset;
+        return ApplicationRulesetLoader.LoadOrThrow(definition);
     }
 
     private static RulesetPackV1 DeserializePack(

@@ -17,6 +17,30 @@ namespace FiveEGoldBox.Application.Randomness;
 /// somebody makes it rollable.
 internal static class ApplicationRulesetLoader
 {
+    /// The convenience every caller that isn't inspecting validation issues
+    /// one by one actually wants: load it, and if it's not good enough to
+    /// play, say why in one exception rather than making every caller
+    /// re-render the issue list itself.
+    internal static ValidatedRuleset LoadOrThrow(
+        RulesetDefinition definition)
+    {
+        RulesetLoadResult load = Load(definition);
+
+        if (!load.IsValid || load.Ruleset is null)
+        {
+            throw new InvalidOperationException(
+                "The ruleset could not be validated: "
+                    + string.Join(
+                        "; ",
+                        load.Validation.Issues
+                            .Where(issue =>
+                                issue.Severity == ValidationSeverity.Error)
+                            .Select(issue => $"{issue.Code} {issue.Message}")));
+        }
+
+        return load.Ruleset;
+    }
+
     internal static RulesetLoadResult Load(
         RulesetDefinition definition)
     {
