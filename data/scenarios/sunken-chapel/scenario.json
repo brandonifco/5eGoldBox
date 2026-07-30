@@ -1,0 +1,196 @@
+{
+    "FormatVersion": 1,
+    "ScenarioId": "scenario.sunken-chapel",
+    "DisplayName": "The Sunken Chapel",
+    "RulesetId": "ruleset.campaign",
+    "StartingLocationId": "location.harbor-town",
+    "Progress": {
+        "InitialProgressId": "chapel.rumour-heard",
+        "ProgressIds": [
+            "chapel.rumour-heard",
+            "chapel.charter-signed",
+            "chapel.seal-broken",
+            "chapel.guardians-roused",
+            "chapel.guardians-banished",
+            "chapel.party-drowned",
+            "chapel.relic-recovered"
+        ],
+        "Conclusions": [
+            {
+                "ProgressId": "chapel.relic-recovered",
+                "IsSuccess": true,
+                "LocationId": "location.sunken-chapel"
+            },
+            {
+                "ProgressId": "chapel.party-drowned",
+                "IsSuccess": false,
+                "LocationId": "location.sunken-chapel"
+            }
+        ]
+    },
+    "PartyRequirement": {
+        "MinimumMembers": 4,
+        "MaximumMembers": 4,
+        "MinimumConsciousMembers": 1
+    },
+    "Locations": [
+        {
+            "LocationId": "location.harbor-town",
+            "DisplayName": "Harbor Town"
+        },
+        {
+            "LocationId": "location.sunken-chapel",
+            "DisplayName": "The Sunken Chapel",
+            "ExplorationMap": {
+                "MapId": "map.sunken-chapel",
+                "Width": 2,
+                "Height": 2,
+                "StartingFloor": "GroundFloor",
+                "StartingPosition": { "X": 0, "Y": 0 },
+                "StartingFacing": "East",
+                "Floors": [
+                    {
+                        "Floor": "GroundFloor",
+                        "TraversablePositions": [
+                            { "X": 0, "Y": 0 },
+                            { "X": 1, "Y": 0 },
+                            { "X": 0, "Y": 1 },
+                            { "X": 1, "Y": 1 }
+                        ],
+                        "Stairs": []
+                    }
+                ]
+            },
+            "ExplorableProgressIds": [
+                "chapel.charter-signed",
+                "chapel.seal-broken",
+                "chapel.guardians-banished"
+            ]
+        }
+    ],
+    "Routes": [
+        {
+            "RouteId": "route.harbor-to-chapel",
+            "OriginLocationId": "location.harbor-town",
+            "DestinationLocationId": "location.sunken-chapel",
+            "FinalStepIndex": 2,
+            "RequiredProgressIds": [ "chapel.charter-signed" ]
+        }
+    ],
+    "Encounters": [
+        {
+            "EncounterId": "encounter.chapel-guardians",
+            "BattlefieldId": "battlefield.chapel-nave",
+            "Width": 4,
+            "Height": 4,
+            "PartySideId": "side.party",
+            "BlockedPositions": [],
+            "PartyStartingPositions": [
+                { "X": 0, "Y": 1 },
+                { "X": 0, "Y": 2 },
+                { "X": 1, "Y": 1 },
+                { "X": 1, "Y": 2 }
+            ],
+            "Combatants": [
+                {
+                    "CombatantId": "combatant.chapel-guardian.first",
+                    "DisplayName": "Drowned acolyte",
+                    "SideId": "side.chapel-guardians",
+                    "MaximumHitPoints": 7,
+                    "ArmorClass": 12,
+                    "MovementSpeedFeet": 25,
+                    "StartingPosition": { "X": 3, "Y": 1 },
+                    "ZeroHitPointPolicy": "Defeated",
+                    "AbilityModifiers": [
+                        { "Ability": "Strength", "Modifier": 0 },
+                        { "Ability": "Dexterity", "Modifier": 1 },
+                        { "Ability": "Constitution", "Modifier": 2 },
+                        { "Ability": "Intelligence", "Modifier": -2 },
+                        { "Ability": "Wisdom", "Modifier": 0 },
+                        { "Ability": "Charisma", "Modifier": -3 }
+                    ],
+                    "ProficiencyBonus": 2,
+                    "Weapons": [
+                        { "WeaponId": "weapon.chapel-guardian.dagger" }
+                    ]
+                },
+                {
+                    "CombatantId": "combatant.chapel-guardian.second",
+                    "DisplayName": "Drowned sexton",
+                    "SideId": "side.chapel-guardians",
+                    "MaximumHitPoints": 7,
+                    "ArmorClass": 12,
+                    "MovementSpeedFeet": 25,
+                    "StartingPosition": { "X": 3, "Y": 2 },
+                    "ZeroHitPointPolicy": "Defeated",
+                    "AbilityModifiers": [
+                        { "Ability": "Strength", "Modifier": 0 },
+                        { "Ability": "Dexterity", "Modifier": 1 },
+                        { "Ability": "Constitution", "Modifier": 2 },
+                        { "Ability": "Intelligence", "Modifier": -2 },
+                        { "Ability": "Wisdom", "Modifier": 0 },
+                        { "Ability": "Charisma", "Modifier": -3 }
+                    ],
+                    "ProficiencyBonus": 2,
+                    "Weapons": [
+                        { "WeaponId": "weapon.chapel-guardian.dagger" }
+                    ]
+                }
+            ],
+            "Outcome": {
+                "VictoryProgressId": "chapel.guardians-banished",
+                "DefeatProgressId": "chapel.party-drowned"
+            }
+        }
+    ],
+    "Triggers": [
+        {
+            "TriggerId": "trigger.chapel-seal",
+            "DisplayName": "Tide seal",
+            "LocationId": "location.sunken-chapel",
+            "Floor": "GroundFloor",
+            "Position": { "X": 1, "Y": 0 },
+            "RequiredFacing": "East",
+            "RequiredProgressIds": [ "chapel.charter-signed" ],
+            "ResultingProgressId": "chapel.seal-broken"
+        },
+        {
+            "TriggerId": "trigger.chapel-guardians",
+            "DisplayName": "Flooded nave",
+            "LocationId": "location.sunken-chapel",
+            "Floor": "GroundFloor",
+            "Position": { "X": 1, "Y": 1 },
+            "RequiredProgressIds": [ "chapel.seal-broken" ],
+            "ResultingProgressId": "chapel.guardians-roused",
+            "EncounterId": "encounter.chapel-guardians"
+        },
+        {
+            "TriggerId": "trigger.chapel-relic",
+            "DisplayName": "Drowned reliquary",
+            "LocationId": "location.sunken-chapel",
+            "Floor": "GroundFloor",
+            "Position": { "X": 1, "Y": 1 },
+            "RequiredProgressIds": [ "chapel.guardians-banished" ],
+            "ResultingProgressId": "chapel.relic-recovered"
+        }
+    ],
+    "Decisions": [
+        {
+            "DecisionId": "decision.chapel-charter",
+            "DisplayName": "Sign the salvage charter",
+            "LocationId": "location.harbor-town",
+            "RequiredProgressIds": [ "chapel.rumour-heard" ],
+            "Options": [
+                {
+                    "OptionId": "AcceptMission",
+                    "DisplayName": "Sign the charter",
+                    "ResultingProgressId": "chapel.charter-signed"
+                },
+                {
+                    "OptionId": "NotYet",
+                    "DisplayName": "Not yet"
+                }
+            ]
+        }
+    ]
+}
