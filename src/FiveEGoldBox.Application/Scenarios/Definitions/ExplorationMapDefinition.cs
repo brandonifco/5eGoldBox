@@ -11,7 +11,7 @@ internal sealed record ExplorationMapDefinition
 
     internal required int Height { get; init; }
 
-    internal required ExplorationFloor StartingFloor { get; init; }
+    internal required string StartingFloor { get; init; }
 
     internal required GridPosition StartingPosition { get; init; }
 

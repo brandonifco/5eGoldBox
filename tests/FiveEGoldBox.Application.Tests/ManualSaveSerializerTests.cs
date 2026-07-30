@@ -809,7 +809,7 @@ public sealed class ManualSaveSerializerTests
             "map.ruined-watchtower",
             exploration.MapId);
         Assert.Equal(
-            ExplorationFloor.GroundFloor,
+            "GroundFloor",
             exploration.Floor);
         Assert.Equal(
             new GridPosition(0, 0),
@@ -855,7 +855,7 @@ public sealed class ManualSaveSerializerTests
             ApplicationMode.Exploration,
             loaded.CurrentMode);
         Assert.Equal(
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             exploration.Floor);
         Assert.Equal(
             new GridPosition(2, 0),
@@ -964,7 +964,7 @@ public sealed class ManualSaveSerializerTests
     }
 
     [Fact]
-    public void Deserialize_ExplorationWithUndefinedFloor_ReturnsMalformedDataFailure()
+    public void Deserialize_ExplorationWithUnknownFloor_ReturnsInvalidSessionStateFailure()
     {
         JsonObject save = ParseSave(
             ManualSaveSerializer.Serialize(
@@ -984,7 +984,7 @@ public sealed class ManualSaveSerializerTests
         AssertFailure(
             result,
             ManualSaveLoadFailureReason
-                .MalformedSerializedData);
+                .InvalidSessionState);
     }
 
     [Fact]

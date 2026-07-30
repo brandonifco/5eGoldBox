@@ -129,20 +129,20 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
         AssertExploration(
             current,
-            ExplorationFloor.GroundFloor,
+            "GroundFloor",
             x: 0,
             y: 0,
             ExplorationFacing.East);
 
         current = MoveForward(
             current,
-            ExplorationFloor.GroundFloor,
+            "GroundFloor",
             x: 1,
             y: 0,
             ExplorationFacing.East);
         current = MoveForward(
             current,
-            ExplorationFloor.GroundFloor,
+            "GroundFloor",
             x: 2,
             y: 0,
             ExplorationFacing.East);
@@ -151,7 +151,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
         AssertExploration(
             current,
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             x: 2,
             y: 0,
             ExplorationFacing.East);
@@ -159,40 +159,40 @@ public sealed class WatchtowerOutcomeLifecycleTests
         current = Turn(
             current,
             ExplorationTurnDirection.Right,
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             x: 2,
             y: 0,
             ExplorationFacing.South);
         current = MoveForward(
             current,
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             x: 2,
             y: 1,
             ExplorationFacing.South);
         current = Turn(
             current,
             ExplorationTurnDirection.Right,
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             x: 2,
             y: 1,
             ExplorationFacing.West);
         current = MoveForward(
             current,
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             x: 1,
             y: 1,
             ExplorationFacing.West);
         current = Turn(
             current,
             ExplorationTurnDirection.Left,
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             x: 1,
             y: 1,
             ExplorationFacing.South);
         current = Turn(
             current,
             ExplorationTurnDirection.Left,
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             x: 1,
             y: 1,
             ExplorationFacing.East);
@@ -401,7 +401,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
         AssertExploration(
             continued,
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             x: 1,
             y: 1,
             ExplorationFacing.North);
@@ -674,7 +674,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
     private static ApplicationSessionState MoveForward(
         ApplicationSessionState source,
-        ExplorationFloor expectedFloor,
+        string expectedFloor,
         int x,
         int y,
         ExplorationFacing expectedFacing)
@@ -696,7 +696,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
     private static ApplicationSessionState Turn(
         ApplicationSessionState source,
         ExplorationTurnDirection direction,
-        ExplorationFloor expectedFloor,
+        string expectedFloor,
         int x,
         int y,
         ExplorationFacing expectedFacing)
@@ -716,7 +716,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
     private static void AssertExploration(
         ApplicationSessionState state,
-        ExplorationFloor expectedFloor,
+        string expectedFloor,
         int x,
         int y,
         ExplorationFacing expectedFacing)

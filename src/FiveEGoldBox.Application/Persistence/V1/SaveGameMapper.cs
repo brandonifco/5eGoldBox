@@ -289,7 +289,7 @@ internal static class SaveGameMapper
         return new SaveExplorationV1
         {
             MapId = exploration.MapId,
-            Floor = ToSaveFloor(exploration.Floor),
+            Floor = exploration.Floor,
             Position = new SaveGridPositionV1
             {
                 X = exploration.Position.X,
@@ -307,7 +307,7 @@ internal static class SaveGameMapper
         return new ExplorationState
         {
             MapId = exploration.MapId,
-            Floor = ToRuntimeFloor(exploration.Floor),
+            Floor = exploration.Floor,
             Position = new GridPosition(
                 exploration.Position.X,
                 exploration.Position.Y),
@@ -391,37 +391,6 @@ internal static class SaveGameMapper
         };
     }
 
-    private static SaveExplorationFloorV1 ToSaveFloor(
-        ExplorationFloor floor)
-    {
-        return floor switch
-        {
-            ExplorationFloor.GroundFloor =>
-                SaveExplorationFloorV1.GroundFloor,
-            ExplorationFloor.UpperFloor =>
-                SaveExplorationFloorV1.UpperFloor,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(floor),
-                floor,
-                "Unsupported exploration floor.")
-        };
-    }
-
-    private static ExplorationFloor ToRuntimeFloor(
-        SaveExplorationFloorV1 floor)
-    {
-        return floor switch
-        {
-            SaveExplorationFloorV1.GroundFloor =>
-                ExplorationFloor.GroundFloor,
-            SaveExplorationFloorV1.UpperFloor =>
-                ExplorationFloor.UpperFloor,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(floor),
-                floor,
-                "Unsupported saved exploration floor.")
-        };
-    }
 
     private static SaveExplorationFacingV1 ToSaveFacing(
         ExplorationFacing facing)

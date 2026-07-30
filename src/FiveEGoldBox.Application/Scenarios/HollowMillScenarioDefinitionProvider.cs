@@ -230,7 +230,7 @@ internal static class HollowMillScenarioDefinitionProvider
             TriggerId = "trigger.herbalist-alcove",
             DisplayName = "Old Rosa's alcove",
             LocationId = MillLocationId,
-            Floor = ExplorationFloor.GroundFloor,
+            Floor = "GroundFloor",
             Position = new GridPosition(0, 1),
             RequiredFacing = null,
             RequiredProgressIds = [CommissionAccepted],
@@ -249,7 +249,7 @@ internal static class HollowMillScenarioDefinitionProvider
             TriggerId = "trigger.confront-miller",
             DisplayName = "The mill floor",
             LocationId = MillLocationId,
-            Floor = ExplorationFloor.GroundFloor,
+            Floor = "GroundFloor",
             Position = new GridPosition(2, 1),
             RequiredFacing = null,
             RequiredProgressIds = [CommissionAccepted],
@@ -268,7 +268,7 @@ internal static class HollowMillScenarioDefinitionProvider
             TriggerId = "trigger.cellar-informed-approach",
             DisplayName = "The flooded grain vault",
             LocationId = MillLocationId,
-            Floor = ExplorationFloor.UpperFloor,
+            Floor = "UpperFloor",
             Position = new GridPosition(2, 0),
             RequiredFacing = null,
             RequiredProgressIds = [HerbalistConsulted],
@@ -288,7 +288,7 @@ internal static class HollowMillScenarioDefinitionProvider
             TriggerId = "trigger.cellar-blind-approach",
             DisplayName = "The flooded grain vault",
             LocationId = MillLocationId,
-            Floor = ExplorationFloor.UpperFloor,
+            Floor = "UpperFloor",
             Position = new GridPosition(2, 0),
             RequiredFacing = null,
             RequiredProgressIds = [CommissionAccepted, MillerConfronted],
@@ -304,7 +304,7 @@ internal static class HollowMillScenarioDefinitionProvider
             TriggerId = "trigger.blight-root",
             DisplayName = "The blighted root",
             LocationId = MillLocationId,
-            Floor = ExplorationFloor.UpperFloor,
+            Floor = "UpperFloor",
             Position = new GridPosition(2, 1),
             RequiredFacing = null,
             RequiredProgressIds = [VerminRoused],
@@ -471,14 +471,14 @@ internal static class HollowMillScenarioDefinitionProvider
             MapId = "map.hollow-mill",
             Width = MapWidth,
             Height = MapHeight,
-            StartingFloor = ExplorationFloor.GroundFloor,
+            StartingFloor = "GroundFloor",
             StartingPosition = new GridPosition(1, 0),
             StartingFacing = ExplorationFacing.South,
             Floors =
             [
                 new ExplorationFloorDefinition
                 {
-                    Floor = ExplorationFloor.GroundFloor,
+                    Floor = "GroundFloor",
                     TraversablePositions =
                     [
                         new GridPosition(0, 0),
@@ -496,14 +496,14 @@ internal static class HollowMillScenarioDefinitionProvider
                         new StairDefinition
                         {
                             Position = new GridPosition(1, 2),
-                            DestinationFloor = ExplorationFloor.UpperFloor,
+                            DestinationFloor = "UpperFloor",
                             DestinationPosition = new GridPosition(0, 0)
                         }
                     ]
                 },
                 new ExplorationFloorDefinition
                 {
-                    Floor = ExplorationFloor.UpperFloor,
+                    Floor = "UpperFloor",
                     TraversablePositions =
                     [
                         new GridPosition(0, 0),
@@ -518,7 +518,7 @@ internal static class HollowMillScenarioDefinitionProvider
                         new StairDefinition
                         {
                             Position = new GridPosition(0, 0),
-                            DestinationFloor = ExplorationFloor.GroundFloor,
+                            DestinationFloor = "GroundFloor",
                             DestinationPosition = new GridPosition(1, 2)
                         }
                     ]

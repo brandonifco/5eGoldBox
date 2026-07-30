@@ -11,7 +11,7 @@ public sealed record ExplorationMapView
 {
     internal ExplorationMapView(
         string mapId,
-        ExplorationFloor floor,
+        string floor,
         int width,
         int height,
         IReadOnlyList<GridPosition> traversablePositions,
@@ -24,6 +24,13 @@ public sealed record ExplorationMapView
             throw new ArgumentException(
                 "Map ID is required.",
                 nameof(mapId));
+        }
+
+        if (string.IsNullOrWhiteSpace(floor))
+        {
+            throw new ArgumentException(
+                "Floor ID is required.",
+                nameof(floor));
         }
 
         ArgumentNullException.ThrowIfNull(traversablePositions);
@@ -42,7 +49,7 @@ public sealed record ExplorationMapView
 
     public string MapId { get; }
 
-    public ExplorationFloor Floor { get; }
+    public string Floor { get; }
 
     public int Width { get; }
 

@@ -73,7 +73,7 @@ public sealed class ScenarioDefinitionModelTests
         ExplorationMapDefinition map = Assert.IsType<ExplorationMapDefinition>(
             watchtower.ExplorationMap);
         Assert.Equal("map.ruined-watchtower", map.MapId);
-        Assert.Equal(ExplorationFloor.GroundFloor, map.StartingFloor);
+        Assert.Equal("GroundFloor", map.StartingFloor);
         Assert.Equal(ExplorationFacing.East, map.StartingFacing);
 
         TravelRouteDefinition route = Assert.Single(definition.Routes);
@@ -100,7 +100,7 @@ public sealed class ScenarioDefinitionModelTests
         Assert.Equal(
             WatchtowerRegionalRoute.WatchtowerLocationId,
             signal.LocationId);
-        Assert.Equal(ExplorationFloor.UpperFloor, signal.Floor);
+        Assert.Equal("UpperFloor", signal.Floor);
         Assert.Equal(
             new GridPosition(1, 1),
             signal.Position);
@@ -249,7 +249,7 @@ public sealed class ScenarioDefinitionModelTests
                     TriggerId = "trigger.watchtower-signal",
                     DisplayName = "Signal Mechanism",
                     LocationId = WatchtowerRegionalRoute.WatchtowerLocationId,
-                    Floor = ExplorationFloor.UpperFloor,
+                    Floor = "UpperFloor",
                     Position = new GridPosition(1, 1),
                     RequiredFacing = ExplorationFacing.East,
                     RequiredProgressIds =
@@ -294,14 +294,14 @@ public sealed class ScenarioDefinitionModelTests
             MapId = "map.ruined-watchtower",
             Width = 5,
             Height = 5,
-            StartingFloor = ExplorationFloor.GroundFloor,
+            StartingFloor = "GroundFloor",
             StartingPosition = new GridPosition(0, 0),
             StartingFacing = ExplorationFacing.East,
             Floors =
             [
                 new ExplorationFloorDefinition
                 {
-                    Floor = ExplorationFloor.GroundFloor,
+                    Floor = "GroundFloor",
                     TraversablePositions =
                     [
                         new GridPosition(0, 0),
@@ -312,14 +312,14 @@ public sealed class ScenarioDefinitionModelTests
                         new StairDefinition
                         {
                             Position = new GridPosition(1, 0),
-                            DestinationFloor = ExplorationFloor.UpperFloor,
+                            DestinationFloor = "UpperFloor",
                             DestinationPosition = new GridPosition(1, 0)
                         }
                     ]
                 },
                 new ExplorationFloorDefinition
                 {
-                    Floor = ExplorationFloor.UpperFloor,
+                    Floor = "UpperFloor",
                     TraversablePositions =
                     [
                         new GridPosition(1, 0),

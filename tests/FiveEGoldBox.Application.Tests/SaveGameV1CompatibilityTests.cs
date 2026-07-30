@@ -77,7 +77,7 @@ public sealed class SaveGameV1CompatibilityTests
             "map.ruined-watchtower",
             exploration.MapId);
         Assert.Equal(
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             exploration.Floor);
         Assert.Equal(
             ExplorationFacing.East,

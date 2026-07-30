@@ -183,7 +183,7 @@ public static class ExplorationRules
 
         if (!TryGetStairDestination(
             canonicalSession,
-            out ExplorationFloor destinationFloor,
+            out string destinationFloor,
             out GridPosition destinationPosition))
         {
             throw new InvalidOperationException(
@@ -289,7 +289,7 @@ public static class ExplorationRules
 
     private static bool TryGetStairDestination(
         ApplicationSessionState session,
-        out ExplorationFloor destinationFloor,
+        out string destinationFloor,
         out GridPosition destinationPosition)
     {
         ExplorationState exploration =

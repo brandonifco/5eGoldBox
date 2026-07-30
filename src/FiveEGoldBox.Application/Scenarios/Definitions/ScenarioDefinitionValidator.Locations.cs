@@ -1,4 +1,3 @@
-using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Core.Runtime;
 using FiveEGoldBox.Core.Validation;
 
@@ -84,11 +83,12 @@ internal static partial class ScenarioDefinitionValidator
 
         AddDuplicateIdIssues(
             issues,
-            map.Floors.Select(floor => floor.Floor.ToString()),
+            map.Floors.Select(floor => floor.Floor),
             "scenario.map.duplicate_floor",
             $"floor in {where}");
 
-        Dictionary<ExplorationFloor, HashSet<GridPosition>> traversable = [];
+        Dictionary<string, HashSet<GridPosition>> traversable =
+            new(StringComparer.Ordinal);
 
         foreach (ExplorationFloorDefinition floor in map.Floors)
         {
@@ -131,7 +131,7 @@ internal static partial class ScenarioDefinitionValidator
     /// mistake that only shows up when a player walks into it.
     private static void AddStairIssues(
         ExplorationMapDefinition map,
-        Dictionary<ExplorationFloor, HashSet<GridPosition>> traversable,
+        Dictionary<string, HashSet<GridPosition>> traversable,
         string where,
         List<ValidationIssue> issues)
     {
@@ -171,7 +171,7 @@ internal static partial class ScenarioDefinitionValidator
 
     private static void AddStartingStateIssues(
         ExplorationMapDefinition map,
-        Dictionary<ExplorationFloor, HashSet<GridPosition>> traversable,
+        Dictionary<string, HashSet<GridPosition>> traversable,
         string where,
         List<ValidationIssue> issues)
     {

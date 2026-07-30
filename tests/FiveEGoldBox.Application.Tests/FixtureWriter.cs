@@ -37,7 +37,7 @@ public sealed class FixtureWriter
             Exploration = new ExplorationState
             {
                 MapId = "map.ruined-watchtower",
-                Floor = ExplorationFloor.UpperFloor,
+                Floor = "UpperFloor",
                 Position = new GridPosition(1, 1),
                 Facing = ExplorationFacing.East
             }

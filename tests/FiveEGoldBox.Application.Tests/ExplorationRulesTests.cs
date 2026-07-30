@@ -161,7 +161,7 @@ public sealed class ExplorationRulesTests
 
         _ = ExplorationRules.CanUseStairs(stairs);
 
-        Assert.Equal(ExplorationFloor.GroundFloor, exploration.Floor);
+        Assert.Equal("GroundFloor", exploration.Floor);
         Assert.Equal(new GridPosition(2, 0), exploration.Position);
         Assert.Equal(8675309, stairs.RandomSeed);
         Assert.Equal(12, stairs.RandomValuesConsumed);
@@ -210,7 +210,7 @@ public sealed class ExplorationRulesTests
             "map.ruined-watchtower",
             exploration.MapId);
         Assert.Equal(
-            ExplorationFloor.GroundFloor,
+            "GroundFloor",
             exploration.Floor);
         Assert.Equal(
             new GridPosition(0, 0),
@@ -569,7 +569,7 @@ WatchtowerScenarioProgress
             ExplorationFacing.East,
             moved.Facing);
         Assert.Equal(
-            ExplorationFloor.GroundFloor,
+            "GroundFloor",
             moved.Floor);
     }
 
@@ -632,7 +632,7 @@ WatchtowerScenarioProgress
 
         Assert.True(result.DidMove);
         Assert.Equal(
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             moved.Floor);
         Assert.Equal(
             new GridPosition(2, 1),
@@ -708,13 +708,13 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
-    public void MoveForward_WithUndefinedFloor_Throws()
+    public void MoveForward_WithUnknownFloor_Throws()
     {
         AssertInvalidExplorationActionThrows(
             state => ExplorationRules.MoveForward(state),
             exploration => exploration with
             {
-                Floor = (ExplorationFloor)999
+                Floor = "floor.unsupported"
             });
     }
 
@@ -754,7 +754,7 @@ WatchtowerScenarioProgress
             AssertExploration(upper);
 
         Assert.Equal(
-            ExplorationFloor.UpperFloor,
+            "UpperFloor",
             exploration.Floor);
         Assert.Equal(
             new GridPosition(2, 0),
@@ -778,7 +778,7 @@ WatchtowerScenarioProgress
             AssertExploration(ground);
 
         Assert.Equal(
-            ExplorationFloor.GroundFloor,
+            "GroundFloor",
             exploration.Floor);
         Assert.Equal(
             new GridPosition(2, 0),
@@ -805,7 +805,7 @@ WatchtowerScenarioProgress
             atStairs.Party,
             upper.Party);
         Assert.Equal(
-            ExplorationFloor.GroundFloor,
+            "GroundFloor",
             original.Floor);
         Assert.Equal(
             new GridPosition(2, 0),
@@ -863,7 +863,7 @@ WatchtowerScenarioProgress
 
         Assert.NotNull(view);
         Assert.Equal("map.ruined-watchtower", view!.MapId);
-        Assert.Equal(ExplorationFloor.GroundFloor, view.Floor);
+        Assert.Equal("GroundFloor", view.Floor);
         Assert.Equal(3, view.Width);
         Assert.Equal(3, view.Height);
         Assert.Equal(new GridPosition(0, 0), view.PartyPosition);
@@ -907,7 +907,7 @@ WatchtowerScenarioProgress
         ExplorationMapView? view = ExplorationRules.Query(upper);
 
         Assert.NotNull(view);
-        Assert.Equal(ExplorationFloor.UpperFloor, view!.Floor);
+        Assert.Equal("UpperFloor", view!.Floor);
         Assert.Equal(
             new HashSet<GridPosition>
             {

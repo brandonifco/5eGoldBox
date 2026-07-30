@@ -127,13 +127,27 @@ WatchtowerScenarioProgress.RaidersDefeated)
             });
     }
 
-    [Fact]
-    public void Validate_WithUndefinedFloor_Throws()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void Validate_WithBlankFloor_Throws(
+        string? floor)
     {
         AssertInvalidExplorationThrows(
             exploration => exploration with
             {
-                Floor = (ExplorationFloor)999
+                Floor = floor!
+            });
+    }
+
+    [Fact]
+    public void Validate_WithUnknownFloor_Throws()
+    {
+        AssertInvalidExplorationThrows(
+            exploration => exploration with
+            {
+                Floor = "floor.unsupported"
             });
     }
 
