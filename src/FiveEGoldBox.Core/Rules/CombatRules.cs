@@ -2,7 +2,7 @@ using FiveEGoldBox.Core.Definitions;
 
 namespace FiveEGoldBox.Core.Rules;
 
-public static class CombatRules
+internal static class CombatRules
 {
     public static AttackResolutionResult ResolveAttack(
         D20RollMode rollMode,

@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Core.Rules;
 
-public static class AbilityCheckRules
+internal static class AbilityCheckRules
 {
     public static AbilityCheckResult ResolveAbilityCheck(
         Ability ability,

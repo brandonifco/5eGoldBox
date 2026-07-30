@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Core.Rules;
 
-public static class SkillContestRules
+internal static class SkillContestRules
 {
     public static SkillContestResult ResolveSkillContest(
         string firstSkillId,

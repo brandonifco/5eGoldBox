@@ -1,6 +1,6 @@
 namespace FiveEGoldBox.Core.Rules;
 
-public static class D20ContestRules
+internal static class D20ContestRules
 {
     public static D20ContestOutcome ResolveOutcome(
         int firstTotal,
