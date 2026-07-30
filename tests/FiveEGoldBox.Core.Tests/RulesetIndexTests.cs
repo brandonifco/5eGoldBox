@@ -1,5 +1,6 @@
 using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
+using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Core.Tests;
 
@@ -63,6 +64,25 @@ public sealed class RulesetIndexTests
             Name = "Test Item"
         };
 
+        MonsterDefinition monster = new()
+        {
+            Id = "monster.test",
+            Name = "Test Monster",
+            MaximumHitPoints = 10,
+            ArmorClass = 12,
+            MovementSpeedFeet = 30,
+            ZeroHitPointPolicy = CombatantZeroHitPointPolicy.Defeated,
+            AbilityModifiers = Enum.GetValues<Ability>()
+                .Select(ability => new MonsterAbilityModifier
+                {
+                    Ability = ability,
+                    Modifier = 0
+                })
+                .ToArray(),
+            ProficiencyBonus = 2,
+            Weapons = [new MonsterWeaponDefinition { WeaponId = "weapon.test" }]
+        };
+
         RulesetDefinition ruleset = new()
         {
             Id = "ruleset.test",
@@ -73,6 +93,7 @@ public sealed class RulesetIndexTests
             Skills = [skill],
             Armors = [armor],
             Weapons = [weapon],
+            Monsters = [monster],
             EquipmentItems = [equipmentItem]
         };
 
@@ -87,6 +108,9 @@ public sealed class RulesetIndexTests
         Assert.Same(index.Ruleset.Skills.Single(), index.SkillsById["skill.test"]);
         Assert.Same(index.Ruleset.Armors.Single(), index.ArmorsById["armor.test"]);
         Assert.Same(index.Ruleset.Weapons.Single(), index.WeaponsById["weapon.test"]);
+        Assert.Same(
+            index.Ruleset.Monsters.Single(),
+            index.MonstersById["monster.test"]);
         Assert.Same(
             index.Ruleset.EquipmentItems.Single(),
             index.EquipmentItemsById["item.test"]);

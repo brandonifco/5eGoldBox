@@ -142,7 +142,7 @@
         "Combatants": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/CombatantDefinitionV1"
+            "$ref": "#/$defs/EncounterCombatantDefinitionV1"
           }
         },
         "EncounterId": {
@@ -196,111 +196,28 @@
         "Y"
       ]
     },
-    "CombatantDefinitionV1": {
+    "EncounterCombatantDefinitionV1": {
       "type": "object",
       "properties": {
-        "AbilityModifiers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/CombatantAbilityModifierV1"
-          }
-        },
-        "ArmorClass": {
-          "type": "integer"
-        },
         "CombatantId": {
           "type": "string"
         },
-        "DisplayName": {
+        "MonsterId": {
           "type": "string"
-        },
-        "IsProficientWithWeapons": {
-          "type": "boolean"
-        },
-        "MaximumHitPoints": {
-          "type": "integer"
-        },
-        "MovementSpeedFeet": {
-          "type": "integer"
-        },
-        "ProficiencyBonus": {
-          "type": "integer"
         },
         "SideId": {
           "type": "string"
         },
         "StartingPosition": {
           "$ref": "#/$defs/GridPositionV1"
-        },
-        "Weapons": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/CombatantWeaponDefinitionV1"
-          }
-        },
-        "ZeroHitPointPolicy": {
-          "type": "string",
-          "enum": [
-            "DeathSavingThrows",
-            "Defeated"
-          ]
         }
       },
       "additionalProperties": false,
       "required": [
-        "AbilityModifiers",
-        "ArmorClass",
         "CombatantId",
-        "DisplayName",
-        "MaximumHitPoints",
-        "MovementSpeedFeet",
-        "ProficiencyBonus",
+        "MonsterId",
         "SideId",
-        "StartingPosition",
-        "Weapons",
-        "ZeroHitPointPolicy"
-      ]
-    },
-    "CombatantAbilityModifierV1": {
-      "type": "object",
-      "properties": {
-        "Ability": {
-          "type": "string",
-          "enum": [
-            "Strength",
-            "Dexterity",
-            "Constitution",
-            "Intelligence",
-            "Wisdom",
-            "Charisma"
-          ]
-        },
-        "Modifier": {
-          "type": "integer"
-        }
-      },
-      "additionalProperties": false,
-      "required": [
-        "Ability",
-        "Modifier"
-      ]
-    },
-    "CombatantWeaponDefinitionV1": {
-      "type": "object",
-      "properties": {
-        "AmmunitionItemId": {
-          "type": "string"
-        },
-        "AmmunitionQuantity": {
-          "type": "integer"
-        },
-        "WeaponId": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false,
-      "required": [
-        "WeaponId"
+        "StartingPosition"
       ]
     },
     "EncounterOutcomeDefinitionV1": {

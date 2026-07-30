@@ -52,6 +52,13 @@ public static partial class RulesetValidator
 
         AddDuplicateIdIssues(
             issues,
+            ruleset.Monsters,
+            "ruleset.monsters.duplicate_id",
+            "monster",
+            monster => monster.Id);
+
+        AddDuplicateIdIssues(
+            issues,
             ruleset.Spells,
             "ruleset.spells.duplicate_id",
             "spell",

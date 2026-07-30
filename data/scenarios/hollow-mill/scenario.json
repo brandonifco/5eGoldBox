@@ -132,47 +132,15 @@
             "Combatants": [
                 {
                     "CombatantId": "combatant.mill-rat.first",
-                    "DisplayName": "Giant rat",
+                    "MonsterId": "monster.mill-rat",
                     "SideId": "side.mill-vermin",
-                    "MaximumHitPoints": 6,
-                    "ArmorClass": 11,
-                    "MovementSpeedFeet": 30,
-                    "StartingPosition": { "X": 3, "Y": 1 },
-                    "ZeroHitPointPolicy": "Defeated",
-                    "AbilityModifiers": [
-                        { "Ability": "Strength", "Modifier": -1 },
-                        { "Ability": "Dexterity", "Modifier": 1 },
-                        { "Ability": "Constitution", "Modifier": 0 },
-                        { "Ability": "Intelligence", "Modifier": -4 },
-                        { "Ability": "Wisdom", "Modifier": 0 },
-                        { "Ability": "Charisma", "Modifier": -3 }
-                    ],
-                    "ProficiencyBonus": 2,
-                    "Weapons": [
-                        { "WeaponId": "weapon.mill-rat.bite" }
-                    ]
+                    "StartingPosition": { "X": 3, "Y": 1 }
                 },
                 {
                     "CombatantId": "combatant.mill-rat.second",
-                    "DisplayName": "Giant rat",
+                    "MonsterId": "monster.mill-rat",
                     "SideId": "side.mill-vermin",
-                    "MaximumHitPoints": 6,
-                    "ArmorClass": 11,
-                    "MovementSpeedFeet": 30,
-                    "StartingPosition": { "X": 3, "Y": 2 },
-                    "ZeroHitPointPolicy": "Defeated",
-                    "AbilityModifiers": [
-                        { "Ability": "Strength", "Modifier": -1 },
-                        { "Ability": "Dexterity", "Modifier": 1 },
-                        { "Ability": "Constitution", "Modifier": 0 },
-                        { "Ability": "Intelligence", "Modifier": -4 },
-                        { "Ability": "Wisdom", "Modifier": 0 },
-                        { "Ability": "Charisma", "Modifier": -3 }
-                    ],
-                    "ProficiencyBonus": 2,
-                    "Weapons": [
-                        { "WeaponId": "weapon.mill-rat.bite" }
-                    ]
+                    "StartingPosition": { "X": 3, "Y": 2 }
                 }
             ],
             "Outcome": {
@@ -196,69 +164,21 @@
             "Combatants": [
                 {
                     "CombatantId": "combatant.mill-rat.first",
-                    "DisplayName": "Giant rat",
+                    "MonsterId": "monster.mill-rat",
                     "SideId": "side.mill-vermin",
-                    "MaximumHitPoints": 6,
-                    "ArmorClass": 11,
-                    "MovementSpeedFeet": 30,
-                    "StartingPosition": { "X": 3, "Y": 1 },
-                    "ZeroHitPointPolicy": "Defeated",
-                    "AbilityModifiers": [
-                        { "Ability": "Strength", "Modifier": -1 },
-                        { "Ability": "Dexterity", "Modifier": 1 },
-                        { "Ability": "Constitution", "Modifier": 0 },
-                        { "Ability": "Intelligence", "Modifier": -4 },
-                        { "Ability": "Wisdom", "Modifier": 0 },
-                        { "Ability": "Charisma", "Modifier": -3 }
-                    ],
-                    "ProficiencyBonus": 2,
-                    "Weapons": [
-                        { "WeaponId": "weapon.mill-rat.bite" }
-                    ]
+                    "StartingPosition": { "X": 3, "Y": 1 }
                 },
                 {
                     "CombatantId": "combatant.mill-rat.second",
-                    "DisplayName": "Giant rat",
+                    "MonsterId": "monster.mill-rat",
                     "SideId": "side.mill-vermin",
-                    "MaximumHitPoints": 6,
-                    "ArmorClass": 11,
-                    "MovementSpeedFeet": 30,
-                    "StartingPosition": { "X": 3, "Y": 2 },
-                    "ZeroHitPointPolicy": "Defeated",
-                    "AbilityModifiers": [
-                        { "Ability": "Strength", "Modifier": -1 },
-                        { "Ability": "Dexterity", "Modifier": 1 },
-                        { "Ability": "Constitution", "Modifier": 0 },
-                        { "Ability": "Intelligence", "Modifier": -4 },
-                        { "Ability": "Wisdom", "Modifier": 0 },
-                        { "Ability": "Charisma", "Modifier": -3 }
-                    ],
-                    "ProficiencyBonus": 2,
-                    "Weapons": [
-                        { "WeaponId": "weapon.mill-rat.bite" }
-                    ]
+                    "StartingPosition": { "X": 3, "Y": 2 }
                 },
                 {
                     "CombatantId": "combatant.mill-thrall",
-                    "DisplayName": "Miller's thrall",
+                    "MonsterId": "monster.mill-thrall",
                     "SideId": "side.mill-vermin",
-                    "MaximumHitPoints": 14,
-                    "ArmorClass": 13,
-                    "MovementSpeedFeet": 25,
-                    "StartingPosition": { "X": 3, "Y": 0 },
-                    "ZeroHitPointPolicy": "Defeated",
-                    "AbilityModifiers": [
-                        { "Ability": "Strength", "Modifier": 2 },
-                        { "Ability": "Dexterity", "Modifier": 0 },
-                        { "Ability": "Constitution", "Modifier": 2 },
-                        { "Ability": "Intelligence", "Modifier": -2 },
-                        { "Ability": "Wisdom", "Modifier": -1 },
-                        { "Ability": "Charisma", "Modifier": -2 }
-                    ],
-                    "ProficiencyBonus": 2,
-                    "Weapons": [
-                        { "WeaponId": "weapon.mill-thrall.cleaver" }
-                    ]
+                    "StartingPosition": { "X": 3, "Y": 0 }
                 }
             ],
             "Outcome": {

@@ -1,5 +1,6 @@
 using FiveEGoldBox.Application.Campaigns;
 using FiveEGoldBox.Application.Randomness;
+using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Validation;
@@ -58,7 +59,21 @@ public static class ContentPackValidation
             return ParseFailure(exception);
         }
 
-        return ScenarioDefinitionValidator.Validate(definition);
+        ValidatedRuleset? ruleset;
+
+        try
+        {
+            ruleset = RulesetRegistry.Resolve(definition.RulesetId);
+        }
+        catch (ArgumentException)
+        {
+            // Same defensive resolution ScenarioDefinitionRegistry uses: an
+            // unresolvable ruleset just means the cross-pack MonsterId checks
+            // below have nothing to check against.
+            ruleset = null;
+        }
+
+        return ScenarioDefinitionValidator.Validate(definition, ruleset);
     }
 
     public static ValidationResult ValidateCampaignPack(

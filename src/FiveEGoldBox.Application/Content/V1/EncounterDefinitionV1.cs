@@ -16,7 +16,7 @@ internal sealed record EncounterDefinitionV1
 
     public required IReadOnlyList<GridPositionV1> PartyStartingPositions { get; init; }
 
-    public required IReadOnlyList<CombatantDefinitionV1> Combatants { get; init; }
+    public required IReadOnlyList<EncounterCombatantDefinitionV1> Combatants { get; init; }
 
     public required EncounterOutcomeDefinitionV1 Outcome { get; init; }
 }

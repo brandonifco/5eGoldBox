@@ -77,6 +77,10 @@ internal static class RulesetPackMapper
                 .SelectMany(pack => pack.Weapons)
                 .Select(ToRuntimeWeapon)
                 .ToArray(),
+            Monsters = packs
+                .SelectMany(pack => pack.Monsters)
+                .Select(ToRuntimeMonster)
+                .ToArray(),
             Spells = packs
                 .SelectMany(pack => pack.Spells)
                 .Select(ToRuntimeSpell)
@@ -301,6 +305,50 @@ internal static class RulesetPackMapper
             AmmunitionItemId = weapon.AmmunitionItemId,
             WeightPounds = weapon.WeightPounds,
             CostInCopperPieces = weapon.CostInCopperPieces
+        };
+    }
+
+    private static MonsterDefinition ToRuntimeMonster(
+        MonsterDefinitionV1 monster)
+    {
+        return new MonsterDefinition
+        {
+            Id = monster.Id,
+            Name = monster.Name,
+            MaximumHitPoints = monster.MaximumHitPoints,
+            ArmorClass = monster.ArmorClass,
+            MovementSpeedFeet = monster.MovementSpeedFeet,
+            ZeroHitPointPolicy = ScenarioPackMapper.ToRuntimeZeroHitPointPolicy(
+                monster.ZeroHitPointPolicy),
+            AbilityModifiers = monster.AbilityModifiers
+                .Select(ToRuntimeMonsterAbilityModifier)
+                .ToArray(),
+            ProficiencyBonus = monster.ProficiencyBonus,
+            IsProficientWithWeapons = monster.IsProficientWithWeapons,
+            Weapons = monster.Weapons
+                .Select(ToRuntimeMonsterWeapon)
+                .ToArray()
+        };
+    }
+
+    private static MonsterAbilityModifier ToRuntimeMonsterAbilityModifier(
+        MonsterAbilityModifierV1 abilityModifier)
+    {
+        return new MonsterAbilityModifier
+        {
+            Ability = ToRuntimeAbility(abilityModifier.Ability),
+            Modifier = abilityModifier.Modifier
+        };
+    }
+
+    private static MonsterWeaponDefinition ToRuntimeMonsterWeapon(
+        MonsterWeaponDefinitionV1 weapon)
+    {
+        return new MonsterWeaponDefinition
+        {
+            WeaponId = weapon.WeaponId,
+            AmmunitionItemId = weapon.AmmunitionItemId,
+            AmmunitionQuantity = weapon.AmmunitionQuantity
         };
     }
 

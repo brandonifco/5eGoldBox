@@ -52,7 +52,7 @@ internal static class ScenarioEncounterFactory
             initiativeBonuses.Add(participant.InitiativeBonus);
         }
 
-        foreach (CombatantDefinition combatant in definition.Combatants)
+        foreach (EncounterCombatantDefinition combatant in definition.Combatants)
         {
             ScenarioEncounterCombatant opponent =
                 ScenarioCombatantMapper.CreateParticipant(

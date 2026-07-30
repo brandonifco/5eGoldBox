@@ -1,3 +1,4 @@
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Validation;
 
 namespace FiveEGoldBox.Application.Scenarios.Definitions;
@@ -9,8 +10,14 @@ namespace FiveEGoldBox.Application.Scenarios.Definitions;
 /// do with a failed result; loading refuses, tooling reports.
 internal static partial class ScenarioDefinitionValidator
 {
+    /// The ruleset is optional because not every caller has one resolvable
+    /// (a scenario referencing an unregistered ruleset ID, for instance) --
+    /// when it is available, cross-pack references like a combatant's
+    /// MonsterId are checked against it; when it is not, those checks are
+    /// simply skipped rather than failing the whole validation.
     internal static ValidationResult Validate(
-        ScenarioDefinition definition)
+        ScenarioDefinition definition,
+        ValidatedRuleset? ruleset = null)
     {
         ArgumentNullException.ThrowIfNull(definition);
 
@@ -21,7 +28,7 @@ internal static partial class ScenarioDefinitionValidator
         AddPartyRequirementIssues(definition, issues);
         AddLocationIssues(definition, issues);
         AddRouteIssues(definition, issues);
-        AddEncounterIssues(definition, issues);
+        AddEncounterIssues(definition, ruleset, issues);
         AddEncounterOutcomeIssues(definition, issues);
         AddTriggerIssues(definition, issues);
         AddDecisionIssues(definition, issues);

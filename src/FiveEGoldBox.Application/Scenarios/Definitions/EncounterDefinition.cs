@@ -22,7 +22,7 @@ internal sealed record EncounterDefinition
     internal required IReadOnlyList<GridPosition> PartyStartingPositions { get; init; }
 
     /// Everyone the scenario itself places on the battlefield.
-    internal required IReadOnlyList<CombatantDefinition> Combatants { get; init; }
+    internal required IReadOnlyList<EncounterCombatantDefinition> Combatants { get; init; }
 
     /// Where winning and losing leave the scenario.
     internal required EncounterOutcomeDefinition Outcome { get; init; }

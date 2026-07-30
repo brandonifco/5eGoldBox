@@ -95,47 +95,15 @@
             "Combatants": [
                 {
                     "CombatantId": "combatant.chapel-guardian.first",
-                    "DisplayName": "Drowned acolyte",
+                    "MonsterId": "monster.chapel-guardian.acolyte",
                     "SideId": "side.chapel-guardians",
-                    "MaximumHitPoints": 7,
-                    "ArmorClass": 12,
-                    "MovementSpeedFeet": 25,
-                    "StartingPosition": { "X": 3, "Y": 1 },
-                    "ZeroHitPointPolicy": "Defeated",
-                    "AbilityModifiers": [
-                        { "Ability": "Strength", "Modifier": 0 },
-                        { "Ability": "Dexterity", "Modifier": 1 },
-                        { "Ability": "Constitution", "Modifier": 2 },
-                        { "Ability": "Intelligence", "Modifier": -2 },
-                        { "Ability": "Wisdom", "Modifier": 0 },
-                        { "Ability": "Charisma", "Modifier": -3 }
-                    ],
-                    "ProficiencyBonus": 2,
-                    "Weapons": [
-                        { "WeaponId": "weapon.chapel-guardian.dagger" }
-                    ]
+                    "StartingPosition": { "X": 3, "Y": 1 }
                 },
                 {
                     "CombatantId": "combatant.chapel-guardian.second",
-                    "DisplayName": "Drowned sexton",
+                    "MonsterId": "monster.chapel-guardian.sexton",
                     "SideId": "side.chapel-guardians",
-                    "MaximumHitPoints": 7,
-                    "ArmorClass": 12,
-                    "MovementSpeedFeet": 25,
-                    "StartingPosition": { "X": 3, "Y": 2 },
-                    "ZeroHitPointPolicy": "Defeated",
-                    "AbilityModifiers": [
-                        { "Ability": "Strength", "Modifier": 0 },
-                        { "Ability": "Dexterity", "Modifier": 1 },
-                        { "Ability": "Constitution", "Modifier": 2 },
-                        { "Ability": "Intelligence", "Modifier": -2 },
-                        { "Ability": "Wisdom", "Modifier": 0 },
-                        { "Ability": "Charisma", "Modifier": -3 }
-                    ],
-                    "ProficiencyBonus": 2,
-                    "Weapons": [
-                        { "WeaponId": "weapon.chapel-guardian.dagger" }
-                    ]
+                    "StartingPosition": { "X": 3, "Y": 2 }
                 }
             ],
             "Outcome": {

@@ -231,6 +231,116 @@
             "ReachFeet": 5
         }
     ],
+    "Monsters": [
+        {
+            "Id": "monster.watchtower-raider.marauder",
+            "Name": "Raider marauder",
+            "MaximumHitPoints": 9,
+            "ArmorClass": 13,
+            "MovementSpeedFeet": 30,
+            "ZeroHitPointPolicy": "Defeated",
+            "AbilityModifiers": [
+                { "Ability": "Strength", "Modifier": 1 },
+                { "Ability": "Dexterity", "Modifier": 2 },
+                { "Ability": "Constitution", "Modifier": 1 },
+                { "Ability": "Intelligence", "Modifier": 0 },
+                { "Ability": "Wisdom", "Modifier": 0 },
+                { "Ability": "Charisma", "Modifier": 0 }
+            ],
+            "ProficiencyBonus": 2,
+            "Weapons": [ { "WeaponId": "weapon.watchtower-raider.scimitar" } ]
+        },
+        {
+            "Id": "monster.watchtower-raider.archer",
+            "Name": "Raider archer",
+            "MaximumHitPoints": 8,
+            "ArmorClass": 13,
+            "MovementSpeedFeet": 30,
+            "ZeroHitPointPolicy": "Defeated",
+            "AbilityModifiers": [
+                { "Ability": "Strength", "Modifier": 1 },
+                { "Ability": "Dexterity", "Modifier": 2 },
+                { "Ability": "Constitution", "Modifier": 1 },
+                { "Ability": "Intelligence", "Modifier": 0 },
+                { "Ability": "Wisdom", "Modifier": 0 },
+                { "Ability": "Charisma", "Modifier": 0 }
+            ],
+            "ProficiencyBonus": 2,
+            "Weapons": [ { "WeaponId": "weapon.watchtower-raider.shortbow", "AmmunitionItemId": "item.arrow", "AmmunitionQuantity": 12 } ]
+        },
+        {
+            "Id": "monster.chapel-guardian.acolyte",
+            "Name": "Drowned acolyte",
+            "MaximumHitPoints": 7,
+            "ArmorClass": 12,
+            "MovementSpeedFeet": 25,
+            "ZeroHitPointPolicy": "Defeated",
+            "AbilityModifiers": [
+                { "Ability": "Strength", "Modifier": 0 },
+                { "Ability": "Dexterity", "Modifier": 1 },
+                { "Ability": "Constitution", "Modifier": 2 },
+                { "Ability": "Intelligence", "Modifier": -2 },
+                { "Ability": "Wisdom", "Modifier": 0 },
+                { "Ability": "Charisma", "Modifier": -3 }
+            ],
+            "ProficiencyBonus": 2,
+            "Weapons": [ { "WeaponId": "weapon.chapel-guardian.dagger" } ]
+        },
+        {
+            "Id": "monster.chapel-guardian.sexton",
+            "Name": "Drowned sexton",
+            "MaximumHitPoints": 7,
+            "ArmorClass": 12,
+            "MovementSpeedFeet": 25,
+            "ZeroHitPointPolicy": "Defeated",
+            "AbilityModifiers": [
+                { "Ability": "Strength", "Modifier": 0 },
+                { "Ability": "Dexterity", "Modifier": 1 },
+                { "Ability": "Constitution", "Modifier": 2 },
+                { "Ability": "Intelligence", "Modifier": -2 },
+                { "Ability": "Wisdom", "Modifier": 0 },
+                { "Ability": "Charisma", "Modifier": -3 }
+            ],
+            "ProficiencyBonus": 2,
+            "Weapons": [ { "WeaponId": "weapon.chapel-guardian.dagger" } ]
+        },
+        {
+            "Id": "monster.mill-rat",
+            "Name": "Giant rat",
+            "MaximumHitPoints": 6,
+            "ArmorClass": 11,
+            "MovementSpeedFeet": 30,
+            "ZeroHitPointPolicy": "Defeated",
+            "AbilityModifiers": [
+                { "Ability": "Strength", "Modifier": -1 },
+                { "Ability": "Dexterity", "Modifier": 1 },
+                { "Ability": "Constitution", "Modifier": 0 },
+                { "Ability": "Intelligence", "Modifier": -4 },
+                { "Ability": "Wisdom", "Modifier": 0 },
+                { "Ability": "Charisma", "Modifier": -3 }
+            ],
+            "ProficiencyBonus": 2,
+            "Weapons": [ { "WeaponId": "weapon.mill-rat.bite" } ]
+        },
+        {
+            "Id": "monster.mill-thrall",
+            "Name": "Miller's thrall",
+            "MaximumHitPoints": 14,
+            "ArmorClass": 13,
+            "MovementSpeedFeet": 25,
+            "ZeroHitPointPolicy": "Defeated",
+            "AbilityModifiers": [
+                { "Ability": "Strength", "Modifier": 2 },
+                { "Ability": "Dexterity", "Modifier": 0 },
+                { "Ability": "Constitution", "Modifier": 2 },
+                { "Ability": "Intelligence", "Modifier": -2 },
+                { "Ability": "Wisdom", "Modifier": -1 },
+                { "Ability": "Charisma", "Modifier": -2 }
+            ],
+            "ProficiencyBonus": 2,
+            "Weapons": [ { "WeaponId": "weapon.mill-thrall.cleaver" } ]
+        }
+    ],
     "Spells": [
         {
             "Id": "spell.fire-bolt",

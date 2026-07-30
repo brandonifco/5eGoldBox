@@ -1,6 +1,7 @@
 using FiveEGoldBox.Application.Content;
 using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Rules;
+using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Tests;
 
@@ -86,6 +87,32 @@ public sealed class RulesetPackLoaderTests
                     "VersatileDamage": { "Count": 1, "Die": "D10" },
                     "DamageType": "slashing",
                     "Properties": [ "weapon_property.versatile" ]
+                }
+            ],
+            "Monsters": [
+                {
+                    "Id": "monster.test",
+                    "Name": "Test Monster",
+                    "MaximumHitPoints": 12,
+                    "ArmorClass": 13,
+                    "MovementSpeedFeet": 30,
+                    "ZeroHitPointPolicy": "Defeated",
+                    "AbilityModifiers": [
+                        { "Ability": "Strength", "Modifier": 2 },
+                        { "Ability": "Dexterity", "Modifier": 1 },
+                        { "Ability": "Constitution", "Modifier": 1 },
+                        { "Ability": "Intelligence", "Modifier": 0 },
+                        { "Ability": "Wisdom", "Modifier": 0 },
+                        { "Ability": "Charisma", "Modifier": 0 }
+                    ],
+                    "ProficiencyBonus": 2,
+                    "Weapons": [
+                        {
+                            "WeaponId": "weapon.test",
+                            "AmmunitionItemId": "item.test",
+                            "AmmunitionQuantity": 5
+                        }
+                    ]
                 }
             ],
             "Spells": [
@@ -201,6 +228,23 @@ public sealed class RulesetPackLoaderTests
         Assert.Equal(DieType.D8, weapon.Damage.Die);
         Assert.NotNull(weapon.VersatileDamage);
         Assert.Equal(DieType.D10, weapon.VersatileDamage.Die);
+
+        MonsterDefinition monster = Assert.Single(ruleset.Monsters);
+        Assert.Equal(12, monster.MaximumHitPoints);
+        Assert.Equal(13, monster.ArmorClass);
+        Assert.Equal(
+            CombatantZeroHitPointPolicy.Defeated,
+            monster.ZeroHitPointPolicy);
+        Assert.Equal(6, monster.AbilityModifiers.Count);
+        Assert.Contains(
+            monster.AbilityModifiers,
+            modifier => modifier.Ability == Ability.Strength
+                && modifier.Modifier == 2);
+        MonsterWeaponDefinition monsterWeapon =
+            Assert.Single(monster.Weapons);
+        Assert.Equal("weapon.test", monsterWeapon.WeaponId);
+        Assert.Equal("item.test", monsterWeapon.AmmunitionItemId);
+        Assert.Equal(5, monsterWeapon.AmmunitionQuantity);
 
         SpellDefinition spell = Assert.Single(ruleset.Spells);
         Assert.Equal(SpellCostKind.Slot, spell.Cost);
