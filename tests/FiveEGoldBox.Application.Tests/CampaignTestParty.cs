@@ -16,7 +16,7 @@ internal static class CampaignTestParty
     {
         return CampaignPartyFactory.CreateStartingParty(
             CampaignRegistry.Resolve(
-                FrontierCampaignContent.CampaignId));
+                FrontierCampaignIds.CampaignId));
     }
 
     internal static PartyMemberState[] CreateMembers()

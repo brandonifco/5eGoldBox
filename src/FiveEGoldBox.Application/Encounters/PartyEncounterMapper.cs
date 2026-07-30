@@ -22,7 +22,7 @@ internal static class PartyEncounterMapper
             CampaignCharacterDraftFactory.CreateDraft(
                 member,
                 CampaignRegistry.Resolve(
-                    FrontierCampaignContent.CampaignId),
+                    FrontierCampaignIds.CampaignId),
                 ruleset);
         CharacterSnapshot snapshot =
             new CharacterResolver(ruleset).Resolve(draft);

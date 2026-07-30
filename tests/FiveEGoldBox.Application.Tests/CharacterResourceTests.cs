@@ -238,7 +238,7 @@ public sealed class CharacterResourceTests
 
     private static CampaignDefinition Campaign()
     {
-        return CampaignRegistry.Resolve(FrontierCampaignContent.CampaignId);
+        return CampaignRegistry.Resolve(FrontierCampaignIds.CampaignId);
     }
 
     /// A campaign of one Cleric, so the mechanism is exercised against real

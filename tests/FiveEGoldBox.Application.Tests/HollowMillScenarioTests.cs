@@ -371,7 +371,7 @@ public sealed class HollowMillScenarioTests
         CampaignDefinition campaign = CampaignRegistry.ResolveForScenario(
             HollowMillScenarioIds.ScenarioId);
 
-        Assert.Equal(FrontierCampaignContent.CampaignId, campaign.CampaignId);
+        Assert.Equal(FrontierCampaignIds.CampaignId, campaign.CampaignId);
     }
 
     private static ApplicationSessionState CreateSession()

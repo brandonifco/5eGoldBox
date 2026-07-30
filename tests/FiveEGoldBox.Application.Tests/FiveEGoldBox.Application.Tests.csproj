@@ -19,11 +19,6 @@
   <ItemGroup>
     <None Include="Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Fixtures\**\*.txt" CopyToOutputDirectory="PreserveNewest" />
-    <!-- The real content pack, not a copy of it: proves the actual file
-         that will replace FrontierCampaignContent is equivalent to it. -->
-    <None Include="..\..\data\campaigns\frontier\campaign.json"
-          Link="Fixtures\data-campaigns-frontier-campaign.json"
-          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

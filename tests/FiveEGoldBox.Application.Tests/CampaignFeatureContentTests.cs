@@ -81,10 +81,10 @@ public sealed class CampaignFeatureContentTests
     {
         Assert.Contains(
             CampaignRegistry.Resolve(
-                FrontierCampaignContent.CampaignId)
+                FrontierCampaignIds.CampaignId)
                 .Roster
                 .Take(CampaignRegistry.Resolve(
-                    FrontierCampaignContent.CampaignId)
+                    FrontierCampaignIds.CampaignId)
                     .ActivePartySize),
             character => character.ClassId
                 == CampaignRulesetIds.RogueClassId);

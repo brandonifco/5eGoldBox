@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using FiveEGoldBox.Application.Content;
 
 namespace FiveEGoldBox.Application.Campaigns;
 
@@ -14,8 +15,7 @@ internal static class CampaignRegistry
         Factories = new Dictionary<string, Func<CampaignDefinition>>(
             StringComparer.Ordinal)
         {
-            [FrontierCampaignContent.CampaignId] =
-                FrontierCampaignContent.CreateDefinition
+            [FrontierCampaignIds.CampaignId] = LoadFrontierCampaign
         };
 
     private static readonly ConcurrentDictionary<string, CampaignDefinition>
@@ -82,5 +82,13 @@ internal static class CampaignRegistry
         CampaignDefinitionValidator.Validate(campaign);
 
         return campaign;
+    }
+
+    private static CampaignDefinition LoadFrontierCampaign()
+    {
+        string packPath = DataDirectoryLocator.ResolveDataFilePath(
+            Path.Combine("campaigns", "frontier", "campaign.json"));
+
+        return CampaignPackLoader.Load(packPath);
     }
 }

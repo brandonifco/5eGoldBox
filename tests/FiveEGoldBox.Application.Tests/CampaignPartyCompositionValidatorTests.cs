@@ -150,7 +150,7 @@ public sealed class CampaignPartyCompositionValidatorTests
     private static CampaignDefinition Campaign()
     {
         return CampaignRegistry.Resolve(
-            FrontierCampaignContent.CampaignId);
+            FrontierCampaignIds.CampaignId);
     }
 
     private static PartyState CreateParty()
