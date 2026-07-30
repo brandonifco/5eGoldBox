@@ -232,7 +232,7 @@ internal static class EncounterSessionValidator
                 "Party participant");
         }
 
-        foreach (CombatantDefinition combatant in definition.Combatants)
+        foreach (EncounterCombatantDefinition combatant in definition.Combatants)
         {
             RequireParticipantOnSide(
                 state,

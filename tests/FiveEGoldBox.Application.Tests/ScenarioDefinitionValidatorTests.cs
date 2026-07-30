@@ -1,5 +1,7 @@
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Scenarios.Definitions;
+using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 using FiveEGoldBox.Core.Validation;
 
@@ -49,8 +51,7 @@ public sealed class ScenarioDefinitionValidatorTests
     [InlineData("scenario.encounters.insufficient_deployment")]
     [InlineData("scenario.combatants.overlap")]
     [InlineData("scenario.combatants.party_side")]
-    [InlineData("scenario.combatants.hit_points")]
-    [InlineData("scenario.combatants.ammunition_incomplete")]
+    [InlineData("scenario.combatants.monster_id_required")]
     [InlineData("scenario.party_requirement.minimum_members")]
     public void Validate_RejectsBrokenContent(string expectedCode)
     {
@@ -126,6 +127,106 @@ public sealed class ScenarioDefinitionValidatorTests
         Assert.Contains(
             result.Issues,
             issue => issue.Code == "scenario.routes.final_step");
+    }
+
+    /// New behaviour, and not reachable through the Theory list above -- that
+    /// list validates a scenario alone, with no ruleset supplied, and the
+    /// check below only runs when one is available.
+    [Fact]
+    public void Validate_ReportsAMonsterIdThatDoesNotResolveAgainstTheRuleset()
+    {
+        ScenarioDefinition definition =
+            ScenarioDefinitionModelTests.CreateWatchtowerDefinition();
+        ValidatedRuleset ruleset = CreateRulesetWithMonsters([]);
+
+        ValidationResult result = ScenarioDefinitionValidator.Validate(
+            definition,
+            ruleset);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code
+                == "scenario.combatants.monster_id_unresolved");
+    }
+
+    /// The same definition against a ruleset that actually declares the
+    /// monsters it references resolves cleanly -- proof the check above is a
+    /// real cross-reference rather than one that always fires.
+    [Fact]
+    public void Validate_AcceptsAMonsterIdThatResolvesAgainstTheRuleset()
+    {
+        ScenarioDefinition definition =
+            ScenarioDefinitionModelTests.CreateWatchtowerDefinition();
+        ValidatedRuleset ruleset = CreateRulesetWithMonsters(
+            definition.Encounters[0].Combatants
+                .Select(combatant => combatant.MonsterId)
+                .ToArray());
+
+        ValidationResult result = ScenarioDefinitionValidator.Validate(
+            definition,
+            ruleset);
+
+        Assert.DoesNotContain(
+            result.Issues,
+            issue => issue.Code
+                == "scenario.combatants.monster_id_unresolved");
+    }
+
+    private static ValidatedRuleset CreateRulesetWithMonsters(
+        IReadOnlyList<string> monsterIds)
+    {
+        const string weaponId = "weapon.test";
+
+        RulesetLoadResult result = ValidatedRuleset.Load(new RulesetDefinition
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Weapons =
+            [
+                new WeaponDefinition
+                {
+                    Id = weaponId,
+                    Name = "Test Weapon",
+                    Category = WeaponCategory.Simple,
+                    AttackKind = WeaponAttackKind.Melee,
+                    Damage = new DamageDice { Count = 1, Die = DieType.D4 },
+                    DamageType = "damage.bludgeoning"
+                }
+            ],
+            Monsters = monsterIds
+                .Select(monsterId => new MonsterDefinition
+                {
+                    Id = monsterId,
+                    Name = monsterId,
+                    MaximumHitPoints = 1,
+                    ArmorClass = 10,
+                    MovementSpeedFeet = 30,
+                    ZeroHitPointPolicy =
+                        CombatantZeroHitPointPolicy.Defeated,
+                    AbilityModifiers = Enum.GetValues<Ability>()
+                        .Select(ability => new MonsterAbilityModifier
+                        {
+                            Ability = ability,
+                            Modifier = 0
+                        })
+                        .ToArray(),
+                    ProficiencyBonus = 2,
+                    Weapons =
+                    [
+                        new MonsterWeaponDefinition { WeaponId = weaponId }
+                    ]
+                })
+                .ToArray()
+        });
+
+        Assert.True(
+            result.IsValid,
+            "Test ruleset should carry no errors, but reported: "
+                + string.Join(
+                    "; ",
+                    result.Validation.Issues.Select(issue => issue.Code)));
+
+        return result.Ruleset!;
     }
 
     /// Takes the known-good Watchtower definition and breaks exactly the one
@@ -330,32 +431,13 @@ public sealed class ScenarioDefinitionValidatorTests
                     combatants[1]
                 ]));
 
-        Add(breakages, "scenario.combatants.hit_points",
+        Add(breakages, "scenario.combatants.monster_id_required",
             source => WithCombatants(
                 source,
                 combatants =>
                 [
-                    combatants[0] with { MaximumHitPoints = 0 },
+                    combatants[0] with { MonsterId = "  " },
                     combatants[1]
-                ]));
-
-        // Half-declared ammunition is an authoring slip, not a valid weapon.
-        Add(breakages, "scenario.combatants.ammunition_incomplete",
-            source => WithCombatants(
-                source,
-                combatants =>
-                [
-                    combatants[0],
-                    combatants[1] with
-                    {
-                        Weapons =
-                        [
-                            combatants[1].Weapons[0] with
-                            {
-                                AmmunitionQuantity = null
-                            }
-                        ]
-                    }
                 ]));
 
         Add(breakages, "scenario.party_requirement.minimum_members",
@@ -404,8 +486,8 @@ public sealed class ScenarioDefinitionValidatorTests
 
     private static ScenarioDefinition WithCombatants(
         ScenarioDefinition source,
-        Func<IReadOnlyList<CombatantDefinition>,
-            IReadOnlyList<CombatantDefinition>> change)
+        Func<IReadOnlyList<EncounterCombatantDefinition>,
+            IReadOnlyList<EncounterCombatantDefinition>> change)
     {
         return source with
         {

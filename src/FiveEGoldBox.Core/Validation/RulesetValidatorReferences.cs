@@ -73,6 +73,25 @@ public static partial class RulesetValidator
             characterClass => characterClass.Id,
             "weapon proficiency");
 
+        // Deliberately a fresh set rather than reusing weaponProficiencyIds
+        // above -- that set also contains the two proficiency-category
+        // constants, which would wrongly resolve as weapon IDs here.
+        HashSet<string> weaponIds = ruleset.Weapons
+            .Select(weapon => weapon.Id)
+            .ToHashSet();
+
+        AddUnknownReferenceIssues(
+            issues,
+            ruleset.Monsters,
+            monster => monster.Weapons
+                .Select(weapon => weapon.WeaponId)
+                .ToArray(),
+            weaponIds,
+            "ruleset.monsters.weapons.unknown_weapon",
+            "monster",
+            monster => monster.Id,
+            "weapon");
+
         HashSet<string> equipmentItemIds = ruleset.EquipmentItems
             .Select(item => item.Id)
             .ToHashSet();

@@ -15,6 +15,7 @@ internal sealed class RulesetIndex
         SkillsById = CreateIndex(Ruleset.Skills, skill => skill.Id);
         ArmorsById = CreateIndex(Ruleset.Armors, armor => armor.Id);
         WeaponsById = CreateIndex(Ruleset.Weapons, weapon => weapon.Id);
+        MonstersById = CreateIndex(Ruleset.Monsters, monster => monster.Id);
         EquipmentItemsById = CreateIndex(Ruleset.EquipmentItems, item => item.Id);
         FeaturesById = CreateIndex(Ruleset.Features, feature => feature.Id);
         SpellsById = CreateIndex(Ruleset.Spells, spell => spell.Id);
@@ -34,6 +35,8 @@ internal sealed class RulesetIndex
     public IReadOnlyDictionary<string, ArmorDefinition> ArmorsById { get; }
 
     public IReadOnlyDictionary<string, WeaponDefinition> WeaponsById { get; }
+
+    public IReadOnlyDictionary<string, MonsterDefinition> MonstersById { get; }
 
     public IReadOnlyDictionary<string, EquipmentItemDefinition> EquipmentItemsById { get; }
 

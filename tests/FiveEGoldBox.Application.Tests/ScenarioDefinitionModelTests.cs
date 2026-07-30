@@ -3,7 +3,6 @@ using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Travel;
-using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Tests;
@@ -131,11 +130,11 @@ public sealed class ScenarioDefinitionModelTests
             WatchtowerSignalEncounter.PartySideId,
             encounter.PartySideId);
 
-        CombatantDefinition melee = Assert.Single(
+        EncounterCombatantDefinition melee = Assert.Single(
             encounter.Combatants,
             combatant => combatant.CombatantId
                 == WatchtowerSignalEncounter.MeleeRaiderId);
-        CombatantDefinition ranged = Assert.Single(
+        EncounterCombatantDefinition ranged = Assert.Single(
             encounter.Combatants,
             combatant => combatant.CombatantId
                 == WatchtowerSignalEncounter.RangedRaiderId);
@@ -146,15 +145,14 @@ public sealed class ScenarioDefinitionModelTests
                 WatchtowerSignalEncounter.RaiderSideId,
                 raider.SideId));
 
-        // Values taken from WatchtowerSignalEncounter's authored raiders.
-        Assert.Equal(9, melee.MaximumHitPoints);
-        Assert.Equal(8, ranged.MaximumHitPoints);
         Assert.Equal(new GridPosition(2, 1), melee.StartingPosition);
         Assert.Equal(new GridPosition(4, 2), ranged.StartingPosition);
 
-        // Only the archer draws on ammunition.
-        Assert.Null(Assert.Single(melee.Weapons).AmmunitionItemId);
-        Assert.NotNull(Assert.Single(ranged.Weapons).AmmunitionItemId);
+        // A monster's own stats (hit points, weapons, ...) now live once in
+        // the ruleset and are only referenced here by ID -- that stat data
+        // is covered by Core-side monster validator/mapper tests, not here.
+        Assert.Equal(MeleeMonsterId, melee.MonsterId);
+        Assert.Equal(RangedMonsterId, ranged.MonsterId);
     }
 
     /// The scenario states what it needs of a party without describing one,
@@ -331,6 +329,14 @@ public sealed class ScenarioDefinitionModelTests
         };
     }
 
+    /// This file proves the definition model, not the ruleset -- the stat
+    /// blocks these IDs would resolve against are exercised by Core-side
+    /// monster validator/mapper tests, so the literal values here only need
+    /// to be stable strings, not real ruleset content.
+    private const string MeleeMonsterId = "monster.watchtower-raider.marauder";
+
+    private const string RangedMonsterId = "monster.watchtower-raider.archer";
+
     private static EncounterDefinition CreateAmbush()
     {
         return new EncounterDefinition
@@ -349,61 +355,19 @@ public sealed class ScenarioDefinitionModelTests
             ],
             Combatants =
             [
-                new CombatantDefinition
+                new EncounterCombatantDefinition
                 {
                     CombatantId = WatchtowerSignalEncounter.MeleeRaiderId,
-                    DisplayName = "Raider Marauder",
+                    MonsterId = MeleeMonsterId,
                     SideId = WatchtowerSignalEncounter.RaiderSideId,
-                    MaximumHitPoints = 9,
-                    ArmorClass = 13,
-                    MovementSpeedFeet = 30,
-                    StartingPosition = new GridPosition(2, 1),
-                    ZeroHitPointPolicy =
-                        CombatantZeroHitPointPolicy.Defeated,
-                    AbilityModifiers = Enum.GetValues<Ability>()
-                        .Select(ability => new CombatantAbilityModifier
-                        {
-                            Ability = ability,
-                            Modifier = 1
-                        })
-                        .ToArray(),
-                    ProficiencyBonus = 2,
-                    Weapons =
-                    [
-                        new CombatantWeaponDefinition
-                        {
-                            WeaponId = "weapon.watchtower-raider.scimitar"
-                        }
-                    ]
+                    StartingPosition = new GridPosition(2, 1)
                 },
-                new CombatantDefinition
+                new EncounterCombatantDefinition
                 {
                     CombatantId = WatchtowerSignalEncounter.RangedRaiderId,
-                    DisplayName = "Raider Archer",
+                    MonsterId = RangedMonsterId,
                     SideId = WatchtowerSignalEncounter.RaiderSideId,
-                    MaximumHitPoints = 8,
-                    ArmorClass = 13,
-                    MovementSpeedFeet = 30,
-                    StartingPosition = new GridPosition(4, 2),
-                    ZeroHitPointPolicy =
-                        CombatantZeroHitPointPolicy.Defeated,
-                    AbilityModifiers = Enum.GetValues<Ability>()
-                        .Select(ability => new CombatantAbilityModifier
-                        {
-                            Ability = ability,
-                            Modifier = 1
-                        })
-                        .ToArray(),
-                    ProficiencyBonus = 2,
-                    Weapons =
-                    [
-                        new CombatantWeaponDefinition
-                        {
-                            WeaponId = "weapon.watchtower-raider.shortbow",
-                            AmmunitionItemId = "item.arrow",
-                            AmmunitionQuantity = 12
-                        }
-                    ]
+                    StartingPosition = new GridPosition(4, 2)
                 }
             ],
             Outcome = new EncounterOutcomeDefinition

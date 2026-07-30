@@ -45,6 +45,12 @@
     "Id": {
       "type": "string"
     },
+    "Monsters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/MonsterDefinitionV1"
+      }
+    },
     "Name": {
       "type": "string"
     },
@@ -391,6 +397,105 @@
       "required": [
         "Id",
         "Name"
+      ]
+    },
+    "MonsterDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AbilityModifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MonsterAbilityModifierV1"
+          }
+        },
+        "ArmorClass": {
+          "type": "integer"
+        },
+        "Id": {
+          "type": "string"
+        },
+        "IsProficientWithWeapons": {
+          "type": "boolean"
+        },
+        "MaximumHitPoints": {
+          "type": "integer"
+        },
+        "MovementSpeedFeet": {
+          "type": "integer"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "ProficiencyBonus": {
+          "type": "integer"
+        },
+        "Weapons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MonsterWeaponDefinitionV1"
+          }
+        },
+        "ZeroHitPointPolicy": {
+          "type": "string",
+          "enum": [
+            "DeathSavingThrows",
+            "Defeated"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "AbilityModifiers",
+        "ArmorClass",
+        "Id",
+        "MaximumHitPoints",
+        "MovementSpeedFeet",
+        "Name",
+        "ProficiencyBonus",
+        "Weapons",
+        "ZeroHitPointPolicy"
+      ]
+    },
+    "MonsterAbilityModifierV1": {
+      "type": "object",
+      "properties": {
+        "Ability": {
+          "type": "string",
+          "enum": [
+            "Strength",
+            "Dexterity",
+            "Constitution",
+            "Intelligence",
+            "Wisdom",
+            "Charisma"
+          ]
+        },
+        "Modifier": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Ability",
+        "Modifier"
+      ]
+    },
+    "MonsterWeaponDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "AmmunitionItemId": {
+          "type": "string"
+        },
+        "AmmunitionQuantity": {
+          "type": "integer"
+        },
+        "WeaponId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "WeaponId"
       ]
     },
     "RaceDefinitionV1": {

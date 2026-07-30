@@ -1,7 +1,6 @@
 using FiveEGoldBox.Application.Content;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Scenarios.Definitions;
-using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Tests;
@@ -91,26 +90,9 @@ public sealed class ScenarioPackLoaderTests
                     "Combatants": [
                         {
                             "CombatantId": "combatant.foe",
-                            "DisplayName": "Foe",
+                            "MonsterId": "monster.foe",
                             "SideId": "side.enemy",
-                            "MaximumHitPoints": 12,
-                            "ArmorClass": 13,
-                            "MovementSpeedFeet": 30,
-                            "StartingPosition": { "X": 3, "Y": 3 },
-                            "ZeroHitPointPolicy": "Defeated",
-                            "AbilityModifiers": [
-                                { "Ability": "Strength", "Modifier": 2 },
-                                { "Ability": "Dexterity", "Modifier": 1 }
-                            ],
-                            "ProficiencyBonus": 2,
-                            "IsProficientWithWeapons": true,
-                            "Weapons": [
-                                {
-                                    "WeaponId": "weapon.foe-bow",
-                                    "AmmunitionItemId": "item.arrow",
-                                    "AmmunitionQuantity": 10
-                                }
-                            ]
+                            "StartingPosition": { "X": 3, "Y": 3 }
                         }
                     ],
                     "Outcome": {
@@ -210,16 +192,10 @@ public sealed class ScenarioPackLoaderTests
         Assert.Equal("side.party", encounter.PartySideId);
         Assert.Equal(new GridPosition(4, 4), Assert.Single(encounter.BlockedPositions));
 
-        CombatantDefinition foe = Assert.Single(encounter.Combatants);
-        Assert.Equal(CombatantZeroHitPointPolicy.Defeated, foe.ZeroHitPointPolicy);
-        Assert.Equal(2, foe.AbilityModifiers.Count);
-        Assert.Contains(
-            foe.AbilityModifiers,
-            modifier => modifier.Ability == Ability.Strength
-                && modifier.Modifier == 2);
-        CombatantWeaponDefinition weapon = Assert.Single(foe.Weapons);
-        Assert.Equal("item.arrow", weapon.AmmunitionItemId);
-        Assert.Equal(10, weapon.AmmunitionQuantity);
+        EncounterCombatantDefinition foe = Assert.Single(encounter.Combatants);
+        Assert.Equal("monster.foe", foe.MonsterId);
+        Assert.Equal("side.enemy", foe.SideId);
+        Assert.Equal(new GridPosition(3, 3), foe.StartingPosition);
         Assert.Equal("test.won", encounter.Outcome.VictoryProgressId);
         Assert.Equal("test.lost", encounter.Outcome.DefeatProgressId);
 

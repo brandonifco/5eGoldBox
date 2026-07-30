@@ -1,4 +1,4 @@
-using FiveEGoldBox.Core.Rules;
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Runtime;
 using FiveEGoldBox.Core.Validation;
 
@@ -8,6 +8,7 @@ internal static partial class ScenarioDefinitionValidator
 {
     private static void AddEncounterIssues(
         ScenarioDefinition definition,
+        ValidatedRuleset? ruleset,
         List<ValidationIssue> issues)
     {
         AddDuplicateIdIssues(
@@ -18,13 +19,14 @@ internal static partial class ScenarioDefinitionValidator
 
         foreach (EncounterDefinition encounter in definition.Encounters)
         {
-            AddEncounterIssues(definition, encounter, issues);
+            AddEncounterIssues(definition, encounter, ruleset, issues);
         }
     }
 
     private static void AddEncounterIssues(
         ScenarioDefinition definition,
         EncounterDefinition encounter,
+        ValidatedRuleset? ruleset,
         List<ValidationIssue> issues)
     {
         AddIfBlank(
@@ -67,7 +69,7 @@ internal static partial class ScenarioDefinitionValidator
         HashSet<GridPosition> occupied = [];
 
         AddDeploymentIssues(definition, encounter, blocked, occupied, issues);
-        AddCombatantIssues(encounter, blocked, occupied, issues);
+        AddCombatantIssues(encounter, ruleset, blocked, occupied, issues);
     }
 
     /// The battlefield has to have room for the largest party the scenario is
@@ -111,46 +113,9 @@ internal static partial class ScenarioDefinitionValidator
         }
     }
 
-    /// Every ability, exactly once. A missing modifier would only surface when
-    /// something asked this combatant for that saving throw, which could be
-    /// most of the way through an adventure.
-    private static void AddAbilityModifierIssues(
-        CombatantDefinition combatant,
-        string subject,
-        List<ValidationIssue> issues)
-    {
-        HashSet<Ability> declared = [];
-
-        foreach (CombatantAbilityModifier modifier
-            in combatant.AbilityModifiers)
-        {
-            if (!Enum.IsDefined(modifier.Ability))
-            {
-                issues.Add(Error(
-                    "scenario.combatants.ability_undefined",
-                    $"{subject} declares a modifier for undefined ability '{(int)modifier.Ability}'."));
-                continue;
-            }
-
-            if (!declared.Add(modifier.Ability))
-            {
-                issues.Add(Error(
-                    "scenario.combatants.ability_duplicate",
-                    $"{subject} declares ability '{modifier.Ability}' more than once."));
-            }
-        }
-
-        foreach (Ability ability in Enum.GetValues<Ability>()
-            .Where(ability => !declared.Contains(ability)))
-        {
-            issues.Add(Error(
-                "scenario.combatants.ability_missing",
-                $"{subject} declares no modifier for ability '{ability}'."));
-        }
-    }
-
     private static void AddCombatantIssues(
         EncounterDefinition encounter,
+        ValidatedRuleset? ruleset,
         HashSet<GridPosition> blocked,
         HashSet<GridPosition> occupied,
         List<ValidationIssue> issues)
@@ -168,7 +133,7 @@ internal static partial class ScenarioDefinitionValidator
             "scenario.combatants.duplicate_id",
             $"combatant ID in encounter '{encounter.EncounterId}'");
 
-        foreach (CombatantDefinition combatant in encounter.Combatants)
+        foreach (EncounterCombatantDefinition combatant in encounter.Combatants)
         {
             string subject =
                 $"Combatant '{combatant.CombatantId}' in encounter '{encounter.EncounterId}'";
@@ -178,14 +143,12 @@ internal static partial class ScenarioDefinitionValidator
                 combatant.CombatantId,
                 "scenario.combatants.id_required",
                 "Combatant IDs must not be blank.");
-            AddAbilityModifierIssues(combatant, subject, issues);
 
-            if (combatant.ProficiencyBonus < 0)
-            {
-                issues.Add(Error(
-                    "scenario.combatants.proficiency_negative",
-                    $"{subject} has a negative proficiency bonus."));
-            }
+            AddIfBlank(
+                issues,
+                combatant.MonsterId,
+                "scenario.combatants.monster_id_required",
+                $"{subject} requires a monster ID.");
 
             AddIfBlank(
                 issues,
@@ -203,32 +166,16 @@ internal static partial class ScenarioDefinitionValidator
                     $"{subject} is placed on the party's own side; scenarios author opposition, not party members."));
             }
 
-            if (combatant.MaximumHitPoints <= 0)
+            if (ruleset is not null
+                && !string.IsNullOrWhiteSpace(combatant.MonsterId)
+                && !ruleset.Definition.Monsters.Any(monster => string.Equals(
+                    monster.Id,
+                    combatant.MonsterId,
+                    StringComparison.Ordinal)))
             {
                 issues.Add(Error(
-                    "scenario.combatants.hit_points",
-                    $"{subject} must have positive maximum hit points."));
-            }
-
-            if (combatant.ArmorClass <= 0)
-            {
-                issues.Add(Error(
-                    "scenario.combatants.armor_class",
-                    $"{subject} must have a positive armor class."));
-            }
-
-            if (combatant.MovementSpeedFeet < 0)
-            {
-                issues.Add(Error(
-                    "scenario.combatants.movement_speed",
-                    $"{subject} must not have negative movement."));
-            }
-
-            if (!Enum.IsDefined(combatant.ZeroHitPointPolicy))
-            {
-                issues.Add(Error(
-                    "scenario.combatants.zero_hit_point_policy",
-                    $"{subject} has an unsupported zero-hit-point policy."));
+                    "scenario.combatants.monster_id_unresolved",
+                    $"{subject} references monster '{combatant.MonsterId}', which the scenario's ruleset does not define."));
             }
 
             AddPlacementIssues(
@@ -238,13 +185,12 @@ internal static partial class ScenarioDefinitionValidator
                 occupied,
                 subject,
                 issues);
-            AddWeaponIssues(combatant, subject, issues);
         }
     }
 
     private static void AddPlacementIssues(
         EncounterDefinition encounter,
-        CombatantDefinition combatant,
+        EncounterCombatantDefinition combatant,
         HashSet<GridPosition> blocked,
         HashSet<GridPosition> occupied,
         string subject,
@@ -270,53 +216,6 @@ internal static partial class ScenarioDefinitionValidator
             issues.Add(Error(
                 "scenario.combatants.overlap",
                 $"{subject} starts on a square already taken by another combatant or a party member."));
-        }
-    }
-
-    private static void AddWeaponIssues(
-        CombatantDefinition combatant,
-        string subject,
-        List<ValidationIssue> issues)
-    {
-        if (combatant.Weapons.Count == 0)
-        {
-            issues.Add(Error(
-                "scenario.combatants.no_weapon",
-                $"{subject} has no weapon."));
-        }
-
-        AddDuplicateIdIssues(
-            issues,
-            combatant.Weapons.Select(weapon => weapon.WeaponId),
-            "scenario.combatants.duplicate_weapon",
-            $"weapon on {subject}");
-
-        foreach (CombatantWeaponDefinition weapon in combatant.Weapons)
-        {
-            AddIfBlank(
-                issues,
-                weapon.WeaponId,
-                "scenario.combatants.weapon_id_required",
-                $"{subject} has a weapon without an ID.");
-
-            // Ammunition is all-or-nothing: an item without a count, or a count
-            // without an item, is an authoring slip rather than a valid weapon.
-            bool hasItem = !string.IsNullOrWhiteSpace(weapon.AmmunitionItemId);
-            bool hasQuantity = weapon.AmmunitionQuantity is not null;
-
-            if (hasItem != hasQuantity)
-            {
-                issues.Add(Error(
-                    "scenario.combatants.ammunition_incomplete",
-                    $"Weapon '{weapon.WeaponId}' on {subject} declares only half of its ammunition."));
-            }
-
-            if (weapon.AmmunitionQuantity < 0)
-            {
-                issues.Add(Error(
-                    "scenario.combatants.ammunition_negative",
-                    $"Weapon '{weapon.WeaponId}' on {subject} has negative ammunition."));
-            }
         }
     }
 

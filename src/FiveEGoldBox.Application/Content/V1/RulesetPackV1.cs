@@ -32,6 +32,9 @@ internal sealed record RulesetPackV1
     public IReadOnlyList<WeaponDefinitionV1> Weapons { get; init; }
         = Array.Empty<WeaponDefinitionV1>();
 
+    public IReadOnlyList<MonsterDefinitionV1> Monsters { get; init; }
+        = Array.Empty<MonsterDefinitionV1>();
+
     public IReadOnlyList<SpellDefinitionV1> Spells { get; init; }
         = Array.Empty<SpellDefinitionV1>();
 

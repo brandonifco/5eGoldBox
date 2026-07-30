@@ -70,11 +70,11 @@ public sealed class ContentPackSchemaTests
     }
 
     [Fact]
-    public void ScenarioPackSchema_DeclaresTheEnumValuesOfADiceKind()
+    public void RulesetPackSchema_DeclaresTheEnumValuesOfADiceKind()
     {
-        JsonObject schema = LoadCheckedInSchema("scenario-pack.schema.json");
+        JsonObject schema = LoadCheckedInSchema("ruleset-pack.schema.json");
         JsonObject defs = (JsonObject)schema["$defs"]!;
-        JsonObject zeroHitPointPolicy = (JsonObject)((JsonObject)defs["CombatantDefinitionV1"]!)
+        JsonObject zeroHitPointPolicy = (JsonObject)((JsonObject)defs["MonsterDefinitionV1"]!)
             ["properties"]!["ZeroHitPointPolicy"]!;
 
         Assert.Equal(

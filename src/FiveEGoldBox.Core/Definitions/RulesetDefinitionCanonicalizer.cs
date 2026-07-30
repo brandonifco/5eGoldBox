@@ -16,6 +16,7 @@ internal static class RulesetDefinitionCanonicalizer
             Skills = Protect(definition.Skills),
             Armors = Protect(definition.Armors),
             Weapons = Protect(definition.Weapons.Select(CopyWeapon)),
+            Monsters = Protect(definition.Monsters.Select(CopyMonster)),
             EquipmentItems = Protect(definition.EquipmentItems.Select(CopyEquipmentItem)),
             Spells = Protect(definition.Spells.Select(CopySpell)),
             Effects = Protect(definition.Effects.Select(CopyEffect)),
@@ -116,6 +117,15 @@ internal static class RulesetDefinitionCanonicalizer
         return weapon with
         {
             Properties = Protect(weapon.Properties)
+        };
+    }
+
+    private static MonsterDefinition CopyMonster(MonsterDefinition monster)
+    {
+        return monster with
+        {
+            AbilityModifiers = Protect(monster.AbilityModifiers),
+            Weapons = Protect(monster.Weapons)
         };
     }
 

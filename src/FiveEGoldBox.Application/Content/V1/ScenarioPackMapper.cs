@@ -169,57 +169,21 @@ internal static class ScenarioPackMapper
                 .Select(ToRuntimePosition)
                 .ToArray(),
             Combatants = encounter.Combatants
-                .Select(ToRuntimeCombatant)
+                .Select(ToRuntimeEncounterCombatant)
                 .ToArray(),
             Outcome = ToRuntimeOutcome(encounter.Outcome)
         };
     }
 
-    private static CombatantDefinition ToRuntimeCombatant(
-        CombatantDefinitionV1 combatant)
+    private static EncounterCombatantDefinition ToRuntimeEncounterCombatant(
+        EncounterCombatantDefinitionV1 combatant)
     {
-        return new CombatantDefinition
+        return new EncounterCombatantDefinition
         {
             CombatantId = combatant.CombatantId,
-            DisplayName = combatant.DisplayName,
+            MonsterId = combatant.MonsterId,
             SideId = combatant.SideId,
-            MaximumHitPoints = combatant.MaximumHitPoints,
-            ArmorClass = combatant.ArmorClass,
-            MovementSpeedFeet = combatant.MovementSpeedFeet,
-            StartingPosition = ToRuntimePosition(
-                combatant.StartingPosition),
-            ZeroHitPointPolicy = ToRuntimeZeroHitPointPolicy(
-                combatant.ZeroHitPointPolicy),
-            AbilityModifiers = combatant.AbilityModifiers
-                .Select(ToRuntimeAbilityModifier)
-                .ToArray(),
-            ProficiencyBonus = combatant.ProficiencyBonus,
-            IsProficientWithWeapons = combatant.IsProficientWithWeapons,
-            Weapons = combatant.Weapons
-                .Select(ToRuntimeCombatantWeapon)
-                .ToArray()
-        };
-    }
-
-    private static CombatantWeaponDefinition ToRuntimeCombatantWeapon(
-        CombatantWeaponDefinitionV1 weapon)
-    {
-        return new CombatantWeaponDefinition
-        {
-            WeaponId = weapon.WeaponId,
-            AmmunitionItemId = weapon.AmmunitionItemId,
-            AmmunitionQuantity = weapon.AmmunitionQuantity
-        };
-    }
-
-    private static CombatantAbilityModifier ToRuntimeAbilityModifier(
-        CombatantAbilityModifierV1 abilityModifier)
-    {
-        return new CombatantAbilityModifier
-        {
-            Ability = RulesetPackMapper.ToRuntimeAbility(
-                abilityModifier.Ability),
-            Modifier = abilityModifier.Modifier
+            StartingPosition = ToRuntimePosition(combatant.StartingPosition)
         };
     }
 

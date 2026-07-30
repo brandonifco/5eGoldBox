@@ -15,28 +15,37 @@ namespace FiveEGoldBox.Application.Encounters;
 internal static class ScenarioCombatantMapper
 {
     internal static ScenarioEncounterCombatant CreateParticipant(
-        CombatantDefinition combatant,
+        EncounterCombatantDefinition placement,
         ValidatedRuleset ruleset)
     {
-        ArgumentNullException.ThrowIfNull(combatant);
+        ArgumentNullException.ThrowIfNull(placement);
         ArgumentNullException.ThrowIfNull(ruleset);
 
+        MonsterDefinition monster = ruleset.Definition.Monsters
+            .FirstOrDefault(candidate => string.Equals(
+                candidate.Id,
+                placement.MonsterId,
+                StringComparison.Ordinal))
+            ?? throw new InvalidOperationException(
+                $"Combatant '{placement.CombatantId}' references monster '{placement.MonsterId}', which the ruleset does not define.");
+
         IReadOnlyDictionary<Ability, int> modifiers =
-            CreateModifierLookup(combatant);
+            CreateModifierLookup(placement, monster);
 
         return new ScenarioEncounterCombatant(
             new EncounterParticipantSetup
             {
                 Combatant = CombatantRules.Create(
-                    combatant.CombatantId,
-                    combatant.MaximumHitPoints,
-                    combatant.ZeroHitPointPolicy),
+                    placement.CombatantId,
+                    monster.MaximumHitPoints,
+                    monster.ZeroHitPointPolicy),
                 CombatProfile = new EncounterCombatProfile
                 {
-                    ArmorClass = combatant.ArmorClass,
-                    WeaponAttacks = combatant.Weapons
+                    ArmorClass = monster.ArmorClass,
+                    WeaponAttacks = monster.Weapons
                         .Select(weapon => CreateWeaponAttack(
-                            combatant,
+                            placement,
+                            monster,
                             weapon,
                             modifiers,
                             ruleset))
@@ -46,9 +55,9 @@ internal static class ScenarioCombatantMapper
                     DamageResponses =
                         Array.Empty<CharacterDamageResponse>()
                 },
-                SideId = combatant.SideId,
-                MovementSpeedFeet = combatant.MovementSpeedFeet,
-                StartingPosition = combatant.StartingPosition
+                SideId = placement.SideId,
+                MovementSpeedFeet = monster.MovementSpeedFeet,
+                StartingPosition = placement.StartingPosition
             },
             // Initiative is a Dexterity check, so it uses the same modifier
             // everything else Dexterity-based does.
@@ -56,17 +65,18 @@ internal static class ScenarioCombatantMapper
     }
 
     private static IReadOnlyDictionary<Ability, int> CreateModifierLookup(
-        CombatantDefinition combatant)
+        EncounterCombatantDefinition placement,
+        MonsterDefinition monster)
     {
         Dictionary<Ability, int> modifiers = new();
 
-        foreach (CombatantAbilityModifier modifier
-            in combatant.AbilityModifiers)
+        foreach (MonsterAbilityModifier modifier
+            in monster.AbilityModifiers)
         {
             if (!modifiers.TryAdd(modifier.Ability, modifier.Modifier))
             {
                 throw new InvalidOperationException(
-                    $"Combatant '{combatant.CombatantId}' declares ability '{modifier.Ability}' twice.");
+                    $"Combatant '{placement.CombatantId}' declares ability '{modifier.Ability}' twice.");
             }
         }
 
@@ -75,7 +85,7 @@ internal static class ScenarioCombatantMapper
             if (!modifiers.ContainsKey(ability))
             {
                 throw new InvalidOperationException(
-                    $"Combatant '{combatant.CombatantId}' declares no modifier for ability '{ability}'.");
+                    $"Combatant '{placement.CombatantId}' declares no modifier for ability '{ability}'.");
             }
         }
 
@@ -83,8 +93,9 @@ internal static class ScenarioCombatantMapper
     }
 
     private static WeaponAttack CreateWeaponAttack(
-        CombatantDefinition combatant,
-        CombatantWeaponDefinition authored,
+        EncounterCombatantDefinition placement,
+        MonsterDefinition monster,
+        MonsterWeaponDefinition authored,
         IReadOnlyDictionary<Ability, int> modifiers,
         ValidatedRuleset ruleset)
     {
@@ -94,12 +105,12 @@ internal static class ScenarioCombatantMapper
                 authored.WeaponId,
                 StringComparison.Ordinal))
             ?? throw new InvalidOperationException(
-                $"Combatant '{combatant.CombatantId}' carries weapon '{authored.WeaponId}', which the ruleset does not define.");
+                $"Combatant '{placement.CombatantId}' carries weapon '{authored.WeaponId}', which the ruleset does not define.");
 
         Ability attackAbility = ResolveAttackAbility(weapon);
         int abilityModifier = modifiers[attackAbility];
-        int proficiencyBonus = combatant.IsProficientWithWeapons
-            ? combatant.ProficiencyBonus
+        int proficiencyBonus = monster.IsProficientWithWeapons
+            ? monster.ProficiencyBonus
             : 0;
 
         return new WeaponAttack
@@ -110,7 +121,7 @@ internal static class ScenarioCombatantMapper
             AttackKind = weapon.AttackKind,
             AttackAbility = attackAbility,
             AbilityModifier = abilityModifier,
-            IsProficient = combatant.IsProficientWithWeapons,
+            IsProficient = monster.IsProficientWithWeapons,
             ProficiencyBonus = proficiencyBonus,
             AttackBonus = abilityModifier + proficiencyBonus,
             HasDisadvantage = false,

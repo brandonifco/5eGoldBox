@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using FiveEGoldBox.Application.Content;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
+using FiveEGoldBox.Core.Definitions;
 using FiveEGoldBox.Core.Validation;
 
 namespace FiveEGoldBox.Application.Scenarios;
@@ -70,8 +71,24 @@ internal static class ScenarioDefinitionRegistry
         }
 
         ScenarioDefinition definition = factory();
+
+        ValidatedRuleset? ruleset;
+
+        try
+        {
+            ruleset = RulesetRegistry.Resolve(definition.RulesetId);
+        }
+        catch (ArgumentException)
+        {
+            // A scenario naming a ruleset that does not resolve is itself a
+            // validation problem the check below will not catch by itself --
+            // this just means the cross-pack MonsterId checks below have
+            // nothing to check against, not that loading should throw here.
+            ruleset = null;
+        }
+
         ValidationResult validation =
-            ScenarioDefinitionValidator.Validate(definition);
+            ScenarioDefinitionValidator.Validate(definition, ruleset);
 
         if (!validation.IsValid)
         {

@@ -116,6 +116,84 @@ public sealed class ContentPackValidationTests
         }
     }
 
+    /// The load-time cross-pack check that a combatant's MonsterId resolves
+    /// against the scenario's own ruleset -- new behaviour, and this is the
+    /// path a real content author actually hits: the standalone `validate`
+    /// command, which this facade backs.
+    [Fact]
+    public void ValidateScenarioPack_WithAnUnresolvedMonsterId_ReportsTheValidationIssue()
+    {
+        const string packWithUnresolvedMonster = """
+            {
+                "FormatVersion": 1,
+                "ScenarioId": "scenario.test",
+                "DisplayName": "Test",
+                "RulesetId": "ruleset.campaign",
+                "StartingLocationId": "location.hub",
+                "Progress": {
+                    "InitialProgressId": "test.not_started",
+                    "ProgressIds": [ "test.not_started", "test.won", "test.lost" ],
+                    "Conclusions": [
+                        { "ProgressId": "test.won", "IsSuccess": true, "LocationId": "location.hub" },
+                        { "ProgressId": "test.lost", "IsSuccess": false, "LocationId": "location.hub" }
+                    ]
+                },
+                "PartyRequirement": {
+                    "MinimumMembers": 1,
+                    "MaximumMembers": 1,
+                    "MinimumConsciousMembers": 1
+                },
+                "Locations": [
+                    { "LocationId": "location.hub", "DisplayName": "Hub" }
+                ],
+                "Routes": [],
+                "Encounters": [
+                    {
+                        "EncounterId": "encounter.test",
+                        "BattlefieldId": "battlefield.test",
+                        "Width": 4,
+                        "Height": 4,
+                        "PartySideId": "side.party",
+                        "BlockedPositions": [],
+                        "PartyStartingPositions": [ { "X": 0, "Y": 0 } ],
+                        "Combatants": [
+                            {
+                                "CombatantId": "combatant.foe",
+                                "MonsterId": "monster.does-not-exist",
+                                "SideId": "side.enemy",
+                                "StartingPosition": { "X": 3, "Y": 3 }
+                            }
+                        ],
+                        "Outcome": {
+                            "VictoryProgressId": "test.won",
+                            "DefeatProgressId": "test.lost"
+                        }
+                    }
+                ],
+                "Triggers": [],
+                "Decisions": []
+            }
+            """;
+
+        string path = WriteTempFile(packWithUnresolvedMonster);
+
+        try
+        {
+            ValidationResult result = ContentPackValidation.ValidateScenarioPack(
+                path);
+
+            Assert.False(result.IsValid);
+            Assert.Contains(
+                result.Issues,
+                issue => issue.Code
+                    == "scenario.combatants.monster_id_unresolved");
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     [Fact]
     public void ValidateScenarioPack_WithAnUnsupportedFormatVersion_ReportsAParseFailureIssue()
     {
