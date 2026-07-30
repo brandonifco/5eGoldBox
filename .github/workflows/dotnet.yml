@@ -82,3 +82,82 @@ jobs:
             exit 1
           fi
           echo "No vulnerable packages found."
+
+  godot-build-and-boot:
+    runs-on: ubuntu-latest
+
+    env:
+      GODOT_VERSION: 4.7-stable
+      GODOT_ARCHIVE: Godot_v4.7-stable_mono_linux_x86_64.zip
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Cache Godot engine
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot-engine
+          key: godot-engine-${{ env.GODOT_VERSION }}-mono-linux-x86_64
+
+      # The project targets the official Godot mono build specifically (see
+      # CLAUDE.md's Godot verification notes) — a distro/snap package can be a
+      # different, incompatible build even at the same version number.
+      - name: Download Godot engine
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot-engine
+          curl -fL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/${GODOT_ARCHIVE}"
+          unzip -q /tmp/godot.zip -d ~/godot-engine
+
+      - name: Add Godot to PATH
+        run: |
+          bin=$(find ~/godot-engine -maxdepth 2 -type f -name 'Godot_v*_mono_linux.x86_64')
+          chmod +x "$bin"
+          echo "$(dirname "$bin")" >> "$GITHUB_PATH"
+
+      # A runtime exception with no display attached tries to show a GUI
+      # error dialog via zenity and hangs forever instead of exiting. A fake
+      # zenity ahead of the real one on PATH forces the error out to stderr,
+      # matching CLAUDE.md's documented workaround.
+      - name: Stub out zenity
+        run: |
+          mkdir -p /tmp/fake-bin
+          ln -sf /bin/true /tmp/fake-bin/zenity
+          echo "/tmp/fake-bin" >> "$GITHUB_PATH"
+
+      - name: Import project
+        run: godot --headless --path src/FiveEGoldBox.Godot --import
+
+      - name: Build
+        run: dotnet build src/FiveEGoldBox.Godot/FiveEGoldBox.Godot.sln --configuration Debug
+
+      - name: Headless boot check
+        run: |
+          set +e
+          godot --headless --path src/FiveEGoldBox.Godot --quit-after 15 \
+            > /tmp/godot-boot-stdout.txt 2> /tmp/godot-boot-stderr.txt
+          code=$?
+          set -e
+
+          cat /tmp/godot-boot-stdout.txt
+
+          if [ $code -ne 0 ]; then
+            echo "::error::Headless boot exited with code $code"
+            cat /tmp/godot-boot-stderr.txt
+            exit 1
+          fi
+
+          if [ -s /tmp/godot-boot-stderr.txt ]; then
+            echo "::error::Headless boot wrote to stderr"
+            cat /tmp/godot-boot-stderr.txt
+            exit 1
+          fi
+
+          echo "Headless boot: exit 0, empty stderr."
