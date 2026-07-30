@@ -149,21 +149,21 @@ Test infrastructure (Phase 8) stays an ongoing habit rather than a finished thin
 - ~~**Mid-journey saving was refused for every scenario alike**~~ (Phase 3's note above still describes mid-*combat* saving correctly — that part is unchanged). **Resolved for travel (PR #169):** the V1 save DTO and `SaveGameMapper` had carried `RegionalTravelState` completely since the format's first version; only `ManualSaveSerializer.IsSaveableMode` excluding `ApplicationMode.RegionalTravel` blocked it. Encounter stays excluded, deliberately — a combat's turn order and mid-resolution rolls aren't comparably simple data, and `SaveActiveEncounterV1` is still the empty placeholder it always was.
 - ~~**No scenario declares its ruleset in a resolvable way.**~~ — **resolved (PR #119):** `RulesetRegistry` resolves `ScenarioDefinition.RulesetId`. Both scenarios name the same campaign ruleset rather than inheriting it.
 
-## Workflow authorization for Priority 1 branches
+## Workflow authorization for branch work in this repo
 
-For each Priority 1 branch, proceed autonomously through the full loop without stopping to ask permission at each step:
+**Standing authorization (confirmed 2026-07-30, extended from this section's original Priority-1-only scope to general engineering work in this repo).** For a narrowly-scoped implementation task — a bug fix, a decided refactor, a plan-doc line item — proceed autonomously through the full loop without stopping to ask permission at each step, including the push/PR/merge:
 
 1. Confirm `git status` clean and `main` in sync with `origin/main`.
-2. One narrowly-scoped branch per plan step (see the plan's "Recommended Branch Sequence").
+2. One narrowly-scoped branch per concern.
 3. Implement.
-4. Gate: focused tests → full affected-project tests → full solution build+test → `git diff --check`. Also verify compiled public API counts via reflection (`Assembly.GetExportedTypes()`) when a change could affect visibility — don't trust grep or doc claims for this.
-5. Self-review the diff against that phase's completion gate from the plan; report gaps honestly rather than glossing over them.
-6. Commit — one commit, message explains what and why. **Do not** write `Priority_1_Phase_*_Assignment_Packet.md`-style docs; that ceremony was for coordinating across disconnected sessions/tools and doesn't apply when working directly in the repo. Put equivalent content in the commit message and PR body.
+4. Gate: focused tests → full affected-project tests → full solution build+test (Debug and Release, both 0 warnings) → `git diff --check`. Also verify compiled public API counts via reflection (`Assembly.GetExportedTypes()`) when a change could affect visibility — don't trust grep or doc claims for this.
+5. Self-review the diff; report gaps honestly rather than glossing over them.
+6. Commit — one commit, message explains what and why.
 7. `git add` **specific paths only, never `-A` or `.`** — the repo root has ~50 untracked process-doc/patch/log files (see below) that must never be staged. **`git stash -u` is the same hazard** and is equally off-limits: it lifts the untracked `docs/` assets out of the working tree, and that work is often being edited concurrently. If a clean tree is needed to build a baseline (e.g. the reflection API check against `main`), use `git worktree add` or a copy in a scratch directory instead of stashing.
 8. Push, open a PR (`gh pr create`), wait for CI (`gh run watch`), merge (`gh pr merge --merge --delete-branch`) once green.
-9. `git fetch --prune`, confirm `main` synced, move to the next branch.
+9. `git fetch --prune`, confirm `main` synced, move to the next branch (rebasing it onto the newly-merged `main` first if it was branched earlier in the same batch).
 
-Still pause and flag rather than pushing through: gate failures, merge conflicts, CI failures, or anything that looks destructive/irreversible outside the normal branch→PR→merge flow. This authorization is specific to Priority 1 cohort work in this repo — it doesn't generalize to unrelated pushes, merges, or deletions.
+Still pause and flag rather than pushing through: gate failures, merge conflicts, CI failures, or anything that looks destructive/irreversible outside the normal branch→PR→merge flow. Still stop and ask first for anything that isn't a narrowly-scoped, already-decided task — genuine design/product decisions (see the "needs your decision" items tracked elsewhere in this file), force-pushes, history rewrites, or deleting/closing things outside the normal merge flow.
 
 ## Repo hygiene — leave these alone unless asked
 
