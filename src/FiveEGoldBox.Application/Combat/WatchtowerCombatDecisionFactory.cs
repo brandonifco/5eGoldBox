@@ -21,7 +21,7 @@ internal static class WatchtowerCombatDecisionFactory
         {
             return new WatchtowerCombatDecision
             {
-                State = WatchtowerCombatDecisionState.CombatCompleted,
+                State = CombatDecisionState.CombatCompleted,
                 EncounterRevision = encounter.Revision,
                 ActiveCombatantId = null,
                 PendingDeathSavingThrowCombatantId = null,
@@ -51,7 +51,7 @@ internal static class WatchtowerCombatDecisionFactory
         {
             return new WatchtowerCombatDecision
             {
-                State = WatchtowerCombatDecisionState.AutomaticProcessingRequired,
+                State = CombatDecisionState.AutomaticProcessingRequired,
                 EncounterRevision = encounter.Revision,
                 ActiveCombatantId = encounter.ActiveCombatantId,
                 PendingDeathSavingThrowCombatantId =
@@ -91,7 +91,7 @@ internal static class WatchtowerCombatDecisionFactory
 
         return new WatchtowerCombatDecision
         {
-            State = WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            State = CombatDecisionState.PlayerDecisionRequired,
             EncounterRevision = encounter.Revision,
             ActiveCombatantId = encounter.ActiveCombatantId,
             PendingDeathSavingThrowCombatantId = null,

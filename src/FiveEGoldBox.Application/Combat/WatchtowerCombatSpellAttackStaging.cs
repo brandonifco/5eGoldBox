@@ -78,7 +78,7 @@ internal static class WatchtowerCombatSpellAttackStaging
             firstAttackRoll = first.Value;
             dice.Add(CreateDie(
                 first,
-                WatchtowerCombatDiePurpose.AttackRoll));
+                CombatDiePurpose.AttackRoll));
 
             if (availability.AttackRollMode
                 != D20RollMode.Normal)
@@ -93,7 +93,7 @@ internal static class WatchtowerCombatSpellAttackStaging
                 secondAttackRoll = second.Value;
                 dice.Add(CreateDie(
                     second,
-                    WatchtowerCombatDiePurpose.AttackRoll));
+                    CombatDiePurpose.AttackRoll));
             }
 
             foreach (DieType die
@@ -110,7 +110,7 @@ internal static class WatchtowerCombatSpellAttackStaging
                 attackContributionValues.Add(contribution.Value);
                 dice.Add(CreateDie(
                     contribution,
-                    WatchtowerCombatDiePurpose.AttackRoll));
+                    CombatDiePurpose.AttackRoll));
             }
         }
         else if (RequiresSavingThrow(
@@ -128,7 +128,7 @@ internal static class WatchtowerCombatSpellAttackStaging
             savingThrowRoll = save.Value;
             dice.Add(CreateDie(
                 save,
-                WatchtowerCombatDiePurpose.SavingThrow));
+                CombatDiePurpose.SavingThrow));
 
             foreach (DieType die
                 in availability.SavingThrowContributions
@@ -145,7 +145,7 @@ internal static class WatchtowerCombatSpellAttackStaging
                     contribution.Value);
                 dice.Add(CreateDie(
                     contribution,
-                    WatchtowerCombatDiePurpose.SavingThrow));
+                    CombatDiePurpose.SavingThrow));
             }
         }
 
@@ -181,7 +181,7 @@ internal static class WatchtowerCombatSpellAttackStaging
             effectValues.Add(effect.Value);
             dice.Add(CreateDie(
                 effect,
-                WatchtowerCombatDiePurpose.EffectRoll));
+                CombatDiePurpose.EffectRoll));
         }
 
         // A spell that would deal damage can end whatever the target was
@@ -211,7 +211,7 @@ internal static class WatchtowerCombatSpellAttackStaging
                     concentration.Value;
                 dice.Add(CreateDie(
                     concentration,
-                    WatchtowerCombatDiePurpose
+                    CombatDiePurpose
                         .ConcentrationSavingThrow));
 
                 foreach (DieType die
@@ -230,7 +230,7 @@ internal static class WatchtowerCombatSpellAttackStaging
                         contribution.Value);
                     dice.Add(CreateDie(
                         contribution,
-                        WatchtowerCombatDiePurpose
+                        CombatDiePurpose
                             .ConcentrationSavingThrow));
                 }
             }
@@ -295,7 +295,7 @@ internal static class WatchtowerCombatSpellAttackStaging
 
     private static WatchtowerCombatDieRoll CreateDie(
         ApplicationRandomRoll roll,
-        WatchtowerCombatDiePurpose purpose)
+        CombatDiePurpose purpose)
     {
         return new WatchtowerCombatDieRoll
         {

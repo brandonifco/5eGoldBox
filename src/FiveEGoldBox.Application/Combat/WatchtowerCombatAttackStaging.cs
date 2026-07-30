@@ -62,7 +62,7 @@ internal static class WatchtowerCombatAttackStaging
         nextCursor = first.UpdatedValuesConsumed;
         dice.Add(CreateDie(
             first,
-            WatchtowerCombatDiePurpose.AttackRoll));
+            CombatDiePurpose.AttackRoll));
 
         int? secondValue = null;
 
@@ -79,7 +79,7 @@ internal static class WatchtowerCombatAttackStaging
             secondValue = second.Value;
             dice.Add(CreateDie(
                 second,
-                WatchtowerCombatDiePurpose.AttackRoll));
+                CombatDiePurpose.AttackRoll));
         }
 
         // Whatever the attacker's effects add to the roll is rolled here,
@@ -102,7 +102,7 @@ internal static class WatchtowerCombatAttackStaging
             contributionValues.Add(contribution.Value);
             dice.Add(CreateDie(
                 contribution,
-                WatchtowerCombatDiePurpose.AttackRoll));
+                CombatDiePurpose.AttackRoll));
         }
 
         IReadOnlyList<int> contributionRolls =
@@ -140,7 +140,7 @@ internal static class WatchtowerCombatAttackStaging
                 damageValues.Add(damage.Value);
                 dice.Add(CreateDie(
                     damage,
-                    WatchtowerCombatDiePurpose.DamageRoll));
+                    CombatDiePurpose.DamageRoll));
             }
         }
 
@@ -162,7 +162,7 @@ internal static class WatchtowerCombatAttackStaging
             damageContributionValues.Add(contribution.Value);
             dice.Add(CreateDie(
                 contribution,
-                WatchtowerCombatDiePurpose.DamageRoll));
+                CombatDiePurpose.DamageRoll));
         }
 
         // A hit that lands damage can end whatever the target was
@@ -190,7 +190,7 @@ internal static class WatchtowerCombatAttackStaging
                 concentrationSavingThrowRoll = concentration.Value;
                 dice.Add(CreateDie(
                     concentration,
-                    WatchtowerCombatDiePurpose
+                    CombatDiePurpose
                         .ConcentrationSavingThrow));
 
                 RollContributionSet concentrationContributions =
@@ -213,7 +213,7 @@ internal static class WatchtowerCombatAttackStaging
                         contribution.Value);
                     dice.Add(CreateDie(
                         contribution,
-                        WatchtowerCombatDiePurpose
+                        CombatDiePurpose
                             .ConcentrationSavingThrow));
                 }
             }
@@ -251,7 +251,7 @@ internal static class WatchtowerCombatAttackStaging
 
     private static WatchtowerCombatDieRoll CreateDie(
         ApplicationRandomRoll roll,
-        WatchtowerCombatDiePurpose purpose)
+        CombatDiePurpose purpose)
     {
         return new WatchtowerCombatDieRoll
         {

@@ -109,7 +109,7 @@ public sealed class WatchtowerCombatAttackStagingTests
             2,
             execution.Dice.Count(die =>
                 die.Purpose
-                    == WatchtowerCombatDiePurpose.AttackRoll));
+                    == CombatDiePurpose.AttackRoll));
         Assert.Equal(
             execution.Result.Attack.AttackRoll.Outcome
                 == AttackRollOutcome.Miss
@@ -118,7 +118,7 @@ public sealed class WatchtowerCombatAttackStagingTests
                         .DamageDice!.Count,
             execution.Dice.Count(die =>
                 die.Purpose
-                    == WatchtowerCombatDiePurpose.DamageRoll));
+                    == CombatDiePurpose.DamageRoll));
         Assert.Equal(
             execution.Dice.Count,
             execution.CursorAfter - cursorBefore);
@@ -130,12 +130,12 @@ public sealed class WatchtowerCombatAttackStagingTests
         Assert.All(
             execution.Dice.Take(2),
             die => Assert.Equal(
-                WatchtowerCombatDiePurpose.AttackRoll,
+                CombatDiePurpose.AttackRoll,
                 die.Purpose));
         Assert.All(
             execution.Dice.Skip(2),
             die => Assert.Equal(
-                WatchtowerCombatDiePurpose.DamageRoll,
+                CombatDiePurpose.DamageRoll,
                 die.Purpose));
 
         Assert.Equal(
@@ -215,17 +215,17 @@ public sealed class WatchtowerCombatAttackStagingTests
         Assert.Single(
             execution.Dice,
             die => die.Purpose
-                == WatchtowerCombatDiePurpose.AttackRoll);
+                == CombatDiePurpose.AttackRoll);
         Assert.Equal(
             execution.Dice.Count,
             execution.CursorAfter - cursorBefore);
         Assert.Equal(
-            WatchtowerCombatDiePurpose.AttackRoll,
+            CombatDiePurpose.AttackRoll,
             execution.Dice[0].Purpose);
         Assert.All(
             execution.Dice.Skip(1),
             die => Assert.Equal(
-                WatchtowerCombatDiePurpose.DamageRoll,
+                CombatDiePurpose.DamageRoll,
                 die.Purpose));
     }
 
@@ -312,12 +312,12 @@ public sealed class WatchtowerCombatAttackStagingTests
         Assert.Equal(20, execution.Dice[0].Sides);
         Assert.Equal(4, contribution.Sides);
         Assert.Equal(
-            WatchtowerCombatDiePurpose.AttackRoll,
+            CombatDiePurpose.AttackRoll,
             contribution.Purpose);
         Assert.All(
             execution.Dice.Skip(2),
             die => Assert.Equal(
-                WatchtowerCombatDiePurpose.DamageRoll,
+                CombatDiePurpose.DamageRoll,
                 die.Purpose));
 
         // The contribution lands in the attack bonus, which is what adding a
@@ -418,7 +418,7 @@ public sealed class WatchtowerCombatAttackStagingTests
 
         WatchtowerCombatDieRoll[] damageDice = execution.Dice
             .Where(die => die.Purpose
-                == WatchtowerCombatDiePurpose.DamageRoll)
+                == CombatDiePurpose.DamageRoll)
             .ToArray();
         WatchtowerCombatDieRoll contribution = damageDice[^1];
 

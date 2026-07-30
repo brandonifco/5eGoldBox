@@ -52,7 +52,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatSpellAttackIntent
+                new CombatSpellAttackIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -63,7 +63,7 @@ public sealed class WatchtowerCombatSpellAttackTests
 
         Assert.NotNull(result.PrimaryStep);
         Assert.Equal(
-            WatchtowerCombatStepKind.SpellAttack,
+            CombatStepKind.SpellAttack,
             result.PrimaryStep.Kind);
         Assert.NotNull(result.PrimaryStep.SpellAttack);
         Assert.True(result.PrimaryStep.SpellAttack!.TookEffect);
@@ -92,7 +92,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatSpellAttackIntent
+                new CombatSpellAttackIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -103,7 +103,7 @@ public sealed class WatchtowerCombatSpellAttackTests
 
         Assert.NotNull(result.PrimaryStep);
         Assert.Equal(
-            WatchtowerCombatStepKind.SpellAttack,
+            CombatStepKind.SpellAttack,
             result.PrimaryStep.Kind);
         Assert.True(result.PrimaryStep.SpellAttack!.TookEffect);
         Assert.True(result.PrimaryStep.SpellAttack.HealingDone > 0);
@@ -134,7 +134,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatSpellAttackIntent
+                new CombatSpellAttackIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -215,7 +215,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatSpellAttackIntent
+                new CombatSpellAttackIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -265,7 +265,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatSpellAttackIntent
+                new CombatSpellAttackIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,
@@ -303,7 +303,7 @@ public sealed class WatchtowerCombatSpellAttackTests
         WatchtowerCombatResolutionResult result =
             WatchtowerCombatRules.Execute(
                 source,
-                new WatchtowerCombatWeaponAttackIntent
+                new CombatWeaponAttackIntent
                 {
                     ExpectedEncounterRevision =
                         decision.EncounterRevision,

@@ -23,17 +23,17 @@ public sealed class WatchtowerCombatAutomaticTurnTests
 
         WatchtowerCombatStepResult deathSave = result.AutomaticSteps[0];
         Assert.Equal(
-            WatchtowerCombatStepKind.DeathSavingThrow,
+            CombatStepKind.DeathSavingThrow,
             deathSave.Kind);
         Assert.Equal(actorId, deathSave.ActorCombatantId);
         WatchtowerCombatDieRoll die = Assert.Single(deathSave.Dice);
         Assert.Equal(20, die.Sides);
         Assert.Equal(5, die.Value);
         Assert.Equal(
-            WatchtowerCombatDiePurpose.DeathSavingThrow,
+            CombatDiePurpose.DeathSavingThrow,
             die.Purpose);
         Assert.Equal(
-            WatchtowerCombatStepKind.TurnAdvanced,
+            CombatStepKind.TurnAdvanced,
             result.AutomaticSteps[1].Kind);
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.DyingParticipantAfterSave,
@@ -74,7 +74,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         Assert.Equal(1, die.Value);
         Assert.Equal(20, die.Sides);
         Assert.Equal(
-            WatchtowerCombatDiePurpose.DeathSavingThrow,
+            CombatDiePurpose.DeathSavingThrow,
             die.Purpose);
         Assert.Equal(
             DeathSavingThrowOutcome.Failure,
@@ -89,13 +89,13 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             participant.Combatant.LifecycleState);
         Assert.Equal(0, participant.Combatant.Health.HitPoints.CurrentHitPoints);
         Assert.Equal(
-            WatchtowerCombatStepKind.TurnAdvanced,
+            CombatStepKind.TurnAdvanced,
             result.AutomaticSteps[1].Kind);
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.DyingParticipantAfterSave,
             result.AutomaticSteps[1].TurnAdvanceReason);
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             result.ResultingDecision.State);
         Assert.Equal(1, result.AutomaticSteps.Sum(step => step.Dice.Count));
         Assert.Equal(
@@ -133,7 +133,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         Assert.Equal(11, die.Value);
         Assert.Equal(20, die.Sides);
         Assert.Equal(
-            WatchtowerCombatDiePurpose.DeathSavingThrow,
+            CombatDiePurpose.DeathSavingThrow,
             die.Purpose);
         Assert.Equal(
             DeathSavingThrowOutcome.Success,
@@ -148,13 +148,13 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             participant.Combatant.LifecycleState);
         Assert.Equal(0, participant.Combatant.Health.HitPoints.CurrentHitPoints);
         Assert.Equal(
-            WatchtowerCombatStepKind.TurnAdvanced,
+            CombatStepKind.TurnAdvanced,
             result.AutomaticSteps[1].Kind);
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.DyingParticipantAfterSave,
             result.AutomaticSteps[1].TurnAdvanceReason);
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             result.ResultingDecision.State);
         Assert.Equal(1, result.AutomaticSteps.Sum(step => step.Dice.Count));
         Assert.Equal(
@@ -192,7 +192,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         Assert.Equal(11, die.Value);
         Assert.Equal(20, die.Sides);
         Assert.Equal(
-            WatchtowerCombatDiePurpose.DeathSavingThrow,
+            CombatDiePurpose.DeathSavingThrow,
             die.Purpose);
         Assert.Equal(
             DeathSavingThrowOutcome.Stabilized,
@@ -208,16 +208,16 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             participant.Combatant.LifecycleState);
         Assert.Equal(0, participant.Combatant.Health.HitPoints.CurrentHitPoints);
         Assert.Equal(
-            WatchtowerCombatStepKind.TurnAdvanced,
+            CombatStepKind.TurnAdvanced,
             result.AutomaticSteps[1].Kind);
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.DyingParticipantAfterSave,
             result.AutomaticSteps[1].TurnAdvanceReason);
         Assert.DoesNotContain(
             result.AutomaticSteps.Skip(1),
-            step => step.Kind == WatchtowerCombatStepKind.DeathSavingThrow);
+            step => step.Kind == CombatStepKind.DeathSavingThrow);
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             result.ResultingDecision.State);
         Assert.Equal(1, result.AutomaticSteps.Sum(step => step.Dice.Count));
         Assert.Equal(
@@ -255,7 +255,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         Assert.Equal(5, die.Value);
         Assert.Equal(20, die.Sides);
         Assert.Equal(
-            WatchtowerCombatDiePurpose.DeathSavingThrow,
+            CombatDiePurpose.DeathSavingThrow,
             die.Purpose);
         Assert.Equal(
             DeathSavingThrowOutcome.Dead,
@@ -270,7 +270,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             participant.Combatant.LifecycleState);
         Assert.Equal(0, participant.Combatant.Health.HitPoints.CurrentHitPoints);
         Assert.Equal(
-            WatchtowerCombatStepKind.TurnAdvanced,
+            CombatStepKind.TurnAdvanced,
             result.AutomaticSteps[1].Kind);
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.DyingParticipantAfterSave,
@@ -279,7 +279,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             EncounterLifecycleState.Active,
             WatchtowerCombatTestData.GetEncounter(result.State).LifecycleState);
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             result.ResultingDecision.State);
         Assert.Equal(1, result.AutomaticSteps.Sum(step => step.Dice.Count));
         Assert.Equal(
@@ -343,7 +343,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         Assert.Equal(5, die.Value);
         Assert.Equal(20, die.Sides);
         Assert.Equal(
-            WatchtowerCombatDiePurpose.DeathSavingThrow,
+            CombatDiePurpose.DeathSavingThrow,
             die.Purpose);
         Assert.Equal(
             DeathSavingThrowOutcome.Dead,
@@ -365,14 +365,14 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             completed.LifecycleState);
         Assert.Equal("side.watchtower-raiders", completed.WinningSideId);
         Assert.Equal(
-            WatchtowerCombatStepKind.CombatCompleted,
+            CombatStepKind.CombatCompleted,
             result.AutomaticSteps[1].Kind);
         Assert.Empty(result.AutomaticSteps[1].Dice);
         Assert.DoesNotContain(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.TurnAdvanced);
+            step => step.Kind == CombatStepKind.TurnAdvanced);
         Assert.Equal(
-            WatchtowerCombatDecisionState.CombatCompleted,
+            CombatDecisionState.CombatCompleted,
             result.ResultingDecision.State);
         Assert.Equal(1, result.AutomaticSteps.Sum(step => step.Dice.Count));
         Assert.Equal(
@@ -401,7 +401,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             CombatantLifecycleState.Conscious,
             step.DeathSavingThrow!.LifecycleState);
         Assert.Equal(
-            WatchtowerCombatDecisionState.PlayerDecisionRequired,
+            CombatDecisionState.PlayerDecisionRequired,
             result.ResultingDecision.State);
         Assert.Equal(actorId, result.ResultingDecision.ActiveCombatantId);
         EncounterParticipantState participant =
@@ -440,7 +440,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             WatchtowerCombatRules.AdvanceToDecision(source);
 
         WatchtowerCombatStepResult step = result.AutomaticSteps[0];
-        Assert.Equal(WatchtowerCombatStepKind.TurnAdvanced, step.Kind);
+        Assert.Equal(CombatStepKind.TurnAdvanced, step.Kind);
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.StableParticipant,
             step.TurnAdvanceReason);
@@ -487,7 +487,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         // under test is picked by its actor rather than by being the only one.
         WatchtowerCombatStepResult attack = Assert.Single(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.WeaponAttack
+            step => step.Kind == CombatStepKind.WeaponAttack
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.melee");
         Assert.Equal(expectedTarget, attack.TargetCombatantId);
@@ -617,12 +617,12 @@ public sealed class WatchtowerCombatAutomaticTurnTests
 
         WatchtowerCombatStepResult movement = Assert.Single(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.Movement
+            step => step.Kind == CombatStepKind.Movement
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.melee");
         WatchtowerCombatStepResult attack = Assert.Single(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.WeaponAttack
+            step => step.Kind == CombatStepKind.WeaponAttack
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.melee");
         Assert.Equal("party-member.rogue", attack.TargetCombatantId);
@@ -720,7 +720,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
 
         WatchtowerCombatStepResult movement = Assert.Single(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.Movement
+            step => step.Kind == CombatStepKind.Movement
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.melee");
         Assert.True(
@@ -732,12 +732,12 @@ public sealed class WatchtowerCombatAutomaticTurnTests
                 new GridPosition(0, 0)));
         Assert.DoesNotContain(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.WeaponAttack
+            step => step.Kind == CombatStepKind.WeaponAttack
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.melee");
         WatchtowerCombatStepResult turn = Assert.Single(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.TurnAdvanced
+            step => step.Kind == CombatStepKind.TurnAdvanced
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.melee"
                 && step.TurnAdvanceReason
@@ -759,12 +759,12 @@ public sealed class WatchtowerCombatAutomaticTurnTests
 
         Assert.DoesNotContain(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.Movement
+            step => step.Kind == CombatStepKind.Movement
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.ranged");
         Assert.Contains(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.WeaponAttack
+            step => step.Kind == CombatStepKind.WeaponAttack
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.ranged");
     }
@@ -803,7 +803,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             WatchtowerCombatRules.AdvanceToDecision(source);
 
         WatchtowerCombatStepResult first = result.AutomaticSteps[0];
-        Assert.Equal(WatchtowerCombatStepKind.TurnAdvanced, first.Kind);
+        Assert.Equal(CombatStepKind.TurnAdvanced, first.Kind);
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.NoProductiveEnemyAction,
             first.TurnAdvanceReason);
@@ -812,8 +812,8 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             result.AutomaticSteps,
             step => step.ActorCombatantId
                     == "combatant.watchtower-raider.ranged"
-                && step.Kind is WatchtowerCombatStepKind.Movement
-                    or WatchtowerCombatStepKind.WeaponAttack);
+                && step.Kind is CombatStepKind.Movement
+                    or CombatStepKind.WeaponAttack);
         Assert.Equal(cursorBefore, result.RandomValuesConsumedAfter);
     }
 
@@ -850,7 +850,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             WatchtowerCombatRules.AdvanceToDecision(source);
 
         WatchtowerCombatStepResult first = result.AutomaticSteps[0];
-        Assert.Equal(WatchtowerCombatStepKind.TurnAdvanced, first.Kind);
+        Assert.Equal(CombatStepKind.TurnAdvanced, first.Kind);
         Assert.Equal(
             WatchtowerCombatTurnAdvanceReason.NoProductiveEnemyAction,
             first.TurnAdvanceReason);
@@ -881,12 +881,12 @@ public sealed class WatchtowerCombatAutomaticTurnTests
 
         Assert.DoesNotContain(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.Movement
+            step => step.Kind == CombatStepKind.Movement
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.ranged");
         WatchtowerCombatStepResult attack = Assert.Single(
             result.AutomaticSteps,
-            step => step.Kind == WatchtowerCombatStepKind.WeaponAttack
+            step => step.Kind == CombatStepKind.WeaponAttack
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.ranged");
         Assert.Equal("party-member.fighter", attack.TargetCombatantId);
@@ -896,7 +896,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
         Assert.Equal(
             2,
             attack.Dice.Count(die =>
-                die.Purpose == WatchtowerCombatDiePurpose.AttackRoll));
+                die.Purpose == CombatDiePurpose.AttackRoll));
     }
 
     [Fact]
@@ -934,7 +934,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             WatchtowerCombatRules.AdvanceToDecision(source);
 
         WatchtowerCombatStepResult first = result.AutomaticSteps[0];
-        Assert.Equal(WatchtowerCombatStepKind.TurnAdvanced, first.Kind);
+        Assert.Equal(CombatStepKind.TurnAdvanced, first.Kind);
         Assert.Equal(
             "combatant.watchtower-raider.melee",
             first.ActorCombatantId);
@@ -946,7 +946,7 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             result.AutomaticSteps,
             step => step.ActorCombatantId
                     == "combatant.watchtower-raider.melee"
-                && step.Kind == WatchtowerCombatStepKind.WeaponAttack);
+                && step.Kind == CombatStepKind.WeaponAttack);
     }
 
     [Fact]
@@ -969,11 +969,11 @@ public sealed class WatchtowerCombatAutomaticTurnTests
             WatchtowerCombatRules.AdvanceToDecision(source);
 
         int movementIndex = result.AutomaticSteps.FindIndex(
-            step => step.Kind == WatchtowerCombatStepKind.Movement
+            step => step.Kind == CombatStepKind.Movement
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.melee");
         int attackIndex = result.AutomaticSteps.FindIndex(
-            step => step.Kind == WatchtowerCombatStepKind.WeaponAttack
+            step => step.Kind == CombatStepKind.WeaponAttack
                 && step.ActorCombatantId
                     == "combatant.watchtower-raider.melee");
 

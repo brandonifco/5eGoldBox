@@ -8,5 +8,5 @@ internal sealed record WatchtowerCombatDieRoll
 
     public required int Value { get; init; }
 
-    public required WatchtowerCombatDiePurpose Purpose { get; init; }
+    public required CombatDiePurpose Purpose { get; init; }
 }

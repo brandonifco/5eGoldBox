@@ -2,7 +2,7 @@ namespace FiveEGoldBox.Application.Combat;
 
 internal sealed record WatchtowerCombatDecision
 {
-    public required WatchtowerCombatDecisionState State { get; init; }
+    public required CombatDecisionState State { get; init; }
 
     public required long EncounterRevision { get; init; }
 
