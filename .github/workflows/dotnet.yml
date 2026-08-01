@@ -101,7 +101,7 @@ jobs:
 
       - name: Cache Godot engine
         id: cache-godot
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/godot-engine
           key: godot-engine-${{ env.GODOT_VERSION }}-mono-linux-x86_64
