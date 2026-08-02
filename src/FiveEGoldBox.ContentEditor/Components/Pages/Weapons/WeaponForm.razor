@@ -1,0 +1,192 @@
+@page "/weapons/new"
+@page "/weapons/edit/{Id}"
+@inject RulesetContentService ContentService
+@inject NavigationManager Navigation
+
+<PageTitle>@(_isNew ? "Add Weapon" : $"Edit {Id}")</PageTitle>
+
+<h1>@(_isNew ? "Add weapon" : $"Edit weapon: {Id}")</h1>
+
+<ValidationIssuesAlert Result="_saveResult" />
+
+<EditForm Model="_model" OnValidSubmit="Save">
+    <div class="mb-3">
+        <label class="form-label">Id</label>
+        <InputText class="form-control" @bind-Value="_model.Id" disabled="@(!_isNew)" />
+        <div class="form-text">Stable identifier, e.g. <code>weapon.longsword</code>. Cannot be changed once created.</div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        <InputText class="form-control" @bind-Value="_model.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Category</label>
+        <InputSelect class="form-select" @bind-Value="_model.Category">
+            @foreach (var value in Enum.GetValues<WeaponCategory>())
+            {
+                <option value="@value">@value</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Attack Kind</label>
+        <InputSelect class="form-select" @bind-Value="_model.AttackKind">
+            @foreach (var value in Enum.GetValues<WeaponAttackKind>())
+            {
+                <option value="@value">@value</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-auto">
+            <label class="form-label">Damage</label>
+            <div class="input-group">
+                <InputNumber class="form-control" style="max-width: 6rem;" @bind-Value="_model.DamageCount" />
+                <InputSelect class="form-select" @bind-Value="_model.DamageDie">
+                    @foreach (var value in Enum.GetValues<DieType>())
+                    {
+                        <option value="@value">@value</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3 form-check">
+        <InputCheckbox class="form-check-input" id="hasVersatile" @bind-Value="_model.HasVersatileDamage" />
+        <label class="form-check-label" for="hasVersatile">Versatile damage</label>
+    </div>
+
+    @if (_model.HasVersatileDamage)
+    {
+        <div class="row mb-3">
+            <div class="col-auto">
+                <label class="form-label">Versatile damage</label>
+                <div class="input-group">
+                    <InputNumber class="form-control" style="max-width: 6rem;" @bind-Value="_model.VersatileDamageCount" />
+                    <InputSelect class="form-select" @bind-Value="_model.VersatileDamageDie">
+                        @foreach (var value in Enum.GetValues<DieType>())
+                        {
+                            <option value="@value">@value</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="mb-3">
+        <label class="form-label">Damage Type</label>
+        <InputText class="form-control" @bind-Value="_model.DamageType" list="damageTypeOptions" />
+        <datalist id="damageTypeOptions">
+            @foreach (var value in _knownDamageTypes)
+            {
+                <option value="@value" />
+            }
+        </datalist>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label d-block">Properties</label>
+        @foreach (var property in WeaponFormModel.KnownProperties)
+        {
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="@("prop-" + property)"
+                       checked="@_model.Properties[property]"
+                       @onchange="@(e => _model.Properties[property] = (bool)e.Value!)" />
+                <label class="form-check-label" for="@("prop-" + property)">@property</label>
+            </div>
+        }
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Reach (feet)</label>
+            <InputNumber class="form-control" @bind-Value="_model.ReachFeet" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Normal Range (feet)</label>
+            <InputNumber class="form-control" @bind-Value="_model.NormalRangeFeet" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Long Range (feet)</label>
+            <InputNumber class="form-control" @bind-Value="_model.LongRangeFeet" />
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Ammunition Item</label>
+        <InputSelect class="form-select" @bind-Value="_model.AmmunitionItemId">
+            <option value="">(none)</option>
+            @foreach (var item in _equipmentItems)
+            {
+                <option value="@item.Id">@item.Name (@item.Id)</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Weight (pounds)</label>
+            <InputNumber class="form-control" @bind-Value="_model.WeightPounds" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Cost (copper pieces)</label>
+            <InputNumber class="form-control" @bind-Value="_model.CostInCopperPieces" />
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a class="btn btn-secondary" href="weapons">Cancel</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private WeaponFormModel _model = new();
+    private bool _isNew;
+    private ValidationResult? _saveResult;
+    private IReadOnlyList<EquipmentItemDefinition> _equipmentItems = [];
+    private IReadOnlyList<string> _knownDamageTypes = [];
+
+    protected override void OnInitialized()
+    {
+        _isNew = string.IsNullOrEmpty(Id);
+        _equipmentItems = ContentService.LoadEquipmentItems();
+
+        _knownDamageTypes = ContentService.LoadWeapons()
+            .Select(w => w.DamageType)
+            .Concat(ContentService.LoadSpells().SelectMany(s => s.Effects).Select(e => e.DamageType))
+            .Where(value => !string.IsNullOrEmpty(value))
+            .Select(value => value!)
+            .Distinct()
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (!_isNew)
+        {
+            WeaponDefinition? existing = ContentService.FindWeapon(Id!);
+
+            if (existing is not null)
+            {
+                _model = WeaponFormModel.FromDefinition(existing);
+            }
+        }
+    }
+
+    private void Save()
+    {
+        WeaponDefinition weapon = _model.ToDefinition();
+        _saveResult = ContentService.SaveWeapon(weapon);
+
+        if (_saveResult.IsValid)
+        {
+            Navigation.NavigateTo("weapons");
+        }
+    }
+}

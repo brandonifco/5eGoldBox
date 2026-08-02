@@ -1,0 +1,30 @@
+@if (_confirming)
+{
+    <span class="me-2">Delete this entry?</span>
+    <button type="button" class="btn btn-sm btn-danger me-1" @onclick="Confirm">Yes, delete</button>
+    <button type="button" class="btn btn-sm btn-secondary" @onclick="Cancel">Cancel</button>
+}
+else
+{
+    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => _confirming = true">
+        Delete
+    </button>
+}
+
+@code {
+    private bool _confirming;
+
+    [Parameter]
+    public EventCallback OnConfirmed { get; set; }
+
+    private void Cancel()
+    {
+        _confirming = false;
+    }
+
+    private async Task Confirm()
+    {
+        _confirming = false;
+        await OnConfirmed.InvokeAsync();
+    }
+}

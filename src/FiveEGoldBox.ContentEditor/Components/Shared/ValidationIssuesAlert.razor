@@ -1,0 +1,17 @@
+@if (Result is { Issues.Count: > 0 })
+{
+    <div class="alert @(Result.IsValid ? "alert-warning" : "alert-danger")">
+        <strong>@(Result.IsValid ? "Saved with warnings:" : "Not saved -- validation failed:")</strong>
+        <ul class="mb-0">
+            @foreach (var issue in Result.Issues)
+            {
+                <li>[@issue.Severity] @issue.Code: @issue.Message</li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public ValidationResult? Result { get; set; }
+}

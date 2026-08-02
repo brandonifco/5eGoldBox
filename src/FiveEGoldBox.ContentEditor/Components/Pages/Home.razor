@@ -1,0 +1,66 @@
+@page "/"
+@inject RulesetContentService ContentService
+
+<PageTitle>5eGoldBox Content Editor</PageTitle>
+
+<h1>5eGoldBox Content Editor</h1>
+
+<p>
+    Edits <code>data/rulesets/campaign/core.json</code> directly. Every save is
+    validated (through the same checks the <code>validate</code> console
+    command uses) before it touches the file on disk.
+</p>
+
+<div class="row row-cols-1 row-cols-md-2 g-3">
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Weapons</h5>
+                <p class="card-text">@_weaponCount defined.</p>
+                <a class="btn btn-primary" href="weapons">Manage weapons</a>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Spells</h5>
+                <p class="card-text">@_spellCount defined.</p>
+                <a class="btn btn-primary" href="spells">Manage spells</a>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Equipment Items</h5>
+                <p class="card-text">@_equipmentItemCount defined.</p>
+                <a class="btn btn-primary" href="equipment-items">Manage equipment items</a>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Monsters</h5>
+                <p class="card-text">@_monsterCount defined.</p>
+                <a class="btn btn-primary" href="monsters">Manage monsters</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int _weaponCount;
+    private int _spellCount;
+    private int _equipmentItemCount;
+    private int _monsterCount;
+
+    protected override void OnInitialized()
+    {
+        _weaponCount = ContentService.LoadWeapons().Count;
+        _spellCount = ContentService.LoadSpells().Count;
+        _equipmentItemCount = ContentService.LoadEquipmentItems().Count;
+        _monsterCount = ContentService.LoadMonsters().Count;
+    }
+}
