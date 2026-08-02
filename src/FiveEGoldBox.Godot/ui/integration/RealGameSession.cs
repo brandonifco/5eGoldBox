@@ -48,6 +48,14 @@ internal sealed class RealGameSession
 		_state = ScenarioSessionFactory.CreateNew(scenarioId, randomSeed);
 	}
 
+	// Lets a caller hand in an already-built session (e.g. one constructed
+	// by ScenarioSessionFactory.CreateAtExploration for a debug jump-to-
+	// location) rather than always starting a scenario fresh at its outpost.
+	internal RealGameSession(ApplicationSessionState initialState)
+	{
+		_state = initialState;
+	}
+
 	// The state-ownership handoff to RealCombatSession
 	// (ShellInteractionController.RealCombat.cs) — called once, the
 	// moment ShowRealSession first sees ApplicationMode.Encounter. This

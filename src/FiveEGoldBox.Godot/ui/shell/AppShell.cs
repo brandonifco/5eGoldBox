@@ -1,3 +1,8 @@
+using System;
+using FiveEGoldBox.Application.Exploration;
+using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Sessions;
+using FiveEGoldBox.Core.Runtime;
 using Godot;
 
 public partial class AppShell : Control
@@ -7,6 +12,27 @@ public partial class AppShell : Control
 	// knows nothing else about it.
 	private const string DefaultScenarioId = "scenario.watchtower";
 	private const int DefaultRandomSeed = 20260728;
+
+	// A developer-only override, same trusted-absolutely/fail-loudly
+	// convention as FIVEEGOLDBOX_DATA_ROOT (DataDirectoryLocator, in
+	// Application/Content/): when FIVEEGOLDBOX_DEBUG_LOCATION_ID is set, the
+	// app boots straight into that exploration location/floor/position/
+	// facing instead of the scenario's outpost. A partially-set debug env
+	// var group is treated as a misconfiguration and fails loudly rather
+	// than silently falling back to the normal outpost start — a typo'd var
+	// name should never look like "nothing happened".
+	private const string DebugLocationIdEnvironmentVariable =
+		"FIVEEGOLDBOX_DEBUG_LOCATION_ID";
+	private const string DebugFloorEnvironmentVariable =
+		"FIVEEGOLDBOX_DEBUG_FLOOR";
+	private const string DebugXEnvironmentVariable =
+		"FIVEEGOLDBOX_DEBUG_X";
+	private const string DebugYEnvironmentVariable =
+		"FIVEEGOLDBOX_DEBUG_Y";
+	private const string DebugFacingEnvironmentVariable =
+		"FIVEEGOLDBOX_DEBUG_FACING";
+	private const string DebugProgressIdEnvironmentVariable =
+		"FIVEEGOLDBOX_DEBUG_PROGRESS_ID";
 
 	private StandardLayout _standardLayout = null!;
 	private ImmersiveLayout _immersiveLayout = null!;
@@ -122,7 +148,89 @@ public partial class AppShell : Control
 		// ShellInteractionController.RealCombat.cs) for Move, single-
 		// target Weapon Attack, and End Turn — spellcasting and multi-
 		// target attacks are proven at the backend but not wired here yet.
-		_realSession = new RealGameSession(DefaultScenarioId, DefaultRandomSeed);
+		_realSession = CreateRealSession();
 		_interactionController.ShowRealSession(_realSession);
+	}
+
+	// Builds the session AppShell hands to RealGameSession. The normal path
+	// is unchanged from before this override existed; the debug path only
+	// engages when FIVEEGOLDBOX_DEBUG_LOCATION_ID is actually set.
+	private static RealGameSession CreateRealSession()
+	{
+		string? debugLocationId = System.Environment.GetEnvironmentVariable(
+			DebugLocationIdEnvironmentVariable);
+
+		if (string.IsNullOrEmpty(debugLocationId))
+		{
+			return new RealGameSession(DefaultScenarioId, DefaultRandomSeed);
+		}
+
+		string floor = RequireDebugEnvironmentVariable(
+			DebugFloorEnvironmentVariable);
+		int x = RequireDebugIntEnvironmentVariable(DebugXEnvironmentVariable);
+		int y = RequireDebugIntEnvironmentVariable(DebugYEnvironmentVariable);
+		ExplorationFacing facing = RequireDebugFacingEnvironmentVariable(
+			DebugFacingEnvironmentVariable);
+		string? progressId = System.Environment.GetEnvironmentVariable(
+			DebugProgressIdEnvironmentVariable);
+
+		ApplicationSessionState state =
+			ScenarioSessionFactory.CreateAtExploration(
+				DefaultScenarioId,
+				debugLocationId,
+				floor,
+				new GridPosition(x, y),
+				facing,
+				DefaultRandomSeed,
+				string.IsNullOrEmpty(progressId) ? null : progressId);
+
+		return new RealGameSession(state);
+	}
+
+	private static string RequireDebugEnvironmentVariable(
+		string variableName)
+	{
+		string? value = System.Environment.GetEnvironmentVariable(variableName);
+
+		if (string.IsNullOrEmpty(value))
+		{
+			throw new InvalidOperationException(
+				$"{DebugLocationIdEnvironmentVariable} is set, which requires " +
+					$"{variableName} to also be set, but it is missing or empty.");
+		}
+
+		return value;
+	}
+
+	private static int RequireDebugIntEnvironmentVariable(
+		string variableName)
+	{
+		string value = RequireDebugEnvironmentVariable(variableName);
+
+		if (!int.TryParse(value, out int parsed))
+		{
+			throw new InvalidOperationException(
+				$"{variableName} is set to '{value}', which is not a valid integer.");
+		}
+
+		return parsed;
+	}
+
+	private static ExplorationFacing RequireDebugFacingEnvironmentVariable(
+		string variableName)
+	{
+		string value = RequireDebugEnvironmentVariable(variableName);
+
+		if (!Enum.TryParse(
+				value,
+				ignoreCase: true,
+				out ExplorationFacing facing)
+			|| !Enum.IsDefined(facing))
+		{
+			throw new InvalidOperationException(
+				$"{variableName} is set to '{value}', which is not a valid facing.");
+		}
+
+		return facing;
 	}
 }

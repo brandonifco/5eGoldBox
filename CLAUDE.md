@@ -207,3 +207,25 @@ dotnet build 5eGoldBox.sln -c Release   # required gate before merge
 ```
 
 `FiveEGoldBox.Godot` is a separate project (its own `.sln`, not referenced by `5eGoldBox.sln`, back in this working tree as of 2026-07-28 — see "Repo hygiene" above) — the above commands don't touch it. **CI does build and boot-check it now (PR #202):** a separate `godot-build-and-boot` job (`.github/workflows/dotnet.yml`) builds `FiveEGoldBox.Godot.sln` and boots it headless; it doesn't run the manual "throwaway console project" verification described below, and it's a separate job/workflow run from the main Debug/Release matrix, not folded into `5eGoldBox.sln`. It's real backend-wired now, not "not-yet-integrated" — see "Where things stand" at the top for what that means and how to verify changes to it.
+
+## Developer quick-reference: jumping straight to an exploration location
+
+Both clients can start a session already inside a specific exploration location/floor/position/facing, bypassing the outpost decision and regional travel — for checking a spot on a map (a door, treasure, rendering) without replaying a scenario up to it every time. `ScenarioSessionFactory.CreateAtExploration` (`src/FiveEGoldBox.Application/Scenarios/ScenarioSessionFactory.cs`) is the shared engine seam behind both.
+
+**Console — `goto` verb:**
+
+```
+dotnet run --project src/FiveEGoldBox.Console -- goto <scenario-id> <location-id> <floor> <x> <y> <facing> [progress-id]
+```
+
+Worked example, landing on the tile adjacent to Watchtower's armory door:
+
+```
+dotnet run --project src/FiveEGoldBox.Console -- goto scenario.watchtower location.ruined-watchtower GroundFloor 2 1 East MissionAccepted
+```
+
+**Godot — five (or six) `FIVEEGOLDBOX_DEBUG_*` env vars**, same trusted-absolutely/fail-loudly convention as `FIVEEGOLDBOX_DATA_ROOT` above: `FIVEEGOLDBOX_DEBUG_LOCATION_ID`, `FIVEEGOLDBOX_DEBUG_FLOOR`, `FIVEEGOLDBOX_DEBUG_X`, `FIVEEGOLDBOX_DEBUG_Y`, `FIVEEGOLDBOX_DEBUG_FACING`, and an optional `FIVEEGOLDBOX_DEBUG_PROGRESS_ID`. Only `LOCATION_ID` gates the override — set it and the other four become required, or the app fails loudly naming the missing one rather than silently booting to the outpost. Worked example, same spot:
+
+```
+FIVEEGOLDBOX_DEBUG_LOCATION_ID=location.ruined-watchtower FIVEEGOLDBOX_DEBUG_FLOOR=GroundFloor FIVEEGOLDBOX_DEBUG_X=2 FIVEEGOLDBOX_DEBUG_Y=1 FIVEEGOLDBOX_DEBUG_FACING=East FIVEEGOLDBOX_DEBUG_PROGRESS_ID=MissionAccepted godot --path src/FiveEGoldBox.Godot
+```

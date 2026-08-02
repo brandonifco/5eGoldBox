@@ -28,6 +28,15 @@ internal static class Program
                 System.Console.Error);
         }
 
+        if (args.Length > 0
+            && string.Equals(args[0], "goto", StringComparison.OrdinalIgnoreCase))
+        {
+            return GotoLocationCommand.Run(
+                args[1..],
+                System.Console.Out,
+                System.Console.Error);
+        }
+
         string savePath = Path.Combine(
             Environment.CurrentDirectory,
             "savegame.json");
