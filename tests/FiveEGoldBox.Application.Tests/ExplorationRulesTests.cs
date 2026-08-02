@@ -1181,6 +1181,120 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
+    public void Query_FreshSession_ClassifiesDoorsAndTreasureIntoTheirBuckets()
+    {
+        ExplorationMapView? view =
+            ExplorationRules.Query(CreateExplorationSession());
+
+        Assert.NotNull(view);
+        Assert.Contains(
+            new GridPosition(3, 1),
+            view!.ClosedDoorPositions);
+        Assert.Contains(
+            new GridPosition(1, 1),
+            view.LockedDoorPositions);
+
+        // The hidden vault (3, 2) is an unrevealed secret door: invisible.
+        // It appears in no list at all, including TraversablePositions.
+        Assert.DoesNotContain(
+            new GridPosition(3, 2),
+            view.ClosedDoorPositions);
+        Assert.DoesNotContain(
+            new GridPosition(3, 2),
+            view.LockedDoorPositions);
+        Assert.DoesNotContain(
+            new GridPosition(3, 2),
+            view.TraversablePositions);
+
+        Assert.Contains(
+            new GridPosition(4, 1),
+            view.TreasurePositions);
+    }
+
+    [Fact]
+    public void Query_AfterOpeningAnOrdinaryDoor_MovesItIntoTraversablePositions()
+    {
+        ApplicationSessionState opened =
+            ExplorationRules.OpenDoor(
+                CreateFacingArmoryDoor());
+
+        ExplorationMapView? view = ExplorationRules.Query(opened);
+
+        Assert.NotNull(view);
+        Assert.Contains(
+            new GridPosition(3, 1),
+            view!.TraversablePositions);
+        Assert.DoesNotContain(
+            new GridPosition(3, 1),
+            view.ClosedDoorPositions);
+    }
+
+    [Fact]
+    public void Query_AfterRevealingASecretDoorWithoutOpeningIt_ShowsItAsClosed()
+    {
+        ApplicationSessionState revealed =
+            ExplorationRules.RevealSecretDoor(
+                CreateFacingHiddenVaultDoor());
+
+        ExplorationMapView? view = ExplorationRules.Query(revealed);
+
+        Assert.NotNull(view);
+        Assert.Contains(
+            new GridPosition(3, 2),
+            view!.ClosedDoorPositions);
+        Assert.DoesNotContain(
+            new GridPosition(3, 2),
+            view.TraversablePositions);
+    }
+
+    [Fact]
+    public void Query_AfterCollectingTreasure_RemovesItFromTreasurePositions()
+    {
+        ApplicationSessionState collected =
+            ExplorationRules.CollectTreasure(
+                CreateAtArmoryCacheTreasure());
+
+        ExplorationMapView? view = ExplorationRules.Query(collected);
+
+        Assert.NotNull(view);
+        Assert.DoesNotContain(
+            new GridPosition(4, 1),
+            view!.TreasurePositions);
+    }
+
+    [Fact]
+    public void Query_TheLockedPosternNeverAppearsAsClosedOrTraversable_AcrossStateChanges()
+    {
+        ApplicationSessionState fresh = CreateExplorationSession();
+        ApplicationSessionState doorOpened =
+            ExplorationRules.OpenDoor(
+                CreateFacingArmoryDoor());
+        ApplicationSessionState secretRevealed =
+            ExplorationRules.RevealSecretDoor(
+                CreateFacingHiddenVaultDoor());
+        ApplicationSessionState treasureCollected =
+            ExplorationRules.CollectTreasure(
+                CreateAtArmoryCacheTreasure());
+
+        foreach (ApplicationSessionState state
+            in new[] { fresh, doorOpened, secretRevealed, treasureCollected })
+        {
+            ExplorationMapView? view = ExplorationRules.Query(state);
+
+            Assert.NotNull(view);
+            Assert.Contains(
+                new GridPosition(1, 1),
+                view!.LockedDoorPositions);
+            Assert.DoesNotContain(
+                new GridPosition(1, 1),
+                view.ClosedDoorPositions);
+            Assert.DoesNotContain(
+                new GridPosition(1, 1),
+                view.TraversablePositions);
+        }
+    }
+
+    [Fact]
     public void Query_DoesNotMutateOrConsumeRandomness()
     {
         ApplicationSessionState session = CreateExplorationSession();

@@ -8,6 +8,9 @@ internal sealed record AreaMapViewModel(
 	int Height,
 	IReadOnlyList<AreaMapPointViewModel> WalkableCells,
 	IReadOnlyList<AreaMapPointViewModel> StairCells,
+	IReadOnlyList<AreaMapPointViewModel> ClosedDoorCells,
+	IReadOnlyList<AreaMapPointViewModel> LockedDoorCells,
+	IReadOnlyList<AreaMapPointViewModel> TreasureCells,
 	int PartyX,
 	int PartyY,
 	string PartyFacing);
