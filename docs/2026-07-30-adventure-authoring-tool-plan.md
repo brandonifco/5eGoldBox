@@ -163,34 +163,44 @@ location (hand-authored story beats with no `Floor`/`Position`) are left untouch
 geometry. Verified end-to-end against a temp copy of the real `data/scenarios/hollow-mill/scenario.json`
 (never the committed file itself).
 
-### Phase F — Form-based content editor
+### Phase F — Form-based content editor (done, PRs #209)
 
-A small tool (likely a minimal ASP.NET Core web app, referencing `FiveEGoldBox.Application`/`Core`
-directly so it validates through the exact same `RulesetValidator`/`ScenarioDefinitionValidator`
-the engine uses, rather than reimplementing validation — or, now that Phase D exists, at minimum
-the standalone `validate` command) with forms for weapons/spells/items/monsters, reading and
-writing `data/rulesets/**/*.json` directly. Phase C's completion means monsters need nothing
-further either now — weapons/spells/items/monsters can all start as soon as this phase is picked
-up.
+Scoped in detail in `docs/2026-08-02-content-editor-plan.md` (full decision record and phase
+breakdown there). Built as a new `FiveEGoldBox.ContentEditor` Blazor Server project, referencing
+`FiveEGoldBox.Application`/`Core` directly, with full CRUD forms for all four content kinds
+(weapons, items, spells, monsters) reading and writing `data/rulesets/campaign/core.json`. Writes
+go through raw JSON-node manipulation (mirroring Phase E's Tiled importer, not a round-trip
+through the internal DTOs), validated on every save through the existing public
+`ContentPackValidation.ValidateRulesetPack` before the file is replaced — a rejected save leaves
+the committed file untouched. `RulesetJsonSplicer`/`RulesetJsonFormatting` reproduce the file's
+hand-authored formatting exactly, proven by a no-op-save-is-byte-identical test. 20 new tests.
 
-### Phase G — Godot tile rendering for new map content
+### Phase G — Godot tile rendering for new map content (done, PR #210)
 
-Extend `AreaMapView`'s existing single-`_Draw()`-pass grid (currently walkable/stair/blocked as
-three flat colors) with more cell kinds for doors/secret-doors-once-found/treasure. Tile *art* (as
-opposed to flat colored cells) would need a genuinely new tileset/atlas pipeline in Godot, since
-none exists today; scope that separately once it's clear flat colors aren't enough.
+`AreaMapView`'s existing single-`_Draw()`-pass grid now resolves each cell's paint color through a
+precedence chain (stair > locked door > closed door > treasure > walkable > blocked), fed by three
+new `ExplorationMapView` fields (`ClosedDoorPositions`/`LockedDoorPositions`/`TreasurePositions`)
+that `ExplorationMapViewFactory` populates via door/treasure classification against
+`ExplorationState`. An unrevealed secret door stays fully invisible (no visual hint); a locked door
+gets its own distinct color from an ordinary closed door — both per prior design decisions in this
+doc. Cell-color resolution is a pure, Godot-API-free method, covered by five new
+`ExplorationRulesTests` cases against the real Watchtower scenario data. Tile *art* (as opposed to
+flat colored cells) would still need a genuinely new tileset/atlas pipeline in Godot, since none
+exists today; that remains separately scoped, unblocked but not started.
 
 ## Out of scope for this plan
 
 - Leveling/multiclassing, condition-immunity enforcement, and the other product-backlog items
   already tracked in CLAUDE.md.
 
-## Status (2026-08-02, updated after Phase B landed)
+## Status (2026-08-02, updated after Phase G landed)
 
-Phases A, B, C, D, and E are done. Remaining, in no particular committed order — see CLAUDE.md or
-ask before picking one:
+Phases A through G are all done. This plan is complete — the full authoring/import pipeline the
+user asked for (map maker via Tiled import, door/secret-door/treasure runtime state, a monster
+bestiary, JSON content packs, a form-based content editor, and Godot rendering for the new map
+content) is built and merged. Remaining, genuinely separate work, not part of this plan's scope:
 
-- **Phase F** (form-based content editor) — scoped in `docs/2026-08-02-content-editor-plan.md`,
-  not yet built.
-- **Phase G** (Godot tile rendering for doors/secret-doors/treasure) — unblocked now that Phase B
-  is done; not started.
+- Tile *art* for the area map (flat colors only today) — a new tileset/atlas pipeline, scoped
+  separately once flat colors prove insufficient (see Phase G above).
+- Scenario/campaign content editing (locations, encounters, triggers, roster) — the content editor
+  is ruleset-only by design; see `docs/2026-08-02-content-editor-plan.md`'s "Out of scope."

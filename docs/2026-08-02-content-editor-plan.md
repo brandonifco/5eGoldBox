@@ -133,7 +133,14 @@ against the real `core.json`.
 - Tile/map authoring — that's Phase E (Tiled importer), already done.
 - Any deployment/hosting/auth story — this is a local dev-only tool, same as the Console client.
 
-## Status (2026-08-02, scoped, not started)
+## Status (2026-08-02, done, PR #209)
 
-Nothing built yet. Phases F.1–F.4 above are the intended sequence; ask before picking one up if
-priorities have shifted since this was written.
+Built in two commits on one branch rather than the four sub-phases above staged separately: the
+full read/write/validate/CRUD path for all four content kinds landed together
+(`FiveEGoldBox.ContentEditor`, `RulesetJsonSplicer`/`RulesetJsonFormatting`, 20 tests including a
+byte-identical no-op-save check), then a same-branch follow-up commit turned on Blazor's
+InteractiveServer render mode for the root component — without it, `EditForm` submits and
+`DeleteButton` clicks were dead because no circuit existed to run them over, only caught by
+actually clicking through the app in a browser rather than trusting a clean build. All decisions
+locked in above (Blazor Server, all four kinds together, full CRUD, raw JSON-node writes,
+single-target-file, cross-reference pickers) were followed as written; no scope changes.
