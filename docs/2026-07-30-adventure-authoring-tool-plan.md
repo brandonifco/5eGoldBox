@@ -45,9 +45,9 @@ content got the same treatment too, which this plan hadn't called out by name).
   which today's `ExplorationState` has no slot for — this is new runtime exploration state, not
   just new content fields (Phase B).
 - **No monster/NPC content type exists separate from `CombatantDefinition`.** Encounter opposition
-  is authored inline, directly in each scenario's `EncounterDefinition.Combatants` — there is no
-  reusable "bestiary" entry referenced by ID the way weapons/spells are (Phase C, flagged as
-  needing a user decision, not assumed).
+  was authored inline, directly in each scenario's `EncounterDefinition.Combatants` — there was no
+  reusable "bestiary" entry referenced by ID the way weapons/spells are. **Closed by Phase C
+  below.**
 - **No tileset/atlas/tile-art pipeline exists in Godot at all.** Current art is one full-frame PNG
   per scene, or a flat placeholder color. `AreaMapView` already draws its grid via one `_Draw()`
   pass with flat colors, which extends cleanly to more tile "kinds" without an architecture change
@@ -84,12 +84,21 @@ slots (open/closed per door, found/hidden per secret door, collected/not per tre
 for interacting with them. Secret-door discovery is binary for v1 (see Findings above) —
 deliberately not wired to a skill check.
 
-### Phase C — Monster/NPC bestiary extraction (needs a user decision, not started)
+### Phase C — Monster/NPC bestiary extraction (done, PR #203)
 
-Extract a standalone `MonsterDefinition` from `CombatantDefinition` (minus `StartingPosition`),
-referenced by ID from `EncounterDefinition.Combatants`, so monsters become reusable/importable
-content instead of copy-authored per encounter — mirrors how
-`CombatantWeaponDefinition.WeaponId` already references the ruleset's `WeaponDefinition`.
+`MonsterDefinition` (public, `Core.Definitions`, mirroring `WeaponDefinition`'s placement and
+visibility exactly) is now a standalone bestiary entry — `EncounterCombatantDefinition` (replacing
+`CombatantDefinition`) carries only `CombatantId`/`MonsterId`/`SideId`/`StartingPosition` and
+references a monster by ID, the same way `CombatantWeaponDefinition.WeaponId` already references
+the ruleset's `WeaponDefinition`. Six monsters extracted into `data/rulesets/campaign/core.json`
+(Watchtower's two raiders, the Sunken Chapel's two guardians, Hollow Mill's giant rat and miller's
+thrall) — the giant rat is shared by ID across both Hollow Mill encounters that use it, which is
+the actual duplication this phase existed to remove. New load-time validation
+(`scenario.combatants.monster_id_unresolved`) catches a `MonsterId` that doesn't resolve against
+the scenario's ruleset — deliberately not retrofitted onto `WeaponId`, which stays exactly as it
+was. Both frozen Watchtower combat transcripts passed unchanged, confirming the extraction is
+byte-for-byte behavior-preserving. Public API: `Core.dll` 173 → 176 (the three new public types);
+`Application.dll` held at 64 (everything added there is internal).
 
 ### Phase D — Scenario (and campaign) content pack loader (done, PRs #188–#198)
 
@@ -153,8 +162,9 @@ A small tool (likely a minimal ASP.NET Core web app, referencing `FiveEGoldBox.A
 directly so it validates through the exact same `RulesetValidator`/`ScenarioDefinitionValidator`
 the engine uses, rather than reimplementing validation — or, now that Phase D exists, at minimum
 the standalone `validate` command) with forms for weapons/spells/items/monsters, reading and
-writing `data/rulesets/**/*.json` directly. Monsters specifically wait on Phase C's decision;
-weapons/spells/items need nothing further and could start now.
+writing `data/rulesets/**/*.json` directly. Phase C's completion means monsters need nothing
+further either now — weapons/spells/items/monsters can all start as soon as this phase is picked
+up.
 
 ### Phase G — Godot tile rendering for new map content
 
@@ -168,15 +178,14 @@ none exists today; scope that separately once it's clear flat colors aren't enou
 - Leveling/multiclassing, condition-immunity enforcement, and the other product-backlog items
   already tracked in CLAUDE.md.
 
-## Status (2026-07-30, regrouped after Phases A and D landed, updated after Phase E)
+## Status (2026-08-02, updated after Phase C landed)
 
-Phases A, D, and E are done. Remaining, in no particular committed order — see CLAUDE.md or ask
+Phases A, C, D, and E are done. Remaining, in no particular committed order — see CLAUDE.md or ask
 before picking one:
 
-- **Phase B** (door/secret door/treasure runtime state) — bounded engine work, no decision needed
-  beyond what's already recorded above. Doing this unlocks extending Phase E's Tiled convention to
-  cover doors/secret doors/treasure objects too.
-- **Phase C** (monster/NPC bestiary extraction) — needs a user decision before starting.
-- **Phase F** (form-based content editor) — can start now for weapons/spells/items; monsters wait
-  on Phase C.
+- **Phase B** (door/secret door/treasure runtime state) — in progress. Bounded engine work, no
+  decision needed beyond what's already recorded above. Doing this unlocks extending Phase E's
+  Tiled convention to cover doors/secret doors/treasure objects too.
+- **Phase F** (form-based content editor) — can start now for weapons/spells/items/monsters, no
+  outstanding blocker.
 - **Phase G** (Godot tile rendering) — waits on Phase B.
