@@ -176,6 +176,15 @@ internal sealed class RealGameSession
 			map.StairPositions
 				.Select(position => new AreaMapPointViewModel(position.X, position.Y))
 				.ToArray(),
+			map.ClosedDoorPositions
+				.Select(position => new AreaMapPointViewModel(position.X, position.Y))
+				.ToArray(),
+			map.LockedDoorPositions
+				.Select(position => new AreaMapPointViewModel(position.X, position.Y))
+				.ToArray(),
+			map.TreasurePositions
+				.Select(position => new AreaMapPointViewModel(position.X, position.Y))
+				.ToArray(),
 			map.PartyPosition.X,
 			map.PartyPosition.Y,
 			map.PartyFacing.ToString());

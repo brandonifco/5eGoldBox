@@ -23,6 +23,9 @@ public partial class AreaMapView : Control
 	private int _height = 1;
 	private HashSet<(int X, int Y)> _walkable = new();
 	private HashSet<(int X, int Y)> _stairs = new();
+	private HashSet<(int X, int Y)> _closedDoors = new();
+	private HashSet<(int X, int Y)> _lockedDoors = new();
+	private HashSet<(int X, int Y)> _treasure = new();
 	private int _partyX;
 	private int _partyY;
 
@@ -43,6 +46,15 @@ public partial class AreaMapView : Control
 			.Select(cell => (cell.X, cell.Y))
 			.ToHashSet();
 		_stairs = model.StairCells
+			.Select(cell => (cell.X, cell.Y))
+			.ToHashSet();
+		_closedDoors = model.ClosedDoorCells
+			.Select(cell => (cell.X, cell.Y))
+			.ToHashSet();
+		_lockedDoors = model.LockedDoorCells
+			.Select(cell => (cell.X, cell.Y))
+			.ToHashSet();
+		_treasure = model.TreasureCells
 			.Select(cell => (cell.X, cell.Y))
 			.ToHashSet();
 		_partyX = model.PartyX;
@@ -107,19 +119,30 @@ public partial class AreaMapView : Control
 		Color walkableColor = new(0.55f, 0.5f, 0.42f, 1f);
 		Color blockedColor = new(0.12f, 0.11f, 0.1f, 1f);
 		Color stairColor = new(0.35f, 0.6f, 0.85f, 1f);
+		Color closedDoorColor = new(0.5f, 0.32f, 0.18f, 1f);
+		Color lockedDoorColor = new(0.55f, 0.15f, 0.12f, 1f);
+		Color treasureColor = new(0.85f, 0.7f, 0.2f, 1f);
 		Color gridLineColor = new(0f, 0f, 0f, 0.25f);
 
 		for (int y = 0; y < _height; y++)
 		{
 			for (int x = 0; x < _width; x++)
 			{
-				bool isStair = _stairs.Contains((x, y));
-				bool isWalkable = _walkable.Contains((x, y));
-				Color fill = isStair
-					? stairColor
-					: isWalkable
-						? walkableColor
-						: blockedColor;
+				CellVisualKind kind = ResolveCellKind(
+					_stairs.Contains((x, y)),
+					_lockedDoors.Contains((x, y)),
+					_closedDoors.Contains((x, y)),
+					_treasure.Contains((x, y)),
+					_walkable.Contains((x, y)));
+				Color fill = kind switch
+				{
+					CellVisualKind.Stair => stairColor,
+					CellVisualKind.LockedDoor => lockedDoorColor,
+					CellVisualKind.ClosedDoor => closedDoorColor,
+					CellVisualKind.Treasure => treasureColor,
+					CellVisualKind.Walkable => walkableColor,
+					_ => blockedColor,
+				};
 				Vector2 topLeft = new(
 					offsetX + (x * cellSize),
 					offsetY + (y * cellSize));
