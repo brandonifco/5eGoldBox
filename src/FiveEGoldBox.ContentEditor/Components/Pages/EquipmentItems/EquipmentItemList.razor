@@ -1,0 +1,58 @@
+@page "/equipment-items"
+@inject RulesetContentService ContentService
+
+<PageTitle>Equipment Items</PageTitle>
+
+<h1>Equipment Items</h1>
+
+<a class="btn btn-primary mb-3" href="equipment-items/new">Add new equipment item</a>
+
+<ValidationIssuesAlert Result="_lastDeleteResult" />
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Weight (lb)</th>
+            <th>Cost (cp)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in _items)
+        {
+            <tr>
+                <td><code>@item.Id</code></td>
+                <td>@item.Name</td>
+                <td>@item.WeightPounds</td>
+                <td>@item.CostInCopperPieces</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary me-1" href="@($"equipment-items/edit/{Uri.EscapeDataString(item.Id)}")">Edit</a>
+                    <DeleteButton OnConfirmed="() => Delete(item.Id)" />
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private IReadOnlyList<EquipmentItemDefinition> _items = [];
+    private ValidationResult? _lastDeleteResult;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _items = ContentService.LoadEquipmentItems();
+    }
+
+    private void Delete(string id)
+    {
+        _lastDeleteResult = ContentService.DeleteEquipmentItem(id);
+        Refresh();
+    }
+}

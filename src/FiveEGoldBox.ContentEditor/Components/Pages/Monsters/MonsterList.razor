@@ -1,0 +1,58 @@
+@page "/monsters"
+@inject RulesetContentService ContentService
+
+<PageTitle>Monsters</PageTitle>
+
+<h1>Monsters</h1>
+
+<a class="btn btn-primary mb-3" href="monsters/new">Add new monster</a>
+
+<ValidationIssuesAlert Result="_lastDeleteResult" />
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>HP</th>
+            <th>AC</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var monster in _monsters)
+        {
+            <tr>
+                <td><code>@monster.Id</code></td>
+                <td>@monster.Name</td>
+                <td>@monster.MaximumHitPoints</td>
+                <td>@monster.ArmorClass</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary me-1" href="@($"monsters/edit/{Uri.EscapeDataString(monster.Id)}")">Edit</a>
+                    <DeleteButton OnConfirmed="() => Delete(monster.Id)" />
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private IReadOnlyList<MonsterDefinition> _monsters = [];
+    private ValidationResult? _lastDeleteResult;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _monsters = ContentService.LoadMonsters();
+    }
+
+    private void Delete(string id)
+    {
+        _lastDeleteResult = ContentService.DeleteMonster(id);
+        Refresh();
+    }
+}

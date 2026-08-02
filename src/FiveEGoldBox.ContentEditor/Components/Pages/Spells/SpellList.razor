@@ -1,0 +1,60 @@
+@page "/spells"
+@inject RulesetContentService ContentService
+
+<PageTitle>Spells</PageTitle>
+
+<h1>Spells</h1>
+
+<a class="btn btn-primary mb-3" href="spells/new">Add new spell</a>
+
+<ValidationIssuesAlert Result="_lastDeleteResult" />
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Cost</th>
+            <th>Level</th>
+            <th>Resolution</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var spell in _spells)
+        {
+            <tr>
+                <td><code>@spell.Id</code></td>
+                <td>@spell.Name</td>
+                <td>@spell.Cost</td>
+                <td>@spell.Level</td>
+                <td>@spell.Resolution</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary me-1" href="@($"spells/edit/{Uri.EscapeDataString(spell.Id)}")">Edit</a>
+                    <DeleteButton OnConfirmed="() => Delete(spell.Id)" />
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private IReadOnlyList<SpellDefinition> _spells = [];
+    private ValidationResult? _lastDeleteResult;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _spells = ContentService.LoadSpells();
+    }
+
+    private void Delete(string id)
+    {
+        _lastDeleteResult = ContentService.DeleteSpell(id);
+        Refresh();
+    }
+}

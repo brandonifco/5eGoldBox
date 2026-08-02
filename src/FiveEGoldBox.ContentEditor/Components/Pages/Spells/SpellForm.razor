@@ -1,0 +1,261 @@
+@page "/spells/new"
+@page "/spells/edit/{Id}"
+@inject RulesetContentService ContentService
+@inject NavigationManager Navigation
+
+<PageTitle>@(_isNew ? "Add Spell" : $"Edit {Id}")</PageTitle>
+
+<h1>@(_isNew ? "Add spell" : $"Edit spell: {Id}")</h1>
+
+<ValidationIssuesAlert Result="_saveResult" />
+
+<EditForm Model="_model" OnValidSubmit="Save">
+    <div class="mb-3">
+        <label class="form-label">Id</label>
+        <InputText class="form-control" @bind-Value="_model.Id" disabled="@(!_isNew)" />
+        <div class="form-text">Stable identifier, e.g. <code>spell.fire-bolt</code>. Cannot be changed once created.</div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        <InputText class="form-control" @bind-Value="_model.Name" />
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label class="form-label">Cost</label>
+            <InputSelect class="form-select" @bind-Value="_model.Cost">
+                @foreach (var value in Enum.GetValues<SpellCostKind>())
+                {
+                    <option value="@value">@value</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Level</label>
+            <InputNumber class="form-control" @bind-Value="_model.Level" />
+            <div class="form-text">0 for a cantrip.</div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Casting Time</label>
+            <InputSelect class="form-select" @bind-Value="_model.CastingTime">
+                @foreach (var value in Enum.GetValues<SpellCastingTime>())
+                {
+                    <option value="@value">@value</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Maximum Targets</label>
+            <InputNumber class="form-control" @bind-Value="_model.MaximumTargets" />
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Range Kind</label>
+            <InputSelect class="form-select" @bind-Value="_model.RangeKind">
+                @foreach (var value in Enum.GetValues<SpellRangeKind>())
+                {
+                    <option value="@value">@value</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Range (feet)</label>
+            <InputNumber class="form-control" @bind-Value="_model.RangeFeet" />
+            <div class="form-text">Only meaningful when Range Kind is Ranged.</div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Targets</label>
+            <InputSelect class="form-select" @bind-Value="_model.Targets">
+                @foreach (var value in Enum.GetValues<SpellTargetDisposition>())
+                {
+                    <option value="@value">@value</option>
+                }
+            </InputSelect>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Resolution</label>
+        <InputSelect class="form-select" @bind-Value="_model.Resolution">
+            @foreach (var value in Enum.GetValues<SpellResolutionKind>())
+            {
+                <option value="@value">@value</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3 form-check">
+        <InputCheckbox class="form-check-input" id="hasSaveAbility" @bind-Value="_model.HasSaveAbility" />
+        <label class="form-check-label" for="hasSaveAbility">Resolved by a saving throw against a specific ability</label>
+        <div class="form-text">Only meaningful when Resolution is SavingThrow.</div>
+    </div>
+
+    @if (_model.HasSaveAbility)
+    {
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label">Save Ability</label>
+                <InputSelect class="form-select" @bind-Value="_model.SaveAbility">
+                    @foreach (var value in Enum.GetValues<Ability>())
+                    {
+                        <option value="@value">@value</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Save Outcome</label>
+                <InputSelect class="form-select" @bind-Value="_model.SaveOutcome">
+                    @foreach (var value in Enum.GetValues<SpellSaveOutcome>())
+                    {
+                        <option value="@value">@value</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+    }
+
+    <div class="mb-3">
+        <label class="form-label">Applied Effect</label>
+        <InputSelect class="form-select" @bind-Value="_model.AppliedEffectId">
+            <option value="">(none)</option>
+            @foreach (var effect in _effects)
+            {
+                <option value="@effect.Id">@effect.Name (@effect.Id)</option>
+            }
+        </InputSelect>
+        <div class="form-text">
+            An effect this spell installs on its targets. Effects are managed elsewhere in the file; this is a read-only picker.
+        </div>
+    </div>
+
+    <div class="mb-3 form-check">
+        <InputCheckbox class="form-check-input" id="requiresConcentration" @bind-Value="_model.RequiresConcentration" />
+        <label class="form-check-label" for="requiresConcentration">Requires Concentration</label>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Duration (rounds)</label>
+        <InputNumber class="form-control" style="max-width: 12rem;" @bind-Value="_model.DurationRounds" />
+    </div>
+
+    <hr />
+    <h4>Effects</h4>
+
+    @for (int i = 0; i < _model.Effects.Count; i++)
+    {
+        var index = i;
+        var effect = _model.Effects[index];
+
+        <div class="card mb-2">
+            <div class="card-body">
+                <div class="row align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label">Kind</label>
+                        <InputSelect class="form-select" @bind-Value="effect.Kind">
+                            @foreach (var value in Enum.GetValues<SpellEffectKind>())
+                            {
+                                <option value="@value">@value</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Dice</label>
+                        <div class="input-group">
+                            <InputNumber class="form-control" @bind-Value="effect.DiceCount" />
+                            <InputSelect class="form-select" @bind-Value="effect.DiceDie">
+                                @foreach (var value in Enum.GetValues<DieType>())
+                                {
+                                    <option value="@value">@value</option>
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Instances</label>
+                        <InputNumber class="form-control" @bind-Value="effect.Instances" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Damage Type</label>
+                        <InputText class="form-control" @bind-Value="effect.DamageType" list="damageTypeOptions" />
+                    </div>
+                    <div class="col-md-1 form-check">
+                        <InputCheckbox class="form-check-input" @bind-Value="effect.AddsSpellcastingModifier" />
+                        <label class="form-check-label">Adds spellcasting modifier</label>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => _model.Effects.RemoveAt(index)">Remove</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <datalist id="damageTypeOptions">
+        @foreach (var value in _knownDamageTypes)
+        {
+            <option value="@value" />
+        }
+    </datalist>
+
+    <button type="button" class="btn btn-sm btn-outline-primary mb-3" @onclick="AddEffect">Add effect</button>
+
+    <div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a class="btn btn-secondary" href="spells">Cancel</a>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private SpellFormModel _model = new();
+    private bool _isNew;
+    private ValidationResult? _saveResult;
+    private IReadOnlyList<EffectDefinition> _effects = [];
+    private IReadOnlyList<string> _knownDamageTypes = [];
+
+    protected override void OnInitialized()
+    {
+        _isNew = string.IsNullOrEmpty(Id);
+        _effects = ContentService.LoadEffects();
+
+        _knownDamageTypes = ContentService.LoadWeapons()
+            .Select(w => w.DamageType)
+            .Concat(ContentService.LoadSpells().SelectMany(s => s.Effects).Select(e => e.DamageType))
+            .Where(value => !string.IsNullOrEmpty(value))
+            .Select(value => value!)
+            .Distinct()
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (!_isNew)
+        {
+            SpellDefinition? existing = ContentService.FindSpell(Id!);
+
+            if (existing is not null)
+            {
+                _model = SpellFormModel.FromDefinition(existing);
+            }
+        }
+    }
+
+    private void AddEffect()
+    {
+        _model.Effects.Add(new SpellEffectFormModel());
+    }
+
+    private void Save()
+    {
+        SpellDefinition spell = _model.ToDefinition();
+        _saveResult = ContentService.SaveSpell(spell);
+
+        if (_saveResult.IsValid)
+        {
+            Navigation.NavigateTo("spells");
+        }
+    }
+}
