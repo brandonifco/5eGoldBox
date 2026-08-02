@@ -295,7 +295,10 @@ internal static class SaveGameMapper
                 X = exploration.Position.X,
                 Y = exploration.Position.Y
             },
-            Facing = ToSaveFacing(exploration.Facing)
+            Facing = ToSaveFacing(exploration.Facing),
+            OpenDoorIds = exploration.OpenDoorIds,
+            RevealedSecretDoorIds = exploration.RevealedSecretDoorIds,
+            CollectedTreasureIds = exploration.CollectedTreasureIds
         };
     }
 
@@ -311,7 +314,10 @@ internal static class SaveGameMapper
             Position = new GridPosition(
                 exploration.Position.X,
                 exploration.Position.Y),
-            Facing = ToRuntimeFacing(exploration.Facing)
+            Facing = ToRuntimeFacing(exploration.Facing),
+            OpenDoorIds = exploration.OpenDoorIds,
+            RevealedSecretDoorIds = exploration.RevealedSecretDoorIds,
+            CollectedTreasureIds = exploration.CollectedTreasureIds
         };
     }
 

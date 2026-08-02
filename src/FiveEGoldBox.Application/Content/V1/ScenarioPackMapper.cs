@@ -123,6 +123,12 @@ internal static class ScenarioPackMapper
                 .ToArray(),
             Stairs = floor.Stairs
                 .Select(ToRuntimeStair)
+                .ToArray(),
+            Doors = floor.Doors
+                .Select(ToRuntimeDoor)
+                .ToArray(),
+            Treasures = floor.Treasures
+                .Select(ToRuntimeTreasure)
                 .ToArray()
         };
     }
@@ -136,6 +142,30 @@ internal static class ScenarioPackMapper
             DestinationFloor = stair.DestinationFloor,
             DestinationPosition = ToRuntimePosition(
                 stair.DestinationPosition)
+        };
+    }
+
+    private static DoorDefinition ToRuntimeDoor(
+        DoorDefinitionV1 door)
+    {
+        return new DoorDefinition
+        {
+            DoorId = door.DoorId,
+            Position = ToRuntimePosition(door.Position),
+            IsSecret = door.IsSecret,
+            IsLocked = door.IsLocked
+        };
+    }
+
+    private static TreasureDefinition ToRuntimeTreasure(
+        TreasureDefinitionV1 treasure)
+    {
+        return new TreasureDefinition
+        {
+            TreasureId = treasure.TreasureId,
+            Position = ToRuntimePosition(treasure.Position),
+            ItemId = treasure.ItemId,
+            GoldPieces = treasure.GoldPieces
         };
     }
 

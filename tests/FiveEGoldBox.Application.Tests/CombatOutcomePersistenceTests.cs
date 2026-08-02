@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using FiveEGoldBox.Application.Combat;
+using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Persistence;
 using FiveEGoldBox.Application.Scenarios;
@@ -26,7 +27,7 @@ public sealed class CombatOutcomePersistenceTests
             WatchtowerScenarioProgress.RaidersDefeated,
             WatchtowerScenario.ProgressOf(loaded));
         Assert.Equal(source.CurrentLocationId, loaded.CurrentLocationId);
-        Assert.Equal(source.Exploration, loaded.Exploration);
+        AssertExplorationEqual(source.Exploration, loaded.Exploration);
         Assert.Null(loaded.ActiveEncounter);
         Assert.Null(loaded.RegionalTravel);
         AssertPersistentOutcome(source, loaded);
@@ -186,5 +187,32 @@ public sealed class CombatOutcomePersistenceTests
                 expectedMember.Ammunition,
                 actualMember.Ammunition);
         }
+    }
+
+    /// ExplorationState.OpenDoorIds/RevealedSecretDoorIds/CollectedTreasureIds
+    /// are IReadOnlyList<string>-typed, so record-generated Equals compares
+    /// them by reference -- decompose the same way AssertPersistentOutcome
+    /// already does for Party.Members rather than comparing the whole record.
+    private static void AssertExplorationEqual(
+        ExplorationState? expected,
+        ExplorationState? actual)
+    {
+        if (expected is null || actual is null)
+        {
+            Assert.Equal(expected is null, actual is null);
+            return;
+        }
+
+        Assert.Equal(expected.MapId, actual.MapId);
+        Assert.Equal(expected.Floor, actual.Floor);
+        Assert.Equal(expected.Position, actual.Position);
+        Assert.Equal(expected.Facing, actual.Facing);
+        Assert.Equal(expected.OpenDoorIds, actual.OpenDoorIds);
+        Assert.Equal(
+            expected.RevealedSecretDoorIds,
+            actual.RevealedSecretDoorIds);
+        Assert.Equal(
+            expected.CollectedTreasureIds,
+            actual.CollectedTreasureIds);
     }
 }

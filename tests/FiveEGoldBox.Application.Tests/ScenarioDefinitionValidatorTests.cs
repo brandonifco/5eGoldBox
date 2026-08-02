@@ -42,6 +42,18 @@ public sealed class ScenarioDefinitionValidatorTests
     [InlineData("scenario.map.starting_position_impassable")]
     [InlineData("scenario.map.position_out_of_bounds")]
     [InlineData("scenario.map.stair_destination_impassable")]
+    [InlineData("scenario.map.door_id_required")]
+    [InlineData("scenario.map.duplicate_door_id")]
+    [InlineData("scenario.map.door_position_out_of_bounds")]
+    [InlineData("scenario.map.door_position_already_traversable")]
+    [InlineData("scenario.map.door_position_collision")]
+    [InlineData("scenario.map.treasure_id_required")]
+    [InlineData("scenario.map.duplicate_treasure_id")]
+    [InlineData("scenario.map.treasure_position_out_of_bounds")]
+    [InlineData("scenario.map.treasure_position_unreachable")]
+    [InlineData("scenario.map.treasure_position_collision")]
+    [InlineData("scenario.map.treasure_no_reward")]
+    [InlineData("scenario.map.treasure_gold_negative")]
     [InlineData("scenario.routes.circular")]
     [InlineData("scenario.routes.origin_unreachable")]
     [InlineData("scenario.triggers.resulting_progress_unknown")]
@@ -170,6 +182,102 @@ public sealed class ScenarioDefinitionValidatorTests
             result.Issues,
             issue => issue.Code
                 == "scenario.combatants.monster_id_unresolved");
+    }
+
+    /// New behaviour, and not reachable through the Theory list above -- same
+    /// reasoning as the monster cross-reference check just above: it only
+    /// fires when a ruleset is actually supplied.
+    [Fact]
+    public void Validate_ReportsATreasureItemIdThatDoesNotResolveAgainstTheRuleset()
+    {
+        ScenarioDefinition definition = WithTreasureItemId(
+            ScenarioDefinitionModelTests.CreateWatchtowerDefinition(),
+            "item.unresolved");
+        ValidatedRuleset ruleset = CreateRulesetWithEquipmentItems([]);
+
+        ValidationResult result = ScenarioDefinitionValidator.Validate(
+            definition,
+            ruleset);
+
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code
+                == "scenario.map.treasure_item_id_unresolved");
+    }
+
+    /// The same definition against a ruleset that actually declares the item
+    /// it references resolves cleanly -- proof the check above is a real
+    /// cross-reference rather than one that always fires.
+    [Fact]
+    public void Validate_AcceptsATreasureItemIdThatResolvesAgainstTheRuleset()
+    {
+        const string itemId = "item.test.resolved";
+        ScenarioDefinition definition = WithTreasureItemId(
+            ScenarioDefinitionModelTests.CreateWatchtowerDefinition(),
+            itemId);
+        ValidatedRuleset ruleset = CreateRulesetWithEquipmentItems([itemId]);
+
+        ValidationResult result = ScenarioDefinitionValidator.Validate(
+            definition,
+            ruleset);
+
+        Assert.DoesNotContain(
+            result.Issues,
+            issue => issue.Code
+                == "scenario.map.treasure_item_id_unresolved");
+    }
+
+    private static ScenarioDefinition WithTreasureItemId(
+        ScenarioDefinition source,
+        string itemId)
+    {
+        return WithMap(
+            source,
+            map => map with
+            {
+                Floors =
+                [
+                    map.Floors[0] with
+                    {
+                        Treasures =
+                        [
+                            new TreasureDefinition
+                            {
+                                TreasureId = "treasure.test.item_reference",
+                                Position = new GridPosition(0, 0),
+                                ItemId = itemId
+                            }
+                        ]
+                    },
+                    map.Floors[1]
+                ]
+            });
+    }
+
+    private static ValidatedRuleset CreateRulesetWithEquipmentItems(
+        IReadOnlyList<string> itemIds)
+    {
+        RulesetLoadResult result = ValidatedRuleset.Load(new RulesetDefinition
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            EquipmentItems = itemIds
+                .Select(itemId => new EquipmentItemDefinition
+                {
+                    Id = itemId,
+                    Name = itemId
+                })
+                .ToArray()
+        });
+
+        Assert.True(
+            result.IsValid,
+            "Test ruleset should carry no errors, but reported: "
+                + string.Join(
+                    "; ",
+                    result.Validation.Issues.Select(issue => issue.Code)));
+
+        return result.Ruleset!;
     }
 
     private static ValidatedRuleset CreateRulesetWithMonsters(
@@ -316,6 +424,302 @@ public sealed class ScenarioDefinitionValidatorTests
                                 {
                                     DestinationPosition =
                                         new GridPosition(4, 4)
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.door_id_required",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Doors =
+                            [
+                                new DoorDefinition
+                                {
+                                    DoorId = "  ",
+                                    Position = new GridPosition(2, 2),
+                                    IsSecret = false,
+                                    IsLocked = false
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.duplicate_door_id",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Doors =
+                            [
+                                new DoorDefinition
+                                {
+                                    DoorId = "door.test.duplicate",
+                                    Position = new GridPosition(2, 2),
+                                    IsSecret = false,
+                                    IsLocked = false
+                                },
+                                new DoorDefinition
+                                {
+                                    DoorId = "door.test.duplicate",
+                                    Position = new GridPosition(3, 2),
+                                    IsSecret = false,
+                                    IsLocked = false
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.door_position_out_of_bounds",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Doors =
+                            [
+                                new DoorDefinition
+                                {
+                                    DoorId = "door.test.out_of_bounds",
+                                    Position = new GridPosition(99, 99),
+                                    IsSecret = false,
+                                    IsLocked = false
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.door_position_already_traversable",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Doors =
+                            [
+                                new DoorDefinition
+                                {
+                                    DoorId = "door.test.already_traversable",
+                                    Position = new GridPosition(0, 0),
+                                    IsSecret = false,
+                                    IsLocked = false
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        // (1, 0) is the ground floor's own stair square.
+        Add(breakages, "scenario.map.door_position_collision",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Doors =
+                            [
+                                new DoorDefinition
+                                {
+                                    DoorId = "door.test.collision",
+                                    Position = new GridPosition(1, 0),
+                                    IsSecret = false,
+                                    IsLocked = false
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.treasure_id_required",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Treasures =
+                            [
+                                new TreasureDefinition
+                                {
+                                    TreasureId = "  ",
+                                    Position = new GridPosition(0, 0),
+                                    GoldPieces = 1
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.duplicate_treasure_id",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Treasures =
+                            [
+                                new TreasureDefinition
+                                {
+                                    TreasureId = "treasure.test.duplicate",
+                                    Position = new GridPosition(0, 0),
+                                    GoldPieces = 1
+                                },
+                                new TreasureDefinition
+                                {
+                                    TreasureId = "treasure.test.duplicate",
+                                    Position = new GridPosition(0, 0),
+                                    GoldPieces = 1
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.treasure_position_out_of_bounds",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Treasures =
+                            [
+                                new TreasureDefinition
+                                {
+                                    TreasureId = "treasure.test.out_of_bounds",
+                                    Position = new GridPosition(99, 99),
+                                    GoldPieces = 1
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        // (2, 2) is not declared traversable on the ground floor fixture.
+        Add(breakages, "scenario.map.treasure_position_unreachable",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Treasures =
+                            [
+                                new TreasureDefinition
+                                {
+                                    TreasureId = "treasure.test.unreachable",
+                                    Position = new GridPosition(2, 2),
+                                    GoldPieces = 1
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        // (1, 0) is the ground floor's own stair square.
+        Add(breakages, "scenario.map.treasure_position_collision",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Treasures =
+                            [
+                                new TreasureDefinition
+                                {
+                                    TreasureId = "treasure.test.collision",
+                                    Position = new GridPosition(1, 0),
+                                    GoldPieces = 1
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.treasure_no_reward",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Treasures =
+                            [
+                                new TreasureDefinition
+                                {
+                                    TreasureId = "treasure.test.no_reward",
+                                    Position = new GridPosition(0, 0)
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.treasure_gold_negative",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Treasures =
+                            [
+                                new TreasureDefinition
+                                {
+                                    TreasureId = "treasure.test.negative_gold",
+                                    Position = new GridPosition(0, 0),
+                                    GoldPieces = -1
                                 }
                             ]
                         },

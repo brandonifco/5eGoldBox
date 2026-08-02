@@ -154,7 +154,7 @@ public sealed class ConsoleProcessRestartTests
         Assert.Equal(
             WatchtowerScenarioProgress.RaidersDefeated,
             WatchtowerScenario.ProgressOf(beforeRestart));
-        Assert.Equal(
+        AssertExplorationEqual(
             plan.ExpectedLoadedAndTurnedState.Exploration,
             afterRestart.Exploration);
         Assert.NotEqual(
@@ -1068,6 +1068,34 @@ public sealed class ConsoleProcessRestartTests
             $"The process-created save failed to deserialize: {result.FailureReason}");
         return Assert.IsType<ApplicationSessionState>(
             result.Session);
+    }
+
+    /// ExplorationState.OpenDoorIds/RevealedSecretDoorIds/CollectedTreasureIds
+    /// are IReadOnlyList<string>-typed, so record-generated Equals compares
+    /// them by reference once a save round-trip replaces the original
+    /// Array.Empty<string>() default with a deserialized List -- decompose
+    /// the comparison rather than trust the whole-record Equals.
+    private static void AssertExplorationEqual(
+        ExplorationState? expected,
+        ExplorationState? actual)
+    {
+        if (expected is null || actual is null)
+        {
+            Assert.Equal(expected is null, actual is null);
+            return;
+        }
+
+        Assert.Equal(expected.MapId, actual.MapId);
+        Assert.Equal(expected.Floor, actual.Floor);
+        Assert.Equal(expected.Position, actual.Position);
+        Assert.Equal(expected.Facing, actual.Facing);
+        Assert.Equal(expected.OpenDoorIds, actual.OpenDoorIds);
+        Assert.Equal(
+            expected.RevealedSecretDoorIds,
+            actual.RevealedSecretDoorIds);
+        Assert.Equal(
+            expected.CollectedTreasureIds,
+            actual.CollectedTreasureIds);
     }
 
     private static void AssertEquivalentFinalState(

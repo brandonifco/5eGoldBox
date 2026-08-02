@@ -182,6 +182,36 @@ WatchtowerScenarioProgress.RaidersDefeated)
     }
 
     [Fact]
+    public void Validate_WithUnknownOpenDoorId_Throws()
+    {
+        AssertInvalidExplorationThrows(
+            exploration => exploration with
+            {
+                OpenDoorIds = ["door.unsupported"]
+            });
+    }
+
+    [Fact]
+    public void Validate_WithUnknownRevealedSecretDoorId_Throws()
+    {
+        AssertInvalidExplorationThrows(
+            exploration => exploration with
+            {
+                RevealedSecretDoorIds = ["door.unsupported"]
+            });
+    }
+
+    [Fact]
+    public void Validate_WithUnknownCollectedTreasureId_Throws()
+    {
+        AssertInvalidExplorationThrows(
+            exploration => exploration with
+            {
+                CollectedTreasureIds = ["treasure.unsupported"]
+            });
+    }
+
+    [Fact]
     public void Validate_WithCurrentLocationOtherThanWatchtower_Throws()
     {
         ApplicationSessionState invalid =

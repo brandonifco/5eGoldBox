@@ -313,7 +313,9 @@ public sealed class ScenarioDefinitionModelTests
                             DestinationFloor = "UpperFloor",
                             DestinationPosition = new GridPosition(1, 0)
                         }
-                    ]
+                    ],
+                    Doors = [],
+                    Treasures = []
                 },
                 new ExplorationFloorDefinition
                 {
@@ -323,7 +325,9 @@ public sealed class ScenarioDefinitionModelTests
                         new GridPosition(1, 0),
                         new GridPosition(1, 1)
                     ],
-                    Stairs = []
+                    Stairs = [],
+                    Doors = [],
+                    Treasures = []
                 }
             ]
         };

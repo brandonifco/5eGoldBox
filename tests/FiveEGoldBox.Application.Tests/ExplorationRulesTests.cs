@@ -855,6 +855,252 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
+    public void CanOpenDoor_WithNothingAheadOfThatKind_ReturnsFalse()
+    {
+        Assert.False(
+            ExplorationRules.CanOpenDoor(
+                CreateExplorationSession()));
+    }
+
+    [Fact]
+    public void CanOpenDoor_FacingALockedDoor_ReturnsFalse()
+    {
+        Assert.False(
+            ExplorationRules.CanOpenDoor(
+                CreateFacingSealedPostern()));
+    }
+
+    [Fact]
+    public void CanOpenDoor_FacingAnUnrevealedSecretDoor_ReturnsFalse()
+    {
+        Assert.False(
+            ExplorationRules.CanOpenDoor(
+                CreateFacingHiddenVaultDoor()));
+    }
+
+    [Fact]
+    public void CanOpenDoor_FacingAnOrdinaryDoor_ReturnsTrue()
+    {
+        Assert.True(
+            ExplorationRules.CanOpenDoor(
+                CreateFacingArmoryDoor()));
+    }
+
+    [Fact]
+    public void CanOpenDoor_AfterTheDoorIsAlreadyOpen_ReturnsFalse()
+    {
+        ApplicationSessionState opened =
+            ExplorationRules.OpenDoor(
+                CreateFacingArmoryDoor());
+
+        Assert.False(ExplorationRules.CanOpenDoor(opened));
+    }
+
+    [Fact]
+    public void CanOpenDoor_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            ExplorationRules.CanOpenDoor(null!));
+    }
+
+    [Fact]
+    public void OpenDoor_OpensTheDoorAndAllowsMovingThroughIt()
+    {
+        ApplicationSessionState facingDoor =
+            CreateFacingArmoryDoor();
+
+        ApplicationSessionState opened =
+            ExplorationRules.OpenDoor(facingDoor);
+
+        Assert.Contains(
+            "door.watchtower.armory-door",
+            AssertExploration(opened).OpenDoorIds);
+
+        ExplorationMoveResult moved =
+            ExplorationRules.MoveForward(opened);
+
+        Assert.True(moved.DidMove);
+        Assert.Equal(
+            new GridPosition(3, 1),
+            AssertExploration(moved.State).Position);
+    }
+
+    [Fact]
+    public void OpenDoor_WhenNoOpenableDoorAhead_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            ExplorationRules.OpenDoor(
+                CreateExplorationSession()));
+    }
+
+    [Fact]
+    public void OpenDoor_FacingALockedDoor_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            ExplorationRules.OpenDoor(
+                CreateFacingSealedPostern()));
+    }
+
+    [Fact]
+    public void OpenDoor_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            ExplorationRules.OpenDoor(null!));
+    }
+
+    [Fact]
+    public void OpenDoor_WhenModeIsNotExploration_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            ExplorationRules.OpenDoor(
+                CreateAcceptedSession()));
+    }
+
+    [Fact]
+    public void CanRevealSecretDoor_FacingASecretDoor_ReturnsTrue()
+    {
+        Assert.True(
+            ExplorationRules.CanRevealSecretDoor(
+                CreateFacingHiddenVaultDoor()));
+    }
+
+    [Fact]
+    public void CanRevealSecretDoor_FacingAnOrdinaryDoor_ReturnsFalse()
+    {
+        Assert.False(
+            ExplorationRules.CanRevealSecretDoor(
+                CreateFacingArmoryDoor()));
+    }
+
+    [Fact]
+    public void CanRevealSecretDoor_AfterAlreadyRevealed_ReturnsFalse()
+    {
+        ApplicationSessionState revealed =
+            ExplorationRules.RevealSecretDoor(
+                CreateFacingHiddenVaultDoor());
+
+        Assert.False(
+            ExplorationRules.CanRevealSecretDoor(revealed));
+    }
+
+    [Fact]
+    public void CanRevealSecretDoor_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            ExplorationRules.CanRevealSecretDoor(null!));
+    }
+
+    [Fact]
+    public void RevealSecretDoor_FindsTheDoorAndThenAllowsOpeningIt()
+    {
+        ApplicationSessionState facingSecretDoor =
+            CreateFacingHiddenVaultDoor();
+
+        Assert.False(
+            ExplorationRules.CanOpenDoor(facingSecretDoor));
+
+        ApplicationSessionState revealed =
+            ExplorationRules.RevealSecretDoor(facingSecretDoor);
+
+        Assert.Contains(
+            "door.watchtower.hidden-vault",
+            AssertExploration(revealed).RevealedSecretDoorIds);
+        Assert.True(ExplorationRules.CanOpenDoor(revealed));
+    }
+
+    [Fact]
+    public void RevealSecretDoor_WhenNoSecretDoorAhead_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            ExplorationRules.RevealSecretDoor(
+                CreateFacingArmoryDoor()));
+    }
+
+    [Fact]
+    public void RevealSecretDoor_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            ExplorationRules.RevealSecretDoor(null!));
+    }
+
+    [Fact]
+    public void CanCollectTreasure_AtTheTreasurePosition_ReturnsTrue()
+    {
+        Assert.True(
+            ExplorationRules.CanCollectTreasure(
+                CreateAtArmoryCacheTreasure()));
+    }
+
+    [Fact]
+    public void CanCollectTreasure_ElsewhereOnTheMap_ReturnsFalse()
+    {
+        Assert.False(
+            ExplorationRules.CanCollectTreasure(
+                CreateExplorationSession()));
+    }
+
+    [Fact]
+    public void CanCollectTreasure_AfterAlreadyCollected_ReturnsFalse()
+    {
+        ApplicationSessionState collected =
+            ExplorationRules.CollectTreasure(
+                CreateAtArmoryCacheTreasure());
+
+        Assert.False(
+            ExplorationRules.CanCollectTreasure(collected));
+    }
+
+    [Fact]
+    public void CanCollectTreasure_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            ExplorationRules.CanCollectTreasure(null!));
+    }
+
+    [Fact]
+    public void CollectTreasure_FlagsTheTreasureAsCollectedWithoutGrantingAnything()
+    {
+        ApplicationSessionState atTreasure =
+            CreateAtArmoryCacheTreasure();
+
+        ApplicationSessionState collected =
+            ExplorationRules.CollectTreasure(atTreasure);
+
+        Assert.Contains(
+            "treasure.watchtower.armory-cache",
+            AssertExploration(collected).CollectedTreasureIds);
+        AssertPartyEquivalent(
+            atTreasure.Party,
+            collected.Party);
+    }
+
+    [Fact]
+    public void CollectTreasure_CollectingTheSameTreasureTwice_Throws()
+    {
+        ApplicationSessionState collected =
+            ExplorationRules.CollectTreasure(
+                CreateAtArmoryCacheTreasure());
+
+        Assert.Throws<InvalidOperationException>(() =>
+            ExplorationRules.CollectTreasure(collected));
+    }
+
+    [Fact]
+    public void CollectTreasure_WhenNoTreasureAtThePosition_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            ExplorationRules.CollectTreasure(
+                CreateExplorationSession()));
+    }
+
+    [Fact]
+    public void CollectTreasure_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            ExplorationRules.CollectTreasure(null!));
+    }
+
+    [Fact]
     public void Query_DuringExploration_ReturnsRealMapData()
     {
         ApplicationSessionState session = CreateExplorationSession();
@@ -864,7 +1110,7 @@ WatchtowerScenarioProgress
         Assert.NotNull(view);
         Assert.Equal("map.ruined-watchtower", view!.MapId);
         Assert.Equal("GroundFloor", view.Floor);
-        Assert.Equal(3, view.Width);
+        Assert.Equal(5, view.Width);
         Assert.Equal(3, view.Height);
         Assert.Equal(new GridPosition(0, 0), view.PartyPosition);
         Assert.Equal(ExplorationFacing.East, view.PartyFacing);
@@ -873,7 +1119,8 @@ WatchtowerScenarioProgress
             {
                 new(0, 0), new(1, 0), new(2, 0),
                 new(0, 1), new(2, 1),
-                new(0, 2), new(1, 2), new(2, 2)
+                new(0, 2), new(1, 2), new(2, 2),
+                new(4, 1), new(4, 2)
             },
             view.TraversablePositions.ToHashSet());
         Assert.Equal(
@@ -996,6 +1243,80 @@ WatchtowerScenarioProgress
             .State;
         current = ExplorationRules.MoveForward(current)
             .State;
+
+        return current;
+    }
+
+    /// Facing the ordinary door at (3, 1) on the Watchtower's ground floor,
+    /// from the traversable ring square at (2, 1).
+    private static ApplicationSessionState
+        CreateFacingArmoryDoor()
+    {
+        ApplicationSessionState current =
+            CreateExplorationSession();
+
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Right);
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Left);
+
+        return current;
+    }
+
+    /// Facing the secret door at (3, 2) on the Watchtower's ground floor,
+    /// from the traversable ring square at (2, 2).
+    private static ApplicationSessionState
+        CreateFacingHiddenVaultDoor()
+    {
+        ApplicationSessionState current =
+            CreateExplorationSession();
+
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Right);
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Left);
+
+        return current;
+    }
+
+    /// Facing the locked door at (1, 1) -- the Watchtower ground floor's own
+    /// interior gap -- from the traversable square at (1, 0).
+    private static ApplicationSessionState
+        CreateFacingSealedPostern()
+    {
+        ApplicationSessionState current =
+            CreateExplorationSession();
+
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Right);
+
+        return current;
+    }
+
+    /// Standing on the armory cache treasure at (4, 1), reachable only by
+    /// opening the ordinary door at (3, 1) first.
+    private static ApplicationSessionState
+        CreateAtArmoryCacheTreasure()
+    {
+        ApplicationSessionState current =
+            ExplorationRules.OpenDoor(
+                CreateFacingArmoryDoor());
+
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.MoveForward(current).State;
 
         return current;
     }

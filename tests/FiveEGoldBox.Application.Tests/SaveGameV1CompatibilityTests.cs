@@ -140,8 +140,35 @@ public sealed class SaveGameV1CompatibilityTests
             first.Party.Members.Select(member => member.Ammunition),
             second.Party.Members.Select(member => member.Ammunition));
         Assert.Equal(first.RegionalTravel, second.RegionalTravel);
-        Assert.Equal(first.Exploration, second.Exploration);
+        AssertExplorationEqual(first.Exploration, second.Exploration);
         Assert.Equal(first.ActiveEncounter, second.ActiveEncounter);
+    }
+
+    /// ExplorationState.OpenDoorIds/RevealedSecretDoorIds/CollectedTreasureIds
+    /// are IReadOnlyList<string>-typed, so record-generated Equals compares
+    /// them by reference like Party.Members above -- decompose the same way
+    /// rather than comparing the whole record.
+    private static void AssertExplorationEqual(
+        ExplorationState? expected,
+        ExplorationState? actual)
+    {
+        if (expected is null || actual is null)
+        {
+            Assert.Equal(expected is null, actual is null);
+            return;
+        }
+
+        Assert.Equal(expected.MapId, actual.MapId);
+        Assert.Equal(expected.Floor, actual.Floor);
+        Assert.Equal(expected.Position, actual.Position);
+        Assert.Equal(expected.Facing, actual.Facing);
+        Assert.Equal(expected.OpenDoorIds, actual.OpenDoorIds);
+        Assert.Equal(
+            expected.RevealedSecretDoorIds,
+            actual.RevealedSecretDoorIds);
+        Assert.Equal(
+            expected.CollectedTreasureIds,
+            actual.CollectedTreasureIds);
     }
 
     /// The roster changed, and a save naming a party this campaign no longer

@@ -9,4 +9,10 @@ internal sealed record SaveExplorationV1
     public required SaveGridPositionV1 Position { get; init; }
 
     public required SaveExplorationFacingV1 Facing { get; init; }
+
+    public IReadOnlyList<string> OpenDoorIds { get; init; } = Array.Empty<string>();
+
+    public IReadOnlyList<string> RevealedSecretDoorIds { get; init; } = Array.Empty<string>();
+
+    public IReadOnlyList<string> CollectedTreasureIds { get; init; } = Array.Empty<string>();
 }

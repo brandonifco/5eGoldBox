@@ -309,6 +309,12 @@
     "ExplorationFloorDefinitionV1": {
       "type": "object",
       "properties": {
+        "Doors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DoorDefinitionV1"
+          }
+        },
         "Floor": {
           "type": "string"
         },
@@ -323,6 +329,12 @@
           "items": {
             "$ref": "#/$defs/GridPositionV1"
           }
+        },
+        "Treasures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TreasureDefinitionV1"
+          }
         }
       },
       "additionalProperties": false,
@@ -330,6 +342,30 @@
         "Floor",
         "Stairs",
         "TraversablePositions"
+      ]
+    },
+    "DoorDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "DoorId": {
+          "type": "string"
+        },
+        "IsLocked": {
+          "type": "boolean"
+        },
+        "IsSecret": {
+          "type": "boolean"
+        },
+        "Position": {
+          "$ref": "#/$defs/GridPositionV1"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "DoorId",
+        "IsLocked",
+        "IsSecret",
+        "Position"
       ]
     },
     "StairDefinitionV1": {
@@ -350,6 +386,28 @@
         "DestinationFloor",
         "DestinationPosition",
         "Position"
+      ]
+    },
+    "TreasureDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "GoldPieces": {
+          "type": "integer"
+        },
+        "ItemId": {
+          "type": "string"
+        },
+        "Position": {
+          "$ref": "#/$defs/GridPositionV1"
+        },
+        "TreasureId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "Position",
+        "TreasureId"
       ]
     },
     "PartyRequirementDefinitionV1": {

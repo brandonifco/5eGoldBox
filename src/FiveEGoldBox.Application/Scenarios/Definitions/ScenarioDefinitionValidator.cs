@@ -26,7 +26,7 @@ internal static partial class ScenarioDefinitionValidator
         AddIdentityIssues(definition, issues);
         AddProgressIssues(definition, issues);
         AddPartyRequirementIssues(definition, issues);
-        AddLocationIssues(definition, issues);
+        AddLocationIssues(definition, ruleset, issues);
         AddRouteIssues(definition, issues);
         AddEncounterIssues(definition, ruleset, issues);
         AddEncounterOutcomeIssues(definition, issues);

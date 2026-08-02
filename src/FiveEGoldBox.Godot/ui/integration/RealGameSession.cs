@@ -204,6 +204,9 @@ internal sealed class RealGameSession
 				Turn(ExplorationTurnDirection.Right, "Turned right."),
 			SessionActionKind.UseStairs => UseStairs(),
 			SessionActionKind.ActivateTrigger => ActivateTrigger(action),
+			SessionActionKind.OpenDoor => OpenDoor(),
+			SessionActionKind.RevealSecretDoor => RevealSecretDoor(),
+			SessionActionKind.CollectTreasure => CollectTreasure(),
 			_ => $"'{action.DisplayName}' is not connected to the real " +
 				"engine yet.",
 		};
@@ -313,6 +316,27 @@ internal sealed class RealGameSession
 		_state = ScenarioTriggerRules.Activate(_state);
 
 		return $"{action.DisplayName}.";
+	}
+
+	private string OpenDoor()
+	{
+		_state = ExplorationRules.OpenDoor(_state);
+
+		return "Door opened.";
+	}
+
+	private string RevealSecretDoor()
+	{
+		_state = ExplorationRules.RevealSecretDoor(_state);
+
+		return "A hidden door reveals itself.";
+	}
+
+	private string CollectTreasure()
+	{
+		_state = ExplorationRules.CollectTreasure(_state);
+
+		return "Treasure collected.";
 	}
 
 	private static string DescribeStatus(SessionViewModel view)
