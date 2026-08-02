@@ -76,13 +76,20 @@ plain strings — confirmed directly in `data/schemas/scenario-pack.schema.json`
 `ScenarioTriggerDefinitionV1.Floor` are all `"type": "string"`, not an enum). No further work needed
 here before a map can declare 3+ floors.
 
-### Phase B — Door / secret door / treasure runtime state
+### Phase B — Door / secret door / treasure runtime state (done, PR #207)
 
-New definition types (`DoorDefinition`: position, blocks-a-tile-until-opened, `IsSecret: bool`,
-`IsLocked: bool`; `TreasureDefinition`: position, item/gold reward) plus new `ExplorationState`
-slots (open/closed per door, found/hidden per secret door, collected/not per treasure) and rules
-for interacting with them. Secret-door discovery is binary for v1 (see Findings above) —
-deliberately not wired to a skill check.
+New definition types (`DoorDefinition`, `TreasureDefinition`) plus new `ExplorationState` slots
+(`OpenDoorIds`/`RevealedSecretDoorIds`/`CollectedTreasureIds`) and matching rules
+(`CanOpenDoor`/`OpenDoor`, `CanRevealSecretDoor`/`RevealSecretDoor`,
+`CanCollectTreasure`/`CollectTreasure`). Secret-door discovery is binary, as scoped — deliberately
+not wired to a skill check. Treasure is flag-only (no inventory/currency system exists to grant
+anything into); `IsLocked` is a permanent binary blocker with no unlock path. Watchtower's ground
+floor gained a small additive appendage (an ordinary door plus treasure, a secret door, and a
+locked door sealing the floor's one pre-existing interior gap) exercising all three mechanisms
+through real, registered content — both frozen combat transcripts and the existing exploration
+test suite passed unchanged, confirming the addition was purely additive. `Application.dll` held
+at 64 exported types (everything added is internal). Godot rendering for the new cell kinds is
+Phase G, below, still separate.
 
 ### Phase C — Monster/NPC bestiary extraction (done, PR #203)
 
@@ -178,14 +185,12 @@ none exists today; scope that separately once it's clear flat colors aren't enou
 - Leveling/multiclassing, condition-immunity enforcement, and the other product-backlog items
   already tracked in CLAUDE.md.
 
-## Status (2026-08-02, updated after Phase C landed)
+## Status (2026-08-02, updated after Phase B landed)
 
-Phases A, C, D, and E are done. Remaining, in no particular committed order — see CLAUDE.md or ask
-before picking one:
+Phases A, B, C, D, and E are done. Remaining, in no particular committed order — see CLAUDE.md or
+ask before picking one:
 
-- **Phase B** (door/secret door/treasure runtime state) — in progress. Bounded engine work, no
-  decision needed beyond what's already recorded above. Doing this unlocks extending Phase E's
-  Tiled convention to cover doors/secret doors/treasure objects too.
-- **Phase F** (form-based content editor) — can start now for weapons/spells/items/monsters, no
-  outstanding blocker.
-- **Phase G** (Godot tile rendering) — waits on Phase B.
+- **Phase F** (form-based content editor) — scoped in `docs/2026-08-02-content-editor-plan.md`,
+  not yet built.
+- **Phase G** (Godot tile rendering for doors/secret-doors/treasure) — unblocked now that Phase B
+  is done; not started.
