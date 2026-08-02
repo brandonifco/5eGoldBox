@@ -15,5 +15,8 @@ public enum SessionActionKind
     TurnLeft,
     TurnRight,
     UseStairs,
-    ActivateTrigger
+    ActivateTrigger,
+    OpenDoor,
+    RevealSecretDoor,
+    CollectTreasure
 }

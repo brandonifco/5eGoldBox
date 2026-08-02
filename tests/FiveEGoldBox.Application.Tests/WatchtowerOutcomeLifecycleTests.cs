@@ -385,7 +385,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         Assert.Equal(
             WatchtowerScenarioProgress.RaidersDefeated,
             WatchtowerScenario.ProgressOf(loaded));
-        Assert.Equal(returnContext, loaded.Exploration);
+        AssertExplorationEqual(returnContext, loaded.Exploration);
         Assert.Null(loaded.RegionalTravel);
         Assert.Null(loaded.ActiveEncounter);
         Assert.Equal(finalized.RandomSeed, loaded.RandomSeed);
@@ -787,6 +787,34 @@ public sealed class WatchtowerOutcomeLifecycleTests
                 expectedMember.Ammunition?.AmmunitionItemId,
                 actualMember.Ammunition?.AmmunitionItemId);
         }
+    }
+
+    /// ExplorationState.OpenDoorIds/RevealedSecretDoorIds/CollectedTreasureIds
+    /// are IReadOnlyList<string>-typed, so record-generated Equals compares
+    /// them by reference -- only bites once a save round-trip replaces the
+    /// original Array.Empty<string>() default with a deserialized List, so
+    /// only the post-round-trip comparison above needs decomposing.
+    private static void AssertExplorationEqual(
+        ExplorationState? expected,
+        ExplorationState? actual)
+    {
+        if (expected is null || actual is null)
+        {
+            Assert.Equal(expected is null, actual is null);
+            return;
+        }
+
+        Assert.Equal(expected.MapId, actual.MapId);
+        Assert.Equal(expected.Floor, actual.Floor);
+        Assert.Equal(expected.Position, actual.Position);
+        Assert.Equal(expected.Facing, actual.Facing);
+        Assert.Equal(expected.OpenDoorIds, actual.OpenDoorIds);
+        Assert.Equal(
+            expected.RevealedSecretDoorIds,
+            actual.RevealedSecretDoorIds);
+        Assert.Equal(
+            expected.CollectedTreasureIds,
+            actual.CollectedTreasureIds);
     }
 
     private static void AssertPartyEquals(

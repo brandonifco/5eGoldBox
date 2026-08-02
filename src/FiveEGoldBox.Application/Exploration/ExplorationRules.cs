@@ -130,7 +130,8 @@ public static class ExplorationRules
             ScenarioExplorationMap.IsTraversable(
                 map,
                 exploration.Floor,
-                destination);
+                destination,
+                exploration.OpenDoorIds);
 
         ApplicationSessionState resultingSession =
             didMove
@@ -197,6 +198,140 @@ public static class ExplorationRules
                 {
                     Floor = destinationFloor,
                     Position = destinationPosition
+                }
+            });
+    }
+
+    public static bool CanOpenDoor(
+        ApplicationSessionState session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        if (session.CurrentMode
+            != ApplicationMode.Exploration)
+        {
+            return false;
+        }
+
+        ApplicationSessionState canonicalSession =
+            ApplicationSessionRules.CreateCanonical(session);
+
+        return ResolveOpenableDoor(canonicalSession) is not null;
+    }
+
+    public static ApplicationSessionState OpenDoor(
+        ApplicationSessionState session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        ApplicationSessionState canonicalSession =
+            RequireExplorationSession(session);
+        ExplorationState exploration =
+            canonicalSession.Exploration!;
+
+        DoorDefinition door =
+            ResolveOpenableDoor(canonicalSession)
+            ?? throw new InvalidOperationException(
+                "There is no openable door ahead of the party.");
+
+        return ApplicationSessionRules.CreateCanonical(
+            canonicalSession with
+            {
+                Exploration = exploration with
+                {
+                    OpenDoorIds = exploration.OpenDoorIds
+                        .Append(door.DoorId)
+                        .ToArray()
+                }
+            });
+    }
+
+    public static bool CanRevealSecretDoor(
+        ApplicationSessionState session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        if (session.CurrentMode
+            != ApplicationMode.Exploration)
+        {
+            return false;
+        }
+
+        ApplicationSessionState canonicalSession =
+            ApplicationSessionRules.CreateCanonical(session);
+
+        return ResolveRevealableSecretDoor(canonicalSession) is not null;
+    }
+
+    public static ApplicationSessionState RevealSecretDoor(
+        ApplicationSessionState session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        ApplicationSessionState canonicalSession =
+            RequireExplorationSession(session);
+        ExplorationState exploration =
+            canonicalSession.Exploration!;
+
+        DoorDefinition door =
+            ResolveRevealableSecretDoor(canonicalSession)
+            ?? throw new InvalidOperationException(
+                "There is no undiscovered secret door ahead of the party.");
+
+        return ApplicationSessionRules.CreateCanonical(
+            canonicalSession with
+            {
+                Exploration = exploration with
+                {
+                    RevealedSecretDoorIds = exploration
+                        .RevealedSecretDoorIds
+                        .Append(door.DoorId)
+                        .ToArray()
+                }
+            });
+    }
+
+    public static bool CanCollectTreasure(
+        ApplicationSessionState session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        if (session.CurrentMode
+            != ApplicationMode.Exploration)
+        {
+            return false;
+        }
+
+        ApplicationSessionState canonicalSession =
+            ApplicationSessionRules.CreateCanonical(session);
+
+        return ResolveCollectableTreasure(canonicalSession) is not null;
+    }
+
+    public static ApplicationSessionState CollectTreasure(
+        ApplicationSessionState session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        ApplicationSessionState canonicalSession =
+            RequireExplorationSession(session);
+        ExplorationState exploration =
+            canonicalSession.Exploration!;
+
+        TreasureDefinition treasure =
+            ResolveCollectableTreasure(canonicalSession)
+            ?? throw new InvalidOperationException(
+                "There is no uncollected treasure where the party is standing.");
+
+        return ApplicationSessionRules.CreateCanonical(
+            canonicalSession with
+            {
+                Exploration = exploration with
+                {
+                    CollectedTreasureIds = exploration
+                        .CollectedTreasureIds
+                        .Append(treasure.TreasureId)
+                        .ToArray()
                 }
             });
     }
@@ -301,6 +436,93 @@ public static class ExplorationRules
             exploration.Position,
             out destinationFloor,
             out destinationPosition);
+    }
+
+    /// The door ahead of the party, if one exists there, is not locked, and
+    /// (being either not secret or already found) is legal to open right
+    /// now -- whether or not it has already been opened.
+    private static DoorDefinition? ResolveOpenableDoor(
+        ApplicationSessionState session)
+    {
+        ExplorationState exploration =
+            session.Exploration!;
+        GridPosition forward =
+            GetForwardPosition(
+                exploration.Position,
+                exploration.Facing);
+        DoorDefinition? door = ScenarioExplorationMap.FindDoor(
+            RequireMap(session),
+            exploration.Floor,
+            forward);
+
+        if (door is null
+            || door.IsLocked
+            || (door.IsSecret
+                && !exploration.RevealedSecretDoorIds.Contains(
+                    door.DoorId,
+                    StringComparer.Ordinal))
+            || exploration.OpenDoorIds.Contains(
+                door.DoorId,
+                StringComparer.Ordinal))
+        {
+            return null;
+        }
+
+        return door;
+    }
+
+    /// The secret door ahead of the party, if one exists there and has not
+    /// already been found. Locked-ness does not gate revealing -- a locked
+    /// secret door can still be discovered, it just can never be opened.
+    private static DoorDefinition? ResolveRevealableSecretDoor(
+        ApplicationSessionState session)
+    {
+        ExplorationState exploration =
+            session.Exploration!;
+        GridPosition forward =
+            GetForwardPosition(
+                exploration.Position,
+                exploration.Facing);
+        DoorDefinition? door = ScenarioExplorationMap.FindDoor(
+            RequireMap(session),
+            exploration.Floor,
+            forward);
+
+        if (door is null
+            || !door.IsSecret
+            || exploration.RevealedSecretDoorIds.Contains(
+                door.DoorId,
+                StringComparer.Ordinal))
+        {
+            return null;
+        }
+
+        return door;
+    }
+
+    /// The treasure the party is standing on, if any, that has not already
+    /// been collected. Unlike a door, this checks the party's own current
+    /// position rather than the position ahead -- treasure sits on an
+    /// already-walkable tile the party can stand on.
+    private static TreasureDefinition? ResolveCollectableTreasure(
+        ApplicationSessionState session)
+    {
+        ExplorationState exploration =
+            session.Exploration!;
+        TreasureDefinition? treasure = ScenarioExplorationMap.FindTreasure(
+            RequireMap(session),
+            exploration.Floor,
+            exploration.Position);
+
+        if (treasure is null
+            || exploration.CollectedTreasureIds.Contains(
+                treasure.TreasureId,
+                StringComparer.Ordinal))
+        {
+            return null;
+        }
+
+        return treasure;
     }
 
     private static ApplicationSessionState

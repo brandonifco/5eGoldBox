@@ -37,7 +37,7 @@
             "DisplayName": "Ruined Watchtower",
             "ExplorationMap": {
                 "MapId": "map.ruined-watchtower",
-                "Width": 3,
+                "Width": 5,
                 "Height": 3,
                 "StartingFloor": "GroundFloor",
                 "StartingPosition": { "X": 0, "Y": 0 },
@@ -53,13 +53,42 @@
                             { "X": 2, "Y": 1 },
                             { "X": 0, "Y": 2 },
                             { "X": 1, "Y": 2 },
-                            { "X": 2, "Y": 2 }
+                            { "X": 2, "Y": 2 },
+                            { "X": 4, "Y": 1 },
+                            { "X": 4, "Y": 2 }
                         ],
                         "Stairs": [
                             {
                                 "Position": { "X": 2, "Y": 0 },
                                 "DestinationFloor": "UpperFloor",
                                 "DestinationPosition": { "X": 2, "Y": 0 }
+                            }
+                        ],
+                        "Doors": [
+                            {
+                                "DoorId": "door.watchtower.armory-door",
+                                "Position": { "X": 3, "Y": 1 },
+                                "IsSecret": false,
+                                "IsLocked": false
+                            },
+                            {
+                                "DoorId": "door.watchtower.hidden-vault",
+                                "Position": { "X": 3, "Y": 2 },
+                                "IsSecret": true,
+                                "IsLocked": false
+                            },
+                            {
+                                "DoorId": "door.watchtower.sealed-postern",
+                                "Position": { "X": 1, "Y": 1 },
+                                "IsSecret": false,
+                                "IsLocked": true
+                            }
+                        ],
+                        "Treasures": [
+                            {
+                                "TreasureId": "treasure.watchtower.armory-cache",
+                                "Position": { "X": 4, "Y": 1 },
+                                "GoldPieces": 25
                             }
                         ]
                     },

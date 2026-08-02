@@ -184,6 +184,33 @@ public static class SessionView
                 });
             }
         }
+
+        if (ExplorationRules.CanOpenDoor(session))
+        {
+            actions.Add(new SessionAction
+            {
+                Kind = SessionActionKind.OpenDoor,
+                DisplayName = "Open the door"
+            });
+        }
+
+        if (ExplorationRules.CanRevealSecretDoor(session))
+        {
+            actions.Add(new SessionAction
+            {
+                Kind = SessionActionKind.RevealSecretDoor,
+                DisplayName = "Search for a hidden door"
+            });
+        }
+
+        if (ExplorationRules.CanCollectTreasure(session))
+        {
+            actions.Add(new SessionAction
+            {
+                Kind = SessionActionKind.CollectTreasure,
+                DisplayName = "Collect the treasure"
+            });
+        }
     }
 
     private static string FindLocationDisplayName(

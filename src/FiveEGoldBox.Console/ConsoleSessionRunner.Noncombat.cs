@@ -122,6 +122,18 @@ internal sealed partial class ConsoleSessionRunner
                     output.WriteLine(
                         "Signal activated. Encounter started.");
                     break;
+                case SessionMenuAction.OpenDoor:
+                    session = ExplorationRules.OpenDoor(session);
+                    output.WriteLine("Door opened.");
+                    break;
+                case SessionMenuAction.RevealSecretDoor:
+                    session = ExplorationRules.RevealSecretDoor(session);
+                    output.WriteLine("A hidden door reveals itself.");
+                    break;
+                case SessionMenuAction.CollectTreasure:
+                    session = ExplorationRules.CollectTreasure(session);
+                    output.WriteLine("Treasure collected.");
+                    break;
                 case SessionMenuAction.InspectParty:
                     RenderParty(output, session);
                     break;
@@ -203,6 +215,12 @@ internal sealed partial class ConsoleSessionRunner
                 SessionMenuAction.UseStairs,
             SessionActionKind.ActivateTrigger =>
                 SessionMenuAction.ActivateTrigger,
+            SessionActionKind.OpenDoor =>
+                SessionMenuAction.OpenDoor,
+            SessionActionKind.RevealSecretDoor =>
+                SessionMenuAction.RevealSecretDoor,
+            SessionActionKind.CollectTreasure =>
+                SessionMenuAction.CollectTreasure,
             _ => throw new InvalidOperationException(
                 $"The session action '{kind}' is unsupported by the console client.")
         };
@@ -260,6 +278,9 @@ internal sealed partial class ConsoleSessionRunner
         TurnRight,
         UseStairs,
         ActivateTrigger,
+        OpenDoor,
+        RevealSecretDoor,
+        CollectTreasure,
         InspectParty,
         Save,
         Exit

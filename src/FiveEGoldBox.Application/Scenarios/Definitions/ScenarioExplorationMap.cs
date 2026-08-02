@@ -81,22 +81,77 @@ internal static class ScenarioExplorationMap
                 "Unsupported exploration facing.");
         }
 
-        if (!IsTraversable(map, state.Floor, state.Position))
+        if (!IsTraversable(map, state.Floor, state.Position, state.OpenDoorIds))
         {
             throw new ArgumentException(
                 "The exploration position is not a traversable tile on the current floor.",
                 nameof(state));
         }
+
+        RequireKnownDoorIds(
+            map,
+            state.OpenDoorIds,
+            nameof(state.OpenDoorIds));
+        RequireKnownDoorIds(
+            map,
+            state.RevealedSecretDoorIds,
+            nameof(state.RevealedSecretDoorIds));
+        RequireKnownTreasureIds(
+            map,
+            state.CollectedTreasureIds,
+            nameof(state.CollectedTreasureIds));
     }
 
+    /// A position is traversable if it is ordinary open ground, or an
+    /// unlocked door there has been opened. A locked door is independently
+    /// re-checked here rather than trusted from the caller -- the same
+    /// defense-in-depth this method already applies to every other
+    /// invariant -- so corrupted state naming a locked door's ID can never
+    /// make it walkable.
     internal static bool IsTraversable(
+        ExplorationMapDefinition map,
+        string floor,
+        GridPosition position,
+        IReadOnlyList<string> openDoorIds)
+    {
+        ExplorationFloorDefinition? floorDefinition = FindFloor(map, floor);
+
+        if (floorDefinition is null)
+        {
+            return false;
+        }
+
+        if (floorDefinition.TraversablePositions.Contains(position))
+        {
+            return true;
+        }
+
+        DoorDefinition? door = floorDefinition.Doors
+            .FirstOrDefault(candidate => candidate.Position == position);
+
+        return door is not null
+            && !door.IsLocked
+            && openDoorIds.Contains(door.DoorId, StringComparer.Ordinal);
+    }
+
+    internal static DoorDefinition? FindDoor(
         ExplorationMapDefinition map,
         string floor,
         GridPosition position)
     {
         return FindFloor(map, floor)
-            ?.TraversablePositions.Contains(position)
-            ?? false;
+            ?.Doors
+            .FirstOrDefault(candidate => candidate.Position == position);
+    }
+
+    internal static TreasureDefinition? FindTreasure(
+        ExplorationMapDefinition map,
+        string floor,
+        GridPosition position)
+    {
+        return FindFloor(map, floor)
+            ?.Treasures
+            .FirstOrDefault(candidate => candidate.Position == position);
     }
 
     internal static bool TryGetStairDestination(
@@ -131,5 +186,54 @@ internal static class ScenarioExplorationMap
                 candidate.Floor,
                 floor,
                 StringComparison.Ordinal));
+    }
+
+    /// Guards against corrupted/hand-edited save data referencing a door ID
+    /// that does not exist anywhere on this map.
+    private static void RequireKnownDoorIds(
+        ExplorationMapDefinition map,
+        IReadOnlyList<string> doorIds,
+        string parameterName)
+    {
+        if (doorIds.Count == 0)
+        {
+            return;
+        }
+
+        HashSet<string> known = new(
+            map.Floors.SelectMany(floor => floor.Doors)
+                .Select(door => door.DoorId),
+            StringComparer.Ordinal);
+
+        if (doorIds.Any(id => !known.Contains(id)))
+        {
+            throw new ArgumentException(
+                "The exploration state names a door ID that does not exist on the current map.",
+                parameterName);
+        }
+    }
+
+    /// Same guard as RequireKnownDoorIds, for collected treasure IDs.
+    private static void RequireKnownTreasureIds(
+        ExplorationMapDefinition map,
+        IReadOnlyList<string> treasureIds,
+        string parameterName)
+    {
+        if (treasureIds.Count == 0)
+        {
+            return;
+        }
+
+        HashSet<string> known = new(
+            map.Floors.SelectMany(floor => floor.Treasures)
+                .Select(treasure => treasure.TreasureId),
+            StringComparer.Ordinal);
+
+        if (treasureIds.Any(id => !known.Contains(id)))
+        {
+            throw new ArgumentException(
+                "The exploration state names a treasure ID that does not exist on the current map.",
+                parameterName);
+        }
     }
 }
