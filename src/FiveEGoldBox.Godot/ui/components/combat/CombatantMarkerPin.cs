@@ -46,6 +46,7 @@ public partial class CombatantMarkerPin : Button
 	private int? _currentHitPoints;
 	private int? _maximumHitPoints;
 	private Texture2D? _portrait;
+	private bool _flipPortrait;
 
 	public override void _Ready()
 	{
@@ -62,7 +63,8 @@ public partial class CombatantMarkerPin : Button
 		bool selected,
 		int? currentHitPoints = null,
 		int? maximumHitPoints = null,
-		Texture2D? portrait = null)
+		Texture2D? portrait = null,
+		bool flipPortrait = false)
 	{
 		TooltipText = label;
 		_ringColor = isAlly
@@ -73,6 +75,7 @@ public partial class CombatantMarkerPin : Button
 		_currentHitPoints = currentHitPoints;
 		_maximumHitPoints = maximumHitPoints;
 		_portrait = portrait;
+		_flipPortrait = flipPortrait;
 
 		if (IsNodeReady())
 		{
@@ -106,6 +109,16 @@ public partial class CombatantMarkerPin : Button
 	// ring diameter (a bust/full-body sprite reads as "standing behind"
 	// the ring, not clipped by it) and drawn before every other layer so
 	// the ring/health arc/highlight still render on top, unchanged.
+	//
+	// No per-direction art exists (single static frame, see above), so
+	// facing the other way means literally mirroring the draw call.
+	// _flipPortrait is computed by the caller (CombatView.Markers.cs's
+	// ShouldFlipPortrait, which also owns the "which side's art faces
+	// which way by default" convention -- this class only knows how to
+	// mirror, not why). A temporary scale.x=-1 transform, centered on
+	// the portrait so the mirror axis is its own middle rather than the
+	// control's corner, reset to identity immediately after so it can't
+	// leak into the ring/arc draws that follow.
 	private void DrawPortrait(Vector2 center, float radius, Texture2D portrait)
 	{
 		float portraitSize = radius * 2.2f;
@@ -114,7 +127,18 @@ public partial class CombatantMarkerPin : Button
 			new Vector2(portraitSize, portraitSize));
 		Rect2 sourceRect = new(Vector2.Zero, new Vector2(PortraitFrameSize, PortraitFrameSize));
 
-		DrawTextureRectRegion(portrait, destinationRect, sourceRect);
+		if (!_flipPortrait)
+		{
+			DrawTextureRectRegion(portrait, destinationRect, sourceRect);
+			return;
+		}
+
+		DrawSetTransform(center, 0f, new Vector2(-1f, 1f));
+		DrawTextureRectRegion(
+			portrait,
+			new Rect2(destinationRect.Position - center, destinationRect.Size),
+			sourceRect);
+		DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
 	}
 
 	// Real combat only — mock content never had HP to show. A thin arc
