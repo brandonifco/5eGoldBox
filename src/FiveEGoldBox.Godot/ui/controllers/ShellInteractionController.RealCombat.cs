@@ -96,7 +96,10 @@ internal sealed partial class ShellInteractionController
 			CommandViewModel commandViewModel = new(
 				spellId,
 				spellId,
-				AssignSpellHotkey(spellId, usedHotkeys));
+				HotkeyAssigner.Assign(
+					spellId.Where(char.IsLetter).Select(char.ToUpperInvariant),
+					usedHotkeys,
+					spellId));
 
 			commands.Add(CommandViewModelTranslator.ToCommandDefinition(
 				commandViewModel,
@@ -389,37 +392,6 @@ internal sealed partial class ShellInteractionController
 				PopContext(ShellInteractionContext.Confirmation);
 				_presentationController.SelectCombatTarget(null);
 			});
-	}
-
-	// Same collision-free letter-then-digit algorithm RealGameSession.
-	// AssignHotkey uses for real SessionAction labels — duplicated rather
-	// than shared, since that one lives in a file with no combat
-	// dependency and this one is combat-only.
-	private static string AssignSpellHotkey(
-		string spellId,
-		HashSet<char> usedHotkeys)
-	{
-		foreach (char candidate in spellId
-			.Where(char.IsLetter)
-			.Select(char.ToUpperInvariant))
-		{
-			if (usedHotkeys.Add(candidate))
-			{
-				return candidate.ToString();
-			}
-		}
-
-		for (char digit = '1'; digit <= '9'; digit++)
-		{
-			if (usedHotkeys.Add(digit))
-			{
-				return digit.ToString();
-			}
-		}
-
-		throw new InvalidOperationException(
-			$"Could not assign a hotkey for '{spellId}'; every letter and " +
-				"digit is already taken in this command set.");
 	}
 
 	// CombatOutcomeRules.Finalize already leaves the session in

@@ -90,7 +90,12 @@ internal sealed class RealGameSession
 			commands.Add(new CommandViewModel(
 				commandId,
 				action.DisplayName,
-				AssignHotkey(action.DisplayName, usedHotkeys)));
+				HotkeyAssigner.Assign(
+					action.DisplayName
+						.Where(char.IsLetter)
+						.Select(char.ToUpperInvariant),
+					usedHotkeys,
+					action.DisplayName)));
 		}
 
 		_lastActions = byCommandId;
@@ -366,37 +371,6 @@ internal sealed class RealGameSession
 		}
 
 		return $"{view.ScenarioDisplayName} — {view.LocationDisplayName}.";
-	}
-
-	// Godot's ShowCommands throws on a duplicate ShortcutKey within one
-	// call, so real content (arbitrary DisplayName strings, unlike the
-	// hand-picked mock command letters) needs a collision-free assignment
-	// rather than always taking the first letter.
-	private static string AssignHotkey(
-		string displayName,
-		HashSet<char> usedHotkeys)
-	{
-		foreach (char candidate in displayName
-			.Where(char.IsLetter)
-			.Select(char.ToUpperInvariant))
-		{
-			if (usedHotkeys.Add(candidate))
-			{
-				return candidate.ToString();
-			}
-		}
-
-		for (char digit = '1'; digit <= '9'; digit++)
-		{
-			if (usedHotkeys.Add(digit))
-			{
-				return digit.ToString();
-			}
-		}
-
-		throw new InvalidOperationException(
-			$"Could not assign a hotkey for '{displayName}'; every " +
-				"letter and digit is already taken in this command set.");
 	}
 }
 
