@@ -265,6 +265,40 @@ internal sealed class RealGameSession
 			: $"Purse: {string.Join(", ", denominations)}.";
 	}
 
+	// A read-only party roster, the same shape ShowCharacterScreen's mock
+	// content already renders through -- one row per member, body text
+	// updated per selection via DescribeCharacterMember (mirrors the mock's
+	// own onRowFocused convention).
+	internal ModalViewModel DescribeCharacter()
+	{
+		FiveEGoldBox.Application.Views.PartyViewModel party =
+			SessionView.Describe(_state).Party;
+		string firstMemberId = party.Members[0].PartyMemberId;
+
+		return new ModalViewModel(
+			"Character",
+			DescribeCharacterMember(firstMemberId),
+			party.Members
+				.Select(member => new CommandViewModel(
+					member.PartyMemberId,
+					$"{member.DisplayName} ({member.ClassDisplayName})"))
+				.ToArray(),
+			new[] { new CommandViewModel("close", "Close", "C") },
+			SelectedRowId: firstMemberId);
+	}
+
+	internal string DescribeCharacterMember(string partyMemberId)
+	{
+		FiveEGoldBox.Application.Views.PartyViewModel party =
+			SessionView.Describe(_state).Party;
+		FiveEGoldBox.Application.Views.PartyMemberViewModel member = party
+			.Members
+			.First(candidate => candidate.PartyMemberId == partyMemberId);
+
+		return $"{member.DisplayName} — {member.ClassDisplayName}, " +
+			$"{member.CurrentHitPoints}/{member.MaximumHitPoints} HP.";
+	}
+
 	internal string Submit(string commandId)
 	{
 		if (!_lastActions.TryGetValue(commandId, out SessionAction? action))
