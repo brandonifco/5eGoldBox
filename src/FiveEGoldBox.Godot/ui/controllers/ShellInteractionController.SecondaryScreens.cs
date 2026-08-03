@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 
 // M9a: the shared secondary-screen shell every M9 screen (Character/
-// Party, Inventory, Spellbook, Area Map, Journal, Options, Save/Load, and
-// the reusable location-interaction screen) funnels through.
-// ShowModalScreen pushes/pops ShellInteractionContext.ModalScreen the same
+// Party, Inventory, Spellbook, Journal, Options, Save/Load) funnels
+// through. The mock Area Map and mock shop/inn/services/temple screens
+// were retired 2026-08-02 in favor of the real, backend-wired Area Map
+// (RealSession.cs's EnterAreaMapMode) — see docs/2026-08-02-independent-
+// review-and-redesign.md. ShowModalScreen pushes/pops
+// ShellInteractionContext.ModalScreen the same
 // way ShowEncampConfirmation already does for Confirmation
 // (ShellInteractionController.Exploration.cs) — one cancel/back path
 // regardless of which screen is open or how it's dismissed. Escape,
@@ -52,16 +55,6 @@ internal sealed partial class ShellInteractionController
 				MockSecondaryScreenContent.DescribeSpell(spellId)),
 			onRowActivated: spellId => _presentationController.SetMessage(
 				MockSecondaryScreenContent.ReadySpellMessage(spellId)));
-	}
-
-	// M9c: "Area" already existed as an Exploration command (M6c) and only
-	// ever printed a placeholder message — a body-text-only screen, no
-	// list, same shared shell either way.
-	public void ShowAreaMapScreen()
-	{
-		ShowModalScreen(
-			MockSecondaryScreenContent.AreaMap(),
-			new Dictionary<string, Action> { ["close"] = CloseModalScreen });
 	}
 
 	// M9d: no existing Exploration command slot named it, but "J" (for
@@ -120,46 +113,6 @@ internal sealed partial class ShellInteractionController
 				_modalScreen.UpdateBody(
 					MockSecondaryScreenContent.DescribeSaveSlot(slotId));
 			});
-	}
-
-	// M9f: the reusable location-interaction screen — the same
-	// ModalViewModel shape and ShowModalScreen path every other M9 screen
-	// uses, driven by MockLocationInteractionContent instead of a new
-	// component. A no-op for a location with nothing to offer (the
-	// Outpost, Old Mine) rather than a special case at the call site
-	// (ShellInteractionController.RegionalMap.cs's EnterSelectedLocation).
-	//
-	// One handler set covers every wired location kind (shop items are
-	// list rows, activated via onRowActivated; the other three kinds'
-	// single action is a Commands-row button) since a given screen's own
-	// Commands/ListItems only ever reference the subset of these that
-	// actually apply to it.
-	public void ShowLocationInteraction(string locationId)
-	{
-		ModalViewModel? model = MockLocationInteractionContent.ForLocation(locationId);
-
-		if (model is null)
-		{
-			return;
-		}
-
-		ShowModalScreen(
-			model,
-			new Dictionary<string, Action>
-			{
-				["close"] = CloseModalScreen,
-				["rent-room"] = () => _presentationController.SetMessage(
-					"You rent a room for the night. Resting here is not " +
-						"connected to the real engine yet."),
-				["request-healing"] = () => _presentationController.SetMessage(
-					"You make a small donation and receive a blessing. " +
-						"Healing is not connected to the real engine yet."),
-				["charter-passage"] = () => _presentationController.SetMessage(
-					"You charter passage across the lake. Travel here " +
-						"is not connected to the real engine yet."),
-			},
-			onRowActivated: goodId => _presentationController.SetMessage(
-				MockLocationInteractionContent.ShopPurchaseMessage(goodId)));
 	}
 
 	private void ShowModalScreen(

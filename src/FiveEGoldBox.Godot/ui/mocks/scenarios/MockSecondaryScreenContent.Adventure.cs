@@ -1,6 +1,6 @@
 using System.Linq;
 
-// Spellbook, Area Map, and Journal content (M9c/d) — split out of
+// Spellbook and Journal content (M9c/d) — split out of
 // MockSecondaryScreenContent.cs (see that file's header) once the
 // combined class crossed the governing plan's 250-line review threshold.
 internal static partial class MockSecondaryScreenContent
@@ -55,18 +55,6 @@ internal static partial class MockSecondaryScreenContent
 
 		return $"You ready {spell.Name}. Casting is not connected to the " +
 			"real engine yet.";
-	}
-
-	public static ModalViewModel AreaMap()
-	{
-		return new ModalViewModel(
-			"Area",
-			"Frontier Outpost — a fortified waypoint on the region's " +
-				"edge, watching the road toward the Ruined Watchtower. " +
-				"Detailed area surveying is not connected to the real " +
-				"engine yet.",
-			ListItems: null,
-			Commands: new[] { new CommandViewModel("close", "Close", "C") });
 	}
 
 	// Names the same Frontier Outpost / Ruined Watchtower narrative
