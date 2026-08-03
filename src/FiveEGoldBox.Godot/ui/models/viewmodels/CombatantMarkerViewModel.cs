@@ -11,4 +11,9 @@ internal sealed record CombatantMarkerViewModel(
 	// on every refresh, at zero extra cost — a board that never visibly
 	// reflects damage would undercut the point of a real-combat demo.
 	int? CurrentHitPoints = null,
-	int? MaximumHitPoints = null);
+	int? MaximumHitPoints = null,
+	// A res:// path into the medieval-heroes asset pack, resolved from
+	// the combatant's own stable ID by CombatantPortraitCatalog -- null
+	// for mock content and for any real combatant the catalog doesn't
+	// name (every monster today), which keeps the plain colored pin.
+	string? PortraitResourcePath = null);

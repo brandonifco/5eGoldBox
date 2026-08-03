@@ -171,7 +171,8 @@ internal sealed class RealCombatSession
 				Active: combatant.CombatantId == decision.ActiveCombatantId,
 				IsAlly: combatant.SideId == view.PartySideId,
 				CurrentHitPoints: combatant.Health.HitPoints.CurrentHitPoints,
-				MaximumHitPoints: combatant.Health.HitPoints.MaximumHitPoints))
+				MaximumHitPoints: combatant.Health.HitPoints.MaximumHitPoints,
+				PortraitResourcePath: CombatantPortraitCatalog.Resolve(combatant.CombatantId)))
 			.ToArray();
 
 		bool isCompleted = decision.State == CombatDecisionState.CombatCompleted;
