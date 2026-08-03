@@ -183,7 +183,9 @@ internal sealed class RealCombatSession
 			view.BattlefieldHeight,
 			combatants,
 			decision.ActiveCombatantId,
-			HasArtBackground: false);
+			HasArtBackground: false,
+			FloorTileSheetPath: CombatFloorTileCatalog.Resolve(
+				view.Combatants.Select(combatant => combatant.CombatantId)));
 
 		return new RealCombatSnapshot(
 			model,
