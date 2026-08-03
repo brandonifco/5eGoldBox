@@ -23,6 +23,15 @@ public partial class AppShell : Control
 	// name should never look like "nothing happened".
 	private const string DebugLocationIdEnvironmentVariable =
 		"FIVEEGOLDBOX_DEBUG_LOCATION_ID";
+	// Optional, unlike the other five below -- every existing documented
+	// debug example (CLAUDE.md) predates this var and targets Watchtower
+	// without setting it, so it defaults to DefaultScenarioId rather than
+	// joining the "set LOCATION_ID, these become required" group. Only
+	// needed to jump into a location that isn't scenario.watchtower's own
+	// (e.g. Hollow Mill's), the same scenario-plus-location pair
+	// FiveEGoldBox.Console's own `goto` verb already takes explicitly.
+	private const string DebugScenarioIdEnvironmentVariable =
+		"FIVEEGOLDBOX_DEBUG_SCENARIO_ID";
 	private const string DebugFloorEnvironmentVariable =
 		"FIVEEGOLDBOX_DEBUG_FLOOR";
 	private const string DebugXEnvironmentVariable =
@@ -173,10 +182,15 @@ public partial class AppShell : Control
 			DebugFacingEnvironmentVariable);
 		string? progressId = System.Environment.GetEnvironmentVariable(
 			DebugProgressIdEnvironmentVariable);
+		string? debugScenarioId = System.Environment.GetEnvironmentVariable(
+			DebugScenarioIdEnvironmentVariable);
+		string scenarioId = string.IsNullOrEmpty(debugScenarioId)
+			? DefaultScenarioId
+			: debugScenarioId;
 
 		ApplicationSessionState state =
 			ScenarioSessionFactory.CreateAtExploration(
-				DefaultScenarioId,
+				scenarioId,
 				debugLocationId,
 				floor,
 				new GridPosition(x, y),
