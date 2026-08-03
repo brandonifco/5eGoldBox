@@ -18,7 +18,8 @@ public sealed record CombatantView
         int movementRemainingFeet,
         bool hasActionAvailable,
         bool hasBonusActionAvailable,
-        bool hasReactionAvailable)
+        bool hasReactionAvailable,
+        string? monsterId = null)
     {
         if (string.IsNullOrWhiteSpace(combatantId))
         {
@@ -56,9 +57,17 @@ public sealed record CombatantView
         HasActionAvailable = hasActionAvailable;
         HasBonusActionAvailable = hasBonusActionAvailable;
         HasReactionAvailable = hasReactionAvailable;
+        MonsterId = monsterId;
     }
 
     public string CombatantId { get; }
+
+    /// The scenario's shared monster type ID (e.g. "monster.mill-rat"),
+    /// distinct from CombatantId's own per-placement instance ID (e.g.
+    /// "combatant.mill-rat.first") -- two rats from the same monster share
+    /// this value but not CombatantId. Null for a party member, which has
+    /// no monster type at all.
+    public string? MonsterId { get; }
 
     /// A party member's real name (PartyMemberState.DisplayName), or --
     /// for opposition placed by the scenario -- the ruleset's

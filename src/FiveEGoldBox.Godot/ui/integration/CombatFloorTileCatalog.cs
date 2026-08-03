@@ -2,15 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-// Maps a real encounter's enemy roster to a piece of the SBS Isometric
-// Floor Tiles pack (src/FiveEGoldBox.Godot/assets/isometric-floor-tiles/
-// -- see docs/2026-08-03-isometric-floor-tiles-asset-inventory.md), so
-// CombatView can draw real tiles under the tactical grid instead of the
-// placeholder's flat fill. No scenario/location ID reaches this deep into
-// the real-combat integration layer today (RealCombatSession only ever
-// sees ApplicationSessionState/CombatOperations), so the enemy roster
-// itself is the signal -- each authored monster only ever appears in one
-// scenario, the same "one battlefield per encounter" assumption
+// Maps a real encounter's enemy roster (their shared MonsterIds, e.g.
+// "monster.mill-rat" -- never a monster's own per-placement CombatantId,
+// e.g. "combatant.mill-rat.first", which this would never match) to a
+// piece of the SBS Isometric Floor Tiles pack
+// (src/FiveEGoldBox.Godot/assets/isometric-floor-tiles/ -- see
+// docs/2026-08-03-isometric-floor-tiles-asset-inventory.md), so CombatView
+// can draw real tiles under the tactical grid instead of the placeholder's
+// flat fill. No scenario/location ID reaches this deep into the real-
+// combat integration layer today (RealCombatSession only ever sees
+// ApplicationSessionState/CombatOperations), so the enemy roster itself is
+// the signal -- each authored monster only ever appears in one scenario,
+// the same "one battlefield per encounter" assumption
 // CombatFloorTileCatalog's caller already relies on.
 //
 // Style choice is a real content decision, not derived from the pack
@@ -42,9 +45,9 @@ internal static class CombatFloorTileCatalog
 	// scenario (e.g. a future ad-hoc test roster) -- CombatView falls
 	// back to the placeholder fill in that case, the same as it always
 	// has for every real encounter until this catalog existed.
-	internal static string? Resolve(IEnumerable<string> combatantIds)
+	internal static string? Resolve(IEnumerable<string> monsterIds)
 	{
-		List<string> ids = combatantIds.ToList();
+		List<string> ids = monsterIds.ToList();
 
 		foreach ((string prefix, string sheetPath) in ScenarioFloors)
 		{
