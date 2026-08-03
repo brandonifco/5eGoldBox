@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Internal;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
@@ -145,13 +146,10 @@ public static class EncounterRules
                 "Encounter revision must be at least 1.");
         }
 
-        if (!Enum.IsDefined(state.LifecycleState))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(state),
-                state.LifecycleState,
-                "Unsupported encounter lifecycle state.");
-        }
+        CoreEnumValidation.RequireDefined(
+            state.LifecycleState,
+            nameof(state),
+            "Unsupported encounter lifecycle state.");
 
         ArgumentNullException.ThrowIfNull(
             state.Battlefield);
@@ -356,14 +354,10 @@ public static class EncounterRules
             ArgumentNullException.ThrowIfNull(
                 savingThrowBonus);
 
-            if (!Enum.IsDefined(
-                savingThrowBonus.Ability))
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(combatProfile),
-                    savingThrowBonus.Ability,
-                    "Unsupported saving-throw ability.");
-            }
+            CoreEnumValidation.RequireDefined(
+                savingThrowBonus.Ability,
+                nameof(combatProfile),
+                "Unsupported saving-throw ability.");
 
             if (!savingThrowAbilities.Add(
                 savingThrowBonus.Ability))
@@ -464,14 +458,10 @@ public static class EncounterRules
                 coverPosition.Position,
                 nameof(battlefield));
 
-            if (!Enum.IsDefined(
-                coverPosition.CoverLevel))
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(battlefield),
-                    coverPosition.CoverLevel,
-                    "Unsupported encounter cover level.");
-            }
+            CoreEnumValidation.RequireDefined(
+                coverPosition.CoverLevel,
+                nameof(battlefield),
+                "Unsupported encounter cover level.");
 
             if (coverPosition.CoverLevel
                 == EncounterCoverLevel.None)

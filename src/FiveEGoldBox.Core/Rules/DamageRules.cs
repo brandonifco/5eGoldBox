@@ -281,13 +281,10 @@ public static class DamageRules
 
     private static void ValidateDamageDice(DamageDice damage)
     {
-        if (!Enum.IsDefined(damage.Die))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(damage),
-                damage.Die,
-                "Damage die is not supported.");
-        }
+        CoreEnumValidation.RequireDefined(
+            damage.Die,
+            nameof(damage),
+            "Damage die is not supported.");
 
         if (damage.Count < 1)
         {
@@ -302,13 +299,10 @@ public static class DamageRules
         AttackRollOutcome outcome,
         string parameterName)
     {
-        if (!Enum.IsDefined(outcome))
-        {
-            throw new ArgumentOutOfRangeException(
-                parameterName,
-                outcome,
-                "Attack outcome is not supported.");
-        }
+        CoreEnumValidation.RequireDefined(
+            outcome,
+            parameterName,
+            "Attack outcome is not supported.");
     }
 
     private static void ValidateDamageResponseTypes(
@@ -326,12 +320,9 @@ public static class DamageRules
         DamageResponseType responseType,
         string parameterName)
     {
-        if (!Enum.IsDefined(responseType))
-        {
-            throw new ArgumentOutOfRangeException(
-                parameterName,
-                responseType,
-                "Damage response type is not supported.");
-        }
+        CoreEnumValidation.RequireDefined(
+            responseType,
+            parameterName,
+            "Damage response type is not supported.");
     }
 }

@@ -1,3 +1,5 @@
+using FiveEGoldBox.Core.Internal;
+
 namespace FiveEGoldBox.Core.Rules;
 
 public static class D20Rules
@@ -50,13 +52,10 @@ public static class D20Rules
         D20RollMode rollMode,
         string parameterName)
     {
-        if (!Enum.IsDefined(rollMode))
-        {
-            throw new ArgumentOutOfRangeException(
-                parameterName,
-                rollMode,
-                "D20 roll mode is not supported.");
-        }
+        CoreEnumValidation.RequireDefined(
+            rollMode,
+            parameterName,
+            "D20 roll mode is not supported.");
     }
 
     internal static int ResolveTotal(

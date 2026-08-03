@@ -1,3 +1,5 @@
+using FiveEGoldBox.Core.Internal;
+
 namespace FiveEGoldBox.Core.Rules;
 
 internal static class ConditionRules
@@ -26,12 +28,9 @@ internal static class ConditionRules
         ConditionType condition,
         string parameterName)
     {
-        if (!Enum.IsDefined(condition))
-        {
-            throw new ArgumentOutOfRangeException(
-                parameterName,
-                condition,
-                "Condition is not supported.");
-        }
+        CoreEnumValidation.RequireDefined(
+            condition,
+            parameterName,
+            "Condition is not supported.");
     }
 }

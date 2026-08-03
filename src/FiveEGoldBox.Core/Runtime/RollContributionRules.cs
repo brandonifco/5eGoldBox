@@ -1,4 +1,5 @@
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Internal;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
@@ -56,13 +57,10 @@ public static class RollContributionRules
     {
         ArgumentNullException.ThrowIfNull(participant);
 
-        if (!Enum.IsDefined(target))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(target),
-                target,
-                "Unsupported roll contribution target.");
-        }
+        CoreEnumValidation.RequireDefined(
+            target,
+            nameof(target),
+            "Unsupported roll contribution target.");
 
         int flatBonus = 0;
         List<DieType> requiredDice = [];
@@ -145,13 +143,10 @@ public static class RollContributionRules
         foreach (RollContributionCondition condition
             in contribution.Conditions)
         {
-            if (!Enum.IsDefined(condition))
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(contribution),
-                    condition,
-                    "Unsupported roll contribution condition.");
-            }
+            CoreEnumValidation.RequireDefined(
+                condition,
+                nameof(contribution),
+                "Unsupported roll contribution condition.");
 
             if (context is null)
             {
@@ -251,13 +246,10 @@ public static class RollContributionRules
                 "A roll contribution's dice count must be at least 1.");
         }
 
-        if (!Enum.IsDefined(dice.Die))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(dice),
-                dice.Die,
-                "Unsupported roll contribution die.");
-        }
+        CoreEnumValidation.RequireDefined(
+            dice.Die,
+            nameof(dice),
+            "Unsupported roll contribution die.");
 
         for (int index = 0;
             index < dice.Count;
