@@ -21,14 +21,18 @@ internal sealed partial class ShellInteractionController
 	// destination. Selecting a different party member in the list updates
 	// only the body text (onRowFocused -> UpdateBody), not a full
 	// re-Configure, so paging through the roster doesn't flicker the
-	// screen shut and open again.
+	// screen shut and open again. Real/mock branch mirrors ShowInventoryScreen's.
 	public void ShowCharacterScreen()
 	{
 		ShowModalScreen(
-			MockSecondaryScreenContent.Character(),
+			_activeRealSession is not null
+				? _activeRealSession.DescribeCharacter()
+				: MockSecondaryScreenContent.Character(),
 			new Dictionary<string, Action> { ["close"] = CloseModalScreen },
 			onRowFocused: memberId => _modalScreen.UpdateBody(
-				MockSecondaryScreenContent.DescribeMember(memberId)));
+				_activeRealSession is not null
+					? _activeRealSession.DescribeCharacterMember(memberId)
+					: MockSecondaryScreenContent.DescribeMember(memberId)));
 	}
 
 	// M9b: Inventory has no existing Exploration command slot (M/V/C/A/E/
