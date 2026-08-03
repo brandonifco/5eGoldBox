@@ -281,7 +281,8 @@ public sealed class ScenarioDefinitionModelTests
                         }
                     ]
                 }
-            ]
+            ],
+            Shops = []
         };
     }
 

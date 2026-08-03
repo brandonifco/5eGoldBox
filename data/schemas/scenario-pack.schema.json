@@ -45,6 +45,12 @@
     "ScenarioId": {
       "type": "string"
     },
+    "Shops": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ShopDefinitionV1"
+      }
+    },
     "StartingLocationId": {
       "type": "string"
     },
@@ -537,6 +543,49 @@
         "FinalStepIndex",
         "OriginLocationId",
         "RouteId"
+      ]
+    },
+    "ShopDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "DisplayName": {
+          "type": "string"
+        },
+        "Items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShopItemDefinitionV1"
+          }
+        },
+        "LocationId": {
+          "type": "string"
+        },
+        "ShopId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "DisplayName",
+        "Items",
+        "LocationId",
+        "ShopId"
+      ]
+    },
+    "ShopItemDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "ItemId": {
+          "type": "string"
+        },
+        "PriceGoldPieces": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "ItemId",
+        "PriceGoldPieces"
       ]
     },
     "ScenarioTriggerDefinitionV1": {

@@ -32,6 +32,7 @@ internal static partial class ScenarioDefinitionValidator
         AddEncounterOutcomeIssues(definition, issues);
         AddTriggerIssues(definition, issues);
         AddDecisionIssues(definition, issues);
+        AddShopIssues(definition, ruleset, issues);
         AddProgressReachabilityIssues(definition, issues);
 
         return new ValidationResult(issues);
