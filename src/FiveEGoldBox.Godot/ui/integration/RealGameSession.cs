@@ -291,6 +291,7 @@ internal sealed class RealGameSession
 			SessionActionKind.OpenDoor => OpenDoor(),
 			SessionActionKind.RevealSecretDoor => RevealSecretDoor(),
 			SessionActionKind.CollectTreasure => CollectTreasure(),
+			SessionActionKind.TalkToNpc => TalkToNpc(),
 			_ => $"'{action.DisplayName}' is not connected to the real " +
 				"engine yet.",
 		};
@@ -415,6 +416,14 @@ internal sealed class RealGameSession
 		_state = ExplorationRules.CollectTreasure(_state);
 
 		return "Treasure collected.";
+	}
+
+	// Talking has no session-state consequence, so unlike every other
+	// command here this doesn't reassign _state -- the returned line is
+	// the whole result.
+	private string TalkToNpc()
+	{
+		return ExplorationRules.DescribeNpcDialogue(_state);
 	}
 
 	private static string DescribeStatus(SessionViewModel view)
