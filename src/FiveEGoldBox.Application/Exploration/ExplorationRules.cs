@@ -362,42 +362,10 @@ public static class ExplorationRules
 
         if (treasure.ItemId is string itemId)
         {
-            int grantedQuantity = treasure.Quantity ?? 1;
-
-            bool foundExistingStack = false;
-            List<PartyInventoryItemState> updatedItems = new(
-                inventoryItems.Count + 1);
-
-            foreach (PartyInventoryItemState item in inventoryItems)
-            {
-                if (!foundExistingStack
-                    && string.Equals(
-                        item.ItemId,
-                        itemId,
-                        StringComparison.Ordinal))
-                {
-                    foundExistingStack = true;
-                    updatedItems.Add(item with
-                    {
-                        Quantity = item.Quantity + grantedQuantity
-                    });
-                }
-                else
-                {
-                    updatedItems.Add(item);
-                }
-            }
-
-            if (!foundExistingStack)
-            {
-                updatedItems.Add(new PartyInventoryItemState
-                {
-                    ItemId = itemId,
-                    Quantity = grantedQuantity
-                });
-            }
-
-            inventoryItems = updatedItems;
+            inventoryItems = PartyInventoryRules.AddItem(
+                inventoryItems,
+                itemId,
+                treasure.Quantity ?? 1);
         }
 
         return party with

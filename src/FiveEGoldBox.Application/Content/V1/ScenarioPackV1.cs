@@ -29,4 +29,7 @@ internal sealed record ScenarioPackV1
     public required IReadOnlyList<ScenarioTriggerDefinitionV1> Triggers { get; init; }
 
     public required IReadOnlyList<ScenarioDecisionDefinitionV1> Decisions { get; init; }
+
+    public IReadOnlyList<ShopDefinitionV1> Shops { get; init; } =
+        Array.Empty<ShopDefinitionV1>();
 }

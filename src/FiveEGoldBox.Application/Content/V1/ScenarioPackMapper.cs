@@ -40,6 +40,9 @@ internal static class ScenarioPackMapper
                 .ToArray(),
             Decisions = pack.Decisions
                 .Select(ToRuntimeDecision)
+                .ToArray(),
+            Shops = pack.Shops
+                .Select(ToRuntimeShop)
                 .ToArray()
         };
     }
@@ -287,6 +290,30 @@ internal static class ScenarioPackMapper
             OptionId = option.OptionId,
             DisplayName = option.DisplayName,
             ResultingProgressId = option.ResultingProgressId
+        };
+    }
+
+    private static ShopDefinition ToRuntimeShop(
+        ShopDefinitionV1 shop)
+    {
+        return new ShopDefinition
+        {
+            ShopId = shop.ShopId,
+            DisplayName = shop.DisplayName,
+            LocationId = shop.LocationId,
+            Items = shop.Items
+                .Select(ToRuntimeShopItem)
+                .ToArray()
+        };
+    }
+
+    private static ShopItemDefinition ToRuntimeShopItem(
+        ShopItemDefinitionV1 item)
+    {
+        return new ShopItemDefinition
+        {
+            ItemId = item.ItemId,
+            PriceGoldPieces = item.PriceGoldPieces
         };
     }
 

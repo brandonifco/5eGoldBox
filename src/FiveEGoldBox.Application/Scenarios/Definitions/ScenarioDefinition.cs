@@ -32,4 +32,7 @@ internal sealed record ScenarioDefinition
 
     /// Choices the party is offered for being somewhere.
     internal required IReadOnlyList<ScenarioDecisionDefinition> Decisions { get; init; }
+
+    /// Services the party may spend its shared purse at.
+    internal required IReadOnlyList<ShopDefinition> Shops { get; init; }
 }

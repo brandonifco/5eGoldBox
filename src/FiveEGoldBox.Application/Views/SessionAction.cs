@@ -30,4 +30,8 @@ public sealed record SessionAction
     /// reads this directly rather than parsing it back out of
     /// <see cref="DisplayName"/>'s own composed wording.
     public string? DestinationDisplayName { get; init; }
+
+    /// Set when the action purchases a specific shop good, so the client
+    /// can pass it back to <see cref="ShopRules.Purchase"/>.
+    public string? ShopItemId { get; init; }
 }

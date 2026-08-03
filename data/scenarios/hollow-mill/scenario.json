@@ -267,5 +267,18 @@
                 }
             ]
         }
+    ],
+    "Shops": [
+        {
+            "ShopId": "shop.hollow-mill-village.general-store",
+            "DisplayName": "The Hollow Mill General Store",
+            "LocationId": "location.hollow-mill-village",
+            "Items": [
+                { "ItemId": "item.torch", "PriceGoldPieces": 1 },
+                { "ItemId": "item.rope-50ft", "PriceGoldPieces": 2 },
+                { "ItemId": "item.rations-1day", "PriceGoldPieces": 1 },
+                { "ItemId": "item.arrow", "PriceGoldPieces": 1 }
+            ]
+        }
     ]
 }

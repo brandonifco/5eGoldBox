@@ -169,6 +169,27 @@ public static class SessionView
                 DestinationDisplayName = destinationDisplayName
             });
         }
+
+        ShopDefinition? shop = ShopRules.FindShopHere(session);
+
+        if (shop is not null)
+        {
+            ValidatedRuleset ruleset = RulesetRegistry.Resolve(scenario.RulesetId);
+
+            foreach (ShopItemDefinition item in shop.Items)
+            {
+                string itemDisplayName = FindItemDisplayName(
+                    ruleset,
+                    item.ItemId);
+
+                actions.Add(new SessionAction
+                {
+                    Kind = SessionActionKind.PurchaseShopItem,
+                    DisplayName = $"Buy {itemDisplayName} ({item.PriceGoldPieces} gp)",
+                    ShopItemId = item.ItemId
+                });
+            }
+        }
     }
 
     private static void AddTravelActions(

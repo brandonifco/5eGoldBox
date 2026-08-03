@@ -19,5 +19,6 @@ public enum SessionActionKind
     OpenDoor,
     RevealSecretDoor,
     CollectTreasure,
-    TalkToNpc
+    TalkToNpc,
+    PurchaseShopItem
 }

@@ -488,6 +488,21 @@
             "Id": "item.arrow",
             "Name": "Arrow",
             "WeightPounds": 0.05
+        },
+        {
+            "Id": "item.torch",
+            "Name": "Torch",
+            "WeightPounds": 1
+        },
+        {
+            "Id": "item.rope-50ft",
+            "Name": "Rope, 50 ft.",
+            "WeightPounds": 10
+        },
+        {
+            "Id": "item.rations-1day",
+            "Name": "Rations (1 day)",
+            "WeightPounds": 2
         }
     ]
 }
