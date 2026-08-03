@@ -108,7 +108,9 @@ internal sealed partial class ShellInteractionController
 			["journal"] = ShowJournalScreen,
 			["options"] = ShowOptionsScreen,
 			["cast"] = ShowSpellbookScreen,
-			["area"] = ShowAreaMapScreen,
+			["area"] = () => _presentationController.SetMessage(
+				"A real Area Map exists for real sessions. This mock " +
+					"exploration screen doesn't have one."),
 			["encamp"] = ShowEncampConfirmation,
 			["search"] = () => _presentationController.SetMessage(
 				"You search the area but find nothing. " +
