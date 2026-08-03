@@ -176,7 +176,9 @@ public static class SessionView
         {
             ValidatedRuleset ruleset = RulesetRegistry.Resolve(scenario.RulesetId);
 
-            foreach (ShopItemDefinition item in shop.Items)
+            foreach (ShopItemDefinition item
+                in shop.Items.Where(item =>
+                    ShopRules.CanPurchase(session, item.ItemId)))
             {
                 string itemDisplayName = FindItemDisplayName(
                     ruleset,

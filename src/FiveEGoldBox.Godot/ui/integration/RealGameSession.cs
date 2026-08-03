@@ -292,6 +292,7 @@ internal sealed class RealGameSession
 			SessionActionKind.RevealSecretDoor => RevealSecretDoor(),
 			SessionActionKind.CollectTreasure => CollectTreasure(),
 			SessionActionKind.TalkToNpc => TalkToNpc(),
+			SessionActionKind.PurchaseShopItem => PurchaseShopItem(action),
 			_ => $"'{action.DisplayName}' is not connected to the real " +
 				"engine yet.",
 		};
@@ -424,6 +425,17 @@ internal sealed class RealGameSession
 	private string TalkToNpc()
 	{
 		return ExplorationRules.DescribeNpcDialogue(_state);
+	}
+
+	private string PurchaseShopItem(SessionAction action)
+	{
+		_state = ShopRules.Purchase(
+			_state,
+			action.ShopItemId
+				?? throw new InvalidOperationException(
+					"A PurchaseShopItem action had no item ID."));
+
+		return $"{action.DisplayName}.";
 	}
 
 	private static string DescribeStatus(SessionViewModel view)
