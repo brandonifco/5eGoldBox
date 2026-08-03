@@ -1,7 +1,9 @@
+using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
+using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Exploration;
@@ -332,8 +334,77 @@ public static class ExplorationRules
                         .CollectedTreasureIds
                         .Append(treasure.TreasureId)
                         .ToArray()
-                }
+                },
+                Party = GrantTreasure(canonicalSession.Party, treasure)
             });
+    }
+
+    /// Adds a treasure's reward to the party's shared purse -- gold pieces
+    /// added directly, and, if the treasure names an item, either an
+    /// existing stack of that item incremented or a new one appended.
+    private static PartyState GrantTreasure(
+        PartyState party,
+        TreasureDefinition treasure)
+    {
+        CurrencyAmount currency = party.Currency;
+
+        if (treasure.GoldPieces is int goldPieces
+            && goldPieces != 0)
+        {
+            currency = currency with
+            {
+                GoldPieces = currency.GoldPieces + goldPieces
+            };
+        }
+
+        IReadOnlyList<PartyInventoryItemState> inventoryItems =
+            party.InventoryItems;
+
+        if (treasure.ItemId is string itemId)
+        {
+            int grantedQuantity = treasure.Quantity ?? 1;
+
+            bool foundExistingStack = false;
+            List<PartyInventoryItemState> updatedItems = new(
+                inventoryItems.Count + 1);
+
+            foreach (PartyInventoryItemState item in inventoryItems)
+            {
+                if (!foundExistingStack
+                    && string.Equals(
+                        item.ItemId,
+                        itemId,
+                        StringComparison.Ordinal))
+                {
+                    foundExistingStack = true;
+                    updatedItems.Add(item with
+                    {
+                        Quantity = item.Quantity + grantedQuantity
+                    });
+                }
+                else
+                {
+                    updatedItems.Add(item);
+                }
+            }
+
+            if (!foundExistingStack)
+            {
+                updatedItems.Add(new PartyInventoryItemState
+                {
+                    ItemId = itemId,
+                    Quantity = grantedQuantity
+                });
+            }
+
+            inventoryItems = updatedItems;
+        }
+
+        return party with
+        {
+            Currency = currency,
+            InventoryItems = inventoryItems
+        };
     }
 
     /// A read-only projection of the current floor's grid geometry plus

@@ -1058,7 +1058,7 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
-    public void CollectTreasure_FlagsTheTreasureAsCollectedWithoutGrantingAnything()
+    public void CollectTreasure_FlagsTheTreasureAsCollected()
     {
         ApplicationSessionState atTreasure =
             CreateAtArmoryCacheTreasure();
@@ -1072,6 +1072,56 @@ WatchtowerScenarioProgress
         AssertPartyEquivalent(
             atTreasure.Party,
             collected.Party);
+    }
+
+    // The armory cache (see the "Where things stand" note in CLAUDE.md that
+    // this closes out) declares both GoldPieces and an ItemId/Quantity, so
+    // one collection exercises both grant paths at once.
+    [Fact]
+    public void CollectTreasure_GrantsGoldAndItemToThePartysSharedPurse()
+    {
+        ApplicationSessionState atTreasure =
+            CreateAtArmoryCacheTreasure();
+
+        ApplicationSessionState collected =
+            ExplorationRules.CollectTreasure(atTreasure);
+
+        Assert.Equal(
+            atTreasure.Party.Currency.GoldPieces + 25,
+            collected.Party.Currency.GoldPieces);
+
+        PartyInventoryItemState item = Assert.Single(
+            collected.Party.InventoryItems,
+            entry => entry.ItemId == "item.arrow");
+        Assert.Equal(10, item.Quantity);
+    }
+
+    [Fact]
+    public void CollectTreasure_StacksAnItemOntoAnExistingInventoryEntry()
+    {
+        ApplicationSessionState atTreasure = CreateAtArmoryCacheTreasure();
+        ApplicationSessionState withExistingStack = atTreasure with
+        {
+            Party = atTreasure.Party with
+            {
+                InventoryItems = new[]
+                {
+                    new PartyInventoryItemState
+                    {
+                        ItemId = "item.arrow",
+                        Quantity = 3
+                    }
+                }
+            }
+        };
+
+        ApplicationSessionState collected =
+            ExplorationRules.CollectTreasure(withExistingStack);
+
+        PartyInventoryItemState item = Assert.Single(
+            collected.Party.InventoryItems,
+            entry => entry.ItemId == "item.arrow");
+        Assert.Equal(13, item.Quantity);
     }
 
     [Fact]

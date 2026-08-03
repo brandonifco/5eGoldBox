@@ -54,6 +54,8 @@ public sealed class ScenarioDefinitionValidatorTests
     [InlineData("scenario.map.treasure_position_collision")]
     [InlineData("scenario.map.treasure_no_reward")]
     [InlineData("scenario.map.treasure_gold_negative")]
+    [InlineData("scenario.map.treasure_quantity_without_item")]
+    [InlineData("scenario.map.treasure_quantity_not_positive")]
     [InlineData("scenario.routes.circular")]
     [InlineData("scenario.routes.origin_unreachable")]
     [InlineData("scenario.triggers.resulting_progress_unknown")]
@@ -720,6 +722,54 @@ public sealed class ScenarioDefinitionValidatorTests
                                     TreasureId = "treasure.test.negative_gold",
                                     Position = new GridPosition(0, 0),
                                     GoldPieces = -1
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.treasure_quantity_without_item",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Treasures =
+                            [
+                                new TreasureDefinition
+                                {
+                                    TreasureId = "treasure.test.quantity_without_item",
+                                    Position = new GridPosition(0, 0),
+                                    GoldPieces = 1,
+                                    Quantity = 1
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.treasure_quantity_not_positive",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Treasures =
+                            [
+                                new TreasureDefinition
+                                {
+                                    TreasureId = "treasure.test.quantity_not_positive",
+                                    Position = new GridPosition(0, 0),
+                                    ItemId = "item.test.quantity",
+                                    Quantity = 0
                                 }
                             ]
                         },

@@ -1,7 +1,9 @@
 using FiveEGoldBox.Application.Exploration;
+using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Persistence;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
+using FiveEGoldBox.Core.Characters;
 
 namespace FiveEGoldBox.Application.Tests;
 
@@ -51,6 +53,12 @@ public sealed class SaveGameV1CompatibilityTests
         Assert.Null(loaded.Exploration);
         Assert.Null(loaded.RegionalTravel);
         Assert.Null(loaded.ActiveEncounter);
+
+        // The fixture predates Currency/InventoryItems -- a document from
+        // before the field existed omits it entirely and must still load,
+        // defaulting to a party that never carried any currency or items.
+        Assert.Equal(new CurrencyAmount(), loaded.Party.Currency);
+        Assert.Empty(loaded.Party.InventoryItems);
     }
 
     [Fact]
@@ -142,6 +150,60 @@ public sealed class SaveGameV1CompatibilityTests
         Assert.Equal(first.RegionalTravel, second.RegionalTravel);
         AssertExplorationEqual(first.Exploration, second.Exploration);
         Assert.Equal(first.ActiveEncounter, second.ActiveEncounter);
+        Assert.Equal(first.Party.Currency, second.Party.Currency);
+        Assert.Equal(
+            first.Party.InventoryItems
+                .Select(item => (item.ItemId, item.Quantity)),
+            second.Party.InventoryItems
+                .Select(item => (item.ItemId, item.Quantity)));
+    }
+
+    /// None of the frozen fixtures carry currency or inventory -- they
+    /// predate the field. Round-trips a party that actually has some of
+    /// each, proving the new SavePartyV1 fields carry real (non-default)
+    /// data through a save/load cycle, not just the zero/empty default.
+    [Fact]
+    public void LoadSaveLoad_PreservesNonDefaultCurrencyAndInventory()
+    {
+        ApplicationSessionState loaded = LoadFixture(OutpostFixture);
+        ApplicationSessionState withPurse = loaded with
+        {
+            Party = loaded.Party with
+            {
+                Currency = new CurrencyAmount
+                {
+                    CopperPieces = 4,
+                    SilverPieces = 3,
+                    ElectrumPieces = 2,
+                    GoldPieces = 25,
+                    PlatinumPieces = 1
+                },
+                InventoryItems = new[]
+                {
+                    new PartyInventoryItemState
+                    {
+                        ItemId = "item.arrow",
+                        Quantity = 10
+                    },
+                    new PartyInventoryItemState
+                    {
+                        ItemId = "item.torch",
+                        Quantity = 3
+                    }
+                }
+            }
+        };
+
+        string reserialized = ManualSaveSerializer.Serialize(withPurse);
+        ApplicationSessionState reloaded =
+            LoadFixtureFromJson(reserialized);
+
+        Assert.Equal(withPurse.Party.Currency, reloaded.Party.Currency);
+        Assert.Equal(
+            withPurse.Party.InventoryItems
+                .Select(item => (item.ItemId, item.Quantity)),
+            reloaded.Party.InventoryItems
+                .Select(item => (item.ItemId, item.Quantity)));
     }
 
     /// ExplorationState.OpenDoorIds/RevealedSecretDoorIds/CollectedTreasureIds

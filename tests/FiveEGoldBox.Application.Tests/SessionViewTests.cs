@@ -148,6 +148,76 @@ public sealed class SessionViewTests
             SessionView.Describe(null!));
     }
 
+    [Fact]
+    public void Describe_AtTheStart_ReportsAnEmptyPurse()
+    {
+        SessionViewModel view = SessionView.Describe(
+            ScenarioSessionFactory.CreateNew(
+                WatchtowerScenarioContent.ScenarioId,
+                randomSeed: 7));
+
+        Assert.Equal(0, view.Party.Currency.CopperPieces);
+        Assert.Equal(0, view.Party.Currency.SilverPieces);
+        Assert.Equal(0, view.Party.Currency.ElectrumPieces);
+        Assert.Equal(0, view.Party.Currency.GoldPieces);
+        Assert.Equal(0, view.Party.Currency.PlatinumPieces);
+        Assert.Empty(view.Party.InventoryItems);
+    }
+
+    /// The Watchtower's armory cache (25 gold, 10 arrows) is real content
+    /// coming through real rules, not a synthetic fixture -- proof this
+    /// closes the loop end to end: collect via ExplorationRules, then read
+    /// it back through the exact view a client renders from.
+    [Fact]
+    public void Describe_AfterCollectingTreasure_ReflectsTheGrantedCurrencyAndItem()
+    {
+        ApplicationSessionState atTreasure = AtArmoryCacheTreasure();
+
+        ApplicationSessionState collected =
+            ExplorationRules.CollectTreasure(atTreasure);
+
+        SessionViewModel view = SessionView.Describe(collected);
+
+        Assert.Equal(25, view.Party.Currency.GoldPieces);
+
+        Assert.Equal(
+            "Arrow",
+            Assert.Single(
+                view.Party.InventoryItems,
+                item => item.ItemId == "item.arrow")
+                .DisplayName);
+        Assert.Equal(
+            10,
+            Assert.Single(
+                view.Party.InventoryItems,
+                item => item.ItemId == "item.arrow")
+                .Quantity);
+    }
+
+    /// Mirrors ExplorationRulesTests' own CreateAtArmoryCacheTreasure --
+    /// standing on the armory cache treasure at (4, 1), reachable only by
+    /// opening the ordinary door at (3, 1) first.
+    private static ApplicationSessionState AtArmoryCacheTreasure()
+    {
+        ApplicationSessionState current = ExplorationRules.EnterDestination(
+            Arrive(WatchtowerScenarioContent.ScenarioId));
+
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Right);
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Left);
+        current = ExplorationRules.OpenDoor(current);
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.MoveForward(current).State;
+
+        return current;
+    }
+
     private static ApplicationSessionState Accept(
         ApplicationSessionState session)
     {

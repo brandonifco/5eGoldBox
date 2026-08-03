@@ -26,4 +26,6 @@ public sealed record SessionViewModel
     public bool? IsSuccess { get; init; }
 
     public required IReadOnlyList<SessionAction> Actions { get; init; }
+
+    public required PartyViewModel Party { get; init; }
 }

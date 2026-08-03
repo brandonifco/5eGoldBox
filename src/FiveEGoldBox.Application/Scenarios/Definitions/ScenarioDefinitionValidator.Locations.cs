@@ -303,6 +303,23 @@ internal static partial class ScenarioDefinitionValidator
                         $"A treasure on floor {floor.Floor} of the {where} declares negative gold."));
                 }
 
+                if (treasure.Quantity is int quantity)
+                {
+                    if (string.IsNullOrWhiteSpace(treasure.ItemId))
+                    {
+                        issues.Add(Error(
+                            "scenario.map.treasure_quantity_without_item",
+                            $"A treasure on floor {floor.Floor} of the {where} declares a quantity but no item."));
+                    }
+
+                    if (quantity < 1)
+                    {
+                        issues.Add(Error(
+                            "scenario.map.treasure_quantity_not_positive",
+                            $"A treasure on floor {floor.Floor} of the {where} declares a non-positive quantity."));
+                    }
+                }
+
                 if (ruleset is not null
                     && !string.IsNullOrWhiteSpace(treasure.ItemId)
                     && !ruleset.Definition.EquipmentItems.Any(item => string.Equals(
