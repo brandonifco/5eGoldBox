@@ -21,19 +21,15 @@ internal static class EncounterSessionValidator
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        if (state.RegionalTravel is not null)
-        {
-            throw new ArgumentException(
-                "An encounter session cannot contain regional-travel state.",
-                nameof(state));
-        }
+        SessionSubstateInvariant.RequireAbsent(
+            state,
+            state.RegionalTravel,
+            "An encounter session cannot contain regional-travel state.");
 
-        if (state.Exploration is not null)
-        {
-            throw new ArgumentException(
-                "An encounter session cannot contain root exploration state.",
-                nameof(state));
-        }
+        SessionSubstateInvariant.RequireAbsent(
+            state,
+            state.Exploration,
+            "An encounter session cannot contain root exploration state.");
 
         ActiveEncounterState activeEncounter =
             state.ActiveEncounter

@@ -9,25 +9,19 @@ internal static class OutpostSessionValidator
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        if (state.RegionalTravel is not null)
-        {
-            throw new ArgumentException(
-                "An outpost session cannot contain regional-travel state.",
-                nameof(state));
-        }
+        SessionSubstateInvariant.RequireAbsent(
+            state,
+            state.RegionalTravel,
+            "An outpost session cannot contain regional-travel state.");
 
-        if (state.Exploration is not null)
-        {
-            throw new ArgumentException(
-                "An outpost session cannot contain exploration state.",
-                nameof(state));
-        }
+        SessionSubstateInvariant.RequireAbsent(
+            state,
+            state.Exploration,
+            "An outpost session cannot contain exploration state.");
 
-        if (state.ActiveEncounter is not null)
-        {
-            throw new ArgumentException(
-                "An outpost session cannot contain an active encounter.",
-                nameof(state));
-        }
+        SessionSubstateInvariant.RequireAbsent(
+            state,
+            state.ActiveEncounter,
+            "An outpost session cannot contain an active encounter.");
     }
 }
