@@ -13,26 +13,34 @@ using System.Collections.Generic;
 // Role mapping is a real content decision, not inferred from the pack's
 // own character names (none of the 8 match a party role or monster by
 // name) -- picked once here, by name, rather than guessed per call.
-// Enemies aren't mapped at all: the pack has no monster-shaped sprites,
-// so an unresolved ID (every monster's CombatantId, and the reserve
-// Barbarian/Ranger the active party doesn't field) correctly falls
-// through to null, keeping today's placeholder pin for anything this
-// catalog doesn't name.
+// Most enemies still aren't mapped: the medieval-heroes pack has no
+// monster-shaped sprites, and the PVGames Apex Predators pack (three
+// reptilian beasts, docs/2026-08-03-apex-predators-asset-inventory.md)
+// only reads as a plausible stand-in for monster.mill-rat -- the other
+// five monsters (raiders, guardians, thrall) are human/humanoid and
+// would look wrong in kaiju-lizard art, so they're deliberately left
+// unmapped. An unresolved ID (every other monster's CombatantId, and
+// the reserve Barbarian/Ranger the active party doesn't field)
+// correctly falls through to null, keeping today's placeholder pin.
 internal static class CombatantPortraitCatalog
 {
-	private const string BasePath = "res://assets/medieval-heroes";
+	private const string HeroesBasePath = "res://assets/medieval-heroes";
+	private const string ApexPredatorsBasePath = "res://assets/apex-predators";
 
-	// Single static frame (the first of a 3-frame idle "stance1" strip)
-	// per party role -- see the "static portrait" scope decision in the
-	// asset-inventory doc; a full attack/critical/victory/dead animation
-	// pipeline is a separate, larger piece of work, not built here.
+	// Single static frame per role/monster -- see the "static portrait"
+	// scope decision in the asset-inventory docs; a full attack/critical/
+	// victory/dead animation pipeline is a separate, larger piece of
+	// work, not built here. The Apex Predators frame is the first cell
+	// (row 0, col 0) of each creature's SideViewBattler sheet, trimmed
+	// and centered the same way rather than a pack-provided "stance".
 	private static readonly IReadOnlyDictionary<string, string> RolePortraits =
 		new Dictionary<string, string>
 		{
-			["party-member.fighter"] = $"{BasePath}/PaulHammerArm/PaulHammerArm_MVsv_alt_stance1.png",
-			["party-member.rogue"] = $"{BasePath}/Huntress/Huntress_MVsv_alt_stance1.png",
-			["party-member.cleric"] = $"{BasePath}/Naia/Naia_MVsv_alt_stance1.png",
-			["party-member.wizard"] = $"{BasePath}/MasterGaerron/MasterGaerron_MVsv_alt_stance1.png",
+			["party-member.fighter"] = $"{HeroesBasePath}/PaulHammerArm/PaulHammerArm_MVsv_alt_stance1.png",
+			["party-member.rogue"] = $"{HeroesBasePath}/Huntress/Huntress_MVsv_alt_stance1.png",
+			["party-member.cleric"] = $"{HeroesBasePath}/Naia/Naia_MVsv_alt_stance1.png",
+			["party-member.wizard"] = $"{HeroesBasePath}/MasterGaerron/MasterGaerron_MVsv_alt_stance1.png",
+			["monster.mill-rat"] = $"{ApexPredatorsBasePath}/ApexStalker/ApexStalker_MVsv_portrait.png",
 		};
 
 	internal static string? Resolve(string combatantId)
