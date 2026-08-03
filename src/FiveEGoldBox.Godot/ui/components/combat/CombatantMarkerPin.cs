@@ -35,11 +35,17 @@ public partial class CombatantMarkerPin : Button
 	// viewer reads meaning into.
 	private const float HealthArcStartAngle = -Mathf.Pi / 2f;
 
+	// The medieval-heroes pack's _MVsv_alt_*.png strips are three
+	// 128x128 frames side by side; only the first is used for a static
+	// portrait (no animation wiring yet).
+	private const float PortraitFrameSize = 128f;
+
 	private Color _ringColor = AllyPalette[0];
 	private bool _active;
 	private bool _selected;
 	private int? _currentHitPoints;
 	private int? _maximumHitPoints;
+	private Texture2D? _portrait;
 
 	public override void _Ready()
 	{
@@ -55,7 +61,8 @@ public partial class CombatantMarkerPin : Button
 		bool active,
 		bool selected,
 		int? currentHitPoints = null,
-		int? maximumHitPoints = null)
+		int? maximumHitPoints = null,
+		Texture2D? portrait = null)
 	{
 		TooltipText = label;
 		_ringColor = isAlly
@@ -65,6 +72,7 @@ public partial class CombatantMarkerPin : Button
 		_selected = selected;
 		_currentHitPoints = currentHitPoints;
 		_maximumHitPoints = maximumHitPoints;
+		_portrait = portrait;
 
 		if (IsNodeReady())
 		{
@@ -77,6 +85,11 @@ public partial class CombatantMarkerPin : Button
 		Vector2 center = Size / 2f;
 		float radius = Mathf.Min(Size.X, Size.Y) / 2f;
 
+		if (_portrait is Texture2D portrait)
+		{
+			DrawPortrait(center, radius, portrait);
+		}
+
 		if (_active || _selected)
 		{
 			DrawCircle(center, radius * 0.7f, new Color(_ringColor, 0.25f));
@@ -86,6 +99,22 @@ public partial class CombatantMarkerPin : Button
 		DrawArc(center, radius, 0, Mathf.Tau, 32, _ringColor, borderWidth, antialiased: true);
 
 		DrawHealthArc(center, radius);
+	}
+
+	// Draws only the first of the portrait's three 128x128 idle frames --
+	// a static token image, not an animation. Slightly larger than the
+	// ring diameter (a bust/full-body sprite reads as "standing behind"
+	// the ring, not clipped by it) and drawn before every other layer so
+	// the ring/health arc/highlight still render on top, unchanged.
+	private void DrawPortrait(Vector2 center, float radius, Texture2D portrait)
+	{
+		float portraitSize = radius * 2.2f;
+		Rect2 destinationRect = new(
+			center - new Vector2(portraitSize / 2f, portraitSize / 2f),
+			new Vector2(portraitSize, portraitSize));
+		Rect2 sourceRect = new(Vector2.Zero, new Vector2(PortraitFrameSize, PortraitFrameSize));
+
+		DrawTextureRectRegion(portrait, destinationRect, sourceRect);
 	}
 
 	// Real combat only — mock content never had HP to show. A thin arc

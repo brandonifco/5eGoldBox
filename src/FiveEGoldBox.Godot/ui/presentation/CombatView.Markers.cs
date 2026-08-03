@@ -97,7 +97,8 @@ public partial class CombatView
 				combatant.Active,
 				combatant.Selected,
 				combatant.CurrentHitPoints,
-				combatant.MaximumHitPoints);
+				combatant.MaximumHitPoints,
+				ResolvePortrait(combatant.PortraitResourcePath));
 
 			string combatantId = combatant.Id;
 			pin.Pressed += () => CombatantActivated?.Invoke(combatantId);
@@ -110,6 +111,17 @@ public partial class CombatView
 				allyIndex++;
 			}
 		}
+	}
+
+	// GD.Load is resolved through Godot's own resource cache (keyed by
+	// path), so repeated calls for the same combatant across redraws --
+	// RebuildCombatants tears down and recreates every pin on each one --
+	// cost a dictionary lookup, not a re-read from disk.
+	private static Texture2D? ResolvePortrait(string? resourcePath)
+	{
+		return resourcePath is null
+			? null
+			: GD.Load<Texture2D>(resourcePath);
 	}
 
 	private void RepositionCombatants()
