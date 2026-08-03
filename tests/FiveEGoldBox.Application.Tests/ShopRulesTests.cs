@@ -3,6 +3,7 @@ using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
+using FiveEGoldBox.Application.Views;
 
 namespace FiveEGoldBox.Application.Tests;
 
@@ -120,6 +121,29 @@ public sealed class ShopRulesTests
     {
         Assert.Throws<ArgumentNullException>(() =>
             ShopRules.Purchase(null!, "item.torch"));
+    }
+
+    [Fact]
+    public void SessionView_WithEnoughGold_OffersToBuyTheItem()
+    {
+        SessionViewModel view = SessionView.Describe(WithGold(5));
+
+        SessionAction action = Assert.Single(
+            view.Actions,
+            action => action.ShopItemId == "item.torch");
+
+        Assert.Equal(SessionActionKind.PurchaseShopItem, action.Kind);
+        Assert.Equal("Buy Torch (1 gp)", action.DisplayName);
+    }
+
+    [Fact]
+    public void SessionView_WithoutEnoughGold_DoesNotOfferToBuyAnything()
+    {
+        SessionViewModel view = SessionView.Describe(WithGold(0));
+
+        Assert.DoesNotContain(
+            view.Actions,
+            action => action.Kind == SessionActionKind.PurchaseShopItem);
     }
 
     private static ApplicationSessionState WithGold(int goldPieces)
