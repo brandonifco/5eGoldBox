@@ -122,10 +122,6 @@ internal sealed partial class ConsoleSessionRunner
                     output.WriteLine(
                         "Signal activated. Encounter started.");
                     break;
-                case SessionMenuAction.OpenDoor:
-                    session = ExplorationRules.OpenDoor(session);
-                    output.WriteLine("Door opened.");
-                    break;
                 case SessionMenuAction.RevealSecretDoor:
                     session = ExplorationRules.RevealSecretDoor(session);
                     output.WriteLine("A hidden door reveals itself.");
@@ -215,8 +211,6 @@ internal sealed partial class ConsoleSessionRunner
                 SessionMenuAction.UseStairs,
             SessionActionKind.ActivateTrigger =>
                 SessionMenuAction.ActivateTrigger,
-            SessionActionKind.OpenDoor =>
-                SessionMenuAction.OpenDoor,
             SessionActionKind.RevealSecretDoor =>
                 SessionMenuAction.RevealSecretDoor,
             SessionActionKind.CollectTreasure =>
@@ -278,7 +272,6 @@ internal sealed partial class ConsoleSessionRunner
         TurnRight,
         UseStairs,
         ActivateTrigger,
-        OpenDoor,
         RevealSecretDoor,
         CollectTreasure,
         InspectParty,

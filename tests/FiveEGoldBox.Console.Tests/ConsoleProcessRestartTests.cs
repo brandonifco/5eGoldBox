@@ -1070,7 +1070,7 @@ public sealed class ConsoleProcessRestartTests
             result.Session);
     }
 
-    /// ExplorationState.OpenDoorIds/RevealedSecretDoorIds/CollectedTreasureIds
+    /// ExplorationState.RevealedSecretDoorIds/CollectedTreasureIds
     /// are IReadOnlyList<string>-typed, so record-generated Equals compares
     /// them by reference once a save round-trip replaces the original
     /// Array.Empty<string>() default with a deserialized List -- decompose
@@ -1089,7 +1089,6 @@ public sealed class ConsoleProcessRestartTests
         Assert.Equal(expected.Floor, actual.Floor);
         Assert.Equal(expected.Position, actual.Position);
         Assert.Equal(expected.Facing, actual.Facing);
-        Assert.Equal(expected.OpenDoorIds, actual.OpenDoorIds);
         Assert.Equal(
             expected.RevealedSecretDoorIds,
             actual.RevealedSecretDoorIds);

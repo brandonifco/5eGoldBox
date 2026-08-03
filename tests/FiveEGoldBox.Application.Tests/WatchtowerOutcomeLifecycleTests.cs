@@ -789,7 +789,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         }
     }
 
-    /// ExplorationState.OpenDoorIds/RevealedSecretDoorIds/CollectedTreasureIds
+    /// ExplorationState.RevealedSecretDoorIds/CollectedTreasureIds
     /// are IReadOnlyList<string>-typed, so record-generated Equals compares
     /// them by reference -- only bites once a save round-trip replaces the
     /// original Array.Empty<string>() default with a deserialized List, so
@@ -808,7 +808,6 @@ public sealed class WatchtowerOutcomeLifecycleTests
         Assert.Equal(expected.Floor, actual.Floor);
         Assert.Equal(expected.Position, actual.Position);
         Assert.Equal(expected.Facing, actual.Facing);
-        Assert.Equal(expected.OpenDoorIds, actual.OpenDoorIds);
         Assert.Equal(
             expected.RevealedSecretDoorIds,
             actual.RevealedSecretDoorIds);

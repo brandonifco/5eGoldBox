@@ -206,7 +206,7 @@ public sealed class SaveGameV1CompatibilityTests
                 .Select(item => (item.ItemId, item.Quantity)));
     }
 
-    /// ExplorationState.OpenDoorIds/RevealedSecretDoorIds/CollectedTreasureIds
+    /// ExplorationState.RevealedSecretDoorIds/CollectedTreasureIds
     /// are IReadOnlyList<string>-typed, so record-generated Equals compares
     /// them by reference like Party.Members above -- decompose the same way
     /// rather than comparing the whole record.
@@ -224,7 +224,6 @@ public sealed class SaveGameV1CompatibilityTests
         Assert.Equal(expected.Floor, actual.Floor);
         Assert.Equal(expected.Position, actual.Position);
         Assert.Equal(expected.Facing, actual.Facing);
-        Assert.Equal(expected.OpenDoorIds, actual.OpenDoorIds);
         Assert.Equal(
             expected.RevealedSecretDoorIds,
             actual.RevealedSecretDoorIds);

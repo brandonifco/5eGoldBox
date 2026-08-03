@@ -127,13 +127,11 @@ public sealed class HollowMillScenarioTests
         Assert.Equal("UpperFloor", session.Exploration!.Floor);
         Assert.Equal(new GridPosition(0, 0), session.Exploration!.Position);
 
-        // Face east, open the flooded archway, and cross into the vault.
+        // Face east and cross through the flooded archway into the vault.
         session = FaceEast(session);
         session = Forward(session);
         Assert.Equal(new GridPosition(1, 0), session.Exploration!.Position);
 
-        Assert.True(ExplorationRules.CanOpenDoor(session));
-        session = ExplorationRules.OpenDoor(session);
         session = Forward(session);
         session = Forward(session);
         Assert.Equal(new GridPosition(3, 0), session.Exploration!.Position);
@@ -219,13 +217,11 @@ public sealed class HollowMillScenarioTests
         Assert.Equal("UpperFloor", session.Exploration!.Floor);
         Assert.Equal(new GridPosition(0, 0), session.Exploration!.Position);
 
-        // Face east, open the flooded archway, and cross into the vault.
+        // Face east and cross through the flooded archway into the vault.
         session = FaceEast(session);
         session = Forward(session);
         Assert.Equal(new GridPosition(1, 0), session.Exploration!.Position);
 
-        Assert.True(ExplorationRules.CanOpenDoor(session));
-        session = ExplorationRules.OpenDoor(session);
         session = Forward(session);
         session = Forward(session);
         Assert.Equal(new GridPosition(3, 0), session.Exploration!.Position);
@@ -258,8 +254,10 @@ public sealed class HollowMillScenarioTests
     }
 
     /// The hidden larder is a side reward, not on either branch's critical
-    /// path: finding it needs the secret door revealed and opened before
-    /// its own tile -- and the tile behind it -- becomes reachable at all.
+    /// path: finding it needs the secret door revealed before its own tile
+    /// -- and the tile behind it -- becomes reachable at all. Once
+    /// revealed, the door (unlocked) is freely passable with no separate
+    /// open step.
     [Fact]
     public void HiddenLarder_CanBeFoundOpenedAndCollected()
     {
@@ -284,8 +282,6 @@ public sealed class HollowMillScenarioTests
 
         Assert.True(ExplorationRules.CanRevealSecretDoor(session));
         session = ExplorationRules.RevealSecretDoor(session);
-        Assert.True(ExplorationRules.CanOpenDoor(session));
-        session = ExplorationRules.OpenDoor(session);
 
         session = Forward(session);
         Assert.Equal(new GridPosition(4, 2), session.Exploration!.Position);

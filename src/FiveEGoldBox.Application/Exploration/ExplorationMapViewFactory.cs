@@ -37,7 +37,7 @@ internal static class ExplorationMapViewFactory
                     door.Position,
                     door.OtherPosition,
                     door.IsLocked,
-                    IsOpen(door, state),
+                    IsOpen(door),
                     IsRevealed(door, state)))
                 .ToArray(),
             treasurePositions,
@@ -60,13 +60,15 @@ internal static class ExplorationMapViewFactory
                 StringComparer.Ordinal);
     }
 
+    /// An unlocked, revealed door is just an opening -- there's no
+    /// separate "closed but unlocked" state to track once opening a door
+    /// no longer needs its own action. Only a locked door renders as
+    /// still-closed, until some future unlock mechanic (bash/pick/knock)
+    /// resolves it.
     private static bool IsOpen(
-        DoorDefinition door,
-        ExplorationState state)
+        DoorDefinition door)
     {
-        return state.OpenDoorIds.Contains(
-            door.DoorId,
-            StringComparer.Ordinal);
+        return !door.IsLocked;
     }
 
     private static bool IsCollected(

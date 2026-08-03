@@ -33,9 +33,12 @@ public sealed record ExplorationDoorEdge
 
     public bool IsLocked { get; }
 
-    /// Once open, the door no longer blocks movement across this edge,
-    /// but the edge itself should still read as a doorway rather than
-    /// disappearing.
+    /// True whenever a revealed door is unlocked -- an unlocked door
+    /// needs no separate "open" action or state of its own, it's simply
+    /// an opening the moment it's known about. Only a locked door (until
+    /// some future unlock/bash/pick mechanic resolves it) reads as false
+    /// here, and the edge itself should still read as a doorway rather
+    /// than disappearing once it does.
     public bool IsOpen { get; }
 
     /// False only for a secret door not yet found -- a renderer must

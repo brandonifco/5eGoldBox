@@ -8,7 +8,8 @@ using Godot;
 // not by recomputing triangle points per direction.
 public partial class PartyDirectionMarker : Control
 {
-	private static readonly Color FillColor = new(0.95f, 0.85f, 0.25f, 0.95f);
+	private static readonly Color FillColor = new(0.72f, 0.12f, 0.1f, 0.95f);
+	private static readonly Color OutlineColor = new(0.08f, 0.07f, 0.06f, 1f);
 
 	public override void _Ready()
 	{
@@ -43,5 +44,6 @@ public partial class PartyDirectionMarker : Control
 		};
 
 		DrawColoredPolygon(points, FillColor);
+		DrawPolyline(new[] { points[0], points[1], points[2], points[0] }, OutlineColor, 1.5f);
 	}
 }
