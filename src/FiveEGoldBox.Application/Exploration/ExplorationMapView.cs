@@ -2,30 +2,47 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Exploration;
 
-/// A door on the current floor, known to the party (not an unrevealed
-/// secret) and not yet opened -- PositionA/PositionB are the two tiles it
-/// connects, in no particular order, since neither tile is privileged over
-/// the other.
+/// Every door on the current floor -- open or closed, revealed or not --
+/// PositionA/PositionB are the two tiles it connects, in no particular
+/// order, since neither tile is privileged over the other. A renderer
+/// needs the full state, not just "here's a door to draw": an unrevealed
+/// secret door still blocks movement and must render as a plain wall
+/// (not as open passage, and not with anything that would give away its
+/// presence), and an opened door still occupies its edge and should keep
+/// reading as a doorway rather than vanishing into indistinguishable
+/// open floor once passable.
 public sealed record ExplorationDoorEdge
 {
     internal ExplorationDoorEdge(
         GridPosition positionA,
         GridPosition positionB,
-        bool isLocked)
+        bool isLocked,
+        bool isOpen,
+        bool isRevealed)
     {
         PositionA = positionA;
         PositionB = positionB;
         IsLocked = isLocked;
+        IsOpen = isOpen;
+        IsRevealed = isRevealed;
     }
 
     public GridPosition PositionA { get; }
 
     public GridPosition PositionB { get; }
 
-    /// Rendered distinctly from an ordinary closed door -- a door that is
-    /// both secret and locked only appears here once its secrecy has been
-    /// revealed.
     public bool IsLocked { get; }
+
+    /// Once open, the door no longer blocks movement across this edge,
+    /// but the edge itself should still read as a doorway rather than
+    /// disappearing.
+    public bool IsOpen { get; }
+
+    /// False only for a secret door not yet found -- a renderer must
+    /// treat an unrevealed door exactly like a plain wall (same texture,
+    /// no door marker), since rendering it any other way would give away
+    /// that something is there to find.
+    public bool IsRevealed { get; }
 }
 
 /// A read-only projection of the current floor's grid geometry plus the
@@ -97,10 +114,9 @@ public sealed record ExplorationMapView
     /// Every staircase's own square on this floor. Current floor only.
     public IReadOnlyList<GridPosition> StairPositions { get; }
 
-    /// Doors known to the party (not an unrevealed secret) that are not
-    /// currently open -- this covers both an ordinary not-yet-opened door
-    /// and a secret door that has been found but not yet opened, since the
-    /// two are visually identical once known.
+    /// Every door on this floor, in every state -- see
+    /// ExplorationDoorEdge's own comment for why open and unrevealed
+    /// doors are included rather than filtered out here.
     public IReadOnlyList<ExplorationDoorEdge> Doors { get; }
 
     /// Treasure not yet collected. Current floor only.

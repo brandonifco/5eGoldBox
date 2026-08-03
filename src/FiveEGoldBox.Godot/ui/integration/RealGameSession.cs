@@ -193,7 +193,9 @@ internal sealed class RealGameSession
 				.Select(door => new AreaMapDoorEdgeViewModel(
 					new AreaMapPointViewModel(door.PositionA.X, door.PositionA.Y),
 					new AreaMapPointViewModel(door.PositionB.X, door.PositionB.Y),
-					door.IsLocked))
+					door.IsLocked,
+					door.IsOpen,
+					door.IsRevealed))
 				.ToArray(),
 			map.TreasurePositions
 				.Select(position => new AreaMapPointViewModel(position.X, position.Y))

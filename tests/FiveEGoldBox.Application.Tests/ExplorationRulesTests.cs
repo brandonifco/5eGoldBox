@@ -1320,10 +1320,13 @@ WatchtowerScenarioProgress
                 && ConnectsEdge(door, new GridPosition(0, 1), new GridPosition(1, 1)));
 
         // The hidden vault, on the edge between (2, 2) and (3, 2), is an
-        // unrevealed secret door: invisible, appearing in no list at all.
-        Assert.DoesNotContain(
+        // unrevealed secret door -- still present (a renderer needs the
+        // edge to draw a plain wall rather than open passage), but
+        // flagged as not yet revealed.
+        Assert.Contains(
             view.Doors,
-            door => ConnectsEdge(door, new GridPosition(2, 2), new GridPosition(3, 2)));
+            door => !door.IsRevealed
+                && ConnectsEdge(door, new GridPosition(2, 2), new GridPosition(3, 2)));
 
         Assert.Contains(
             new GridPosition(4, 1),
@@ -1331,7 +1334,7 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
-    public void Query_AfterOpeningAnOrdinaryDoor_RemovesItFromTheDoorList()
+    public void Query_AfterOpeningAnOrdinaryDoor_StaysInTheDoorListMarkedOpen()
     {
         ApplicationSessionState opened =
             ExplorationRules.OpenDoor(
@@ -1340,9 +1343,10 @@ WatchtowerScenarioProgress
         ExplorationMapView? view = ExplorationRules.Query(opened);
 
         Assert.NotNull(view);
-        Assert.DoesNotContain(
+        Assert.Contains(
             view!.Doors,
-            door => ConnectsEdge(door, new GridPosition(2, 1), new GridPosition(3, 1)));
+            door => door.IsOpen
+                && ConnectsEdge(door, new GridPosition(2, 1), new GridPosition(3, 1)));
     }
 
     [Fact]

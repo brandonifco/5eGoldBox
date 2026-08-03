@@ -18,9 +18,6 @@ internal static class ExplorationMapViewFactory
                 state.Floor,
                 StringComparison.Ordinal));
 
-        IReadOnlyList<DoorDefinition> visibleClosedDoors = floor.Doors
-            .Where(door => IsRevealed(door, state) && !IsOpen(door, state))
-            .ToArray();
         IReadOnlyList<GridPosition> treasurePositions = floor.Treasures
             .Where(treasure => !IsCollected(treasure, state))
             .Select(treasure => treasure.Position)
@@ -35,20 +32,24 @@ internal static class ExplorationMapViewFactory
             floor.Stairs
                 .Select(stair => stair.Position)
                 .ToArray(),
-            visibleClosedDoors
+            floor.Doors
                 .Select(door => new ExplorationDoorEdge(
                     door.Position,
                     door.OtherPosition,
-                    door.IsLocked))
+                    door.IsLocked,
+                    IsOpen(door, state),
+                    IsRevealed(door, state)))
                 .ToArray(),
             treasurePositions,
             state.Position,
             state.Facing);
     }
 
-    /// Bucket 1 of the door-visibility rule -- an unrevealed secret door
-    /// is fully invisible, so nothing downstream should ever see it. Every
-    /// other door (secret-but-revealed, or never secret at all) is known.
+    /// Whether the party knows about this door at all -- false only for
+    /// an unrevealed secret. Flagged on the returned ExplorationDoorEdge
+    /// rather than used to filter it out, since a renderer still needs to
+    /// know an unrevealed door's edge exists in order to draw it as a
+    /// plain wall instead of open passage.
     private static bool IsRevealed(
         DoorDefinition door,
         ExplorationState state)
@@ -59,9 +60,6 @@ internal static class ExplorationMapViewFactory
                 StringComparer.Ordinal);
     }
 
-    /// Bucket 2 -- a door the party has opened behaves exactly like
-    /// ordinary floor on both sides, so it drops out of the "closed door"
-    /// list entirely rather than needing special-cased traversability.
     private static bool IsOpen(
         DoorDefinition door,
         ExplorationState state)

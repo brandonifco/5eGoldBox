@@ -24,7 +24,7 @@ public partial class AreaMapView : Control
 	private HashSet<(int X, int Y)> _walkable = new();
 	private HashSet<(int X, int Y)> _stairs = new();
 	private HashSet<(int X, int Y)> _treasure = new();
-	private List<((int X, int Y) A, (int X, int Y) B, bool IsLocked)> _doors = new();
+	private List<((int X, int Y) A, (int X, int Y) B, bool IsLocked, bool IsOpen)> _doors = new();
 	private int _partyX;
 	private int _partyY;
 
@@ -50,8 +50,14 @@ public partial class AreaMapView : Control
 		_treasure = model.TreasureCells
 			.Select(cell => (cell.X, cell.Y))
 			.ToHashSet();
+		// An unrevealed secret door draws nothing at all here -- its two
+		// cells already render as ordinary floor/wall by whatever
+		// TraversablePositions itself says, exactly as if the door did
+		// not exist, so nothing gives away that there's something to
+		// find.
 		_doors = model.Doors
-			.Select(door => ((door.A.X, door.A.Y), (door.B.X, door.B.Y), door.IsLocked))
+			.Where(door => door.IsRevealed)
+			.Select(door => ((door.A.X, door.A.Y), (door.B.X, door.B.Y), door.IsLocked, door.IsOpen))
 			.ToList();
 		_partyX = model.PartyX;
 		_partyY = model.PartyY;
@@ -119,6 +125,7 @@ public partial class AreaMapView : Control
 		Color stairArrowColor = new(0.95f, 0.97f, 1f, 1f);
 		Color closedDoorLeafColor = new(0.5f, 0.32f, 0.18f, 1f);
 		Color lockedDoorLeafColor = new(0.55f, 0.15f, 0.12f, 1f);
+		Color openDoorFrameColor = new(0.5f, 0.32f, 0.18f, 0.85f);
 		Color doorKnobColor = new(0.85f, 0.75f, 0.35f, 1f);
 		Color padlockBodyColor = new(0.15f, 0.15f, 0.15f, 1f);
 		Color padlockShackleColor = new(0.85f, 0.75f, 0.35f, 1f);
@@ -188,8 +195,10 @@ public partial class AreaMapView : Control
 		// unchanged by handing them a synthetic cell-sized rect centered
 		// on the boundary point instead of on an actual cell, so the
 		// same leaf/knob proportions read as "in the wall between the
-		// two rooms" rather than "filling one of them."
-		foreach (((int X, int Y) a, (int X, int Y) b, bool isLocked) in _doors)
+		// two rooms" rather than "filling one of them." An opened door
+		// keeps a marker too -- a hollow frame instead of a solid leaf --
+		// rather than disappearing into indistinguishable open floor.
+		foreach (((int X, int Y) a, (int X, int Y) b, bool isLocked, bool isOpen) in _doors)
 		{
 			Vector2 borderMidpoint = new(
 				offsetX + ((a.X + b.X + 1) * 0.5f * cellSize),
@@ -198,7 +207,11 @@ public partial class AreaMapView : Control
 				borderMidpoint - new Vector2(cellSize / 2f, cellSize / 2f),
 				new Vector2(cellSize, cellSize));
 
-			if (isLocked)
+			if (isOpen)
+			{
+				DrawOpenDoorway(edgeRect, openDoorFrameColor);
+			}
+			else if (isLocked)
 			{
 				DrawDoorLeaf(edgeRect, lockedDoorLeafColor, doorKnobColor);
 				DrawPadlock(edgeRect, padlockBodyColor, padlockShackleColor);

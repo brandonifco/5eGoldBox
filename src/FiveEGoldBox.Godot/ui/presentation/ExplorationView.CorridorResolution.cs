@@ -22,7 +22,11 @@ public partial class ExplorationView
 	{
 		Open,
 		Wall,
-		Door
+		Door,
+		// A revealed door the party has already opened -- still drawn
+		// (a doorway shouldn't disappear), but unlike Door it does not
+		// block the flood-fill from continuing past it.
+		OpenDoor
 	}
 
 	internal enum CorridorEdgeSide
@@ -57,11 +61,15 @@ public partial class ExplorationView
 		HashSet<(int X, int Y)> open = map.WalkableCells
 			.Select(cell => (cell.X, cell.Y))
 			.ToHashSet();
-		HashSet<((int X, int Y) A, (int X, int Y) B)> doorEdges = map.Doors
-			.Select(door => NormalizeEdge(
-				(door.A.X, door.A.Y),
-				(door.B.X, door.B.Y)))
-			.ToHashSet();
+		// Every door, in every state -- an unrevealed secret still needs
+		// to be looked up (so it can resolve as a plain wall rather than
+		// silently falling through to "open, nothing here"), and an
+		// opened door still needs to be looked up (so it keeps drawing
+		// as a doorway instead of vanishing).
+		Dictionary<((int X, int Y) A, (int X, int Y) B), (bool IsOpen, bool IsRevealed)> doorEdges =
+			map.Doors.ToDictionary(
+				door => NormalizeEdge((door.A.X, door.A.Y), (door.B.X, door.B.Y)),
+				door => (door.IsOpen, door.IsRevealed));
 		(int Dx, int Dy) forward = ForwardVector(map.PartyFacing);
 		(int Dx, int Dy) left = LeftVector(map.PartyFacing);
 		(int Dx, int Dy) backward = (-forward.Dx, -forward.Dy);
@@ -114,7 +122,7 @@ public partial class ExplorationView
 		(int Dx, int Dy) direction,
 		int radius,
 		HashSet<(int X, int Y)> open,
-		HashSet<((int X, int Y) A, (int X, int Y) B)> doorEdges,
+		Dictionary<((int X, int Y) A, (int X, int Y) B), (bool IsOpen, bool IsRevealed)> doorEdges,
 		HashSet<(int F, int L)> visited,
 		Queue<(int F, int L)> queue,
 		List<CorridorWallSegment> wallSegments)
@@ -125,6 +133,15 @@ public partial class ExplorationView
 		if (kind != CorridorCellKind.Open)
 		{
 			wallSegments.Add(new CorridorWallSegment(f, l, side, kind));
+		}
+
+		// Wall and closed Door both stop the flood here -- there is
+		// nothing to see past either. Open and OpenDoor both continue:
+		// an opened door still draws (the segment above), but the party
+		// can walk through it, so whatever is beyond needs its own
+		// geometry too.
+		if (kind is CorridorCellKind.Wall or CorridorCellKind.Door)
+		{
 			return;
 		}
 
@@ -142,15 +159,25 @@ public partial class ExplorationView
 	// A door sits on the edge between two tiles now, not on a tile of
 	// its own, so this checks the specific edge between "here" and the
 	// candidate neighbor rather than the neighbor's own position.
+	// Unrevealed resolves as a plain Wall -- rendering it any other way,
+	// including as "just open," would either give away or misrepresent
+	// a secret that has not been found yet.
 	private static CorridorCellKind ResolveKind(
 		(int X, int Y) here,
 		(int X, int Y) neighbor,
 		HashSet<(int X, int Y)> open,
-		HashSet<((int X, int Y) A, (int X, int Y) B)> doorEdges)
+		Dictionary<((int X, int Y) A, (int X, int Y) B), (bool IsOpen, bool IsRevealed)> doorEdges)
 	{
-		if (doorEdges.Contains(NormalizeEdge(here, neighbor)))
+		if (doorEdges.TryGetValue(NormalizeEdge(here, neighbor), out (bool IsOpen, bool IsRevealed) door))
 		{
-			return CorridorCellKind.Door;
+			if (!door.IsRevealed)
+			{
+				return CorridorCellKind.Wall;
+			}
+
+			return door.IsOpen
+				? CorridorCellKind.OpenDoor
+				: CorridorCellKind.Door;
 		}
 
 		return open.Contains(neighbor)

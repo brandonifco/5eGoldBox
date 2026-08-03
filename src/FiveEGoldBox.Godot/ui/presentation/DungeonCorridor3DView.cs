@@ -102,7 +102,11 @@ internal sealed partial class DungeonCorridor3DView : SubViewportContainer
 			float zNear = -segment.Forward * CellSize;
 			float zFar = -(segment.Forward + 1) * CellSize;
 			float xCenter = segment.Lateral * CellSize;
-			Texture2D texture = segment.Kind == ExplorationView.CorridorCellKind.Door
+			// An opened door still draws with the door texture -- see
+			// ExplorationView.CorridorCellKind.OpenDoor's own comment for
+			// why it isn't just left to disappear as "open."
+			Texture2D texture = segment.Kind is ExplorationView.CorridorCellKind.Door
+				or ExplorationView.CorridorCellKind.OpenDoor
 				? material.DoorTexture
 				: material.WallTexture;
 
