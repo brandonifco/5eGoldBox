@@ -1,3 +1,5 @@
+using FiveEGoldBox.Core.Internal;
+
 namespace FiveEGoldBox.Core.Rules;
 
 public static class AbilityRules
@@ -22,12 +24,9 @@ public static class AbilityRules
         Ability ability,
         string parameterName)
     {
-        if (!Enum.IsDefined(ability))
-        {
-            throw new ArgumentOutOfRangeException(
-                parameterName,
-                ability,
-                "Ability is not supported.");
-        }
+        CoreEnumValidation.RequireDefined(
+            ability,
+            parameterName,
+            "Ability is not supported.");
     }
 }

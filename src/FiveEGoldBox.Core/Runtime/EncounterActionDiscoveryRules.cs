@@ -1,3 +1,5 @@
+using FiveEGoldBox.Core.Internal;
+
 namespace FiveEGoldBox.Core.Runtime;
 
 public static class EncounterActionDiscoveryRules
@@ -472,13 +474,10 @@ public static class EncounterActionDiscoveryRules
                     nameof(candidates));
             }
 
-            if (!Enum.IsDefined(candidate.Timing))
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(candidates),
-                    candidate.Timing,
-                    "Unsupported encounter action timing.");
-            }
+            CoreEnumValidation.RequireDefined(
+                candidate.Timing,
+                nameof(candidates),
+                "Unsupported encounter action timing.");
 
             if (!actionOptionIds.Add(
                 candidate.ActionOptionId))

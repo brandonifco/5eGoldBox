@@ -1,3 +1,4 @@
+using FiveEGoldBox.Core.Internal;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
@@ -139,13 +140,10 @@ public static class EncounterDeathSavingThrowRules
                 nameof(command));
         }
 
-        if (!Enum.IsDefined(command.RollMode))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(command),
-                command.RollMode,
-                "Unsupported death-saving-throw roll mode.");
-        }
+        CoreEnumValidation.RequireDefined(
+            command.RollMode,
+            nameof(command),
+            "Unsupported death-saving-throw roll mode.");
     }
 
     private static int FindParticipantIndex(

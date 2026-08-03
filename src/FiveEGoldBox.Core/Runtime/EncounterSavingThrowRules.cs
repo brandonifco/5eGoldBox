@@ -1,5 +1,6 @@
 using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Internal;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
@@ -281,36 +282,27 @@ public static class EncounterSavingThrowRules
     private static void ValidateAbility(
         Ability ability)
     {
-        if (!Enum.IsDefined(ability))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(ability),
-                ability,
-                "Unsupported saving-throw ability.");
-        }
+        CoreEnumValidation.RequireDefined(
+            ability,
+            nameof(ability),
+            "Unsupported saving-throw ability.");
     }
 
     private static void ValidateRollMode(
         D20RollMode rollMode)
     {
-        if (!Enum.IsDefined(rollMode))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(rollMode),
-                rollMode,
-                "Unsupported saving-throw roll mode.");
-        }
+        CoreEnumValidation.RequireDefined(
+            rollMode,
+            nameof(rollMode),
+            "Unsupported saving-throw roll mode.");
     }
 
     private static void ValidateCoverPolicy(
         EncounterSavingThrowCoverPolicy coverPolicy)
     {
-        if (!Enum.IsDefined(coverPolicy))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(coverPolicy),
-                coverPolicy,
-                "Unsupported saving-throw cover policy.");
-        }
+        CoreEnumValidation.RequireDefined(
+            coverPolicy,
+            nameof(coverPolicy),
+            "Unsupported saving-throw cover policy.");
     }
 }

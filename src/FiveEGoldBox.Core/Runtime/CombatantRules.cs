@@ -1,3 +1,4 @@
+using FiveEGoldBox.Core.Internal;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
@@ -205,12 +206,9 @@ public static class CombatantRules
         CombatantZeroHitPointPolicy zeroHitPointPolicy,
         string parameterName)
     {
-        if (!Enum.IsDefined(zeroHitPointPolicy))
-        {
-            throw new ArgumentOutOfRangeException(
-                parameterName,
-                zeroHitPointPolicy,
-                "Unsupported zero-hit-point policy.");
-        }
+        CoreEnumValidation.RequireDefined(
+            zeroHitPointPolicy,
+            parameterName,
+            "Unsupported zero-hit-point policy.");
     }
 }

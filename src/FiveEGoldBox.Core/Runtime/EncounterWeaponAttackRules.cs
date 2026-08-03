@@ -1,5 +1,6 @@
 using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Internal;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
@@ -622,13 +623,10 @@ public static class EncounterWeaponAttackRules
                     nameof(target));
             }
 
-            if (!Enum.IsDefined(response.ResponseType))
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(target),
-                    response.ResponseType,
-                    "Unsupported damage response type.");
-            }
+            CoreEnumValidation.RequireDefined(
+                response.ResponseType,
+                nameof(target),
+                "Unsupported damage response type.");
 
             if (string.Equals(
                 response.DamageType,

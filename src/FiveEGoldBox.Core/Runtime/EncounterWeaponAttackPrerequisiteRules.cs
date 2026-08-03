@@ -1,5 +1,6 @@
 using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Internal;
 using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Core.Runtime;
@@ -274,21 +275,15 @@ internal static class EncounterWeaponAttackPrerequisiteRules
                 nameof(weapon));
         }
 
-        if (!Enum.IsDefined(weapon.AttackKind))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(weapon),
-                weapon.AttackKind,
-                "Unsupported weapon attack kind.");
-        }
+        CoreEnumValidation.RequireDefined(
+            weapon.AttackKind,
+            nameof(weapon),
+            "Unsupported weapon attack kind.");
 
-        if (!Enum.IsDefined(weapon.AttackRollMode))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(weapon),
-                weapon.AttackRollMode,
-                "Unsupported attack roll mode.");
-        }
+        CoreEnumValidation.RequireDefined(
+            weapon.AttackRollMode,
+            nameof(weapon),
+            "Unsupported attack roll mode.");
 
         ArgumentNullException.ThrowIfNull(
             weapon.Damage);
@@ -301,13 +296,10 @@ internal static class EncounterWeaponAttackPrerequisiteRules
                 "Weapon damage dice count must be at least 1.");
         }
 
-        if (!Enum.IsDefined(weapon.Damage.Die))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(weapon),
-                weapon.Damage.Die,
-                "Unsupported weapon damage die.");
-        }
+        CoreEnumValidation.RequireDefined(
+            weapon.Damage.Die,
+            nameof(weapon),
+            "Unsupported weapon damage die.");
 
         if (string.IsNullOrWhiteSpace(
             weapon.DamageType))
