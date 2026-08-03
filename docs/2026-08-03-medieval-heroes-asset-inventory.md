@@ -1,10 +1,9 @@
 # Medieval Heroes I asset pack — inventory
 
-**Date:** 2026-08-03
-**Location on disk:** `/home/brandon/Downloads/PVG_Medieval_Heroes1/Medieval Heroes I/` (not part of
-this repo, not committed — this doc just records what's there and how it maps to the engine's
-needs, per the user's stated license for the pack). Cataloged, not integrated — no code or asset
-files touched.
+**Date:** 2026-08-03, updated 2026-08-03 when the pack was committed (PR #230).
+**Location:** `src/FiveEGoldBox.Godot/assets/medieval-heroes/` — originally cataloged from the
+user's Downloads folder (per the user's stated license for the pack), since moved into the repo
+verbatim. Committed, but still entirely inert: nothing in any code references these paths yet.
 
 ## Why this matters here
 

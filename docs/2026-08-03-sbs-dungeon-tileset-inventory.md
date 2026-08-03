@@ -1,12 +1,13 @@
 # SBS dungeon/cave wall tileset — inventory
 
-**Date:** 2026-08-03
-**Location on disk:** `/home/brandon/Downloads/SBS - Dungeon Crawler Pack/` and
-`/home/brandon/Downloads/SBS - Cave Walls Addon/` (not part of this repo, not committed — this doc
-just records what's there). **License: CC0/Public Domain** (Screaming Brain Studios, stated
-explicitly in each pack's own `License.txt`) — no usage restrictions, unlike the character-sprite
-pack in `2026-08-03-medieval-heroes-asset-inventory.md`, which needed the user's own license
-confirmation. Cataloged, not integrated — no code or asset files touched.
+**Date:** 2026-08-03, updated 2026-08-03 when the packs were committed (PR #230).
+**Location:** `src/FiveEGoldBox.Godot/assets/dungeon-crawler-pack/` and
+`src/FiveEGoldBox.Godot/assets/cave-walls-addon/` — originally cataloged from the user's Downloads
+folder, since moved into the repo verbatim. **License: CC0/Public Domain** (Screaming Brain
+Studios, stated explicitly in each pack's own `License.txt`, itself now committed alongside the
+art) — no usage restrictions, unlike the character-sprite pack in
+`2026-08-03-medieval-heroes-asset-inventory.md`, which needed the user's own license confirmation.
+Committed, but still entirely inert: nothing in any code references these paths yet.
 
 ## Why this matters here
 
