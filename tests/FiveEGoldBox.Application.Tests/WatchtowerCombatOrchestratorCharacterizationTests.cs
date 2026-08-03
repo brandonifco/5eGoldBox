@@ -15,7 +15,7 @@ namespace FiveEGoldBox.Application.Tests;
 /// policy, action-resolution, and outcome-mapping components can be verified as
 /// behaviour-preserving. A failure here means the refactor changed behaviour,
 /// not that these expectations need updating.
-public sealed class WatchtowerCombatOrchestratorCharacterizationTests
+public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
 {
     private const int OperationLimit = 80;
 
