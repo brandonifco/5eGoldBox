@@ -107,11 +107,16 @@ public static class SessionView
         foreach (TravelRouteDefinition route
             in RegionalTravelRules.GetAvailableRoutes(session))
         {
+            string destinationDisplayName = FindLocationDisplayName(
+                scenario,
+                route.DestinationLocationId);
+
             actions.Add(new SessionAction
             {
                 Kind = SessionActionKind.BeginJourney,
-                DisplayName = $"Set out for {FindLocationDisplayName(scenario, route.DestinationLocationId)}",
-                RouteId = route.RouteId
+                DisplayName = $"Set out for {destinationDisplayName}",
+                RouteId = route.RouteId,
+                DestinationDisplayName = destinationDisplayName
             });
         }
     }

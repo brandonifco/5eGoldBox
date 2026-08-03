@@ -23,4 +23,11 @@ public sealed record SessionAction
     /// Only meaningful when more than one route is open — see
     /// <see cref="FiveEGoldBox.Application.Travel.RegionalTravelRules.GetAvailableRoutes"/>.
     public string? RouteId { get; init; }
+
+    /// Set alongside <see cref="RouteId"/>: the route's destination, already
+    /// named the way the scenario names it. A client wanting to remember
+    /// "where am I traveling to" (to show alongside travel progress, say)
+    /// reads this directly rather than parsing it back out of
+    /// <see cref="DisplayName"/>'s own composed wording.
+    public string? DestinationDisplayName { get; init; }
 }

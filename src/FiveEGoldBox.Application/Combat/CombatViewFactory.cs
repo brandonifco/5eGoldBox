@@ -8,14 +8,31 @@ internal static class CombatViewFactory
 {
     internal static CombatView Create(
         EncounterState encounter,
-        IReadOnlySet<string> clientControlledCombatantIds)
+        IReadOnlySet<string> clientControlledCombatantIds,
+        IReadOnlyDictionary<string, string>? combatantDisplayNames = null)
     {
         ArgumentNullException.ThrowIfNull(encounter);
         ArgumentNullException.ThrowIfNull(clientControlledCombatantIds);
 
         CombatantView[] combatants = encounter.Participants
-            .Select(CreateCombatantView)
+            .Select(participant => CreateCombatantView(
+                participant,
+                combatantDisplayNames))
             .ToArray();
+
+        // The same fact EncounterPartySideResolver resolves from the
+        // scenario's own EncounterDefinition.PartySideId, reached here
+        // without that lookup: every party member's participant carries the
+        // side ID it was placed on, and clientControlledCombatantIds is
+        // already exactly the party's own member IDs (Query's caller), so
+        // the first controlled participant found names the party's side.
+        string partySideId = encounter.Participants
+            .Where(participant => clientControlledCombatantIds.Contains(
+                participant.Combatant.CombatantId))
+            .Select(participant => participant.SideId)
+            .FirstOrDefault()
+            ?? throw new InvalidOperationException(
+                "No client-controlled combatant is part of this encounter.");
 
         string? activeCombatantId =
             encounter.LifecycleState == EncounterLifecycleState.Completed
@@ -48,15 +65,27 @@ internal static class CombatViewFactory
             activeCombatantId,
             pendingDeathSavingThrowCombatantId,
             winningSideId,
+            partySideId,
             combatants,
             decision);
     }
 
     private static CombatantView CreateCombatantView(
-        EncounterParticipantState participant)
+        EncounterParticipantState participant,
+        IReadOnlyDictionary<string, string>? combatantDisplayNames)
     {
+        string combatantId = participant.Combatant.CombatantId;
+        string displayName =
+            combatantDisplayNames is not null
+                && combatantDisplayNames.TryGetValue(
+                    combatantId,
+                    out string? resolvedName)
+                ? resolvedName
+                : combatantId;
+
         return new CombatantView(
-            participant.Combatant.CombatantId,
+            combatantId,
+            displayName,
             participant.SideId,
             participant.Position,
             participant.Combatant.LifecycleState,

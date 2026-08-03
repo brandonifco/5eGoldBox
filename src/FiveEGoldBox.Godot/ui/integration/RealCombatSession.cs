@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FiveEGoldBox.Application.Combat;
-using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
@@ -28,22 +27,8 @@ internal sealed class RealCombatSession
 {
 	private ApplicationSessionState _state;
 
-	// Captured once, at construction, from the party roster the session
-	// already carries — the same "capture once at start, reuse for the
-	// duration" precedent RealGameSession sets for
-	// _travelOriginDisplayName/_travelDestinationDisplayName at
-	// BeginJourney. EncounterPartySideResolver/PartySideId are internal to
-	// Application and not visible here; this ID set is the actually-
-	// available mechanism, and it's exactly what CombatOperations.Query
-	// computes internally for the same purpose.
-	private readonly HashSet<string> _partyMemberIds;
-
 	internal RealCombatSession(ApplicationSessionState state)
 	{
-		_partyMemberIds = state.Party.Members
-			.Select(member => member.PartyMemberId)
-			.ToHashSet(StringComparer.Ordinal);
-
 		// Runs any pre-player automatic processing (e.g. a surprise round)
 		// before the first snapshot is ever described — the same thing
 		// Console's RunCombatSession does immediately on entry.
@@ -141,21 +126,30 @@ internal sealed class RealCombatSession
 			CombatOperations.AdvanceToDecision(submitted.State);
 		_state = settled.State;
 
+		// Combatant names don't change mid-encounter, so one query supplies
+		// every step this round-trip describes rather than one per line.
+		IReadOnlyDictionary<string, string> displayNames =
+			CombatOperations.Query(_state).Combatants
+				.ToDictionary(
+					combatant => combatant.CombatantId,
+					combatant => combatant.DisplayName,
+					StringComparer.Ordinal);
+
 		List<string> lines = new();
 
 		if (submitted.PrimaryStep is not null)
 		{
-			DescribeStep(submitted.PrimaryStep, lines);
+			DescribeStep(submitted.PrimaryStep, displayNames, lines);
 		}
 
 		foreach (CombatStepResult step in submitted.AutomaticSteps)
 		{
-			DescribeStep(step, lines);
+			DescribeStep(step, displayNames, lines);
 		}
 
 		foreach (CombatStepResult step in settled.AutomaticSteps)
 		{
-			DescribeStep(step, lines);
+			DescribeStep(step, displayNames, lines);
 		}
 
 		return lines.Count == 0
@@ -171,11 +165,11 @@ internal sealed class RealCombatSession
 		IReadOnlyList<CombatantMarkerViewModel> combatants = view.Combatants
 			.Select(combatant => new CombatantMarkerViewModel(
 				combatant.CombatantId,
-				DescribeLabel(combatant.CombatantId),
+				combatant.DisplayName,
 				combatant.Position.X,
 				combatant.Position.Y,
 				Active: combatant.CombatantId == decision.ActiveCombatantId,
-				IsAlly: _partyMemberIds.Contains(combatant.CombatantId),
+				IsAlly: combatant.SideId == view.PartySideId,
 				CurrentHitPoints: combatant.Health.HitPoints.CurrentHitPoints,
 				MaximumHitPoints: combatant.Health.HitPoints.MaximumHitPoints))
 			.ToArray();
@@ -201,30 +195,35 @@ internal sealed class RealCombatSession
 			statusMessage);
 	}
 
-	private void DescribeStep(CombatStepResult step, List<string> lines)
+	private static void DescribeStep(
+		CombatStepResult step,
+		IReadOnlyDictionary<string, string> displayNames,
+		List<string> lines)
 	{
 		switch (step.Kind)
 		{
 			case CombatStepKind.WeaponAttack:
-				lines.Add(DescribeWeaponAttack(step));
+				lines.Add(DescribeWeaponAttack(step, displayNames));
 				break;
 			case CombatStepKind.SpellAttack:
-				lines.Add(DescribeSpellAttack(step));
+				lines.Add(DescribeSpellAttack(step, displayNames));
 				break;
 			case CombatStepKind.TurnAdvanced:
 				lines.Add(
-					$"{DescribeLabel(step.TurnAdvancement!.EndedTurnCombatantId)}'s turn ends.");
+					$"{DescribeLabel(displayNames, step.TurnAdvancement!.EndedTurnCombatantId)}'s turn ends.");
 				break;
 			case CombatStepKind.CombatCompleted:
 				break;
 		}
 	}
 
-	private string DescribeWeaponAttack(CombatStepResult step)
+	private static string DescribeWeaponAttack(
+		CombatStepResult step,
+		IReadOnlyDictionary<string, string> displayNames)
 	{
 		CombatWeaponAttackStepDetail attack = step.WeaponAttack!;
-		string actor = DescribeLabel(step.ActorCombatantId!);
-		string target = DescribeLabel(step.TargetCombatantId!);
+		string actor = DescribeLabel(displayNames, step.ActorCombatantId!);
+		string target = DescribeLabel(displayNames, step.TargetCombatantId!);
 
 		if (attack.Outcome == AttackRollOutcome.Miss)
 		{
@@ -244,11 +243,13 @@ internal sealed class RealCombatSession
 	// Flame); neither set means it just happens (Cure Wounds, Healing
 	// Word, Magic Missile, single-target Bless) — CombatSpellAttackStepDetail's
 	// own doc comment guarantees at most one of the two is ever set.
-	private string DescribeSpellAttack(CombatStepResult step)
+	private static string DescribeSpellAttack(
+		CombatStepResult step,
+		IReadOnlyDictionary<string, string> displayNames)
 	{
 		CombatSpellAttackStepDetail spell = step.SpellAttack!;
-		string actor = DescribeLabel(step.ActorCombatantId!);
-		string target = DescribeLabel(step.TargetCombatantId!);
+		string actor = DescribeLabel(displayNames, step.ActorCombatantId!);
+		string target = DescribeLabel(displayNames, step.TargetCombatantId!);
 
 		if (spell.AttackRollMode is not null)
 		{
@@ -314,17 +315,18 @@ internal sealed class RealCombatSession
 		return message;
 	}
 
-	// Party member labels use the real, public display name
-	// (PartyMemberState.DisplayName). Enemy combatants have no public
-	// display name — CombatantDefinition.DisplayName lives on the
-	// internal EncounterDefinition — so this falls back to the raw
-	// combatant ID, the same limitation Console has always had.
-	private string DescribeLabel(string combatantId)
+	// CombatantView.DisplayName now carries a real name for every
+	// combatant, party member and enemy alike (Application resolves the
+	// enemy's name from the ruleset internally); this only falls back to
+	// the raw ID if a combatant somehow isn't in the map this round-trip
+	// captured, which should not happen for a live encounter.
+	private static string DescribeLabel(
+		IReadOnlyDictionary<string, string> displayNames,
+		string combatantId)
 	{
-		PartyMemberState? member = _state.Party.Members
-			.FirstOrDefault(candidate => candidate.PartyMemberId == combatantId);
-
-		return member?.DisplayName ?? combatantId;
+		return displayNames.TryGetValue(combatantId, out string? name)
+			? name
+			: combatantId;
 	}
 }
 

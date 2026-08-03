@@ -28,9 +28,24 @@ public static class CombatOperations
                 .Select(member => member.PartyMemberId)
                 .ToHashSet(StringComparer.Ordinal);
 
+        Dictionary<string, string> combatantDisplayNames =
+            canonical.Party.Members.ToDictionary(
+                member => member.PartyMemberId,
+                member => member.DisplayName,
+                StringComparer.Ordinal);
+
+        foreach ((string combatantId, string displayName)
+            in EncounterCombatantDisplayNameResolver.Resolve(
+                canonical,
+                canonical.ActiveEncounter.Encounter))
+        {
+            combatantDisplayNames[combatantId] = displayName;
+        }
+
         return CombatViewFactory.Create(
             canonical.ActiveEncounter.Encounter,
-            controlledCombatantIds);
+            controlledCombatantIds,
+            combatantDisplayNames);
     }
 
     /// Runs automatic processing until a player decision is required or the
