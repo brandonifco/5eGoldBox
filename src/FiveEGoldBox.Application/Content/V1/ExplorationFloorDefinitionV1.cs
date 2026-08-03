@@ -13,4 +13,7 @@ internal sealed record ExplorationFloorDefinitionV1
 
     public IReadOnlyList<TreasureDefinitionV1> Treasures { get; init; } =
         Array.Empty<TreasureDefinitionV1>();
+
+    public IReadOnlyList<NpcDefinitionV1> Npcs { get; init; } =
+        Array.Empty<NpcDefinitionV1>();
 }

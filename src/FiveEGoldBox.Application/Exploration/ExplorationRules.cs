@@ -407,6 +407,64 @@ public static class ExplorationRules
         };
     }
 
+    public static bool CanTalkToNpc(
+        ApplicationSessionState session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        if (session.CurrentMode
+            != ApplicationMode.Exploration)
+        {
+            return false;
+        }
+
+        ApplicationSessionState canonicalSession =
+            ApplicationSessionRules.CreateCanonical(session);
+
+        return FindNpcToTalkTo(canonicalSession) is not null;
+    }
+
+    /// Talking to an NPC has no session-state consequence -- it is a pure
+    /// read, unlike opening a door or collecting treasure -- so this
+    /// returns the line itself rather than an updated
+    /// ApplicationSessionState.
+    public static string DescribeNpcDialogue(
+        ApplicationSessionState session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        ApplicationSessionState canonicalSession =
+            RequireExplorationSession(session);
+
+        NpcDefinition npc =
+            FindNpcToTalkTo(canonicalSession)
+            ?? throw new InvalidOperationException(
+                "There is no one to talk to ahead of the party.");
+
+        return $"{npc.Name}: {npc.DialogueText}";
+    }
+
+    /// The NPC ahead of the party, if one is there -- an NPC blocks its own
+    /// tile like a door, so this checks the same forward position rather
+    /// than the party's own square the way treasure does. Internal rather
+    /// than private so SessionView can name the NPC in a command's display
+    /// text without ExplorationRules exposing NpcDefinition itself.
+    internal static NpcDefinition? FindNpcToTalkTo(
+        ApplicationSessionState session)
+    {
+        ExplorationState exploration =
+            session.Exploration!;
+        GridPosition forward =
+            GetForwardPosition(
+                exploration.Position,
+                exploration.Facing);
+
+        return ScenarioExplorationMap.FindNpc(
+            RequireMap(session),
+            exploration.Floor,
+            forward);
+    }
+
     /// A read-only projection of the current floor's grid geometry plus
     /// the party's real position/facing, for a client to draw a real area
     /// map from — the same "public Query wrapping otherwise-internal

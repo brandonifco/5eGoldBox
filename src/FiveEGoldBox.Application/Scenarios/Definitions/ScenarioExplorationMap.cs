@@ -154,6 +154,16 @@ internal static class ScenarioExplorationMap
             .FirstOrDefault(candidate => candidate.Position == position);
     }
 
+    internal static NpcDefinition? FindNpc(
+        ExplorationMapDefinition map,
+        string floor,
+        GridPosition position)
+    {
+        return FindFloor(map, floor)
+            ?.Npcs
+            .FirstOrDefault(candidate => candidate.Position == position);
+    }
+
     internal static bool TryGetStairDestination(
         ExplorationMapDefinition map,
         string floor,

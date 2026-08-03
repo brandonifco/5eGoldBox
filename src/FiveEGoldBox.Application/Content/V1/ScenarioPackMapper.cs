@@ -129,6 +129,9 @@ internal static class ScenarioPackMapper
                 .ToArray(),
             Treasures = floor.Treasures
                 .Select(ToRuntimeTreasure)
+                .ToArray(),
+            Npcs = floor.Npcs
+                .Select(ToRuntimeNpc)
                 .ToArray()
         };
     }
@@ -167,6 +170,18 @@ internal static class ScenarioPackMapper
             ItemId = treasure.ItemId,
             GoldPieces = treasure.GoldPieces,
             Quantity = treasure.Quantity
+        };
+    }
+
+    private static NpcDefinition ToRuntimeNpc(
+        NpcDefinitionV1 npc)
+    {
+        return new NpcDefinition
+        {
+            NpcId = npc.NpcId,
+            Position = ToRuntimePosition(npc.Position),
+            Name = npc.Name,
+            DialogueText = npc.DialogueText
         };
     }
 

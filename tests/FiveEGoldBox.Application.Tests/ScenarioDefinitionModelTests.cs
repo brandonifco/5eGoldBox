@@ -315,7 +315,8 @@ public sealed class ScenarioDefinitionModelTests
                         }
                     ],
                     Doors = [],
-                    Treasures = []
+                    Treasures = [],
+                    Npcs = []
                 },
                 new ExplorationFloorDefinition
                 {
@@ -327,7 +328,8 @@ public sealed class ScenarioDefinitionModelTests
                     ],
                     Stairs = [],
                     Doors = [],
-                    Treasures = []
+                    Treasures = [],
+                    Npcs = []
                 }
             ]
         };

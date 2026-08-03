@@ -18,5 +18,6 @@ public enum SessionActionKind
     ActivateTrigger,
     OpenDoor,
     RevealSecretDoor,
-    CollectTreasure
+    CollectTreasure,
+    TalkToNpc
 }

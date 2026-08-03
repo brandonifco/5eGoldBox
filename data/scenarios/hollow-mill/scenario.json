@@ -44,7 +44,7 @@
             "DisplayName": "The Old Mill",
             "ExplorationMap": {
                 "MapId": "map.hollow-mill",
-                "Width": 3,
+                "Width": 4,
                 "Height": 3,
                 "StartingFloor": "GroundFloor",
                 "StartingPosition": { "X": 1, "Y": 0 },
@@ -59,6 +59,7 @@
                             { "X": 0, "Y": 1 },
                             { "X": 1, "Y": 1 },
                             { "X": 2, "Y": 1 },
+                            { "X": 3, "Y": 1 },
                             { "X": 0, "Y": 2 },
                             { "X": 1, "Y": 2 },
                             { "X": 2, "Y": 2 }
@@ -68,6 +69,14 @@
                                 "Position": { "X": 1, "Y": 2 },
                                 "DestinationFloor": "UpperFloor",
                                 "DestinationPosition": { "X": 0, "Y": 0 }
+                            }
+                        ],
+                        "Npcs": [
+                            {
+                                "NpcId": "npc.hollow-mill.garrick",
+                                "Position": { "X": 3, "Y": 0 },
+                                "Name": "Garrick, the Miller's Hand",
+                                "DialogueText": "Thank the stars, someone came. The grain's crawling with vermin the size of hounds, and something worse moves in the dark below. I didn't dare go further."
                             }
                         ]
                     },

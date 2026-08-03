@@ -92,6 +92,14 @@
                                 "ItemId": "item.arrow",
                                 "Quantity": 10
                             }
+                        ],
+                        "Npcs": [
+                            {
+                                "NpcId": "npc.watchtower.bound-watchman",
+                                "Position": { "X": 4, "Y": 0 },
+                                "Name": "A Bound Watchman",
+                                "DialogueText": "The raiders forced me to light the signal fires. I'm sorry -- I had no choice."
+                            }
                         ]
                     },
                     {

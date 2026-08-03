@@ -266,6 +266,20 @@ public static class SessionView
                 DisplayName = "Collect the treasure"
             });
         }
+
+        if (ExplorationRules.CanTalkToNpc(session))
+        {
+            NpcDefinition? npc = ExplorationRules.FindNpcToTalkTo(
+                ApplicationSessionRules.CreateCanonical(session));
+
+            actions.Add(new SessionAction
+            {
+                Kind = SessionActionKind.TalkToNpc,
+                DisplayName = npc is null
+                    ? "Talk"
+                    : $"Talk to {npc.Name}"
+            });
+        }
     }
 
     private static string FindLocationDisplayName(
