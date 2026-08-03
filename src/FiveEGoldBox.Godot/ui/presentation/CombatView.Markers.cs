@@ -195,6 +195,51 @@ public partial class CombatView
 		cell.Position = new Vector2(topVertex.X - (metrics.TileWidth / 2f), topVertex.Y);
 	}
 
+	// Real isometric floor art (CombatFloorTileCatalog), drawn under the
+	// grid lines/highlights/combatants layers. Each tile's source PNG is
+	// already a diamond silhouette on a transparent 256x128 (or 128x64)
+	// canvas — the same shape Project/IsoMetrics already computes per
+	// cell — so drawing it as a plain axis-aligned rect region (no
+	// rotation/polygon UV math) lands correctly, the same technique
+	// CombatantMarkerPin.DrawPortrait already uses for portraits.
+	private void DrawFloorTiles()
+	{
+		if (_floorTileTexture is null)
+		{
+			return;
+		}
+
+		IsoMetrics metrics = Metrics;
+
+		for (int gy = 0; gy < _gridHeight; gy++)
+		{
+			for (int gx = 0; gx < _gridWidth; gx++)
+			{
+				Vector2 topVertex = Project(gx, gy);
+				Rect2 destinationRect = new(
+					new Vector2(topVertex.X - (metrics.TileWidth / 2f), topVertex.Y),
+					new Vector2(metrics.TileWidth, metrics.TileHeight));
+
+				// Deterministic per-cell variant, not random, so a redraw
+				// (zoom/resize/refresh) never makes the floor visibly
+				// shuffle under the player.
+				int variantIndex =
+					((gx * 7) + (gy * 13)) % CombatFloorTileCatalog.TileVariantCount;
+				int column = variantIndex % CombatFloorTileCatalog.TileColumns;
+				int row = variantIndex / CombatFloorTileCatalog.TileColumns;
+				Rect2 sourceRect = new(
+					new Vector2(
+						column * CombatFloorTileCatalog.TileSourceWidth,
+						row * CombatFloorTileCatalog.TileSourceHeight),
+					new Vector2(
+						CombatFloorTileCatalog.TileSourceWidth,
+						CombatFloorTileCatalog.TileSourceHeight));
+
+				_floorLayer.DrawTextureRectRegion(_floorTileTexture, destinationRect, sourceRect);
+			}
+		}
+	}
+
 	// The tactical grid itself, now a diamond lattice — each line of
 	// constant gridY or gridX is still a straight screen-space line
 	// since Project is affine per axis, just diagonal instead of
