@@ -164,6 +164,38 @@ public sealed class SessionViewTests
         Assert.Empty(view.Party.InventoryItems);
     }
 
+    /// The roster, class names, and hit points a real Character screen
+    /// needs -- resolved from the real campaign roster and ruleset, not a
+    /// synthetic fixture.
+    [Fact]
+    public void Describe_ReportsTheRealPartyRosterWithResolvedClassNamesAndHitPoints()
+    {
+        SessionViewModel view = SessionView.Describe(
+            ScenarioSessionFactory.CreateNew(
+                WatchtowerScenarioContent.ScenarioId,
+                randomSeed: 7));
+
+        Assert.NotEmpty(view.Party.Members);
+
+        Assert.All(view.Party.Members, member =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(member.PartyMemberId));
+            Assert.False(string.IsNullOrWhiteSpace(member.DisplayName));
+            Assert.False(string.IsNullOrWhiteSpace(member.ClassDisplayName));
+            Assert.True(member.MaximumHitPoints > 0);
+            Assert.InRange(
+                member.CurrentHitPoints,
+                0,
+                member.MaximumHitPoints);
+        });
+
+        Assert.Equal(
+            view.Party.Members.Count,
+            view.Party.Members.Select(member => member.PartyMemberId)
+                .Distinct(StringComparer.Ordinal)
+                .Count());
+    }
+
     /// The Watchtower's armory cache (25 gold, 10 arrows) is real content
     /// coming through real rules, not a synthetic fixture -- proof this
     /// closes the loop end to end: collect via ExplorationRules, then read

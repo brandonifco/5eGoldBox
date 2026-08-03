@@ -62,6 +62,20 @@ public static class SessionView
 
         return new PartyViewModel
         {
+            Members = Array.AsReadOnly(party.Members
+                .Select(member => new PartyMemberViewModel
+                {
+                    PartyMemberId = member.PartyMemberId,
+                    DisplayName = member.DisplayName,
+                    ClassDisplayName = FindClassDisplayName(
+                        ruleset,
+                        member.ClassId),
+                    CurrentHitPoints =
+                        member.Health.HitPoints.CurrentHitPoints,
+                    MaximumHitPoints =
+                        member.Health.HitPoints.MaximumHitPoints
+                })
+                .ToArray()),
             Currency = DescribeCurrency(party.Currency),
             InventoryItems = Array.AsReadOnly(party.InventoryItems
                 .Select(item => new PartyInventoryItemViewModel
@@ -72,6 +86,19 @@ public static class SessionView
                 })
                 .ToArray())
         };
+    }
+
+    private static string FindClassDisplayName(
+        ValidatedRuleset ruleset,
+        string classId)
+    {
+        return ruleset.Definition.Classes
+            .FirstOrDefault(candidate => string.Equals(
+                candidate.Id,
+                classId,
+                StringComparison.Ordinal))
+            ?.Name
+            ?? classId;
     }
 
     private static CurrencyViewModel DescribeCurrency(
