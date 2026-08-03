@@ -162,6 +162,15 @@ internal sealed class RealCombatSession
 		EncounterView view = CombatOperations.Query(_state);
 		CombatDecision decision = view.Decision;
 
+		// A party member's CombatantId is already its own role identity
+		// ("party-member.fighter") with no MonsterId; a monster's
+		// CombatantId is a per-placement instance ID ("combatant.mill-
+		// rat.first") distinct from the shared type both catalogs below
+		// actually key on ("monster.mill-rat") -- MonsterId is that
+		// shared type, null for party members, so falling back to
+		// CombatantId when it's null is exactly the "party member or
+		// monster, whichever this combatant is" resolution both catalogs
+		// need.
 		IReadOnlyList<CombatantMarkerViewModel> combatants = view.Combatants
 			.Select(combatant => new CombatantMarkerViewModel(
 				combatant.CombatantId,
@@ -172,7 +181,8 @@ internal sealed class RealCombatSession
 				IsAlly: combatant.SideId == view.PartySideId,
 				CurrentHitPoints: combatant.Health.HitPoints.CurrentHitPoints,
 				MaximumHitPoints: combatant.Health.HitPoints.MaximumHitPoints,
-				PortraitResourcePath: CombatantPortraitCatalog.Resolve(combatant.CombatantId)))
+				PortraitResourcePath: CombatantPortraitCatalog.Resolve(
+					combatant.MonsterId ?? combatant.CombatantId)))
 			.ToArray();
 
 		bool isCompleted = decision.State == CombatDecisionState.CombatCompleted;
@@ -185,7 +195,9 @@ internal sealed class RealCombatSession
 			decision.ActiveCombatantId,
 			HasArtBackground: false,
 			FloorTileSheetPath: CombatFloorTileCatalog.Resolve(
-				view.Combatants.Select(combatant => combatant.CombatantId)));
+				view.Combatants
+					.Where(combatant => combatant.MonsterId is not null)
+					.Select(combatant => combatant.MonsterId!)));
 
 		return new RealCombatSnapshot(
 			model,

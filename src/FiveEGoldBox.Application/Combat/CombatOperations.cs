@@ -42,10 +42,16 @@ public static class CombatOperations
             combatantDisplayNames[combatantId] = displayName;
         }
 
+        IReadOnlyDictionary<string, string> combatantMonsterIds =
+            EncounterCombatantMonsterIdResolver.Resolve(
+                canonical,
+                canonical.ActiveEncounter.Encounter);
+
         return CombatViewFactory.Create(
             canonical.ActiveEncounter.Encounter,
             controlledCombatantIds,
-            combatantDisplayNames);
+            combatantDisplayNames,
+            combatantMonsterIds);
     }
 
     /// Runs automatic processing until a player decision is required or the

@@ -9,7 +9,8 @@ internal static class CombatViewFactory
     internal static CombatView Create(
         EncounterState encounter,
         IReadOnlySet<string> clientControlledCombatantIds,
-        IReadOnlyDictionary<string, string>? combatantDisplayNames = null)
+        IReadOnlyDictionary<string, string>? combatantDisplayNames = null,
+        IReadOnlyDictionary<string, string>? combatantMonsterIds = null)
     {
         ArgumentNullException.ThrowIfNull(encounter);
         ArgumentNullException.ThrowIfNull(clientControlledCombatantIds);
@@ -17,7 +18,8 @@ internal static class CombatViewFactory
         CombatantView[] combatants = encounter.Participants
             .Select(participant => CreateCombatantView(
                 participant,
-                combatantDisplayNames))
+                combatantDisplayNames,
+                combatantMonsterIds))
             .ToArray();
 
         // The same fact EncounterPartySideResolver resolves from the
@@ -72,7 +74,8 @@ internal static class CombatViewFactory
 
     private static CombatantView CreateCombatantView(
         EncounterParticipantState participant,
-        IReadOnlyDictionary<string, string>? combatantDisplayNames)
+        IReadOnlyDictionary<string, string>? combatantDisplayNames,
+        IReadOnlyDictionary<string, string>? combatantMonsterIds)
     {
         string combatantId = participant.Combatant.CombatantId;
         string displayName =
@@ -82,6 +85,13 @@ internal static class CombatViewFactory
                     out string? resolvedName)
                 ? resolvedName
                 : combatantId;
+        string? monsterId =
+            combatantMonsterIds is not null
+                && combatantMonsterIds.TryGetValue(
+                    combatantId,
+                    out string? resolvedMonsterId)
+                ? resolvedMonsterId
+                : null;
 
         return new CombatantView(
             combatantId,
@@ -96,7 +106,8 @@ internal static class CombatViewFactory
             participant.TurnResources.MovementRemainingFeet,
             participant.TurnResources.HasActionAvailable,
             participant.TurnResources.HasBonusActionAvailable,
-            participant.TurnResources.HasReactionAvailable);
+            participant.TurnResources.HasReactionAvailable,
+            monsterId);
     }
 
     private static CombatDecision CreateDecision(
