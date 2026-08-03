@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
@@ -85,6 +86,8 @@ public partial class CombatView
 		_combatantPins.Clear();
 
 		int allyIndex = 0;
+		float? allyAverageScreenX = AverageProjectedScreenX(isAlly: true);
+		float? enemyAverageScreenX = AverageProjectedScreenX(isAlly: false);
 
 		foreach (CombatantMarkerViewModel combatant in _combatants)
 		{
@@ -98,7 +101,10 @@ public partial class CombatView
 				combatant.Selected,
 				combatant.CurrentHitPoints,
 				combatant.MaximumHitPoints,
-				ResolvePortrait(combatant.PortraitResourcePath));
+				ResolvePortrait(combatant.PortraitResourcePath),
+				ShouldFlipPortrait(
+					combatant,
+					combatant.IsAlly ? enemyAverageScreenX : allyAverageScreenX));
 
 			string combatantId = combatant.Id;
 			pin.Pressed += () => CombatantActivated?.Invoke(combatantId);
@@ -111,6 +117,56 @@ public partial class CombatView
 				allyIndex++;
 			}
 		}
+	}
+
+	// No per-direction art exists (single static frame), so facing the
+	// other way means mirroring the draw call (CombatantMarkerPin's own
+	// _flipPortrait) rather than picking a different frame. The two art
+	// sources default to *opposite* facings: medieval-heroes' "_MVsv_"
+	// naming is the RPGMaker-MV side-view-Actor convention (party art
+	// faces right, toward a troop window on the right), while the Apex
+	// Predators pack's own frames (confirmed by eye when it was cropped,
+	// docs/2026-08-03-apex-predators-asset-inventory.md) face left, the
+	// matching MV troop/enemy convention (facing left, toward the party
+	// on the left) -- hence flipping on opposing-to-the-left for allies
+	// but opposing-to-the-right for enemies below, not the same
+	// direction for both. "Correct" facing is toward the opposing side's
+	// actual on-screen position, not a fixed left/right rule, since
+	// either side can end up on either edge of the diamond lattice
+	// depending on the encounter's own battlefield layout.
+	private bool ShouldFlipPortrait(
+		CombatantMarkerViewModel combatant,
+		float? opposingAverageScreenX)
+	{
+		if (opposingAverageScreenX is not float opposingScreenX)
+		{
+			return false;
+		}
+
+		float ownScreenX = Project(
+			combatant.GridX + 0.5f,
+			combatant.GridY + 0.5f).X;
+		bool opposingIsToTheLeft = opposingScreenX < ownScreenX;
+
+		return combatant.IsAlly
+			? opposingIsToTheLeft
+			: !opposingIsToTheLeft;
+	}
+
+	// Null when that side has no living combatants left to average (the
+	// last enemy just fell, say) -- ShouldFlipPortrait then leaves every
+	// remaining combatant at its default facing rather than dividing by
+	// zero or flipping toward a side that no longer exists.
+	private float? AverageProjectedScreenX(bool isAlly)
+	{
+		List<float> screenXs = _combatants
+			.Where(combatant => combatant.IsAlly == isAlly)
+			.Select(combatant => Project(
+				combatant.GridX + 0.5f,
+				combatant.GridY + 0.5f).X)
+			.ToList();
+
+		return screenXs.Count == 0 ? null : screenXs.Average();
 	}
 
 	// GD.Load is resolved through Godot's own resource cache (keyed by
