@@ -25,6 +25,20 @@ internal sealed partial class ShellInteractionController
 	private RealGameSession? _activeRealMovementSession;
 	private RealGameSession? _activeAreaMapSession;
 
+	// True whenever a real session is the one currently on screen --
+	// mirrors ShellPresentationController's own _regionalMapIsRealSession
+	// guard, generalized to hold the session itself rather than just a
+	// bool, since ShowInventoryScreen needs the real object to describe
+	// from. Set here on every real render; cleared by the three mock
+	// top-level entry points (ShowExploration/ShowRegionalMap/ShowCombat
+	// in ShellInteractionController.cs) the same way
+	// _regionalMapIsRealSession resets to false in the mock
+	// ShowRegionalMap(). Lets ShowInventoryScreen (reached via the same
+	// "inventory" command ID from both mock and real command sets) render
+	// real party currency/items instead of MockSecondaryScreenContent's
+	// demo list whenever a real session is behind it.
+	private RealGameSession? _activeRealSession;
+
 	// The real integration seam. Renders whatever RealGameSession.Describe()
 	// reports, rather than the mock content ShowExploration()/ShowCombat()
 	// otherwise fall back to. overrideMessage carries a just-submitted
@@ -40,6 +54,8 @@ internal sealed partial class ShellInteractionController
 		string? overrideMessage = null)
 	{
 		ResetContext();
+
+		_activeRealSession = session;
 
 		RealSessionSnapshot snapshot = session.Describe();
 
@@ -129,6 +145,15 @@ internal sealed partial class ShellInteractionController
 					() => EnterRealMovementMode(session)));
 		}
 
+		HashSet<char> usedHotkeys = snapshot.Commands.Commands
+			.Select(command => char.ToUpperInvariant(command.Hotkey![0]))
+			.ToHashSet();
+
+		if (offersMovement)
+		{
+			usedHotkeys.Add('M');
+		}
+
 		// Area is a client-side view toggle, not a SessionAction — real
 		// exploration content never offers it (RealGameSession's own
 		// header comment says so), so it's synthesized here the same way
@@ -137,15 +162,6 @@ internal sealed partial class ShellInteractionController
 		// user's own framing ("an Area view in exploration mode").
 		if (snapshot.Mode == ApplicationMode.Exploration)
 		{
-			HashSet<char> usedHotkeys = snapshot.Commands.Commands
-				.Select(command => char.ToUpperInvariant(command.Hotkey![0]))
-				.ToHashSet();
-
-			if (offersMovement)
-			{
-				usedHotkeys.Add('M');
-			}
-
 			CommandViewModel areaCommand = new(
 				"area-map",
 				"Area",
@@ -154,10 +170,31 @@ internal sealed partial class ShellInteractionController
 					usedHotkeys,
 					"Area"));
 
+			usedHotkeys.Add(areaCommand.Hotkey![0]);
+
 			commands.Add(CommandViewModelTranslator.ToCommandDefinition(
 				areaCommand,
 				() => EnterAreaMapMode(session)));
 		}
+
+		// Inventory is likewise a client-side view toggle rather than a
+		// SessionAction, same reasoning as Area above -- unlike Area,
+		// there's nothing exploration-specific about checking the party's
+		// purse, so it's offered in every mode ShowRealCommands is reached
+		// from (Outpost/RegionalTravel/Exploration; Encounter and
+		// ScenarioConclusion both return out of ShowRealSession before
+		// reaching here).
+		CommandViewModel inventoryCommand = new(
+			"inventory",
+			"Inventory",
+			HotkeyAssigner.Assign(
+				"Inventory".Select(char.ToUpperInvariant),
+				usedHotkeys,
+				"Inventory"));
+
+		commands.Add(CommandViewModelTranslator.ToCommandDefinition(
+			inventoryCommand,
+			ShowInventoryScreen));
 
 		_commandBarController.ShowCommands(commands.ToArray());
 	}
