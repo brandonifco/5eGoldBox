@@ -1,6 +1,8 @@
 using FiveEGoldBox.Application.Campaigns;
+using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
+using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Scenarios;
 
@@ -35,5 +37,93 @@ public static class ScenarioSessionFactory
             scenario.StartingLocationId,
             CampaignPartyFactory.CreateStartingParty(campaign),
             randomSeed);
+    }
+
+    /// Starts a session already inside a specific exploration location, at a
+    /// specific floor/position/facing, bypassing the outpost decision and
+    /// regional travel a normal session would have to walk through first.
+    ///
+    /// A developer tool, not a player-facing entry point: it exists so a spot
+    /// on a map can be reached directly (e.g. to check rendering of a door or
+    /// piece of treasure) without replaying the whole scenario up to it every
+    /// time. The floor/position still have to be real, traversable geometry —
+    /// <see cref="ApplicationSessionRules.CreateCanonical"/> is what actually
+    /// enforces that, the same as it does for <see cref="CreateNew"/>.
+    public static ApplicationSessionState CreateAtExploration(
+        string scenarioId,
+        string locationId,
+        string floor,
+        GridPosition position,
+        ExplorationFacing facing,
+        int randomSeed,
+        string? progressId = null)
+    {
+        if (string.IsNullOrWhiteSpace(scenarioId))
+        {
+            throw new ArgumentException(
+                "Scenario ID is required.",
+                nameof(scenarioId));
+        }
+
+        if (string.IsNullOrWhiteSpace(locationId))
+        {
+            throw new ArgumentException(
+                "Location ID is required.",
+                nameof(locationId));
+        }
+
+        if (string.IsNullOrWhiteSpace(floor))
+        {
+            throw new ArgumentException(
+                "Floor is required.",
+                nameof(floor));
+        }
+
+        ScenarioDefinition scenario =
+            ScenarioDefinitionRegistry.Resolve(scenarioId);
+
+        // The party comes from the campaign the scenario belongs to, same as
+        // CreateNew above.
+        CampaignDefinition campaign =
+            CampaignRegistry.ResolveForScenario(scenarioId);
+
+        ScenarioLocationDefinition location = scenario.Locations
+            .FirstOrDefault(candidate => string.Equals(
+                candidate.LocationId,
+                locationId,
+                StringComparison.Ordinal))
+            ?? throw new ArgumentException(
+                $"Scenario '{scenarioId}' has no location '{locationId}'.",
+                nameof(locationId));
+
+        ExplorationMapDefinition explorationMap =
+            location.ExplorationMap
+            ?? throw new ArgumentException(
+                $"Location '{locationId}' has no explorable map.",
+                nameof(locationId));
+
+        ApplicationSessionState state = new()
+        {
+            ScenarioId = scenario.ScenarioId,
+            CurrentMode = ApplicationMode.Exploration,
+            CurrentLocationId = locationId,
+            Party = CampaignPartyFactory.CreateStartingParty(campaign),
+            Scenario = new ScenarioState
+            {
+                ProgressId = progressId
+                    ?? scenario.Progress.InitialProgressId
+            },
+            RandomSeed = randomSeed,
+            RandomValuesConsumed = 0,
+            Exploration = new ExplorationState
+            {
+                MapId = explorationMap.MapId,
+                Floor = floor,
+                Position = position,
+                Facing = facing
+            }
+        };
+
+        return ApplicationSessionRules.CreateCanonical(state);
     }
 }

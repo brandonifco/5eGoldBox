@@ -1,3 +1,4 @@
+using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
@@ -197,6 +198,102 @@ public sealed class ScenarioSessionFactoryTests
             2,
             second.Party.Members[0]
                 .Health.HitPoints.TemporaryHitPoints);
+    }
+
+    [Fact]
+    public void CreateAtExploration_AtArmoryDoorApproach_ReturnsValidExplorationSession()
+    {
+        ApplicationSessionState state =
+            ScenarioSessionFactory.CreateAtExploration(
+                WatchtowerScenarioContent.ScenarioId,
+                "location.ruined-watchtower",
+                "GroundFloor",
+                new GridPosition(2, 1),
+                ExplorationFacing.East,
+                RandomSeed,
+                progressId: nameof(
+                    WatchtowerScenarioProgress.MissionAccepted));
+
+        Assert.Equal(
+            ApplicationMode.Exploration,
+            state.CurrentMode);
+        Assert.Equal(
+            "location.ruined-watchtower",
+            state.CurrentLocationId);
+        Assert.NotNull(state.Exploration);
+        Assert.Equal(
+            "map.ruined-watchtower",
+            state.Exploration!.MapId);
+        Assert.Equal(
+            "GroundFloor",
+            state.Exploration.Floor);
+        Assert.Equal(
+            new GridPosition(2, 1),
+            state.Exploration.Position);
+        Assert.Equal(
+            ExplorationFacing.East,
+            state.Exploration.Facing);
+        Assert.Equal(
+            nameof(WatchtowerScenarioProgress.MissionAccepted),
+            state.Scenario.ProgressId);
+
+        ApplicationSessionRules.Validate(state);
+    }
+
+    [Fact]
+    public void CreateAtExploration_ForLocationWithNoExplorationMap_ThrowsArgumentException()
+    {
+        ArgumentException exception = Assert.Throws<ArgumentException>(
+            () => ScenarioSessionFactory.CreateAtExploration(
+                WatchtowerScenarioContent.ScenarioId,
+                WatchtowerScenarioContent.OutpostLocationId,
+                "GroundFloor",
+                new GridPosition(0, 0),
+                ExplorationFacing.North,
+                RandomSeed));
+
+        Assert.Contains(
+            "no explorable map",
+            exception.Message,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CreateAtExploration_AtNonTraversablePosition_Throws()
+    {
+        Assert.ThrowsAny<ArgumentException>(
+            () => ScenarioSessionFactory.CreateAtExploration(
+                WatchtowerScenarioContent.ScenarioId,
+                "location.ruined-watchtower",
+                "GroundFloor",
+                new GridPosition(99, 99),
+                ExplorationFacing.North,
+                RandomSeed,
+                progressId: nameof(
+                    WatchtowerScenarioProgress.MissionAccepted)));
+    }
+
+    [Fact]
+    public void CreateAtExploration_WithoutProgressIdOverride_UsesScenarioInitialProgress()
+    {
+        // The armory door location only opens exploration at MissionAccepted
+        // or RaidersDefeated, so falling back to the scenario's own initial
+        // progress (MissionNotAccepted) should fail validation here — proof
+        // that the fallback really lands in Scenario.ProgressId rather than
+        // being silently ignored.
+        ArgumentException exception = Assert.Throws<ArgumentException>(
+            () => ScenarioSessionFactory.CreateAtExploration(
+                WatchtowerScenarioContent.ScenarioId,
+                "location.ruined-watchtower",
+                "GroundFloor",
+                new GridPosition(2, 1),
+                ExplorationFacing.East,
+                RandomSeed));
+
+        Assert.Contains(
+            "progress",
+            exception.Message,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     private static void AssertMember(
