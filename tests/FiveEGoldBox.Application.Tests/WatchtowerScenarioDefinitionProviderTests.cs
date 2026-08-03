@@ -63,8 +63,7 @@ public sealed class WatchtowerScenarioDefinitionProviderTests
         Assert.True(ScenarioExplorationMap.IsTraversable(
             map,
             map.StartingFloor,
-            map.StartingPosition,
-            Array.Empty<string>()));
+            map.StartingPosition));
 
         StairDefinition up = Assert.Single(
             Assert.Single(

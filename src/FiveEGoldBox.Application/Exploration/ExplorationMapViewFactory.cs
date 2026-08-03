@@ -18,19 +18,8 @@ internal static class ExplorationMapViewFactory
                 state.Floor,
                 StringComparison.Ordinal));
 
-        IReadOnlyList<DoorDefinition> visibleDoors = floor.Doors
-            .Where(door => IsRevealed(door, state))
-            .ToArray();
-        IReadOnlyList<DoorDefinition> openDoors = visibleDoors
-            .Where(door => IsOpen(door, state))
-            .ToArray();
-        IReadOnlyList<GridPosition> closedDoorPositions = visibleDoors
-            .Where(door => !IsOpen(door, state) && !door.IsLocked)
-            .Select(door => door.Position)
-            .ToArray();
-        IReadOnlyList<GridPosition> lockedDoorPositions = visibleDoors
-            .Where(door => !IsOpen(door, state) && door.IsLocked)
-            .Select(door => door.Position)
+        IReadOnlyList<DoorDefinition> visibleClosedDoors = floor.Doors
+            .Where(door => IsRevealed(door, state) && !IsOpen(door, state))
             .ToArray();
         IReadOnlyList<GridPosition> treasurePositions = floor.Treasures
             .Where(treasure => !IsCollected(treasure, state))
@@ -42,14 +31,16 @@ internal static class ExplorationMapViewFactory
             state.Floor,
             map.Width,
             map.Height,
-            floor.TraversablePositions
-                .Concat(openDoors.Select(door => door.Position))
-                .ToArray(),
+            floor.TraversablePositions,
             floor.Stairs
                 .Select(stair => stair.Position)
                 .ToArray(),
-            closedDoorPositions,
-            lockedDoorPositions,
+            visibleClosedDoors
+                .Select(door => new ExplorationDoorEdge(
+                    door.Position,
+                    door.OtherPosition,
+                    door.IsLocked))
+                .ToArray(),
             treasurePositions,
             state.Position,
             state.Facing);
@@ -69,9 +60,8 @@ internal static class ExplorationMapViewFactory
     }
 
     /// Bucket 2 -- a door the party has opened behaves exactly like
-    /// ordinary floor, checked ahead of locked/closed since opening a door
-    /// that happened to also be secret or locked is still what it looks
-    /// like once opened.
+    /// ordinary floor on both sides, so it drops out of the "closed door"
+    /// list entirely rather than needing special-cased traversability.
     private static bool IsOpen(
         DoorDefinition door,
         ExplorationState state)

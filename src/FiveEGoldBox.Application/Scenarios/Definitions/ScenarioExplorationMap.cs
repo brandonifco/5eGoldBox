@@ -81,7 +81,7 @@ internal static class ScenarioExplorationMap
                 "Unsupported exploration facing.");
         }
 
-        if (!IsTraversable(map, state.Floor, state.Position, state.OpenDoorIds))
+        if (!IsTraversable(map, state.Floor, state.Position))
         {
             throw new ArgumentException(
                 "The exploration position is not a traversable tile on the current floor.",
@@ -102,46 +102,57 @@ internal static class ScenarioExplorationMap
             nameof(state.CollectedTreasureIds));
     }
 
-    /// A position is traversable if it is ordinary open ground, or an
-    /// unlocked door there has been opened. A locked door is independently
-    /// re-checked here rather than trusted from the caller -- the same
-    /// defense-in-depth this method already applies to every other
-    /// invariant -- so corrupted state naming a locked door's ID can never
-    /// make it walkable.
+    /// Whether a single tile is real floor at all -- independent of
+    /// anything a door might gate, since a door no longer occupies a tile
+    /// of its own.
     internal static bool IsTraversable(
-        ExplorationMapDefinition map,
-        string floor,
-        GridPosition position,
-        IReadOnlyList<string> openDoorIds)
-    {
-        ExplorationFloorDefinition? floorDefinition = FindFloor(map, floor);
-
-        if (floorDefinition is null)
-        {
-            return false;
-        }
-
-        if (floorDefinition.TraversablePositions.Contains(position))
-        {
-            return true;
-        }
-
-        DoorDefinition? door = floorDefinition.Doors
-            .FirstOrDefault(candidate => candidate.Position == position);
-
-        return door is not null
-            && !door.IsLocked
-            && openDoorIds.Contains(door.DoorId, StringComparer.Ordinal);
-    }
-
-    internal static DoorDefinition? FindDoor(
         ExplorationMapDefinition map,
         string floor,
         GridPosition position)
     {
         return FindFloor(map, floor)
+            ?.TraversablePositions
+            .Contains(position)
+            ?? false;
+    }
+
+    /// Whether the party can actually step from one tile to an adjacent
+    /// one: the destination must be real floor, and if a door sits on the
+    /// edge between them, it must be unlocked and already opened. A locked
+    /// door is independently re-checked here rather than trusted from the
+    /// caller -- the same defense-in-depth this method already applies to
+    /// every other invariant -- so corrupted state naming a locked door's
+    /// ID can never make it walkable.
+    internal static bool CanMoveBetween(
+        ExplorationMapDefinition map,
+        string floor,
+        GridPosition from,
+        GridPosition to,
+        IReadOnlyList<string> openDoorIds)
+    {
+        if (!IsTraversable(map, floor, to))
+        {
+            return false;
+        }
+
+        DoorDefinition? door = FindDoorBetween(map, floor, from, to);
+
+        return door is null
+            || (!door.IsLocked
+                && openDoorIds.Contains(door.DoorId, StringComparer.Ordinal));
+    }
+
+    /// The door on the edge between two given tiles, if any, in either
+    /// order.
+    internal static DoorDefinition? FindDoorBetween(
+        ExplorationMapDefinition map,
+        string floor,
+        GridPosition a,
+        GridPosition b)
+    {
+        return FindFloor(map, floor)
             ?.Doors
-            .FirstOrDefault(candidate => candidate.Position == position);
+            .FirstOrDefault(candidate => candidate.ConnectsPositions(a, b));
     }
 
     internal static TreasureDefinition? FindTreasure(

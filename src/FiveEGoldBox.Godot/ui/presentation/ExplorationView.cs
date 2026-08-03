@@ -12,7 +12,8 @@ public partial class ExplorationView : Control
 	private Label _compassLabel = null!;
 	private Control _overlayPromptPanel = null!;
 	private Label _overlayPromptLabel = null!;
-	private DungeonCorridorView _corridorView = null!;
+	private DungeonCorridor3DView _corridorView = null!;
+	private Label _coordinateLabel = null!;
 
 	public override void _Ready()
 	{
@@ -27,17 +28,33 @@ public partial class ExplorationView : Control
 		_overlayPromptLabel = GetNode<Label>("%OverlayPromptLabel");
 
 		// Script-only, no .tscn entry -- same convention
-		// PartyDirectionMarker/CombatHighlightCell already use. Inserted
-		// right after the flat placeholder/outpost image, so real
-		// corridor art layers over either of them but still sits below
-		// the label/facing/compass/overlay-prompt nodes.
-		_corridorView = new DungeonCorridorView
-		{
-			MouseFilter = MouseFilterEnum.Ignore
-		};
+		// PartyDirectionMarker/CombatHighlightCell already use, extended
+		// by DungeonCorridor3DView itself to build its own embedded
+		// SubViewport/Camera3D/geometry at runtime. Inserted right after
+		// the flat placeholder/outpost image, so real corridor art
+		// layers over either of them but still sits below the
+		// label/facing/compass/overlay-prompt nodes.
+		_corridorView = new DungeonCorridor3DView();
 		AddChild(_corridorView);
 		_corridorView.SetAnchorsPreset(LayoutPreset.FullRect);
 		MoveChild(_corridorView, _explorationImage.GetIndex() + 1);
+
+		// A debug aid, not production polish -- the real X/Y this view is
+		// actually rendering, requested while diagnosing the corridor
+		// renderer against real map data by hand. Bottom-left corner,
+		// independent of the existing facing/compass badge row.
+		_coordinateLabel = new Label
+		{
+			Visible = false,
+			MouseFilter = MouseFilterEnum.Ignore,
+			Modulate = new Color(1f, 1f, 1f, 0.8f),
+		};
+		_coordinateLabel.AddThemeColorOverride("font_shadow_color", new Color(0f, 0f, 0f, 0.9f));
+		_coordinateLabel.AddThemeConstantOverride("shadow_offset_x", 1);
+		_coordinateLabel.AddThemeConstantOverride("shadow_offset_y", 1);
+		AddChild(_coordinateLabel);
+		_coordinateLabel.SetAnchorsPreset(LayoutPreset.BottomLeft);
+		_coordinateLabel.Position = new Vector2(8, -24);
 	}
 
 	// M6b: plain colored placeholders for scene keys with no real art yet
@@ -94,12 +111,18 @@ public partial class ExplorationView : Control
 		if (map is null)
 		{
 			_corridorView.Clear();
+			_coordinateLabel.Visible = false;
 			return;
 		}
 
-		IReadOnlyList<CorridorDepthLayer> layers = ResolveCorridor(map, maxDepth: 2);
+		CorridorGeometry geometry = ResolveCorridor(
+			map,
+			radius: DungeonCorridor3DView.ConfigureRadius);
 
-		_corridorView.Configure(layers, DungeonWallMaterials.ResolveDefault());
+		_corridorView.Configure(geometry, DungeonWallMaterials.ResolveDefault());
+
+		_coordinateLabel.Visible = true;
+		_coordinateLabel.Text = $"({map.PartyX}, {map.PartyY}) {map.PartyFacing}";
 	}
 
 	private void ConfigureOverlayPrompts(IReadOnlyList<string>? overlayPrompts)

@@ -175,9 +175,11 @@ internal static partial class ScenarioDefinitionValidator
         }
     }
 
-    /// A door blocks its own tile until opened, so it must not sit on ground
-    /// already traversable without it (that door would do nothing), and it
-    /// must not fight another door or a stair for the same square.
+    /// A door sits on the edge between Position and its OtherPosition, both
+    /// of which must be real, traversable floor -- unlike the old
+    /// its-own-tile model, a door no longer needs its anchor square to be
+    /// otherwise impassable, and two doors can only collide by naming the
+    /// exact same edge.
     private static void AddDoorIssues(
         ExplorationMapDefinition map,
         Dictionary<string, HashSet<GridPosition>> traversable,
@@ -193,8 +195,11 @@ internal static partial class ScenarioDefinitionValidator
 
         foreach (ExplorationFloorDefinition floor in map.Floors)
         {
-            HashSet<GridPosition> occupied =
-                new(floor.Stairs.Select(stair => stair.Position));
+            HashSet<(GridPosition, GridPosition)> seenEdges = [];
+
+            traversable.TryGetValue(
+                floor.Floor,
+                out HashSet<GridPosition>? floorTraversable);
 
             foreach (DoorDefinition door in floor.Doors)
             {
@@ -204,37 +209,60 @@ internal static partial class ScenarioDefinitionValidator
                     "scenario.map.door_id_required",
                     "Door IDs must not be blank.");
 
-                if (!IsWithin(map, door.Position))
+                if (!Enum.IsDefined(door.Side))
                 {
                     issues.Add(Error(
-                        "scenario.map.door_position_out_of_bounds",
-                        $"A door on floor {floor.Floor} of the {where} lies outside the map bounds."));
+                        "scenario.map.door_side_invalid",
+                        $"A door on floor {floor.Floor} of the {where} names an unsupported side."));
                     continue;
                 }
 
-                if (traversable.TryGetValue(
-                        floor.Floor,
-                        out HashSet<GridPosition>? floorTraversable)
-                    && floorTraversable.Contains(door.Position))
+                if (!IsWithin(map, door.Position)
+                    || !IsWithin(map, door.OtherPosition))
                 {
                     issues.Add(Error(
-                        "scenario.map.door_position_already_traversable",
-                        $"A door on floor {floor.Floor} of the {where} sits on a square that is already traversable without it."));
+                        "scenario.map.door_position_out_of_bounds",
+                        $"A door on floor {floor.Floor} of the {where} connects a square outside the map bounds."));
+                    continue;
                 }
 
-                if (!occupied.Add(door.Position))
+                if (floorTraversable is null
+                    || !floorTraversable.Contains(door.Position)
+                    || !floorTraversable.Contains(door.OtherPosition))
                 {
                     issues.Add(Error(
-                        "scenario.map.door_position_collision",
-                        $"A door on floor {floor.Floor} of the {where} shares its square with another door or a stair."));
+                        "scenario.map.door_edge_untraversable",
+                        $"A door on floor {floor.Floor} of the {where} must connect two traversable squares."));
+                    continue;
+                }
+
+                if (!seenEdges.Add(NormalizeEdge(door.Position, door.OtherPosition)))
+                {
+                    issues.Add(Error(
+                        "scenario.map.door_edge_collision",
+                        $"A door on floor {floor.Floor} of the {where} shares its edge with another door."));
                 }
             }
         }
     }
 
-    /// Unlike a door, treasure does not block its own tile -- it has to sit
-    /// somewhere the party can already reach, and it needs a declared reward
-    /// even though v1 only flips a collected flag rather than granting it.
+    /// A stable, order-independent key for the edge between two tiles, so
+    /// the same edge is recognized regardless of which door named which
+    /// tile as Position.
+    private static (GridPosition, GridPosition) NormalizeEdge(
+        GridPosition a,
+        GridPosition b)
+    {
+        return a.X < b.X || (a.X == b.X && a.Y < b.Y)
+            ? (a, b)
+            : (b, a);
+    }
+
+    /// Treasure does not block its own tile -- it has to sit somewhere the
+    /// party can already reach, and it needs a declared reward even though
+    /// v1 only flips a collected flag rather than granting it. A door no
+    /// longer occupies a tile of its own, so it cannot collide with
+    /// treasure the way a stair still can.
     private static void AddTreasureIssues(
         ExplorationMapDefinition map,
         Dictionary<string, HashSet<GridPosition>> traversable,
@@ -251,9 +279,8 @@ internal static partial class ScenarioDefinitionValidator
 
         foreach (ExplorationFloorDefinition floor in map.Floors)
         {
-            HashSet<GridPosition> occupied = new(
-                floor.Stairs.Select(stair => stair.Position)
-                    .Concat(floor.Doors.Select(door => door.Position)));
+            HashSet<GridPosition> occupied =
+                new(floor.Stairs.Select(stair => stair.Position));
 
             foreach (TreasureDefinition treasure in floor.Treasures)
             {
@@ -285,7 +312,7 @@ internal static partial class ScenarioDefinitionValidator
                 {
                     issues.Add(Error(
                         "scenario.map.treasure_position_collision",
-                        $"A treasure on floor {floor.Floor} of the {where} shares its square with a door or a stair."));
+                        $"A treasure on floor {floor.Floor} of the {where} shares its square with a stair."));
                 }
 
                 if (string.IsNullOrWhiteSpace(treasure.ItemId)
@@ -336,9 +363,10 @@ internal static partial class ScenarioDefinitionValidator
         }
     }
 
-    /// An NPC blocks its own tile like a door -- it must not sit on ground
-    /// already traversable without it, and it must not fight a door,
-    /// stair, or treasure for the same square.
+    /// An NPC blocks its own tile -- it must not sit on ground already
+    /// traversable without it, and it must not fight a stair or treasure
+    /// for the same square. A door no longer occupies a tile of its own,
+    /// so it cannot collide with an NPC the way a stair still can.
     private static void AddNpcIssues(
         ExplorationMapDefinition map,
         Dictionary<string, HashSet<GridPosition>> traversable,
@@ -356,7 +384,6 @@ internal static partial class ScenarioDefinitionValidator
         {
             HashSet<GridPosition> occupied = new(
                 floor.Stairs.Select(stair => stair.Position)
-                    .Concat(floor.Doors.Select(door => door.Position))
                     .Concat(floor.Treasures.Select(treasure => treasure.Position)));
 
             foreach (NpcDefinition npc in floor.Npcs)
@@ -401,7 +428,7 @@ internal static partial class ScenarioDefinitionValidator
                 {
                     issues.Add(Error(
                         "scenario.map.npc_position_collision",
-                        $"An NPC on floor {floor.Floor} of the {where} shares its square with a door, stair, or treasure."));
+                        $"An NPC on floor {floor.Floor} of the {where} shares its square with a stair or treasure."));
                 }
             }
         }

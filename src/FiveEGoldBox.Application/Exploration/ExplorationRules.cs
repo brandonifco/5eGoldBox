@@ -129,9 +129,10 @@ public static class ExplorationRules
             ?? throw new InvalidOperationException(
                 "The exploration location has no map.");
         bool didMove =
-            ScenarioExplorationMap.IsTraversable(
+            ScenarioExplorationMap.CanMoveBetween(
                 map,
                 exploration.Floor,
+                exploration.Position,
                 destination,
                 exploration.OpenDoorIds);
 
@@ -547,9 +548,10 @@ public static class ExplorationRules
             GetForwardPosition(
                 exploration.Position,
                 exploration.Facing);
-        DoorDefinition? door = ScenarioExplorationMap.FindDoor(
+        DoorDefinition? door = ScenarioExplorationMap.FindDoorBetween(
             RequireMap(session),
             exploration.Floor,
+            exploration.Position,
             forward);
 
         if (door is null
@@ -580,9 +582,10 @@ public static class ExplorationRules
             GetForwardPosition(
                 exploration.Position,
                 exploration.Facing);
-        DoorDefinition? door = ScenarioExplorationMap.FindDoor(
+        DoorDefinition? door = ScenarioExplorationMap.FindDoorBetween(
             RequireMap(session),
             exploration.Floor,
+            exploration.Position,
             forward);
 
         if (door is null
@@ -679,31 +682,7 @@ public static class ExplorationRules
         GridPosition position,
         ExplorationFacing facing)
     {
-        return facing switch
-        {
-            ExplorationFacing.North =>
-                position with
-                {
-                    Y = position.Y - 1
-                },
-            ExplorationFacing.East =>
-                position with
-                {
-                    X = position.X + 1
-                },
-            ExplorationFacing.South =>
-                position with
-                {
-                    Y = position.Y + 1
-                },
-            ExplorationFacing.West =>
-                position with
-                {
-                    X = position.X - 1
-                },
-            _ => throw new InvalidOperationException(
-                "The validated exploration facing could not produce forward movement.")
-        };
+        return ExplorationFacingOffsets.Apply(facing, position);
     }
 
     private enum DestinationEntryAvailability

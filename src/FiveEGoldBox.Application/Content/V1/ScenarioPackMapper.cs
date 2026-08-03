@@ -159,6 +159,7 @@ internal static class ScenarioPackMapper
         {
             DoorId = door.DoorId,
             Position = ToRuntimePosition(door.Position),
+            Side = ToRuntimeFacing(door.Side),
             IsSecret = door.IsSecret,
             IsLocked = door.IsLocked
         };

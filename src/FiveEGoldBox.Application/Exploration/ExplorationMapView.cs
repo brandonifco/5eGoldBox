@@ -2,6 +2,32 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Exploration;
 
+/// A door on the current floor, known to the party (not an unrevealed
+/// secret) and not yet opened -- PositionA/PositionB are the two tiles it
+/// connects, in no particular order, since neither tile is privileged over
+/// the other.
+public sealed record ExplorationDoorEdge
+{
+    internal ExplorationDoorEdge(
+        GridPosition positionA,
+        GridPosition positionB,
+        bool isLocked)
+    {
+        PositionA = positionA;
+        PositionB = positionB;
+        IsLocked = isLocked;
+    }
+
+    public GridPosition PositionA { get; }
+
+    public GridPosition PositionB { get; }
+
+    /// Rendered distinctly from an ordinary closed door -- a door that is
+    /// both secret and locked only appears here once its secrecy has been
+    /// revealed.
+    public bool IsLocked { get; }
+}
+
 /// A read-only projection of the current floor's grid geometry plus the
 /// party's real position/facing — the same "internal definitions stay
 /// internal, only a flattened client-safe record crosses the boundary"
@@ -16,8 +42,7 @@ public sealed record ExplorationMapView
         int height,
         IReadOnlyList<GridPosition> traversablePositions,
         IReadOnlyList<GridPosition> stairPositions,
-        IReadOnlyList<GridPosition> closedDoorPositions,
-        IReadOnlyList<GridPosition> lockedDoorPositions,
+        IReadOnlyList<ExplorationDoorEdge> doors,
         IReadOnlyList<GridPosition> treasurePositions,
         GridPosition partyPosition,
         ExplorationFacing partyFacing)
@@ -38,8 +63,7 @@ public sealed record ExplorationMapView
 
         ArgumentNullException.ThrowIfNull(traversablePositions);
         ArgumentNullException.ThrowIfNull(stairPositions);
-        ArgumentNullException.ThrowIfNull(closedDoorPositions);
-        ArgumentNullException.ThrowIfNull(lockedDoorPositions);
+        ArgumentNullException.ThrowIfNull(doors);
         ArgumentNullException.ThrowIfNull(treasurePositions);
 
         MapId = mapId;
@@ -49,10 +73,7 @@ public sealed record ExplorationMapView
         TraversablePositions = Array.AsReadOnly(
             traversablePositions.ToArray());
         StairPositions = Array.AsReadOnly(stairPositions.ToArray());
-        ClosedDoorPositions = Array.AsReadOnly(
-            closedDoorPositions.ToArray());
-        LockedDoorPositions = Array.AsReadOnly(
-            lockedDoorPositions.ToArray());
+        Doors = Array.AsReadOnly(doors.ToArray());
         TreasurePositions = Array.AsReadOnly(
             treasurePositions.ToArray());
         PartyPosition = partyPosition;
@@ -68,22 +89,19 @@ public sealed record ExplorationMapView
     public int Height { get; }
 
     /// Squares the party may occupy on this floor — everything else is
-    /// solid. Current floor only, not every floor the map defines.
+    /// solid. Current floor only, not every floor the map defines. A door's
+    /// own edge is not part of this list either way -- a door no longer
+    /// occupies a tile of its own, see ExplorationDoorEdge.
     public IReadOnlyList<GridPosition> TraversablePositions { get; }
 
     /// Every staircase's own square on this floor. Current floor only.
     public IReadOnlyList<GridPosition> StairPositions { get; }
 
-    /// Doors known to the party (not an unrevealed secret) that are
-    /// unlocked and not currently open -- this covers both an ordinary
-    /// not-yet-opened door and a secret door that has been found but not
-    /// yet opened, since the two are visually identical once known.
-    public IReadOnlyList<GridPosition> ClosedDoorPositions { get; }
-
-    /// Doors known to the party that are locked -- rendered distinctly
-    /// from an ordinary closed door. A door that is both secret and
-    /// locked only appears here once its secrecy has been revealed.
-    public IReadOnlyList<GridPosition> LockedDoorPositions { get; }
+    /// Doors known to the party (not an unrevealed secret) that are not
+    /// currently open -- this covers both an ordinary not-yet-opened door
+    /// and a secret door that has been found but not yet opened, since the
+    /// two are visually identical once known.
+    public IReadOnlyList<ExplorationDoorEdge> Doors { get; }
 
     /// Treasure not yet collected. Current floor only.
     public IReadOnlyList<GridPosition> TreasurePositions { get; }

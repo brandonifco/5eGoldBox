@@ -45,8 +45,9 @@ public sealed class ScenarioDefinitionValidatorTests
     [InlineData("scenario.map.door_id_required")]
     [InlineData("scenario.map.duplicate_door_id")]
     [InlineData("scenario.map.door_position_out_of_bounds")]
-    [InlineData("scenario.map.door_position_already_traversable")]
-    [InlineData("scenario.map.door_position_collision")]
+    [InlineData("scenario.map.door_side_invalid")]
+    [InlineData("scenario.map.door_edge_untraversable")]
+    [InlineData("scenario.map.door_edge_collision")]
     [InlineData("scenario.map.treasure_id_required")]
     [InlineData("scenario.map.duplicate_treasure_id")]
     [InlineData("scenario.map.treasure_position_out_of_bounds")]
@@ -433,6 +434,9 @@ public sealed class ScenarioDefinitionValidatorTests
                     ]
                 }));
 
+        // (0, 0)-East-(1, 0) is the ground floor's only real edge -- both
+        // ends are traversable, so this is a clean, otherwise-valid door
+        // used to isolate just the blank-ID check.
         Add(breakages, "scenario.map.door_id_required",
             source => WithMap(
                 source,
@@ -447,7 +451,8 @@ public sealed class ScenarioDefinitionValidatorTests
                                 new DoorDefinition
                                 {
                                     DoorId = "  ",
-                                    Position = new GridPosition(2, 2),
+                                    Position = new GridPosition(0, 0),
+                                    Side = ExplorationFacing.East,
                                     IsSecret = false,
                                     IsLocked = false
                                 }
@@ -471,14 +476,16 @@ public sealed class ScenarioDefinitionValidatorTests
                                 new DoorDefinition
                                 {
                                     DoorId = "door.test.duplicate",
-                                    Position = new GridPosition(2, 2),
+                                    Position = new GridPosition(0, 0),
+                                    Side = ExplorationFacing.East,
                                     IsSecret = false,
                                     IsLocked = false
                                 },
                                 new DoorDefinition
                                 {
                                     DoorId = "door.test.duplicate",
-                                    Position = new GridPosition(3, 2),
+                                    Position = new GridPosition(0, 0),
+                                    Side = ExplorationFacing.East,
                                     IsSecret = false,
                                     IsLocked = false
                                 }
@@ -503,6 +510,7 @@ public sealed class ScenarioDefinitionValidatorTests
                                 {
                                     DoorId = "door.test.out_of_bounds",
                                     Position = new GridPosition(99, 99),
+                                    Side = ExplorationFacing.East,
                                     IsSecret = false,
                                     IsLocked = false
                                 }
@@ -512,7 +520,7 @@ public sealed class ScenarioDefinitionValidatorTests
                     ]
                 }));
 
-        Add(breakages, "scenario.map.door_position_already_traversable",
+        Add(breakages, "scenario.map.door_side_invalid",
             source => WithMap(
                 source,
                 map => map with
@@ -525,8 +533,9 @@ public sealed class ScenarioDefinitionValidatorTests
                             [
                                 new DoorDefinition
                                 {
-                                    DoorId = "door.test.already_traversable",
+                                    DoorId = "door.test.bad_side",
                                     Position = new GridPosition(0, 0),
+                                    Side = (ExplorationFacing)99,
                                     IsSecret = false,
                                     IsLocked = false
                                 }
@@ -536,8 +545,9 @@ public sealed class ScenarioDefinitionValidatorTests
                     ]
                 }));
 
-        // (1, 0) is the ground floor's own stair square.
-        Add(breakages, "scenario.map.door_position_collision",
+        // (0, 1) is in bounds but not traversable -- a door cannot connect
+        // to a tile the party could never stand on regardless of it.
+        Add(breakages, "scenario.map.door_edge_untraversable",
             source => WithMap(
                 source,
                 map => map with
@@ -550,8 +560,42 @@ public sealed class ScenarioDefinitionValidatorTests
                             [
                                 new DoorDefinition
                                 {
-                                    DoorId = "door.test.collision",
+                                    DoorId = "door.test.untraversable",
+                                    Position = new GridPosition(0, 0),
+                                    Side = ExplorationFacing.South,
+                                    IsSecret = false,
+                                    IsLocked = false
+                                }
+                            ]
+                        },
+                        map.Floors[1]
+                    ]
+                }));
+
+        Add(breakages, "scenario.map.door_edge_collision",
+            source => WithMap(
+                source,
+                map => map with
+                {
+                    Floors =
+                    [
+                        map.Floors[0] with
+                        {
+                            Doors =
+                            [
+                                new DoorDefinition
+                                {
+                                    DoorId = "door.test.collision_a",
+                                    Position = new GridPosition(0, 0),
+                                    Side = ExplorationFacing.East,
+                                    IsSecret = false,
+                                    IsLocked = false
+                                },
+                                new DoorDefinition
+                                {
+                                    DoorId = "door.test.collision_b",
                                     Position = new GridPosition(1, 0),
+                                    Side = ExplorationFacing.West,
                                     IsSecret = false,
                                     IsLocked = false
                                 }
