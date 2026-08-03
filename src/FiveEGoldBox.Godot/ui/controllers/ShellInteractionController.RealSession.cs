@@ -73,6 +73,7 @@ internal sealed partial class ShellInteractionController
 					snapshot.LocationDisplayName,
 					snapshot.IsSuccess == true ? "Victory" : "Defeat",
 					overrideMessage ?? snapshot.StatusMessage);
+				_presentationController.ConfigureExplorationCorridor(null);
 				_commandBarController.ShowCommands();
 				ShowConclusionScreen();
 				return;
@@ -97,6 +98,7 @@ internal sealed partial class ShellInteractionController
 					snapshot.LocationDisplayName,
 					snapshot.ModeLabel,
 					overrideMessage ?? snapshot.StatusMessage);
+				_presentationController.ConfigureExplorationCorridor(null);
 				break;
 			default:
 				_presentationController.ShowExploration(
@@ -104,6 +106,8 @@ internal sealed partial class ShellInteractionController
 					snapshot.LocationDisplayName,
 					snapshot.ModeLabel,
 					overrideMessage ?? snapshot.StatusMessage);
+				_presentationController.ConfigureExplorationCorridor(
+					session.DescribeAreaMap());
 				break;
 		}
 

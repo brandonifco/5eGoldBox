@@ -51,6 +51,16 @@ internal sealed partial class ShellInteractionController
 				RefreshAreaMap();
 			}
 
+			// Unconditional, unlike RefreshAreaMap above -- the
+			// front-facing corridor view is what's on screen by default
+			// during movement (the area map is an optional overlay on
+			// top of it), so its walls need to track every real step and
+			// turn, not just while the area map happens to also be open.
+			// Null (e.g. a move that lands in a non-exploration mode)
+			// correctly clears it.
+			_presentationController.ConfigureExplorationCorridor(
+				_activeRealMovementSession.DescribeAreaMap());
+
 			_presentationController.SetMessage(message);
 			return;
 		}

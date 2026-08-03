@@ -35,6 +35,13 @@ internal interface IShellPresentation
 	// ShowExploration(...) (via ExitExplorationMovementMode) closes it.
 	void ShowAreaMap(AreaMapViewModel model);
 
+	// Real-session variant: layers real first-person wall art (doors
+	// included) over the front-facing exploration view from the same
+	// current-floor snapshot ShowAreaMap renders top-down. Null clears
+	// it back to plain background -- see
+	// ShellPresentationController.ConfigureExplorationCorridor.
+	void ConfigureExplorationCorridor(AreaMapViewModel? map);
+
 	string? SelectedRegionalLocationId { get; }
 
 	void EnterRegionalLocation(string locationId);

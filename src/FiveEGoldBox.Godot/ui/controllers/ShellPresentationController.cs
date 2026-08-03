@@ -90,6 +90,7 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		_facing = CompassDirection.North;
 		_overlayPrompts = null;
 		RefreshExplorationView();
+		ConfigureExplorationCorridor(null);
 
 		SetHeader(location.Label, "Exploration");
 		SetMessage($"You stand at {location.Label}.");
@@ -122,6 +123,16 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		SetMessage(message);
 	}
 
+	// The real integration seam's own layer -- mock content always
+	// passes null (clearing back to plain background), since none of it
+	// has a real floor to render; a real session opts in explicitly with
+	// real data right after showing exploration. See
+	// ExplorationView.ConfigureCorridor for what this actually renders.
+	public void ConfigureExplorationCorridor(AreaMapViewModel? map)
+	{
+		_explorationView.ConfigureCorridor(map);
+	}
+
 	public string CycleExplorationVariant()
 	{
 		_explorationVariantIndex =
@@ -129,6 +140,7 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		_currentSceneKey = ExplorationVariantSceneKeys[_explorationVariantIndex];
 
 		RefreshExplorationView();
+		ConfigureExplorationCorridor(null);
 
 		return _currentSceneKey;
 	}

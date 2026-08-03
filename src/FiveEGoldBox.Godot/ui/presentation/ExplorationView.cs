@@ -12,6 +12,7 @@ public partial class ExplorationView : Control
 	private Label _compassLabel = null!;
 	private Control _overlayPromptPanel = null!;
 	private Label _overlayPromptLabel = null!;
+	private DungeonCorridorView _corridorView = null!;
 
 	public override void _Ready()
 	{
@@ -24,6 +25,19 @@ public partial class ExplorationView : Control
 		_compassLabel = GetNode<Label>("%CompassLabel");
 		_overlayPromptPanel = GetNode<Control>("%OverlayPromptPanel");
 		_overlayPromptLabel = GetNode<Label>("%OverlayPromptLabel");
+
+		// Script-only, no .tscn entry -- same convention
+		// PartyDirectionMarker/CombatHighlightCell already use. Inserted
+		// right after the flat placeholder/outpost image, so real
+		// corridor art layers over either of them but still sits below
+		// the label/facing/compass/overlay-prompt nodes.
+		_corridorView = new DungeonCorridorView
+		{
+			MouseFilter = MouseFilterEnum.Ignore
+		};
+		AddChild(_corridorView);
+		_corridorView.SetAnchorsPreset(LayoutPreset.FullRect);
+		MoveChild(_corridorView, _explorationImage.GetIndex() + 1);
 	}
 
 	// M6b: plain colored placeholders for scene keys with no real art yet
@@ -65,6 +79,27 @@ public partial class ExplorationView : Control
 
 		_compassBadge.Visible = !string.IsNullOrEmpty(compassText);
 		_compassLabel.Text = compassText ?? string.Empty;
+	}
+
+	// Layers real, tile-based first-person wall art on top of whatever
+	// ConfigureScene already put down (flat color for a real session's
+	// still-placeholder SceneKey, or the outpost's own real image) --
+	// null clears it back to that plain background, which is what every
+	// non-exploration mode and every mock-content call site wants. See
+	// docs/2026-08-03-sbs-dungeon-tileset-inventory.md for why this
+	// renders from the same AreaMapViewModel AreaMapView already
+	// consumes rather than a new Application-side projection.
+	internal void ConfigureCorridor(AreaMapViewModel? map)
+	{
+		if (map is null)
+		{
+			_corridorView.Clear();
+			return;
+		}
+
+		IReadOnlyList<CorridorDepthLayer> layers = ResolveCorridor(map, maxDepth: 2);
+
+		_corridorView.Configure(layers, DungeonWallMaterials.ResolveDefault());
 	}
 
 	private void ConfigureOverlayPrompts(IReadOnlyList<string>? overlayPrompts)
