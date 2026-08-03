@@ -203,6 +203,68 @@ internal sealed class RealGameSession
 			map.PartyFacing.ToString());
 	}
 
+	// A read-only snapshot of the party's shared purse/inventory, built
+	// straight into the same ModalViewModel shape ShowInventoryScreen
+	// already renders MockSecondaryScreenContent.Inventory() through --
+	// unlike DescribeAreaMap/DescribeRegionalMap above, there is no
+	// interactive per-item behavior yet (matching the mock's own "not
+	// connected to the real engine yet" caveat), so this skips a
+	// dedicated intermediate view-model type and produces the
+	// presentation model directly, the same way MockSecondaryScreenContent
+	// itself does.
+	internal ModalViewModel DescribeInventory()
+	{
+		// Fully qualified: FiveEGoldBox.Application.Views.PartyViewModel
+		// collides by simple name with this project's own (unrelated)
+		// character-sidebar PartyViewModel in ui/models/viewmodels/.
+		FiveEGoldBox.Application.Views.PartyViewModel party =
+			SessionView.Describe(_state).Party;
+
+		return new ModalViewModel(
+			"Inventory",
+			DescribePurse(party.Currency),
+			party.InventoryItems
+				.Select(item => new CommandViewModel(
+					item.ItemId,
+					$"{item.DisplayName} x{item.Quantity}"))
+				.ToArray(),
+			new[] { new CommandViewModel("close", "Close", "C") });
+	}
+
+	private static string DescribePurse(CurrencyViewModel currency)
+	{
+		List<string> denominations = new();
+
+		if (currency.PlatinumPieces != 0)
+		{
+			denominations.Add($"{currency.PlatinumPieces} pp");
+		}
+
+		if (currency.GoldPieces != 0)
+		{
+			denominations.Add($"{currency.GoldPieces} gp");
+		}
+
+		if (currency.ElectrumPieces != 0)
+		{
+			denominations.Add($"{currency.ElectrumPieces} ep");
+		}
+
+		if (currency.SilverPieces != 0)
+		{
+			denominations.Add($"{currency.SilverPieces} sp");
+		}
+
+		if (currency.CopperPieces != 0)
+		{
+			denominations.Add($"{currency.CopperPieces} cp");
+		}
+
+		return denominations.Count == 0
+			? "The party's purse is empty."
+			: $"Purse: {string.Join(", ", denominations)}.";
+	}
+
 	internal string Submit(string commandId)
 	{
 		if (!_lastActions.TryGetValue(commandId, out SessionAction? action))

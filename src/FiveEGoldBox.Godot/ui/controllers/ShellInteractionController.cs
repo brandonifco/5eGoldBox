@@ -56,10 +56,15 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 	// M7e: shared by the boot/dev-shortcut entry point above and the
 	// regional map's "Enter" command (ShellInteractionController.
 	// RegionalMap.cs) — same context reset and command-bar setup either
-	// way, only which presentation call fires differs.
+	// way, only which presentation call fires differs. Mock-only, like
+	// ShowRegionalMap/ShowCombat below — real exploration entry goes
+	// through ShowRealSession instead — so this is where _activeRealSession
+	// resets, the same role _regionalMapIsRealSession's own reset plays
+	// in the mock ShowRegionalMap() on ShellPresentationController.
 	private void EnterExploration(Action showPresentation)
 	{
 		ResetContext();
+		_activeRealSession = null;
 		showPresentation();
 		ShowExplorationCommands();
 	}
@@ -71,6 +76,7 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 		// CommandMenu is Exploration's, so zoom keys (gated on this
 		// context in ShellInputRouter) are live as soon as the map shows.
 		ResetContext(ShellInteractionContext.SelectionList);
+		_activeRealSession = null;
 		_presentationController.ShowRegionalMap();
 		ShowRegionalMapCommands();
 	}
@@ -78,6 +84,7 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 	public void ShowCombat()
 	{
 		ResetContext();
+		_activeRealSession = null;
 		_presentationController.ShowCombat();
 		ShowCombatCommands();
 	}

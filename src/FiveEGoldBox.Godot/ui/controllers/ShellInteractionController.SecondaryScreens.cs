@@ -33,10 +33,20 @@ internal sealed partial class ShellInteractionController
 
 	// M9b: Inventory has no existing Exploration command slot (M/V/C/A/E/
 	// S/L/X are all taken) — "I" was free.
+	//
+	// Reached from both the mock command sets (Exploration/RegionalMap)
+	// and the real one (ShowRealCommands, ShellInteractionController.
+	// RealSession.cs) by the same "inventory" command ID -- _activeRealSession
+	// (set by ShowRealSession, cleared by the mock top-level entry points)
+	// is what tells this which content to render, the same real/mock
+	// branch ShellPresentationController's own _regionalMapIsRealSession
+	// draws for the regional map.
 	public void ShowInventoryScreen()
 	{
 		ShowModalScreen(
-			MockSecondaryScreenContent.Inventory(),
+			_activeRealSession is not null
+				? _activeRealSession.DescribeInventory()
+				: MockSecondaryScreenContent.Inventory(),
 			new Dictionary<string, Action> { ["close"] = CloseModalScreen });
 	}
 
