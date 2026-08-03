@@ -189,11 +189,13 @@ internal sealed class RealGameSession
 			map.StairPositions
 				.Select(position => new AreaMapPointViewModel(position.X, position.Y))
 				.ToArray(),
-			map.ClosedDoorPositions
-				.Select(position => new AreaMapPointViewModel(position.X, position.Y))
-				.ToArray(),
-			map.LockedDoorPositions
-				.Select(position => new AreaMapPointViewModel(position.X, position.Y))
+			map.Doors
+				.Select(door => new AreaMapDoorEdgeViewModel(
+					new AreaMapPointViewModel(door.PositionA.X, door.PositionA.Y),
+					new AreaMapPointViewModel(door.PositionB.X, door.PositionB.Y),
+					door.IsLocked,
+					door.IsOpen,
+					door.IsRevealed))
 				.ToArray(),
 			map.TreasurePositions
 				.Select(position => new AreaMapPointViewModel(position.X, position.Y))

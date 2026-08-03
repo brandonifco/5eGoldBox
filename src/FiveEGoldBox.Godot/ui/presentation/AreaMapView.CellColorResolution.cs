@@ -8,6 +8,11 @@
 // CLAUDE.md's documented "throwaway console project" technique — there is
 // no dedicated Godot C# test project in this repo to host a permanent
 // test in.
+//
+// Doors are no longer a per-cell kind here -- a door sits on the edge
+// between two cells rather than occupying one of its own (see
+// AreaMapDoorEdgeViewModel), so it's drawn as a separate overlay pass in
+// AreaMapView.DrawGrid rather than folded into this precedence.
 public partial class AreaMapView
 {
 	internal enum CellVisualKind
@@ -15,37 +20,19 @@ public partial class AreaMapView
 		Blocked,
 		Walkable,
 		Treasure,
-		ClosedDoor,
-		LockedDoor,
 		Stair
 	}
 
-	// Precedence, highest to lowest: stair, locked door, closed door,
-	// treasure, walkable, blocked (default). A door tile is never also a
-	// stair/treasure tile (Phase B's own content validation rejects that
-	// position collision), so in practice at most one of the first five
-	// arguments is ever true at once -- this ordering exists to have a
-	// defined answer regardless, not to resolve a real ambiguity.
+	// Precedence, highest to lowest: stair, treasure, walkable, blocked
+	// (default).
 	internal static CellVisualKind ResolveCellKind(
 		bool isStair,
-		bool isLockedDoor,
-		bool isClosedDoor,
 		bool isTreasure,
 		bool isWalkable)
 	{
 		if (isStair)
 		{
 			return CellVisualKind.Stair;
-		}
-
-		if (isLockedDoor)
-		{
-			return CellVisualKind.LockedDoor;
-		}
-
-		if (isClosedDoor)
-		{
-			return CellVisualKind.ClosedDoor;
 		}
 
 		if (isTreasure)

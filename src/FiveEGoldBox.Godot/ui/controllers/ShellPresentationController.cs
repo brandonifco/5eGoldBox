@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 
@@ -128,9 +129,27 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 	// has a real floor to render; a real session opts in explicitly with
 	// real data right after showing exploration. See
 	// ExplorationView.ConfigureCorridor for what this actually renders.
+	//
+	// Also syncs the Facing/compass badge to the session's real facing.
+	// ShowExploration(...) always resets _facing to North regardless of
+	// a real session's actual starting facing (a debug-jump can start
+	// facing anything), and TurnFacing only ever rotates relative to
+	// that possibly-wrong starting point -- so a debug-jumped session's
+	// badge silently drifts out of sync with the real backend facing by
+	// a fixed offset for the rest of the session, even though movement
+	// itself (and this corridor art) is reading real facing correctly
+	// the whole time. Found while verifying this exact corridor feature
+	// against a debug jump; pre-existing, not introduced by it.
 	public void ConfigureExplorationCorridor(AreaMapViewModel? map)
 	{
 		_explorationView.ConfigureCorridor(map);
+
+		if (map is not null
+			&& Enum.TryParse(map.PartyFacing, out CompassDirection realFacing))
+		{
+			_facing = realFacing;
+			RefreshExplorationView();
+		}
 	}
 
 	public string CycleExplorationVariant()

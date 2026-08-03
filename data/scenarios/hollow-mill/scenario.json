@@ -70,7 +70,8 @@
                             { "X": 1, "Y": 3 },
                             { "X": 2, "Y": 3 },
                             { "X": 3, "Y": 3 },
-                            { "X": 4, "Y": 3 }
+                            { "X": 4, "Y": 3 },
+                            { "X": 4, "Y": 2 }
                         ],
                         "Stairs": [
                             {
@@ -90,7 +91,8 @@
                         "Doors": [
                             {
                                 "DoorId": "door.hollow-mill.hidden-larder",
-                                "Position": { "X": 4, "Y": 2 },
+                                "Position": { "X": 3, "Y": 2 },
+                                "Side": "East",
                                 "IsSecret": true,
                                 "IsLocked": false
                             }
@@ -108,6 +110,7 @@
                         "TraversablePositions": [
                             { "X": 0, "Y": 0 },
                             { "X": 1, "Y": 0 },
+                            { "X": 2, "Y": 0 },
                             { "X": 3, "Y": 0 },
                             { "X": 0, "Y": 1 },
                             { "X": 1, "Y": 1 },
@@ -124,7 +127,8 @@
                         "Doors": [
                             {
                                 "DoorId": "door.hollow-mill.flooded-archway",
-                                "Position": { "X": 2, "Y": 0 },
+                                "Position": { "X": 1, "Y": 0 },
+                                "Side": "East",
                                 "IsSecret": false,
                                 "IsLocked": false
                             }

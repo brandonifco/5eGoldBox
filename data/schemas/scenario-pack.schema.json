@@ -370,6 +370,15 @@
         },
         "Position": {
           "$ref": "#/$defs/GridPositionV1"
+        },
+        "Side": {
+          "type": "string",
+          "enum": [
+            "North",
+            "East",
+            "South",
+            "West"
+          ]
         }
       },
       "additionalProperties": false,
@@ -377,7 +386,8 @@
         "DoorId",
         "IsLocked",
         "IsSecret",
-        "Position"
+        "Position",
+        "Side"
       ]
     },
     "NpcDefinitionV1": {

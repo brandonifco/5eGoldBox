@@ -576,12 +576,12 @@ WatchtowerScenarioProgress
     [Fact]
     public void MoveForward_WhenBlockedByWall_DoesNotMove()
     {
+        // (0, 0) -> (1, 0) -> (2, 0), still facing East; (3, 0) is the
+        // bound watchman's own tile -- genuinely blocked, not open floor.
         ApplicationSessionState exploring =
             ExplorationRules.MoveForward(
                 CreateExplorationSession()).State;
-        exploring = ExplorationRules.Turn(
-            exploring,
-            ExplorationTurnDirection.Right);
+        exploring = ExplorationRules.MoveForward(exploring).State;
         ExplorationState before =
             AssertExploration(exploring);
 
@@ -1241,8 +1241,8 @@ WatchtowerScenarioProgress
             new HashSet<GridPosition>
             {
                 new(0, 0), new(1, 0), new(2, 0),
-                new(0, 1), new(2, 1),
-                new(0, 2), new(1, 2), new(2, 2),
+                new(0, 1), new(1, 1), new(2, 1), new(3, 1),
+                new(0, 2), new(1, 2), new(2, 2), new(3, 2),
                 new(4, 1), new(4, 2)
             },
             view.TraversablePositions.ToHashSet());
@@ -1311,23 +1311,22 @@ WatchtowerScenarioProgress
 
         Assert.NotNull(view);
         Assert.Contains(
-            new GridPosition(3, 1),
-            view!.ClosedDoorPositions);
+            view!.Doors,
+            door => !door.IsLocked
+                && ConnectsEdge(door, new GridPosition(2, 1), new GridPosition(3, 1)));
         Assert.Contains(
-            new GridPosition(1, 1),
-            view.LockedDoorPositions);
+            view.Doors,
+            door => door.IsLocked
+                && ConnectsEdge(door, new GridPosition(0, 1), new GridPosition(1, 1)));
 
-        // The hidden vault (3, 2) is an unrevealed secret door: invisible.
-        // It appears in no list at all, including TraversablePositions.
-        Assert.DoesNotContain(
-            new GridPosition(3, 2),
-            view.ClosedDoorPositions);
-        Assert.DoesNotContain(
-            new GridPosition(3, 2),
-            view.LockedDoorPositions);
-        Assert.DoesNotContain(
-            new GridPosition(3, 2),
-            view.TraversablePositions);
+        // The hidden vault, on the edge between (2, 2) and (3, 2), is an
+        // unrevealed secret door -- still present (a renderer needs the
+        // edge to draw a plain wall rather than open passage), but
+        // flagged as not yet revealed.
+        Assert.Contains(
+            view.Doors,
+            door => !door.IsRevealed
+                && ConnectsEdge(door, new GridPosition(2, 2), new GridPosition(3, 2)));
 
         Assert.Contains(
             new GridPosition(4, 1),
@@ -1335,7 +1334,7 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
-    public void Query_AfterOpeningAnOrdinaryDoor_MovesItIntoTraversablePositions()
+    public void Query_AfterOpeningAnOrdinaryDoor_StaysInTheDoorListMarkedOpen()
     {
         ApplicationSessionState opened =
             ExplorationRules.OpenDoor(
@@ -1345,11 +1344,9 @@ WatchtowerScenarioProgress
 
         Assert.NotNull(view);
         Assert.Contains(
-            new GridPosition(3, 1),
-            view!.TraversablePositions);
-        Assert.DoesNotContain(
-            new GridPosition(3, 1),
-            view.ClosedDoorPositions);
+            view!.Doors,
+            door => door.IsOpen
+                && ConnectsEdge(door, new GridPosition(2, 1), new GridPosition(3, 1)));
     }
 
     [Fact]
@@ -1363,11 +1360,9 @@ WatchtowerScenarioProgress
 
         Assert.NotNull(view);
         Assert.Contains(
-            new GridPosition(3, 2),
-            view!.ClosedDoorPositions);
-        Assert.DoesNotContain(
-            new GridPosition(3, 2),
-            view.TraversablePositions);
+            view!.Doors,
+            door => !door.IsLocked
+                && ConnectsEdge(door, new GridPosition(2, 2), new GridPosition(3, 2)));
     }
 
     [Fact]
@@ -1385,8 +1380,14 @@ WatchtowerScenarioProgress
             view!.TreasurePositions);
     }
 
+    /// The postern's edge (between (0, 1) and (1, 1)) has no unlock path
+    /// in v1, so it stays locked across every other state change tested
+    /// here -- but unlike the old its-own-tile model, (1, 1) is ordinary
+    /// floor reachable from its other three sides, so it does appear in
+    /// TraversablePositions; only the specific edge from (0, 1) stays
+    /// gated.
     [Fact]
-    public void Query_TheLockedPosternNeverAppearsAsClosedOrTraversable_AcrossStateChanges()
+    public void Query_TheLockedPosternEdgeNeverOpens_AcrossStateChanges()
     {
         ApplicationSessionState fresh = CreateExplorationSession();
         ApplicationSessionState doorOpened =
@@ -1406,12 +1407,10 @@ WatchtowerScenarioProgress
 
             Assert.NotNull(view);
             Assert.Contains(
-                new GridPosition(1, 1),
-                view!.LockedDoorPositions);
-            Assert.DoesNotContain(
-                new GridPosition(1, 1),
-                view.ClosedDoorPositions);
-            Assert.DoesNotContain(
+                view!.Doors,
+                door => door.IsLocked
+                    && ConnectsEdge(door, new GridPosition(0, 1), new GridPosition(1, 1)));
+            Assert.Contains(
                 new GridPosition(1, 1),
                 view.TraversablePositions);
         }
@@ -1633,6 +1632,18 @@ WatchtowerScenarioProgress
     {
         return Assert.IsType<ExplorationState>(
             state.Exploration);
+    }
+
+    /// True if a door edge connects the two given tiles, checked in
+    /// either order since ExplorationDoorEdge itself does not privilege
+    /// PositionA over PositionB.
+    private static bool ConnectsEdge(
+        ExplorationDoorEdge door,
+        GridPosition a,
+        GridPosition b)
+    {
+        return (door.PositionA == a && door.PositionB == b)
+            || (door.PositionA == b && door.PositionB == a);
     }
 
     private static void AssertPartyEquivalent(

@@ -1002,8 +1002,10 @@ public sealed class ManualSaveSerializerTests
         JsonObject position = GetObject(
             exploration,
             "Position");
-        position["X"] = 1;
-        position["Y"] = 1;
+        // (3, 0) is the bound watchman's own tile -- genuinely blocked,
+        // not open floor.
+        position["X"] = 3;
+        position["Y"] = 0;
 
         ManualSaveLoadResult result =
             ManualSaveSerializer.Deserialize(

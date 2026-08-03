@@ -66,6 +66,25 @@ public partial class AreaMapView
 		_gridLayer.DrawCircle(knobCenter, size * 0.045f, knobColor);
 	}
 
+	// A hollow frame rather than a solid leaf -- an opened door still
+	// marks its edge as a doorway, but reads as passable/ajar rather
+	// than closed.
+	private void DrawOpenDoorway(Rect2 cellRect, Color frameColor)
+	{
+		float size = cellRect.Size.X;
+		float frameWidth = size * 0.55f;
+		float frameHeight = size * 0.82f;
+		Vector2 frameTopLeft = cellRect.Position + new Vector2(
+			(size - frameWidth) / 2f,
+			(size - frameHeight) / 2f);
+
+		_gridLayer.DrawRect(
+			new Rect2(frameTopLeft, new Vector2(frameWidth, frameHeight)),
+			frameColor,
+			filled: false,
+			width: size * 0.06f);
+	}
+
 	private void DrawPadlock(Rect2 cellRect, Color bodyColor, Color shackleColor)
 	{
 		float size = cellRect.Size.X;

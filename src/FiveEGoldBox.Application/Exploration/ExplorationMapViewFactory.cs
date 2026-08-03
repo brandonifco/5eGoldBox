@@ -18,20 +18,6 @@ internal static class ExplorationMapViewFactory
                 state.Floor,
                 StringComparison.Ordinal));
 
-        IReadOnlyList<DoorDefinition> visibleDoors = floor.Doors
-            .Where(door => IsRevealed(door, state))
-            .ToArray();
-        IReadOnlyList<DoorDefinition> openDoors = visibleDoors
-            .Where(door => IsOpen(door, state))
-            .ToArray();
-        IReadOnlyList<GridPosition> closedDoorPositions = visibleDoors
-            .Where(door => !IsOpen(door, state) && !door.IsLocked)
-            .Select(door => door.Position)
-            .ToArray();
-        IReadOnlyList<GridPosition> lockedDoorPositions = visibleDoors
-            .Where(door => !IsOpen(door, state) && door.IsLocked)
-            .Select(door => door.Position)
-            .ToArray();
         IReadOnlyList<GridPosition> treasurePositions = floor.Treasures
             .Where(treasure => !IsCollected(treasure, state))
             .Select(treasure => treasure.Position)
@@ -42,22 +28,28 @@ internal static class ExplorationMapViewFactory
             state.Floor,
             map.Width,
             map.Height,
-            floor.TraversablePositions
-                .Concat(openDoors.Select(door => door.Position))
-                .ToArray(),
+            floor.TraversablePositions,
             floor.Stairs
                 .Select(stair => stair.Position)
                 .ToArray(),
-            closedDoorPositions,
-            lockedDoorPositions,
+            floor.Doors
+                .Select(door => new ExplorationDoorEdge(
+                    door.Position,
+                    door.OtherPosition,
+                    door.IsLocked,
+                    IsOpen(door, state),
+                    IsRevealed(door, state)))
+                .ToArray(),
             treasurePositions,
             state.Position,
             state.Facing);
     }
 
-    /// Bucket 1 of the door-visibility rule -- an unrevealed secret door
-    /// is fully invisible, so nothing downstream should ever see it. Every
-    /// other door (secret-but-revealed, or never secret at all) is known.
+    /// Whether the party knows about this door at all -- false only for
+    /// an unrevealed secret. Flagged on the returned ExplorationDoorEdge
+    /// rather than used to filter it out, since a renderer still needs to
+    /// know an unrevealed door's edge exists in order to draw it as a
+    /// plain wall instead of open passage.
     private static bool IsRevealed(
         DoorDefinition door,
         ExplorationState state)
@@ -68,10 +60,6 @@ internal static class ExplorationMapViewFactory
                 StringComparer.Ordinal);
     }
 
-    /// Bucket 2 -- a door the party has opened behaves exactly like
-    /// ordinary floor, checked ahead of locked/closed since opening a door
-    /// that happened to also be secret or locked is still what it looks
-    /// like once opened.
     private static bool IsOpen(
         DoorDefinition door,
         ExplorationState state)
