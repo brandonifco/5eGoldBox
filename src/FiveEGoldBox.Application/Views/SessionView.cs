@@ -48,6 +48,7 @@ public static class SessionView
             IsConcluded = canonicalSession.CurrentMode
                 == ApplicationMode.ScenarioConclusion,
             IsSuccess = conclusion?.IsSuccess,
+            ConclusionText = conclusion?.EpilogueText,
             Actions = Array.AsReadOnly(
                 CreateActions(canonicalSession, scenario).ToArray()),
             Party = DescribeParty(canonicalSession.Party, scenario)

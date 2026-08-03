@@ -54,6 +54,18 @@ internal sealed partial class ShellInteractionController
 			new Dictionary<string, Action> { ["close"] = CloseModalScreen });
 	}
 
+	// Opened automatically by ShowRealSession the moment a real session
+	// reaches ScenarioConclusion -- unlike every other screen here, the
+	// player never asks for this one. Real-only: a concluded scenario is
+	// a real-session-only state, so there is no mock counterpart to branch
+	// to the way ShowInventoryScreen/ShowCharacterScreen do.
+	public void ShowConclusionScreen()
+	{
+		ShowModalScreen(
+			_activeRealSession!.DescribeConclusion(),
+			new Dictionary<string, Action> { ["close"] = CloseModalScreen });
+	}
+
 	// M9c: "Cast" already existed as an Exploration command (M6c) and only
 	// ever printed a placeholder message. Activating a spell in the list
 	// (Enter/click, not just focus) reports a real "readied" message

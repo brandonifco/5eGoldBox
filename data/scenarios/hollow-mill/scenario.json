@@ -20,12 +20,14 @@
             {
                 "ProgressId": "mill.blight-severed",
                 "IsSuccess": true,
-                "LocationId": "location.hollow-mill-house"
+                "LocationId": "location.hollow-mill-house",
+                "EpilogueText": "The root blackens and crumbles under the last blow, and the stench lifts from the grain vault within the hour. Garrick will tell it in the village square for years to come: the day Hollow Mill's grain, and the survivors still guarding it, were saved before the blight could spread past the millhouse walls."
             },
             {
                 "ProgressId": "mill.millers-lost",
                 "IsSuccess": false,
-                "LocationId": "location.hollow-mill-house"
+                "LocationId": "location.hollow-mill-house",
+                "EpilogueText": "Whatever waited in the dark below the mill was more than the party could turn back. The vault swallows the last of the light they carried in, and Hollow Mill's grain, along with those who went to save it, is lost to the blight for good."
             }
         ]
     },

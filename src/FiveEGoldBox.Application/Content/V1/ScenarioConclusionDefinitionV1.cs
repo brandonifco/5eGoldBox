@@ -7,4 +7,6 @@ internal sealed record ScenarioConclusionDefinitionV1
     public required bool IsSuccess { get; init; }
 
     public required string LocationId { get; init; }
+
+    public required string EpilogueText { get; init; }
 }

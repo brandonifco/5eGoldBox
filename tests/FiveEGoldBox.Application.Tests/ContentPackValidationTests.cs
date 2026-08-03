@@ -134,8 +134,8 @@ public sealed class ContentPackValidationTests
                     "InitialProgressId": "test.not_started",
                     "ProgressIds": [ "test.not_started", "test.won", "test.lost" ],
                     "Conclusions": [
-                        { "ProgressId": "test.won", "IsSuccess": true, "LocationId": "location.hub" },
-                        { "ProgressId": "test.lost", "IsSuccess": false, "LocationId": "location.hub" }
+                        { "ProgressId": "test.won", "IsSuccess": true, "LocationId": "location.hub", "EpilogueText": "Won." },
+                        { "ProgressId": "test.lost", "IsSuccess": false, "LocationId": "location.hub", "EpilogueText": "Lost." }
                     ]
                 },
                 "PartyRequirement": {

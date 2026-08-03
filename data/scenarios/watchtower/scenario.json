@@ -18,7 +18,8 @@
             {
                 "ProgressId": "PartyDefeated",
                 "IsSuccess": false,
-                "LocationId": "location.ruined-watchtower"
+                "LocationId": "location.ruined-watchtower",
+                "EpilogueText": "The raiders overrun what's left of the watchtower's defenses. The frontier outpost will need to send another party -- this one doesn't return."
             }
         ]
     },
