@@ -39,25 +39,19 @@ internal static class ScenarioConclusionValidator
                 nameof(state));
         }
 
-        if (state.RegionalTravel is not null)
-        {
-            throw new ArgumentException(
-                "A scenario conclusion cannot contain regional-travel state.",
-                nameof(state));
-        }
+        SessionSubstateInvariant.RequireAbsent(
+            state,
+            state.RegionalTravel,
+            "A scenario conclusion cannot contain regional-travel state.");
 
-        if (state.Exploration is not null)
-        {
-            throw new ArgumentException(
-                "A scenario conclusion cannot contain exploration state.",
-                nameof(state));
-        }
+        SessionSubstateInvariant.RequireAbsent(
+            state,
+            state.Exploration,
+            "A scenario conclusion cannot contain exploration state.");
 
-        if (state.ActiveEncounter is not null)
-        {
-            throw new ArgumentException(
-                "A scenario conclusion cannot contain an active encounter.",
-                nameof(state));
-        }
+        SessionSubstateInvariant.RequireAbsent(
+            state,
+            state.ActiveEncounter,
+            "A scenario conclusion cannot contain an active encounter.");
     }
 }
