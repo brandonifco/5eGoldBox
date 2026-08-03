@@ -498,6 +498,9 @@
     "ScenarioConclusionDefinitionV1": {
       "type": "object",
       "properties": {
+        "EpilogueText": {
+          "type": "string"
+        },
         "IsSuccess": {
           "type": "boolean"
         },
@@ -510,6 +513,7 @@
       },
       "additionalProperties": false,
       "required": [
+        "EpilogueText",
         "IsSuccess",
         "LocationId",
         "ProgressId"

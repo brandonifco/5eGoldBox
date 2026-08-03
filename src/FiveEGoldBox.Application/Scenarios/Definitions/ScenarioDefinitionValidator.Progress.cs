@@ -71,6 +71,12 @@ internal static partial class ScenarioDefinitionValidator
 
         foreach (ScenarioConclusionDefinition conclusion in conclusions)
         {
+            AddIfBlank(
+                issues,
+                conclusion.EpilogueText,
+                "scenario.conclusion.epilogue_required",
+                $"Conclusion '{conclusion.ProgressId}' must declare epilogue text.");
+
             if (!declaredProgress.Contains(conclusion.ProgressId))
             {
                 issues.Add(Error(

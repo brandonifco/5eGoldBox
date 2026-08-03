@@ -46,9 +46,9 @@ internal sealed partial class ShellInteractionController
 	// after an action doesn't immediately clobber it with the generic
 	// status line.
 	//
-	// Combat and scenario conclusion are shown honestly rather than faked:
-	// this scope is outpost decisions, exploration, and regional travel
-	// only (see RealGameSession's own header comment for why).
+	// Scenario conclusion opens the real ShowConclusionScreen modal
+	// (the scenario's own authored epilogue), layered on top of this same
+	// background render -- see the ScenarioConclusion case below.
 	public void ShowRealSession(
 		RealGameSession session,
 		string? overrideMessage = null)
@@ -71,9 +71,10 @@ internal sealed partial class ShellInteractionController
 				_presentationController.ShowExploration(
 					ExplorationSceneKeys.OutpostEntrance,
 					snapshot.LocationDisplayName,
-					"Conclusion",
+					snapshot.IsSuccess == true ? "Victory" : "Defeat",
 					overrideMessage ?? snapshot.StatusMessage);
 				_commandBarController.ShowCommands();
+				ShowConclusionScreen();
 				return;
 			case ApplicationMode.RegionalTravel:
 				_presentationController.ShowRegionalMap();

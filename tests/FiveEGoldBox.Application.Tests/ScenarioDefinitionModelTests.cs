@@ -198,7 +198,8 @@ public sealed class ScenarioDefinitionModelTests
                             WatchtowerScenarioProgress.PartyDefeated.ToString(),
                         IsSuccess = false,
                         LocationId =
-                            WatchtowerRegionalRoute.WatchtowerLocationId
+                            WatchtowerRegionalRoute.WatchtowerLocationId,
+                        EpilogueText = "The party is defeated."
                     }
                 ]
             },

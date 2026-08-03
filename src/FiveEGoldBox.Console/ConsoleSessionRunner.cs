@@ -2,6 +2,7 @@ using System.Globalization;
 using FiveEGoldBox.Application.Persistence;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Views;
 
 namespace FiveEGoldBox.Console;
 
@@ -357,6 +358,7 @@ internal sealed partial class ConsoleSessionRunner
                 break;
             case ApplicationMode.ScenarioConclusion:
                 output.WriteLine("Scenario Conclusion");
+                output.WriteLine(SessionView.Describe(session).ConclusionText);
                 output.WriteLine(
                     $"Conclusion Progress: {session.Scenario.ProgressId}");
                 output.WriteLine(

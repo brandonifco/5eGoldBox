@@ -25,6 +25,10 @@ public sealed record SessionViewModel
     /// Null unless the scenario has ended.
     public bool? IsSuccess { get; init; }
 
+    /// The scenario's own authored epilogue for this ending. Null unless
+    /// the scenario has ended.
+    public string? ConclusionText { get; init; }
+
     public required IReadOnlyList<SessionAction> Actions { get; init; }
 
     public required PartyViewModel Party { get; init; }

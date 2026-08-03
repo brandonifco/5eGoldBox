@@ -67,7 +67,8 @@ internal static class ScenarioPackMapper
         {
             ProgressId = conclusion.ProgressId,
             IsSuccess = conclusion.IsSuccess,
-            LocationId = conclusion.LocationId
+            LocationId = conclusion.LocationId,
+            EpilogueText = conclusion.EpilogueText
         };
     }
 

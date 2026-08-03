@@ -20,12 +20,14 @@
             {
                 "ProgressId": "chapel.relic-recovered",
                 "IsSuccess": true,
-                "LocationId": "location.sunken-chapel"
+                "LocationId": "location.sunken-chapel",
+                "EpilogueText": "The relic surfaces at last, dry and untouched despite the years the sea spent trying to claim it. The chapel's guardians, banished back to whatever silence bound them before, do not stir again as the party wades back toward Harbor Town on the tide it came in on."
             },
             {
                 "ProgressId": "chapel.party-drowned",
                 "IsSuccess": false,
-                "LocationId": "location.sunken-chapel"
+                "LocationId": "location.sunken-chapel",
+                "EpilogueText": "The sea reclaims the chapel's floor before the party can reach open water again. Harbor Town will wait for a return that was never coming, and the relic stays where it has always been -- sunk, guarded, and now one grave deeper."
             }
         ]
     },

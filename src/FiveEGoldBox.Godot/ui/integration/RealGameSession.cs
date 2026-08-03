@@ -15,8 +15,8 @@ using FiveEGoldBox.Application.Views;
 //
 // Scoped deliberately to what both sides already support: outpost
 // decisions, exploration movement/triggers/stairs, and regional travel.
-// Combat and scenario conclusion are detected and shown honestly rather
-// than faked — see ShellInteractionController.ShowRealSession.
+// Scenario conclusion gets its own authored epilogue via
+// DescribeConclusion — see ShellInteractionController.ShowRealSession.
 //
 // Real SessionActionKinds do not match the seven-command exploration set
 // (move/view/cast/area/encamp/search/look) MockExplorationCommandContent
@@ -229,6 +229,20 @@ internal sealed class RealGameSession
 					$"{item.DisplayName} x{item.Quantity}"))
 				.ToArray(),
 			new[] { new CommandViewModel("close", "Close", "C") });
+	}
+
+	// The scenario's own authored ending, surfaced as a real modal instead
+	// of the one templated sentence DescribeStatus produces for the
+	// message log behind it. Mirrors DescribeInventory/DescribeCharacter's
+	// shape exactly -- one SessionView.Describe call, no new lookup.
+	internal ModalViewModel DescribeConclusion()
+	{
+		SessionViewModel view = SessionView.Describe(_state);
+
+		return new ModalViewModel(
+			view.IsSuccess == true ? "Victory" : "Defeat",
+			view.ConclusionText,
+			Commands: new[] { new CommandViewModel("close", "Close", "C") });
 	}
 
 	private static string DescribePurse(CurrencyViewModel currency)

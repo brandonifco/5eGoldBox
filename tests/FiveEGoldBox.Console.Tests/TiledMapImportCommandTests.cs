@@ -276,7 +276,13 @@ public sealed class TiledMapImportCommandTests
                 ProgressIds = new[] { "progress.one", "progress.two" },
                 Conclusions = new[]
                 {
-                    new { ProgressId = "progress.two", IsSuccess = true, LocationId = "location.hub" }
+                    new
+                    {
+                        ProgressId = "progress.two",
+                        IsSuccess = true,
+                        LocationId = "location.hub",
+                        EpilogueText = "The end."
+                    }
                 }
             },
             PartyRequirement = new
