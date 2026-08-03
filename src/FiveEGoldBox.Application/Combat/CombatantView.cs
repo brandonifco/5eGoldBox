@@ -7,6 +7,7 @@ public sealed record CombatantView
 {
     internal CombatantView(
         string combatantId,
+        string displayName,
         string sideId,
         GridPosition position,
         CombatantLifecycleState lifecycleState,
@@ -26,6 +27,13 @@ public sealed record CombatantView
                 nameof(combatantId));
         }
 
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            throw new ArgumentException(
+                "Display name is required.",
+                nameof(displayName));
+        }
+
         if (string.IsNullOrWhiteSpace(sideId))
         {
             throw new ArgumentException(
@@ -36,6 +44,7 @@ public sealed record CombatantView
         ArgumentNullException.ThrowIfNull(health);
 
         CombatantId = combatantId;
+        DisplayName = displayName;
         SideId = sideId;
         Position = position;
         LifecycleState = lifecycleState;
@@ -50,6 +59,15 @@ public sealed record CombatantView
     }
 
     public string CombatantId { get; }
+
+    /// A party member's real name (PartyMemberState.DisplayName), or --
+    /// for opposition placed by the scenario -- the ruleset's
+    /// MonsterDefinition.Name, reached only through the internal
+    /// EncounterCombatantDefinition placement and RulesetRegistry lookup a
+    /// client cannot perform itself. This is the one place a client gets a
+    /// real name for every combatant without falling back to the raw
+    /// combatant ID.
+    public string DisplayName { get; }
 
     public string SideId { get; }
 

@@ -277,16 +277,10 @@ internal sealed class RealGameSession
 		return $"Choice made: {action.DisplayName}.";
 	}
 
-	private const string SetOutForPrefix = "Set out for ";
-
 	private string BeginJourney(SessionAction action)
 	{
 		_travelOriginDisplayName = SessionView.Describe(_state).LocationDisplayName;
-		_travelDestinationDisplayName = action.DisplayName.StartsWith(
-			SetOutForPrefix,
-			StringComparison.Ordinal)
-			? action.DisplayName[SetOutForPrefix.Length..]
-			: action.DisplayName;
+		_travelDestinationDisplayName = action.DestinationDisplayName;
 
 		_state = RegionalTravelRules.BeginJourney(_state, action.RouteId);
 

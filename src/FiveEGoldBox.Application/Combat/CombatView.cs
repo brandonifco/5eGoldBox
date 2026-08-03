@@ -15,6 +15,7 @@ public sealed record CombatView
         string? activeCombatantId,
         string? pendingDeathSavingThrowCombatantId,
         string? winningSideId,
+        string partySideId,
         IReadOnlyList<CombatantView> combatants,
         CombatDecision decision)
     {
@@ -30,6 +31,13 @@ public sealed record CombatView
             throw new ArgumentException(
                 "Battlefield ID is required.",
                 nameof(battlefieldId));
+        }
+
+        if (string.IsNullOrWhiteSpace(partySideId))
+        {
+            throw new ArgumentException(
+                "Party side ID is required.",
+                nameof(partySideId));
         }
 
         ArgumentNullException.ThrowIfNull(combatants);
@@ -56,6 +64,7 @@ public sealed record CombatView
         PendingDeathSavingThrowCombatantId =
             pendingDeathSavingThrowCombatantId;
         WinningSideId = winningSideId;
+        PartySideId = partySideId;
         Combatants = Array.AsReadOnly(protectedCombatants);
         Decision = decision;
     }
@@ -79,6 +88,16 @@ public sealed record CombatView
     public string? PendingDeathSavingThrowCombatantId { get; }
 
     public string? WinningSideId { get; }
+
+    /// Which SideId is the party's, for whichever scenario is running --
+    /// the same fact WatchtowerCombatDecisionFactory already resolves
+    /// internally (via EncounterPartySideResolver, internal to Application)
+    /// to decide whose turn requires a player decision. A client needing
+    /// "is this combatant an ally" no longer has to re-derive its own
+    /// party-member-ID set from the session to answer it; comparing a
+    /// combatant's own SideId against this one is exact, not one client's
+    /// approximation of the real mechanism.
+    public string PartySideId { get; }
 
     public IReadOnlyList<CombatantView> Combatants { get; }
 
