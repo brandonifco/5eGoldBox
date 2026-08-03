@@ -112,24 +112,31 @@ public sealed class HollowMillScenarioTests
             session.Scenario.ProgressId);
         Assert.Equal(ApplicationMode.Exploration, session.CurrentMode);
 
-        // Down to the stairs.
+        // Down through the back hall to the stairs.
         session = Turn(session, ExplorationTurnDirection.Left);
         session = Forward(session);
         Assert.Equal(new GridPosition(0, 2), session.Exploration!.Position);
+        session = Forward(session);
+        Assert.Equal(new GridPosition(0, 3), session.Exploration!.Position);
         session = Turn(session, ExplorationTurnDirection.Left);
         session = Forward(session);
-        Assert.Equal(new GridPosition(1, 2), session.Exploration!.Position);
+        Assert.Equal(new GridPosition(1, 3), session.Exploration!.Position);
 
         Assert.True(ExplorationRules.CanUseStairs(session));
         session = ExplorationRules.UseStairs(session);
         Assert.Equal("UpperFloor", session.Exploration!.Floor);
         Assert.Equal(new GridPosition(0, 0), session.Exploration!.Position);
 
-        // Face east and cross the cellar to the vault.
+        // Face east, open the flooded archway, and cross into the vault.
         session = FaceEast(session);
         session = Forward(session);
+        Assert.Equal(new GridPosition(1, 0), session.Exploration!.Position);
+
+        Assert.True(ExplorationRules.CanOpenDoor(session));
+        session = ExplorationRules.OpenDoor(session);
         session = Forward(session);
-        Assert.Equal(new GridPosition(2, 0), session.Exploration!.Position);
+        session = Forward(session);
+        Assert.Equal(new GridPosition(3, 0), session.Exploration!.Position);
 
         Assert.True(ScenarioTriggerRules.CanActivate(session));
         session = ScenarioTriggerRules.Activate(session);
@@ -155,12 +162,12 @@ public sealed class HollowMillScenarioTests
             HollowMillScenarioIds.VerminRoused,
             session.Scenario.ProgressId);
         Assert.Equal(ApplicationMode.Exploration, session.CurrentMode);
-        Assert.Equal(new GridPosition(2, 0), session.Exploration!.Position);
+        Assert.Equal(new GridPosition(3, 0), session.Exploration!.Position);
 
         // One step to the root, and the scenario is won.
         session = Turn(session, ExplorationTurnDirection.Right);
         session = Forward(session);
-        Assert.Equal(new GridPosition(2, 1), session.Exploration!.Position);
+        Assert.Equal(new GridPosition(3, 1), session.Exploration!.Position);
 
         Assert.True(ScenarioTriggerRules.CanActivate(session));
         session = ScenarioTriggerRules.Activate(session);
@@ -197,23 +204,31 @@ public sealed class HollowMillScenarioTests
             HollowMillScenarioIds.MillerConfronted,
             session.Scenario.ProgressId);
 
-        // Down to the stairs.
+        // Down through the back hall to the stairs.
         session = Turn(session, ExplorationTurnDirection.Right);
         session = Forward(session);
         Assert.Equal(new GridPosition(2, 2), session.Exploration!.Position);
+        session = Forward(session);
+        Assert.Equal(new GridPosition(2, 3), session.Exploration!.Position);
         session = Turn(session, ExplorationTurnDirection.Right);
         session = Forward(session);
-        Assert.Equal(new GridPosition(1, 2), session.Exploration!.Position);
+        Assert.Equal(new GridPosition(1, 3), session.Exploration!.Position);
 
         Assert.True(ExplorationRules.CanUseStairs(session));
         session = ExplorationRules.UseStairs(session);
         Assert.Equal("UpperFloor", session.Exploration!.Floor);
         Assert.Equal(new GridPosition(0, 0), session.Exploration!.Position);
 
+        // Face east, open the flooded archway, and cross into the vault.
         session = FaceEast(session);
         session = Forward(session);
+        Assert.Equal(new GridPosition(1, 0), session.Exploration!.Position);
+
+        Assert.True(ExplorationRules.CanOpenDoor(session));
+        session = ExplorationRules.OpenDoor(session);
         session = Forward(session);
-        Assert.Equal(new GridPosition(2, 0), session.Exploration!.Position);
+        session = Forward(session);
+        Assert.Equal(new GridPosition(3, 0), session.Exploration!.Position);
 
         Assert.True(ScenarioTriggerRules.CanActivate(session));
         session = ScenarioTriggerRules.Activate(session);
@@ -240,6 +255,53 @@ public sealed class HollowMillScenarioTests
             HollowMillScenarioIds.MillersLost,
             session.Scenario.ProgressId);
         Assert.Equal(ApplicationMode.ScenarioConclusion, session.CurrentMode);
+    }
+
+    /// The hidden larder is a side reward, not on either branch's critical
+    /// path: finding it needs the secret door revealed and opened before
+    /// its own tile -- and the tile behind it -- becomes reachable at all.
+    [Fact]
+    public void HiddenLarder_CanBeFoundOpenedAndCollected()
+    {
+        ApplicationSessionState session = CreateSession();
+
+        session = OutpostDecisionRules.Resolve(
+            session,
+            "AcceptMission")
+            .State;
+        session = TravelToTheMill(session);
+        session = ExplorationRules.EnterDestination(session);
+
+        session = Forward(session);
+        session = Turn(session, ExplorationTurnDirection.Left);
+        session = Forward(session);
+        session = Forward(session);
+        Assert.Equal(new GridPosition(3, 1), session.Exploration!.Position);
+        session = Turn(session, ExplorationTurnDirection.Right);
+        session = Forward(session);
+        Assert.Equal(new GridPosition(3, 2), session.Exploration!.Position);
+        session = Turn(session, ExplorationTurnDirection.Left);
+
+        Assert.True(ExplorationRules.CanRevealSecretDoor(session));
+        session = ExplorationRules.RevealSecretDoor(session);
+        Assert.True(ExplorationRules.CanOpenDoor(session));
+        session = ExplorationRules.OpenDoor(session);
+
+        session = Forward(session);
+        Assert.Equal(new GridPosition(4, 2), session.Exploration!.Position);
+        session = Turn(session, ExplorationTurnDirection.Right);
+        session = Forward(session);
+        Assert.Equal(new GridPosition(4, 3), session.Exploration!.Position);
+
+        int goldBefore = session.Party.Currency.GoldPieces;
+
+        Assert.True(ExplorationRules.CanCollectTreasure(session));
+        session = ExplorationRules.CollectTreasure(session);
+
+        Assert.Equal(
+            goldBefore + 15,
+            session.Party.Currency.GoldPieces);
+        Assert.False(ExplorationRules.CanCollectTreasure(session));
     }
 
     /// The vehicle for proving multi-route travel with real, registered
