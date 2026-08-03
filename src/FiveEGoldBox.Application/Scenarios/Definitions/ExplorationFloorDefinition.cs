@@ -13,4 +13,6 @@ internal sealed record ExplorationFloorDefinition
     internal required IReadOnlyList<DoorDefinition> Doors { get; init; }
 
     internal required IReadOnlyList<TreasureDefinition> Treasures { get; init; }
+
+    internal required IReadOnlyList<NpcDefinition> Npcs { get; init; }
 }

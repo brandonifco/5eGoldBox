@@ -1151,6 +1151,79 @@ WatchtowerScenarioProgress
     }
 
     [Fact]
+    public void CanTalkToNpc_WithNothingAheadOfThatKind_ReturnsFalse()
+    {
+        Assert.False(
+            ExplorationRules.CanTalkToNpc(
+                CreateExplorationSession()));
+    }
+
+    [Fact]
+    public void CanTalkToNpc_FacingTheBoundWatchman_ReturnsTrue()
+    {
+        Assert.True(
+            ExplorationRules.CanTalkToNpc(
+                CreateFacingBoundWatchman()));
+    }
+
+    [Fact]
+    public void CanTalkToNpc_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            ExplorationRules.CanTalkToNpc(null!));
+    }
+
+    [Fact]
+    public void DescribeNpcDialogue_FacingTheBoundWatchman_ReturnsTheNpcsNameAndLine()
+    {
+        string dialogue = ExplorationRules.DescribeNpcDialogue(
+            CreateFacingBoundWatchman());
+
+        Assert.Equal(
+            "A Bound Watchman: The raiders forced me to light the signal " +
+                "fires. I'm sorry -- I had no choice.",
+            dialogue);
+    }
+
+    [Fact]
+    public void DescribeNpcDialogue_TalkingDoesNotChangeSessionState()
+    {
+        ApplicationSessionState facingNpc = CreateFacingBoundWatchman();
+
+        ExplorationRules.DescribeNpcDialogue(facingNpc);
+
+        // No session-mutating counterpart exists for talking -- re-describing
+        // is safe to call repeatedly, unlike CollectTreasure.
+        string secondDescription =
+            ExplorationRules.DescribeNpcDialogue(facingNpc);
+
+        Assert.Contains("A Bound Watchman", secondDescription);
+    }
+
+    [Fact]
+    public void DescribeNpcDialogue_WhenNoNpcAhead_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            ExplorationRules.DescribeNpcDialogue(
+                CreateExplorationSession()));
+    }
+
+    [Fact]
+    public void DescribeNpcDialogue_WithNullSession_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            ExplorationRules.DescribeNpcDialogue(null!));
+    }
+
+    [Fact]
+    public void DescribeNpcDialogue_WhenModeIsNotExploration_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            ExplorationRules.DescribeNpcDialogue(
+                CreateAcceptedSession()));
+    }
+
+    [Fact]
     public void Query_DuringExploration_ReturnsRealMapData()
     {
         ApplicationSessionState session = CreateExplorationSession();
@@ -1424,6 +1497,25 @@ WatchtowerScenarioProgress
         current = ExplorationRules.Turn(
             current,
             ExplorationTurnDirection.Right);
+        current = ExplorationRules.MoveForward(current).State;
+        current = ExplorationRules.Turn(
+            current,
+            ExplorationTurnDirection.Left);
+
+        return current;
+    }
+
+    /// Facing the bound watchman NPC at (4, 0) on the Watchtower's ground
+    /// floor, from the armory chamber square at (4, 1) -- reached by
+    /// opening the armory door and walking through it, since the chamber
+    /// beyond is only reachable that way.
+    private static ApplicationSessionState
+        CreateFacingBoundWatchman()
+    {
+        ApplicationSessionState current =
+            ExplorationRules.OpenDoor(CreateFacingArmoryDoor());
+
+        current = ExplorationRules.MoveForward(current).State;
         current = ExplorationRules.MoveForward(current).State;
         current = ExplorationRules.Turn(
             current,

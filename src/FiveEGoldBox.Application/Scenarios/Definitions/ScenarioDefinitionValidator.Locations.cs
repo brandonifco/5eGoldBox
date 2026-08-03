@@ -128,6 +128,7 @@ internal static partial class ScenarioDefinitionValidator
         AddStairIssues(map, traversable, where, issues);
         AddDoorIssues(map, traversable, where, issues);
         AddTreasureIssues(map, traversable, where, ruleset, issues);
+        AddNpcIssues(map, traversable, where, issues);
         AddStartingStateIssues(map, traversable, where, issues);
     }
 
@@ -330,6 +331,77 @@ internal static partial class ScenarioDefinitionValidator
                     issues.Add(Error(
                         "scenario.map.treasure_item_id_unresolved",
                         $"A treasure on floor {floor.Floor} of the {where} references item '{treasure.ItemId}', which the scenario's ruleset does not define."));
+                }
+            }
+        }
+    }
+
+    /// An NPC blocks its own tile like a door -- it must not sit on ground
+    /// already traversable without it, and it must not fight a door,
+    /// stair, or treasure for the same square.
+    private static void AddNpcIssues(
+        ExplorationMapDefinition map,
+        Dictionary<string, HashSet<GridPosition>> traversable,
+        string where,
+        List<ValidationIssue> issues)
+    {
+        AddDuplicateIdIssues(
+            issues,
+            map.Floors.SelectMany(floor => floor.Npcs)
+                .Select(npc => npc.NpcId),
+            "scenario.map.duplicate_npc_id",
+            "NPC ID");
+
+        foreach (ExplorationFloorDefinition floor in map.Floors)
+        {
+            HashSet<GridPosition> occupied = new(
+                floor.Stairs.Select(stair => stair.Position)
+                    .Concat(floor.Doors.Select(door => door.Position))
+                    .Concat(floor.Treasures.Select(treasure => treasure.Position)));
+
+            foreach (NpcDefinition npc in floor.Npcs)
+            {
+                AddIfBlank(
+                    issues,
+                    npc.NpcId,
+                    "scenario.map.npc_id_required",
+                    "NPC IDs must not be blank.");
+
+                AddIfBlank(
+                    issues,
+                    npc.Name,
+                    "scenario.map.npc_name_required",
+                    "NPC names must not be blank.");
+
+                AddIfBlank(
+                    issues,
+                    npc.DialogueText,
+                    "scenario.map.npc_dialogue_required",
+                    "NPC dialogue must not be blank.");
+
+                if (!IsWithin(map, npc.Position))
+                {
+                    issues.Add(Error(
+                        "scenario.map.npc_position_out_of_bounds",
+                        $"An NPC on floor {floor.Floor} of the {where} lies outside the map bounds."));
+                    continue;
+                }
+
+                if (traversable.TryGetValue(
+                        floor.Floor,
+                        out HashSet<GridPosition>? floorTraversable)
+                    && floorTraversable.Contains(npc.Position))
+                {
+                    issues.Add(Error(
+                        "scenario.map.npc_position_already_traversable",
+                        $"An NPC on floor {floor.Floor} of the {where} sits on a square that is already traversable."));
+                }
+
+                if (!occupied.Add(npc.Position))
+                {
+                    issues.Add(Error(
+                        "scenario.map.npc_position_collision",
+                        $"An NPC on floor {floor.Floor} of the {where} shares its square with a door, stair, or treasure."));
                 }
             }
         }

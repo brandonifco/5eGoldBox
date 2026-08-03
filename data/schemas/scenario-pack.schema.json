@@ -318,6 +318,12 @@
         "Floor": {
           "type": "string"
         },
+        "Npcs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NpcDefinitionV1"
+          }
+        },
         "Stairs": {
           "type": "array",
           "items": {
@@ -365,6 +371,30 @@
         "DoorId",
         "IsLocked",
         "IsSecret",
+        "Position"
+      ]
+    },
+    "NpcDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "DialogueText": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "NpcId": {
+          "type": "string"
+        },
+        "Position": {
+          "$ref": "#/$defs/GridPositionV1"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "DialogueText",
+        "Name",
+        "NpcId",
         "Position"
       ]
     },
