@@ -149,7 +149,10 @@ internal sealed partial class ShellInteractionController
 			CommandViewModel areaCommand = new(
 				"area-map",
 				"Area",
-				AssignAreaHotkey(usedHotkeys));
+				HotkeyAssigner.Assign(
+					"Area".Select(char.ToUpperInvariant),
+					usedHotkeys,
+					"Area"));
 
 			commands.Add(CommandViewModelTranslator.ToCommandDefinition(
 				areaCommand,
@@ -157,34 +160,6 @@ internal sealed partial class ShellInteractionController
 		}
 
 		_commandBarController.ShowCommands(commands.ToArray());
-	}
-
-	// Same collision-free letter-then-digit algorithm RealGameSession.
-	// AssignHotkey uses for real SessionAction labels — duplicated rather
-	// than shared, matching this file's existing "own the real session's
-	// command bar" scope rather than reaching into RealGameSession for a
-	// presentation-only concern.
-	private static string AssignAreaHotkey(HashSet<char> usedHotkeys)
-	{
-		foreach (char candidate in "Area".Select(char.ToUpperInvariant))
-		{
-			if (usedHotkeys.Add(candidate))
-			{
-				return candidate.ToString();
-			}
-		}
-
-		for (char digit = '1'; digit <= '9'; digit++)
-		{
-			if (usedHotkeys.Add(digit))
-			{
-				return digit.ToString();
-			}
-		}
-
-		throw new InvalidOperationException(
-			"Could not assign a hotkey for 'Area'; every candidate " +
-				"letter and digit is already taken in this command set.");
 	}
 
 	// Look-only: opens the real area map, replacing the front-facing view
