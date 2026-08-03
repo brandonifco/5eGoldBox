@@ -2,9 +2,10 @@ using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Scenarios.Definitions;
 
-/// Declares an item/gold reward for content-authoring intent and future use,
-/// but v1 has no inventory or currency system anywhere in this engine --
-/// collecting a treasure only flips a "collected" flag, it grants nothing.
+/// Declares an item/gold reward for content-authoring intent and future use.
+/// A real Core.Characters currency/inventory system exists, but v1 doesn't
+/// wire treasure to it yet -- collecting a treasure only flips a
+/// "collected" flag, it grants nothing.
 internal sealed record TreasureDefinition
 {
     internal required string TreasureId { get; init; }
