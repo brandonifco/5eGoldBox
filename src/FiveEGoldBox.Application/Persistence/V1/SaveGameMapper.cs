@@ -3,6 +3,7 @@ using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
+using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -86,6 +87,14 @@ internal static class SaveGameMapper
             PartyId = party.PartyId,
             Members = party.Members
                 .Select(ToSaveMember)
+                .ToArray(),
+            Currency = ToSaveCurrency(party.Currency),
+            InventoryItems = party.InventoryItems
+                .Select(item => new SavePartyInventoryItemV1
+                {
+                    ItemId = item.ItemId,
+                    Quantity = item.Quantity
+                })
                 .ToArray()
         };
     }
@@ -100,7 +109,43 @@ internal static class SaveGameMapper
             PartyId = party.PartyId,
             Members = party.Members
                 .Select(ToRuntimeMember)
+                .ToArray(),
+            Currency = ToRuntimeCurrency(
+                party.Currency ?? new SaveCurrencyV1()),
+            InventoryItems = (party.InventoryItems
+                    ?? Array.Empty<SavePartyInventoryItemV1>())
+                .Select(item => new PartyInventoryItemState
+                {
+                    ItemId = item.ItemId,
+                    Quantity = item.Quantity
+                })
                 .ToArray()
+        };
+    }
+
+    private static SaveCurrencyV1 ToSaveCurrency(
+        CurrencyAmount currency)
+    {
+        return new SaveCurrencyV1
+        {
+            CopperPieces = currency.CopperPieces,
+            SilverPieces = currency.SilverPieces,
+            ElectrumPieces = currency.ElectrumPieces,
+            GoldPieces = currency.GoldPieces,
+            PlatinumPieces = currency.PlatinumPieces
+        };
+    }
+
+    private static CurrencyAmount ToRuntimeCurrency(
+        SaveCurrencyV1 currency)
+    {
+        return new CurrencyAmount
+        {
+            CopperPieces = currency.CopperPieces,
+            SilverPieces = currency.SilverPieces,
+            ElectrumPieces = currency.ElectrumPieces,
+            GoldPieces = currency.GoldPieces,
+            PlatinumPieces = currency.PlatinumPieces
         };
     }
 

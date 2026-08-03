@@ -400,6 +400,9 @@
         "Position": {
           "$ref": "#/$defs/GridPositionV1"
         },
+        "Quantity": {
+          "type": "integer"
+        },
         "TreasureId": {
           "type": "string"
         }

@@ -9,4 +9,6 @@ internal sealed record TreasureDefinitionV1
     public string? ItemId { get; init; }
 
     public int? GoldPieces { get; init; }
+
+    public int? Quantity { get; init; }
 }

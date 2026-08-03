@@ -165,7 +165,8 @@ internal static class ScenarioPackMapper
             TreasureId = treasure.TreasureId,
             Position = ToRuntimePosition(treasure.Position),
             ItemId = treasure.ItemId,
-            GoldPieces = treasure.GoldPieces
+            GoldPieces = treasure.GoldPieces,
+            Quantity = treasure.Quantity
         };
     }
 

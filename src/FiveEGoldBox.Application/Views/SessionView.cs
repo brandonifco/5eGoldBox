@@ -1,9 +1,12 @@
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
+using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
+using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
 
 namespace FiveEGoldBox.Application.Views;
 
@@ -46,8 +49,55 @@ public static class SessionView
                 == ApplicationMode.ScenarioConclusion,
             IsSuccess = conclusion?.IsSuccess,
             Actions = Array.AsReadOnly(
-                CreateActions(canonicalSession, scenario).ToArray())
+                CreateActions(canonicalSession, scenario).ToArray()),
+            Party = DescribeParty(canonicalSession.Party, scenario)
         };
+    }
+
+    private static PartyViewModel DescribeParty(
+        PartyState party,
+        ScenarioDefinition scenario)
+    {
+        ValidatedRuleset ruleset = RulesetRegistry.Resolve(scenario.RulesetId);
+
+        return new PartyViewModel
+        {
+            Currency = DescribeCurrency(party.Currency),
+            InventoryItems = Array.AsReadOnly(party.InventoryItems
+                .Select(item => new PartyInventoryItemViewModel
+                {
+                    ItemId = item.ItemId,
+                    DisplayName = FindItemDisplayName(ruleset, item.ItemId),
+                    Quantity = item.Quantity
+                })
+                .ToArray())
+        };
+    }
+
+    private static CurrencyViewModel DescribeCurrency(
+        CurrencyAmount currency)
+    {
+        return new CurrencyViewModel
+        {
+            CopperPieces = currency.CopperPieces,
+            SilverPieces = currency.SilverPieces,
+            ElectrumPieces = currency.ElectrumPieces,
+            GoldPieces = currency.GoldPieces,
+            PlatinumPieces = currency.PlatinumPieces
+        };
+    }
+
+    private static string FindItemDisplayName(
+        ValidatedRuleset ruleset,
+        string itemId)
+    {
+        return ruleset.Definition.EquipmentItems
+            .FirstOrDefault(item => string.Equals(
+                item.Id,
+                itemId,
+                StringComparison.Ordinal))
+            ?.Name
+            ?? itemId;
     }
 
     private static List<SessionAction> CreateActions(
