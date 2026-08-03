@@ -118,12 +118,23 @@ public partial class AreaMapView : Control
 		(float cellSize, float offsetX, float offsetY) = Metrics;
 		Color walkableColor = new(0.55f, 0.5f, 0.42f, 1f);
 		Color blockedColor = new(0.12f, 0.11f, 0.1f, 1f);
+		Color blockedHatchColor = new(0.24f, 0.22f, 0.19f, 1f);
 		Color stairColor = new(0.35f, 0.6f, 0.85f, 1f);
-		Color closedDoorColor = new(0.5f, 0.32f, 0.18f, 1f);
-		Color lockedDoorColor = new(0.55f, 0.15f, 0.12f, 1f);
-		Color treasureColor = new(0.85f, 0.7f, 0.2f, 1f);
+		Color stairArrowColor = new(0.95f, 0.97f, 1f, 1f);
+		Color closedDoorLeafColor = new(0.5f, 0.32f, 0.18f, 1f);
+		Color lockedDoorLeafColor = new(0.55f, 0.15f, 0.12f, 1f);
+		Color doorKnobColor = new(0.85f, 0.75f, 0.35f, 1f);
+		Color padlockBodyColor = new(0.15f, 0.15f, 0.15f, 1f);
+		Color padlockShackleColor = new(0.85f, 0.75f, 0.35f, 1f);
+		Color chestBodyColor = new(0.45f, 0.28f, 0.12f, 1f);
+		Color chestLidColor = new(0.58f, 0.38f, 0.18f, 1f);
+		Color chestLockColor = new(0.85f, 0.7f, 0.2f, 1f);
 		Color gridLineColor = new(0f, 0f, 0f, 0.25f);
 
+		// Doors and treasure sit on a walkable-floor base, since the
+		// door leaf / chest overlays (drawn below) carry the kind's own
+		// color -- a solid brown/red fill for the whole cell reads as a
+		// wall, not a threshold or a floor item.
 		for (int y = 0; y < _height; y++)
 		{
 			for (int x = 0; x < _width; x++)
@@ -134,22 +145,38 @@ public partial class AreaMapView : Control
 					_closedDoors.Contains((x, y)),
 					_treasure.Contains((x, y)),
 					_walkable.Contains((x, y)));
-				Color fill = kind switch
+				Color baseFill = kind switch
 				{
 					CellVisualKind.Stair => stairColor,
-					CellVisualKind.LockedDoor => lockedDoorColor,
-					CellVisualKind.ClosedDoor => closedDoorColor,
-					CellVisualKind.Treasure => treasureColor,
-					CellVisualKind.Walkable => walkableColor,
-					_ => blockedColor,
+					CellVisualKind.Blocked => blockedColor,
+					_ => walkableColor,
 				};
 				Vector2 topLeft = new(
 					offsetX + (x * cellSize),
 					offsetY + (y * cellSize));
+				Rect2 cellRect = new(topLeft, new Vector2(cellSize, cellSize));
 
-				_gridLayer.DrawRect(
-					new Rect2(topLeft, new Vector2(cellSize, cellSize)),
-					fill);
+				_gridLayer.DrawRect(cellRect, baseFill);
+
+				switch (kind)
+				{
+					case CellVisualKind.Blocked:
+						DrawWallHatch(cellRect, blockedHatchColor);
+						break;
+					case CellVisualKind.Stair:
+						DrawStairChevrons(cellRect, stairArrowColor);
+						break;
+					case CellVisualKind.ClosedDoor:
+						DrawDoorLeaf(cellRect, closedDoorLeafColor, doorKnobColor);
+						break;
+					case CellVisualKind.LockedDoor:
+						DrawDoorLeaf(cellRect, lockedDoorLeafColor, doorKnobColor);
+						DrawPadlock(cellRect, padlockBodyColor, padlockShackleColor);
+						break;
+					case CellVisualKind.Treasure:
+						DrawChest(cellRect, chestBodyColor, chestLidColor, chestLockColor);
+						break;
+				}
 			}
 		}
 
