@@ -270,8 +270,14 @@ Worked example, landing on the tile adjacent to Watchtower's armory door:
 dotnet run --project src/FiveEGoldBox.Console -- goto scenario.watchtower location.ruined-watchtower GroundFloor 2 1 East MissionAccepted
 ```
 
-**Godot — five (or six) `FIVEEGOLDBOX_DEBUG_*` env vars**, same trusted-absolutely/fail-loudly convention as `FIVEEGOLDBOX_DATA_ROOT` above: `FIVEEGOLDBOX_DEBUG_LOCATION_ID`, `FIVEEGOLDBOX_DEBUG_FLOOR`, `FIVEEGOLDBOX_DEBUG_X`, `FIVEEGOLDBOX_DEBUG_Y`, `FIVEEGOLDBOX_DEBUG_FACING`, and an optional `FIVEEGOLDBOX_DEBUG_PROGRESS_ID`. Only `LOCATION_ID` gates the override — set it and the other four become required, or the app fails loudly naming the missing one rather than silently booting to the outpost. Worked example, same spot:
+**Godot — five (or seven) `FIVEEGOLDBOX_DEBUG_*` env vars**, same trusted-absolutely/fail-loudly convention as `FIVEEGOLDBOX_DATA_ROOT` above: `FIVEEGOLDBOX_DEBUG_LOCATION_ID`, `FIVEEGOLDBOX_DEBUG_FLOOR`, `FIVEEGOLDBOX_DEBUG_X`, `FIVEEGOLDBOX_DEBUG_Y`, `FIVEEGOLDBOX_DEBUG_FACING`, an optional `FIVEEGOLDBOX_DEBUG_PROGRESS_ID`, and an optional `FIVEEGOLDBOX_DEBUG_SCENARIO_ID` (added 2026-08-03 — `AppShell.CreateRealSession` hardcoded the debug path to `scenario.watchtower` regardless of which location was named, so pointing `LOCATION_ID` at a Hollow Mill/Sunken Chapel location threw `Scenario 'scenario.watchtower' has no location '...'`; defaults to `scenario.watchtower` when unset, so every example below and every pre-existing invocation is unaffected). Only `LOCATION_ID` gates the override — set it and floor/X/Y/facing become required, or the app fails loudly naming the missing one rather than silently booting to the outpost. Worked example, same spot:
 
 ```
 FIVEEGOLDBOX_DEBUG_LOCATION_ID=location.ruined-watchtower FIVEEGOLDBOX_DEBUG_FLOOR=GroundFloor FIVEEGOLDBOX_DEBUG_X=2 FIVEEGOLDBOX_DEBUG_Y=1 FIVEEGOLDBOX_DEBUG_FACING=East FIVEEGOLDBOX_DEBUG_PROGRESS_ID=MissionAccepted godot --path src/FiveEGoldBox.Godot
+```
+
+Worked example needing the new override — Hollow Mill's upper floor, one tile from the mill-vermin-swarm trigger (walk east into it to fight two mill-rats):
+
+```
+FIVEEGOLDBOX_DEBUG_SCENARIO_ID=scenario.hollow-mill FIVEEGOLDBOX_DEBUG_LOCATION_ID=location.hollow-mill-house FIVEEGOLDBOX_DEBUG_FLOOR=UpperFloor FIVEEGOLDBOX_DEBUG_X=2 FIVEEGOLDBOX_DEBUG_Y=0 FIVEEGOLDBOX_DEBUG_FACING=East FIVEEGOLDBOX_DEBUG_PROGRESS_ID=mill.herbalist-consulted godot --path src/FiveEGoldBox.Godot
 ```

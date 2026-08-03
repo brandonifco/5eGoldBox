@@ -69,8 +69,10 @@ pattern) needs a real live check. To reach a real encounter with floor art wired
 Mill's upper floor next to its mill-rat trigger and walk into it —
 
 ```
-FIVEEGOLDBOX_DEBUG_LOCATION_ID=location.hollow-mill-house FIVEEGOLDBOX_DEBUG_FLOOR=UpperFloor FIVEEGOLDBOX_DEBUG_X=2 FIVEEGOLDBOX_DEBUG_Y=0 FIVEEGOLDBOX_DEBUG_FACING=East FIVEEGOLDBOX_DEBUG_PROGRESS_ID=mill.herbalist-consulted godot --path src/FiveEGoldBox.Godot
+FIVEEGOLDBOX_DEBUG_SCENARIO_ID=scenario.hollow-mill FIVEEGOLDBOX_DEBUG_LOCATION_ID=location.hollow-mill-house FIVEEGOLDBOX_DEBUG_FLOOR=UpperFloor FIVEEGOLDBOX_DEBUG_X=2 FIVEEGOLDBOX_DEBUG_Y=0 FIVEEGOLDBOX_DEBUG_FACING=East FIVEEGOLDBOX_DEBUG_PROGRESS_ID=mill.herbalist-consulted godot --path src/FiveEGoldBox.Godot
 ```
+
+(`FIVEEGOLDBOX_DEBUG_SCENARIO_ID` is required here — `AppShell`'s debug jump hardcoded `scenario.watchtower` until this same day, so the first attempt at this exact repro threw `Scenario 'scenario.watchtower' has no location 'location.hollow-mill-house'`. Fixed alongside this feature; see CLAUDE.md's developer quick-reference section.)
 
 then move one step east into `(3, 0)` to trigger `encounter.mill-vermin-swarm` (two mill-rats —
 also the first live check for the Apex Predators portrait wired the same day).
