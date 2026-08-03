@@ -26,6 +26,7 @@ internal sealed partial class ShellPresentationController
 	private int _combatGridWidth = MockCombatContent.GridWidth;
 	private int _combatGridHeight = MockCombatContent.GridHeight;
 	private bool _combatHasArtBackground = true;
+	private string? _combatFloorTileSheetPath;
 
 	public event Action<string>? CombatantTargeted;
 	public event Action<int, int>? CombatCellTargeted;
@@ -46,6 +47,7 @@ internal sealed partial class ShellPresentationController
 		_combatGridWidth = MockCombatContent.GridWidth;
 		_combatGridHeight = MockCombatContent.GridHeight;
 		_combatHasArtBackground = true;
+		_combatFloorTileSheetPath = null;
 		_combatCombatants = MockCombatContent.Combatants;
 		_activeCombatantId = MockCombatContent.AllyIdsInOrder.First();
 		_combatSelectedTargetId = null;
@@ -59,13 +61,19 @@ internal sealed partial class ShellPresentationController
 
 	// The real integration seam's own entry point — renders whatever
 	// RealCombatSession.Describe() reports, through the exact same
-	// CombatView the mock content uses. Grid dimensions and the art-
-	// background flag are stored (not just passed straight through to
-	// CombatView.Configure) because later lighter updates
-	// (SelectCombatTarget/ShowCombatHighlights) call RefreshCombatView,
-	// which rebuilds via BuildCombatViewModel — that needs to keep
-	// describing a real encounter's actual battlefield, not silently
-	// fall back to the mock grid's dimensions.
+	// CombatView the mock content uses. Grid dimensions, the art-
+	// background flag, and the floor-tile sheet path are all stored (not
+	// just passed straight through to CombatView.Configure) because
+	// later lighter updates (SelectCombatTarget/ShowCombatHighlights)
+	// call RefreshCombatView, which rebuilds via BuildCombatViewModel —
+	// that needs to keep describing a real encounter's actual
+	// battlefield, not silently fall back to the mock grid's dimensions
+	// or drop a field BuildCombatViewModel doesn't itself carry forward.
+	// (FloorTileSheetPath was missed here originally — PR #236 wired the
+	// value correctly as far as RealCombatSession, but every real
+	// encounter's first frame already routes through
+	// BuildCombatViewModel, not model directly, so it was silently
+	// dropped from encounter #1 onward until this fix.)
 	public void ConfigureCombat(CombatViewModel model)
 	{
 		CurrentMode = PresentationMode.Combat;
@@ -79,6 +87,7 @@ internal sealed partial class ShellPresentationController
 		_combatGridWidth = model.GridWidth;
 		_combatGridHeight = model.GridHeight;
 		_combatHasArtBackground = model.HasArtBackground;
+		_combatFloorTileSheetPath = model.FloorTileSheetPath;
 		_combatCombatants = model.Combatants;
 		_activeCombatantId = model.ActiveCombatantId;
 		_combatSelectedTargetId = null;
@@ -172,6 +181,7 @@ internal sealed partial class ShellPresentationController
 			_combatSelectedTargetId,
 			_combatHighlights,
 			_combatInformationalOverlays,
-			_combatHasArtBackground);
+			_combatHasArtBackground,
+			_combatFloorTileSheetPath);
 	}
 }
