@@ -341,7 +341,6 @@ internal static class SaveGameMapper
                 Y = exploration.Position.Y
             },
             Facing = ToSaveFacing(exploration.Facing),
-            OpenDoorIds = exploration.OpenDoorIds,
             RevealedSecretDoorIds = exploration.RevealedSecretDoorIds,
             CollectedTreasureIds = exploration.CollectedTreasureIds
         };
@@ -360,7 +359,6 @@ internal static class SaveGameMapper
                 exploration.Position.X,
                 exploration.Position.Y),
             Facing = ToRuntimeFacing(exploration.Facing),
-            OpenDoorIds = exploration.OpenDoorIds,
             RevealedSecretDoorIds = exploration.RevealedSecretDoorIds,
             CollectedTreasureIds = exploration.CollectedTreasureIds
         };

@@ -2,37 +2,43 @@ using Godot;
 
 // Rudimentary procedural per-cell overlays -- no image assets, no
 // tileset/atlas pipeline (CLAUDE.md's Phase G note flags that as
-// separate, larger work once flat colors prove insufficient, which the
-// user has now said they do for testing purposes). Each cell already
-// gets a flat base fill in AreaMapView.DrawGrid; these draw a small
-// shape on top of it so floor/wall/door/stairs/treasure read as
+// separate, larger work once flat colors prove insufficient). Restyled
+// to read as a hand-drawn dungeon-cartography map (thick black ink
+// perimeter, cross-hatched stone fill, gap-and-leaf door symbols)
+// rather than flat-colored cells, per the reference the user supplied --
+// each cell still gets a base fill in AreaMapView.DrawGrid; these draw a
+// small shape/texture on top so floor/wall/door/stairs/treasure read as
 // distinct kinds of thing at a glance, not just distinct colors.
 public partial class AreaMapView
 {
-	private void DrawWallHatch(Rect2 cellRect, Color hatchColor)
+	// A dense diagonal cross-hatch approximating the scratchy stone
+	// texture packed dungeon-map rock fills use -- two crossing sets of
+	// short diagonal strokes rather than one, so the cell reads as
+	// "solid rock" instead of a single hatch direction.
+	private void DrawStoneHatch(Rect2 cellRect, Color hatchColor)
 	{
 		float size = cellRect.Size.X;
 		Vector2 origin = cellRect.Position;
 
-		for (int i = 1; i <= 3; i++)
+		for (int i = 1; i <= 4; i++)
 		{
-			float frac = i / 4f;
+			float frac = i / 5f;
 
 			_gridLayer.DrawLine(
 				origin + new Vector2(0, size * frac),
 				origin + new Vector2(size * frac, 0),
 				hatchColor,
-				1.5f);
+				1.25f);
 
 			_gridLayer.DrawLine(
 				origin + new Vector2(size * frac, size),
 				origin + new Vector2(size, size * frac),
 				hatchColor,
-				1.5f);
+				1.25f);
 		}
 	}
 
-	private void DrawStairChevrons(Rect2 cellRect, Color arrowColor)
+	private void DrawStairChevrons(Rect2 cellRect, Color inkColor)
 	{
 		float size = cellRect.Size.X;
 		Vector2 center = cellRect.Position + new Vector2(size / 2f, size / 2f);
@@ -46,67 +52,15 @@ public partial class AreaMapView
 			Vector2 left = center + new Vector2(-armX, yOffset + (armY / 2f));
 			Vector2 right = center + new Vector2(armX, yOffset + (armY / 2f));
 
-			_gridLayer.DrawLine(left, apex, arrowColor, 3f);
-			_gridLayer.DrawLine(apex, right, arrowColor, 3f);
+			_gridLayer.DrawLine(left, apex, inkColor, 2.5f);
+			_gridLayer.DrawLine(apex, right, inkColor, 2.5f);
 		}
 	}
 
-	private void DrawDoorLeaf(Rect2 cellRect, Color leafColor, Color knobColor)
-	{
-		float size = cellRect.Size.X;
-		float leafWidth = size * 0.55f;
-		float leafHeight = size * 0.82f;
-		Vector2 leafTopLeft = cellRect.Position + new Vector2(
-			(size - leafWidth) / 2f,
-			(size - leafHeight) / 2f);
-
-		_gridLayer.DrawRect(new Rect2(leafTopLeft, new Vector2(leafWidth, leafHeight)), leafColor);
-
-		Vector2 knobCenter = leafTopLeft + new Vector2(leafWidth * 0.78f, leafHeight * 0.52f);
-		_gridLayer.DrawCircle(knobCenter, size * 0.045f, knobColor);
-	}
-
-	// A hollow frame rather than a solid leaf -- an opened door still
-	// marks its edge as a doorway, but reads as passable/ajar rather
-	// than closed.
-	private void DrawOpenDoorway(Rect2 cellRect, Color frameColor)
-	{
-		float size = cellRect.Size.X;
-		float frameWidth = size * 0.55f;
-		float frameHeight = size * 0.82f;
-		Vector2 frameTopLeft = cellRect.Position + new Vector2(
-			(size - frameWidth) / 2f,
-			(size - frameHeight) / 2f);
-
-		_gridLayer.DrawRect(
-			new Rect2(frameTopLeft, new Vector2(frameWidth, frameHeight)),
-			frameColor,
-			filled: false,
-			width: size * 0.06f);
-	}
-
-	private void DrawPadlock(Rect2 cellRect, Color bodyColor, Color shackleColor)
-	{
-		float size = cellRect.Size.X;
-		Vector2 center = cellRect.Position + new Vector2(size / 2f, size * 0.3f);
-		float bodyWidth = size * 0.2f;
-		float bodyHeight = size * 0.15f;
-
-		_gridLayer.DrawArc(
-			center - new Vector2(0, bodyHeight * 0.15f),
-			bodyWidth * 0.45f,
-			Mathf.Pi,
-			Mathf.Tau,
-			12,
-			shackleColor,
-			2.5f);
-
-		_gridLayer.DrawRect(
-			new Rect2(center - new Vector2(bodyWidth / 2f, 0), new Vector2(bodyWidth, bodyHeight)),
-			bodyColor);
-	}
-
-	private void DrawChest(Rect2 cellRect, Color bodyColor, Color lidColor, Color lockColor)
+	// Outline-only, no color fill -- a chest drawn as plain ink linework
+	// like everything else on the map, with just the lock kept as a
+	// small gold accent dot.
+	private void DrawChest(Rect2 cellRect, Color inkColor, Color lockColor)
 	{
 		float size = cellRect.Size.X;
 		float chestWidth = size * 0.6f;
@@ -114,12 +68,61 @@ public partial class AreaMapView
 		float lidHeight = size * 0.14f;
 		Vector2 bodyTopLeft = cellRect.Position + new Vector2((size - chestWidth) / 2f, size * 0.52f);
 
-		_gridLayer.DrawRect(new Rect2(bodyTopLeft, new Vector2(chestWidth, bodyHeight)), bodyColor);
-		_gridLayer.DrawRect(
-			new Rect2(bodyTopLeft - new Vector2(0, lidHeight), new Vector2(chestWidth, lidHeight)),
-			lidColor);
+		Rect2 bodyRect = new(bodyTopLeft, new Vector2(chestWidth, bodyHeight));
+		Rect2 lidRect = new(
+			bodyTopLeft - new Vector2(0, lidHeight),
+			new Vector2(chestWidth, lidHeight));
+
+		_gridLayer.DrawRect(bodyRect, inkColor, filled: false, width: size * 0.035f);
+		_gridLayer.DrawRect(lidRect, inkColor, filled: false, width: size * 0.035f);
 
 		Vector2 lockCenter = bodyTopLeft + new Vector2(chestWidth / 2f, 0);
 		_gridLayer.DrawCircle(lockCenter, size * 0.045f, lockColor);
+	}
+
+	// Draws one boundary segment between two grid cells -- either a solid
+	// ink wall line (no door), or a gap-with-leaf door symbol: the wall
+	// line breaks for the middle third of the edge, and a short tick
+	// straddling the gap's center stands in for the door leaf itself,
+	// matching the reference map's convention. An open door leaves the
+	// gap bare (no tick) so it reads as a passable opening; a locked one
+	// keeps the tick and adds a small dot accent.
+	private void DrawWallOrDoorSegment(
+		Vector2 start,
+		Vector2 end,
+		Color inkColor,
+		Color lockedAccentColor,
+		float wallWidth,
+		(bool IsLocked, bool IsOpen)? door)
+	{
+		if (door is null)
+		{
+			_gridLayer.DrawLine(start, end, inkColor, wallWidth);
+			return;
+		}
+
+		Vector2 direction = end - start;
+		Vector2 gapStart = start + (direction * 0.32f);
+		Vector2 gapEnd = start + (direction * 0.68f);
+
+		_gridLayer.DrawLine(start, gapStart, inkColor, wallWidth);
+		_gridLayer.DrawLine(gapEnd, end, inkColor, wallWidth);
+
+		if (door.Value.IsOpen)
+		{
+			return;
+		}
+
+		Vector2 mid = (gapStart + gapEnd) / 2f;
+		Vector2 perpendicular = new Vector2(-direction.Y, direction.X).Normalized()
+			* (direction.Length() * 0.22f);
+		Color leafColor = door.Value.IsLocked ? lockedAccentColor : inkColor;
+
+		_gridLayer.DrawLine(mid - perpendicular, mid + perpendicular, leafColor, wallWidth * 0.75f);
+
+		if (door.Value.IsLocked)
+		{
+			_gridLayer.DrawCircle(mid, wallWidth * 1.1f, lockedAccentColor);
+		}
 	}
 }

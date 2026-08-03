@@ -134,7 +134,7 @@ public static class ExplorationRules
                 exploration.Floor,
                 exploration.Position,
                 destination,
-                exploration.OpenDoorIds);
+                exploration.RevealedSecretDoorIds);
 
         ApplicationSessionState resultingSession =
             didMove
@@ -201,50 +201,6 @@ public static class ExplorationRules
                 {
                     Floor = destinationFloor,
                     Position = destinationPosition
-                }
-            });
-    }
-
-    public static bool CanOpenDoor(
-        ApplicationSessionState session)
-    {
-        ArgumentNullException.ThrowIfNull(session);
-
-        if (session.CurrentMode
-            != ApplicationMode.Exploration)
-        {
-            return false;
-        }
-
-        ApplicationSessionState canonicalSession =
-            ApplicationSessionRules.CreateCanonical(session);
-
-        return ResolveOpenableDoor(canonicalSession) is not null;
-    }
-
-    public static ApplicationSessionState OpenDoor(
-        ApplicationSessionState session)
-    {
-        ArgumentNullException.ThrowIfNull(session);
-
-        ApplicationSessionState canonicalSession =
-            RequireExplorationSession(session);
-        ExplorationState exploration =
-            canonicalSession.Exploration!;
-
-        DoorDefinition door =
-            ResolveOpenableDoor(canonicalSession)
-            ?? throw new InvalidOperationException(
-                "There is no openable door ahead of the party.");
-
-        return ApplicationSessionRules.CreateCanonical(
-            canonicalSession with
-            {
-                Exploration = exploration with
-                {
-                    OpenDoorIds = exploration.OpenDoorIds
-                        .Append(door.DoorId)
-                        .ToArray()
                 }
             });
     }
@@ -534,40 +490,6 @@ public static class ExplorationRules
             exploration.Position,
             out destinationFloor,
             out destinationPosition);
-    }
-
-    /// The door ahead of the party, if one exists there, is not locked, and
-    /// (being either not secret or already found) is legal to open right
-    /// now -- whether or not it has already been opened.
-    private static DoorDefinition? ResolveOpenableDoor(
-        ApplicationSessionState session)
-    {
-        ExplorationState exploration =
-            session.Exploration!;
-        GridPosition forward =
-            GetForwardPosition(
-                exploration.Position,
-                exploration.Facing);
-        DoorDefinition? door = ScenarioExplorationMap.FindDoorBetween(
-            RequireMap(session),
-            exploration.Floor,
-            exploration.Position,
-            forward);
-
-        if (door is null
-            || door.IsLocked
-            || (door.IsSecret
-                && !exploration.RevealedSecretDoorIds.Contains(
-                    door.DoorId,
-                    StringComparer.Ordinal))
-            || exploration.OpenDoorIds.Contains(
-                door.DoorId,
-                StringComparer.Ordinal))
-        {
-            return null;
-        }
-
-        return door;
     }
 
     /// The secret door ahead of the party, if one exists there and has not

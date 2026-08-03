@@ -228,7 +228,7 @@ public sealed class SessionViewTests
 
     /// Mirrors ExplorationRulesTests' own CreateAtArmoryCacheTreasure --
     /// standing on the armory cache treasure at (4, 1), reachable only by
-    /// opening the ordinary door at (3, 1) first.
+    /// walking through the ordinary door at (3, 1) first.
     private static ApplicationSessionState AtArmoryCacheTreasure()
     {
         ApplicationSessionState current = ExplorationRules.EnterDestination(
@@ -243,7 +243,6 @@ public sealed class SessionViewTests
         current = ExplorationRules.Turn(
             current,
             ExplorationTurnDirection.Left);
-        current = ExplorationRules.OpenDoor(current);
         current = ExplorationRules.MoveForward(current).State;
         current = ExplorationRules.MoveForward(current).State;
 

@@ -90,10 +90,6 @@ internal static class ScenarioExplorationMap
 
         RequireKnownDoorIds(
             map,
-            state.OpenDoorIds,
-            nameof(state.OpenDoorIds));
-        RequireKnownDoorIds(
-            map,
             state.RevealedSecretDoorIds,
             nameof(state.RevealedSecretDoorIds));
         RequireKnownTreasureIds(
@@ -118,17 +114,19 @@ internal static class ScenarioExplorationMap
 
     /// Whether the party can actually step from one tile to an adjacent
     /// one: the destination must be real floor, and if a door sits on the
-    /// edge between them, it must be unlocked and already opened. A locked
+    /// edge between them, it must not be locked, and if it's a secret door
+    /// it must already be revealed -- an unlocked, revealed door is just an
+    /// opening and needs no separate "open" step. A locked or unrevealed
     /// door is independently re-checked here rather than trusted from the
     /// caller -- the same defense-in-depth this method already applies to
-    /// every other invariant -- so corrupted state naming a locked door's
-    /// ID can never make it walkable.
+    /// every other invariant -- so corrupted state naming a locked or
+    /// still-secret door's ID can never make it walkable.
     internal static bool CanMoveBetween(
         ExplorationMapDefinition map,
         string floor,
         GridPosition from,
         GridPosition to,
-        IReadOnlyList<string> openDoorIds)
+        IReadOnlyList<string> revealedSecretDoorIds)
     {
         if (!IsTraversable(map, floor, to))
         {
@@ -137,9 +135,18 @@ internal static class ScenarioExplorationMap
 
         DoorDefinition? door = FindDoorBetween(map, floor, from, to);
 
-        return door is null
-            || (!door.IsLocked
-                && openDoorIds.Contains(door.DoorId, StringComparer.Ordinal));
+        if (door is null)
+        {
+            return true;
+        }
+
+        if (door.IsLocked)
+        {
+            return false;
+        }
+
+        return !door.IsSecret
+            || revealedSecretDoorIds.Contains(door.DoorId, StringComparer.Ordinal);
     }
 
     /// The door on the edge between two given tiles, if any, in either

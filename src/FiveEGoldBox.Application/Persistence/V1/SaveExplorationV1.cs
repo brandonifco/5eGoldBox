@@ -10,8 +10,6 @@ internal sealed record SaveExplorationV1
 
     public required SaveExplorationFacingV1 Facing { get; init; }
 
-    public IReadOnlyList<string> OpenDoorIds { get; init; } = Array.Empty<string>();
-
     public IReadOnlyList<string> RevealedSecretDoorIds { get; init; } = Array.Empty<string>();
 
     public IReadOnlyList<string> CollectedTreasureIds { get; init; } = Array.Empty<string>();

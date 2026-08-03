@@ -16,7 +16,6 @@ public enum SessionActionKind
     TurnRight,
     UseStairs,
     ActivateTrigger,
-    OpenDoor,
     RevealSecretDoor,
     CollectTreasure,
     TalkToNpc,

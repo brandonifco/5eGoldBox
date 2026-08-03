@@ -291,15 +291,6 @@ public static class SessionView
             }
         }
 
-        if (ExplorationRules.CanOpenDoor(session))
-        {
-            actions.Add(new SessionAction
-            {
-                Kind = SessionActionKind.OpenDoor,
-                DisplayName = "Open the door"
-            });
-        }
-
         if (ExplorationRules.CanRevealSecretDoor(session))
         {
             actions.Add(new SessionAction

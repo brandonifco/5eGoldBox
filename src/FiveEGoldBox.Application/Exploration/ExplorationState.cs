@@ -12,8 +12,6 @@ public sealed record ExplorationState
 
     public required ExplorationFacing Facing { get; init; }
 
-    public IReadOnlyList<string> OpenDoorIds { get; init; } = Array.Empty<string>();
-
     public IReadOnlyList<string> RevealedSecretDoorIds { get; init; } = Array.Empty<string>();
 
     public IReadOnlyList<string> CollectedTreasureIds { get; init; } = Array.Empty<string>();

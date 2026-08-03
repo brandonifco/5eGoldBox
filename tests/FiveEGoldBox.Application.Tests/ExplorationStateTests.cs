@@ -184,16 +184,6 @@ WatchtowerScenarioProgress.RaidersDefeated)
     }
 
     [Fact]
-    public void Validate_WithUnknownOpenDoorId_Throws()
-    {
-        AssertInvalidExplorationThrows(
-            exploration => exploration with
-            {
-                OpenDoorIds = ["door.unsupported"]
-            });
-    }
-
-    [Fact]
     public void Validate_WithUnknownRevealedSecretDoorId_Throws()
     {
         AssertInvalidExplorationThrows(
