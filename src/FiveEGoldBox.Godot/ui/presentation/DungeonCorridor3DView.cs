@@ -48,12 +48,17 @@ internal sealed partial class DungeonCorridor3DView : SubViewportContainer
 	// The camera also sat at Z=0 -- the near edge of the party's own
 	// cell (cell.Forward == 0's zNear, see Configure below), the
 	// boundary with the cell behind them, rather than where a person
-	// standing in that cell actually would be. Half a cell forward
-	// (further along -Z, the look direction) puts it at the cell's own
-	// center instead -- requested live by the user after the eye-height
-	// fix above, framed as "0.5 tiles closer to whatever direction is
-	// facing."
-	private const float CameraForwardOffset = -CellSize / 2f;
+	// standing in that cell actually would be. Requested live by the
+	// user, framed as "0.5 tiles closer to whatever direction is
+	// facing." A full half-cell (-CellSize/2, the cell's exact center)
+	// turned out to overshoot: the party's own-tile side walls span the
+	// whole cell depth (Z=[0, -CellSize]), so sitting exactly at the
+	// midpoint put half of that geometry -- including a door on that
+	// edge -- behind the camera and unrendered, reported live as "can't
+	// see the doors if I'm on the same tile as one, looking down the
+	// hall." Pulled back to 35% of a cell instead of 50%, so a door on
+	// the party's own tile stays almost entirely in front of the camera.
+	private const float CameraForwardOffset = -CellSize * 0.35f;
 
 	// Manhattan-distance flood-fill radius (in cells) from the party's
 	// own position. Generous relative to every current scenario's small
