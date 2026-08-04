@@ -84,31 +84,17 @@ internal sealed partial class ShellInteractionController
 				() => EnterRealCombatAttackTargeting(combatSnapshot)));
 		}
 
-		// One command per available spell, not a single "Cast" that opens
-		// a sub-menu — see the _pendingRealSpellId field comment for why
-		// flattening targets across spells the way Attack flattens them
-		// across weapons would be ambiguous here.
-		HashSet<char> usedHotkeys = new() { 'M', 'A', 'E' };
-
-		foreach (CombatSpellAttackOption spell in combatSnapshot.SpellAttacks)
+		// A single "Cast" opening a list overlay, not one button per spell
+		// — flattening every prepared spell onto the bar directly (the
+		// original approach here) doesn't scale past a spell or two. See
+		// EnterRealCombatSpellMenu for where the list itself lives.
+		if (combatSnapshot.SpellAttacks.Any(spell => spell.IsAvailable))
 		{
-			if (!spell.IsAvailable)
-			{
-				continue;
-			}
-
-			string spellId = spell.SpellId;
-			CommandViewModel commandViewModel = new(
-				spellId,
-				spellId,
-				HotkeyAssigner.Assign(
-					spellId.Where(char.IsLetter).Select(char.ToUpperInvariant),
-					usedHotkeys,
-					spellId));
-
-			commands.Add(CommandViewModelTranslator.ToCommandDefinition(
-				commandViewModel,
-				() => EnterRealCombatSpellTargeting(combatSnapshot, spellId)));
+			commands.Add(new CommandDefinition(
+				"Cast",
+				"[b]C[/b]ast",
+				Key.C,
+				() => EnterRealCombatSpellMenu(combatSnapshot)));
 		}
 
 		if (combatSnapshot.CanEndTurn)
@@ -121,6 +107,35 @@ internal sealed partial class ShellInteractionController
 		}
 
 		_commandBarController.ShowCommands(commands.ToArray());
+	}
+
+	// Reuses the same ModalScreenView/ShowModalScreen plumbing every M9
+	// secondary screen (Character, Inventory, ...) already goes through,
+	// rather than a bespoke overlay — its list rows render through
+	// SelectionList, which is click-or-Up/Down-plus-Enter only (list rows
+	// never read CommandViewModel.Hotkey, unlike the footer Commands row),
+	// matching the requirement that the spell list itself carry no
+	// per-item hotkeys. Closing before entering targeting matters:
+	// EnterRealCombatSpellTargeting pushes ShellInteractionContext.
+	// Targeting, and PopContext only pops when the context on top matches
+	// what's expected, so ModalScreen has to already be off the stack
+	// first — CloseModalScreen's CloseScreen() triggers that synchronously
+	// via ModalScreenView's Closed signal.
+	private void EnterRealCombatSpellMenu(RealCombatSnapshot combatSnapshot)
+	{
+		List<CommandViewModel> spellRows = combatSnapshot.SpellAttacks
+			.Where(spell => spell.IsAvailable)
+			.Select(spell => new CommandViewModel(spell.SpellId, spell.SpellId))
+			.ToList();
+
+		ShowModalScreen(
+			new ModalViewModel("Cast a Spell", ListItems: spellRows),
+			new Dictionary<string, Action> { ["close"] = CloseModalScreen },
+			onRowActivated: spellId =>
+			{
+				CloseModalScreen();
+				EnterRealCombatSpellTargeting(combatSnapshot, spellId);
+			});
 	}
 
 	// A full-battlefield keyboard cursor, not a pre-highlighted set of
