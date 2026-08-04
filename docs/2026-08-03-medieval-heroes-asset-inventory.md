@@ -1,9 +1,21 @@
 # Medieval Heroes I asset pack — inventory
 
-**Date:** 2026-08-03, updated 2026-08-03 when the pack was committed (PR #230).
+**Date:** 2026-08-03, updated 2026-08-03 when the pack was committed (PR #230), updated again
+2026-08-03 once four of these frames were actually wired into real combat portraits.
 **Location:** `src/FiveEGoldBox.Godot/assets/medieval-heroes/` — originally cataloged from the
 user's Downloads folder (per the user's stated license for the pack), since moved into the repo
-verbatim. Committed, but still entirely inert: nothing in any code references these paths yet.
+verbatim.
+
+**No longer entirely inert.** `CombatantPortraitCatalog` wires four party-role portraits, but not
+the pack's own `{Name}_MVsv_alt_stance1.png` frames directly — those leave a lot of dead space on
+one side of their 128×128 frame (checked by eye: PaulHammerArm's is only populated in
+x=[69,127]), which read as visibly off-center once actually drawn on a combat tile. Each of the
+four (`PaulHammerArm`, `Huntress`, `Naia`, `MasterGaerron`) got a derived, alpha-trimmed-and-
+centered sibling file, `{Name}_MVsv_alt_stance1_centered.png`, same folder, same technique the
+Apex Predators portraits already used (`docs/2026-08-03-apex-predators-asset-inventory.md`). Also
+confirmed by eye during that re-crop: every one of these four faces **left** by default, not right
+— the RPGMaker-MV side-view-Actor convention ("faces right") this pack was originally assumed to
+follow doesn't actually hold for it. Everything else cataloged below remains inert.
 
 ## Why this matters here
 

@@ -40,13 +40,26 @@ internal static class CombatantPortraitCatalog
 	// work, not built here. The Apex Predators frame is the first cell
 	// (row 0, col 0) of each creature's SideViewBattler sheet, trimmed
 	// and centered the same way rather than a pack-provided "stance".
+	//
+	// The four party frames are "_centered" derivatives, not the pack's
+	// own "_MVsv_alt_stance1.png" files directly -- the pack's own frame
+	// leaves a lot of dead space on one side (checked by eye: e.g.
+	// PaulHammerArm's 128x128 frame only has content in x=[69,127]), so
+	// drawing it as-is put the character visibly off-center on its tile.
+	// Alpha-trimmed and centered the same way the Apex Predators frames
+	// already were, 2026-08-03, once that same off-centering was reported
+	// live. Checked by eye at the same time: every one of these four,
+	// like the Apex Predators frames, faces left by default -- CombatView.
+	// Markers.cs's ShouldFlipPortrait relies on that being uniform across
+	// both art sources now, not the "opposite by convention" assumption
+	// this dictionary's callers originally shipped with.
 	private static readonly IReadOnlyDictionary<string, string> RolePortraits =
 		new Dictionary<string, string>
 		{
-			["party-member.fighter"] = $"{HeroesBasePath}/PaulHammerArm/PaulHammerArm_MVsv_alt_stance1.png",
-			["party-member.rogue"] = $"{HeroesBasePath}/Huntress/Huntress_MVsv_alt_stance1.png",
-			["party-member.cleric"] = $"{HeroesBasePath}/Naia/Naia_MVsv_alt_stance1.png",
-			["party-member.wizard"] = $"{HeroesBasePath}/MasterGaerron/MasterGaerron_MVsv_alt_stance1.png",
+			["party-member.fighter"] = $"{HeroesBasePath}/PaulHammerArm/PaulHammerArm_MVsv_alt_stance1_centered.png",
+			["party-member.rogue"] = $"{HeroesBasePath}/Huntress/Huntress_MVsv_alt_stance1_centered.png",
+			["party-member.cleric"] = $"{HeroesBasePath}/Naia/Naia_MVsv_alt_stance1_centered.png",
+			["party-member.wizard"] = $"{HeroesBasePath}/MasterGaerron/MasterGaerron_MVsv_alt_stance1_centered.png",
 			["monster.mill-rat"] = $"{ApexPredatorsBasePath}/ApexStalker/ApexStalker_MVsv_portrait.png",
 		};
 

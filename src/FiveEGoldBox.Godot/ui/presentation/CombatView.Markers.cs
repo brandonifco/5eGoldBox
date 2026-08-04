@@ -121,17 +121,18 @@ public partial class CombatView
 
 	// No per-direction art exists (single static frame), so facing the
 	// other way means mirroring the draw call (CombatantMarkerPin's own
-	// _flipPortrait) rather than picking a different frame. The two art
-	// sources default to *opposite* facings: medieval-heroes' "_MVsv_"
-	// naming is the RPGMaker-MV side-view-Actor convention (party art
-	// faces right, toward a troop window on the right), while the Apex
-	// Predators pack's own frames (confirmed by eye when it was cropped,
-	// docs/2026-08-03-apex-predators-asset-inventory.md) face left, the
-	// matching MV troop/enemy convention (facing left, toward the party
-	// on the left) -- hence flipping on opposing-to-the-left for allies
-	// but opposing-to-the-right for enemies below, not the same
-	// direction for both. "Correct" facing is toward the opposing side's
-	// actual on-screen position, not a fixed left/right rule, since
+	// _flipPortrait) rather than picking a different frame. Both art
+	// sources default to the *same* facing -- confirmed by eye, not
+	// assumed: medieval-heroes' own frames face left (checked when they
+	// were re-cropped for centering, see CombatantPortraitCatalog's own
+	// comment on that), matching the Apex Predators frames' facing
+	// (docs/2026-08-03-apex-predators-asset-inventory.md). An earlier
+	// version of this method assumed the RPGMaker-MV side-view-Actor
+	// convention (party art faces right) for medieval-heroes specifically
+	// -- wrong, this pack's own art doesn't follow it, caught live when
+	// the party kept facing away from the enemy after that version
+	// shipped. One rule for both sides now: flip when the opposing side's
+	// average is to the right, never a fixed left/right rule, since
 	// either side can end up on either edge of the diamond lattice
 	// depending on the encounter's own battlefield layout.
 	private bool ShouldFlipPortrait(
@@ -146,11 +147,8 @@ public partial class CombatView
 		float ownScreenX = Project(
 			combatant.GridX + 0.5f,
 			combatant.GridY + 0.5f).X;
-		bool opposingIsToTheLeft = opposingScreenX < ownScreenX;
 
-		return combatant.IsAlly
-			? opposingIsToTheLeft
-			: !opposingIsToTheLeft;
+		return opposingScreenX > ownScreenX;
 	}
 
 	// Null when that side has no living combatants left to average (the
