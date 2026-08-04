@@ -113,15 +113,21 @@ internal static class ScenarioExplorationMap
     }
 
     /// Whether the party can actually step from one tile to an adjacent
-    /// one: the destination must be real floor, and if a door sits on the
-    /// edge between them, it must not be locked, and if it's a secret door
-    /// it must already be revealed -- an unlocked, revealed door is just an
-    /// opening and needs no separate "open" step. A locked or unrevealed
-    /// door is independently re-checked here rather than trusted from the
-    /// caller -- the same defense-in-depth this method already applies to
-    /// every other invariant -- so corrupted state naming a locked or
-    /// still-secret door's ID can never make it walkable.
-    internal static bool CanMoveBetween(
+    /// one, and why not if it can't: the destination must be real floor,
+    /// and if a door sits on the edge between them, it must not be locked,
+    /// and if it's a secret door it must already be revealed -- an
+    /// unlocked, revealed door is just an opening and needs no separate
+    /// "open" step. A locked or unrevealed door is independently re-checked
+    /// here rather than trusted from the caller -- the same
+    /// defense-in-depth this method already applies to every other
+    /// invariant -- so corrupted state naming a locked or still-secret
+    /// door's ID can never make it walkable.
+    ///
+    /// An unrevealed secret door reports BlockedByWall, not
+    /// BlockedByLockedDoor -- the whole point of "secret" is that the
+    /// party doesn't know it's there yet, so the message a client builds
+    /// from this must not give it away.
+    internal static ExplorationMoveOutcome DetermineMoveOutcome(
         ExplorationMapDefinition map,
         string floor,
         GridPosition from,
@@ -130,23 +136,27 @@ internal static class ScenarioExplorationMap
     {
         if (!IsTraversable(map, floor, to))
         {
-            return false;
+            return ExplorationMoveOutcome.BlockedByWall;
         }
 
         DoorDefinition? door = FindDoorBetween(map, floor, from, to);
 
         if (door is null)
         {
-            return true;
+            return ExplorationMoveOutcome.Moved;
         }
 
         if (door.IsLocked)
         {
-            return false;
+            return ExplorationMoveOutcome.BlockedByLockedDoor;
         }
 
-        return !door.IsSecret
+        bool isPassable = !door.IsSecret
             || revealedSecretDoorIds.Contains(door.DoorId, StringComparer.Ordinal);
+
+        return isPassable
+            ? ExplorationMoveOutcome.MovedThroughDoorway
+            : ExplorationMoveOutcome.BlockedByWall;
     }
 
     /// The door on the edge between two given tiles, if any, in either

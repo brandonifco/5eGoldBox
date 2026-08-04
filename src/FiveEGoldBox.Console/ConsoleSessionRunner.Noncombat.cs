@@ -1,3 +1,4 @@
+using System;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Persistence;
@@ -97,9 +98,19 @@ internal sealed partial class ConsoleSessionRunner
                         ExplorationRules.MoveForward(session);
                     session = moveResult.State;
                     output.WriteLine(
-                        moveResult.DidMove
-                            ? "Moved forward."
-                            : "Movement blocked.");
+                        moveResult.Outcome switch
+                        {
+                            ExplorationMoveOutcome.Moved =>
+                                "Moved forward.",
+                            ExplorationMoveOutcome.MovedThroughDoorway =>
+                                "You pass through a doorway.",
+                            ExplorationMoveOutcome.BlockedByWall =>
+                                "A wall blocks the way forward.",
+                            ExplorationMoveOutcome.BlockedByLockedDoor =>
+                                "A locked door blocks the way forward.",
+                            _ => throw new InvalidOperationException(
+                                $"Unhandled {nameof(ExplorationMoveOutcome)}: {moveResult.Outcome}."),
+                        });
                     break;
                 case SessionMenuAction.TurnLeft:
                     session = ExplorationRules.Turn(
