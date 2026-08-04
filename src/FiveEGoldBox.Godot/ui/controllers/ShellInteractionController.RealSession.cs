@@ -182,6 +182,26 @@ internal sealed partial class ShellInteractionController
 				() => EnterAreaMapMode(session)));
 		}
 
+		// View is likewise a client-side view toggle rather than a
+		// SessionAction -- ShowCharacterScreen has been real-session-aware
+		// since PR #226/227, but nothing here ever offered it, unlike Area
+		// and Inventory below. There's nothing exploration-specific about
+		// checking your own character sheet, so it's offered in every mode
+		// this method is reached from, same reasoning as Inventory.
+		CommandViewModel viewCommand = new(
+			"view",
+			"View",
+			HotkeyAssigner.Assign(
+				"View".Select(char.ToUpperInvariant),
+				usedHotkeys,
+				"View"));
+
+		usedHotkeys.Add(viewCommand.Hotkey![0]);
+
+		commands.Add(CommandViewModelTranslator.ToCommandDefinition(
+			viewCommand,
+			ShowCharacterScreen));
+
 		// Inventory is likewise a client-side view toggle rather than a
 		// SessionAction, same reasoning as Area above -- unlike Area,
 		// there's nothing exploration-specific about checking the party's

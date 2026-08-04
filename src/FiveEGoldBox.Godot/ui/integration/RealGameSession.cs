@@ -311,8 +311,12 @@ internal sealed class RealGameSession
 			.Members
 			.First(candidate => candidate.PartyMemberId == partyMemberId);
 
+		// Same purse regardless of which member is focused -- currency is
+		// shared across the party, not per-character (DescribeInventory
+		// reads the identical party.Currency).
 		return $"{member.DisplayName} — {member.ClassDisplayName}, " +
-			$"{member.CurrentHitPoints}/{member.MaximumHitPoints} HP.";
+			$"{member.CurrentHitPoints}/{member.MaximumHitPoints} HP. " +
+			DescribePurse(party.Currency);
 	}
 
 	internal string Submit(string commandId)
