@@ -249,13 +249,24 @@ public partial class CombatView
 		cell.Position = new Vector2(topVertex.X - (metrics.TileWidth / 2f), topVertex.Y);
 	}
 
+	// Extra rings of floor tiles drawn beyond the battlefield's own
+	// bounds, so panning/zooming never reveals a hard edge where the
+	// floor stops and the placeholder fill shows through. A fixed
+	// margin, not derived from viewport/zoom bounds -- generous enough
+	// to cover every current scenario's small battlefields at every
+	// available zoom level, not a rigorous guarantee at arbitrary sizes.
+	private const int FloorMarginTiles = 6;
+
 	// Real isometric floor art (CombatFloorTileCatalog), drawn under the
 	// grid lines/highlights/combatants layers. Each tile's source PNG is
 	// already a diamond silhouette on a transparent 256x128 (or 128x64)
 	// canvas — the same shape Project/IsoMetrics already computes per
 	// cell — so drawing it as a plain axis-aligned rect region (no
 	// rotation/polygon UV math) lands correctly, the same technique
-	// CombatantMarkerPin.DrawPortrait already uses for portraits.
+	// CombatantMarkerPin.DrawPortrait already uses for portraits. Always
+	// the sheet's first (row 0, col 0) variant now -- uniform, not the
+	// deterministic-per-cell variety this started with, per the user's
+	// own request.
 	private void DrawFloorTiles()
 	{
 		if (_floorTileTexture is null)
@@ -264,30 +275,20 @@ public partial class CombatView
 		}
 
 		IsoMetrics metrics = Metrics;
+		Rect2 sourceRect = new(
+			Vector2.Zero,
+			new Vector2(
+				CombatFloorTileCatalog.TileSourceWidth,
+				CombatFloorTileCatalog.TileSourceHeight));
 
-		for (int gy = 0; gy < _gridHeight; gy++)
+		for (int gy = -FloorMarginTiles; gy < _gridHeight + FloorMarginTiles; gy++)
 		{
-			for (int gx = 0; gx < _gridWidth; gx++)
+			for (int gx = -FloorMarginTiles; gx < _gridWidth + FloorMarginTiles; gx++)
 			{
 				Vector2 topVertex = Project(gx, gy);
 				Rect2 destinationRect = new(
 					new Vector2(topVertex.X - (metrics.TileWidth / 2f), topVertex.Y),
 					new Vector2(metrics.TileWidth, metrics.TileHeight));
-
-				// Deterministic per-cell variant, not random, so a redraw
-				// (zoom/resize/refresh) never makes the floor visibly
-				// shuffle under the player.
-				int variantIndex =
-					((gx * 7) + (gy * 13)) % CombatFloorTileCatalog.TileVariantCount;
-				int column = variantIndex % CombatFloorTileCatalog.TileColumns;
-				int row = variantIndex / CombatFloorTileCatalog.TileColumns;
-				Rect2 sourceRect = new(
-					new Vector2(
-						column * CombatFloorTileCatalog.TileSourceWidth,
-						row * CombatFloorTileCatalog.TileSourceHeight),
-					new Vector2(
-						CombatFloorTileCatalog.TileSourceWidth,
-						CombatFloorTileCatalog.TileSourceHeight));
 
 				_floorLayer.DrawTextureRectRegion(_floorTileTexture, destinationRect, sourceRect);
 			}
