@@ -84,8 +84,8 @@
         {
             "EncounterId": "encounter.chapel-guardians",
             "BattlefieldId": "battlefield.chapel-nave",
-            "Width": 4,
-            "Height": 4,
+            "Width": 8,
+            "Height": 8,
             "PartySideId": "side.party",
             "BlockedPositions": [],
             "PartyStartingPositions": [

@@ -146,8 +146,8 @@
         {
             "EncounterId": "encounter.watchtower-signal-ambush",
             "BattlefieldId": "battlefield.watchtower-signal-chamber",
-            "Width": 5,
-            "Height": 4,
+            "Width": 9,
+            "Height": 8,
             "PartySideId": "side.party",
             "BlockedPositions": [],
             "PartyStartingPositions": [

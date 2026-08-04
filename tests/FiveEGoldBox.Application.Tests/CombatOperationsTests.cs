@@ -76,8 +76,8 @@ public sealed class CombatOperationsTests
 
         Assert.Equal("encounter.watchtower-signal-ambush", first.EncounterId);
         Assert.Equal("battlefield.watchtower-signal-chamber", first.BattlefieldId);
-        Assert.Equal(5, first.BattlefieldWidth);
-        Assert.Equal(4, first.BattlefieldHeight);
+        Assert.Equal(9, first.BattlefieldWidth);
+        Assert.Equal(8, first.BattlefieldHeight);
         Assert.Equal(encounter.Revision, first.Revision);
         Assert.Equal(encounter.TurnState.RoundNumber, first.RoundNumber);
         Assert.Equal(encounter.ActiveCombatantId, first.ActiveCombatantId);

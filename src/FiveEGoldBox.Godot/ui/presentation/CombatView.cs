@@ -35,6 +35,7 @@ public partial class CombatView : Control
 	private int _zoomIndex;
 	private Vector2 _panOffset;
 	private Texture2D? _floorTileTexture;
+	private Vector2I? _hoveredCell;
 
 	// M8e: fires when the player targets a combatant (marker click/Enter)
 	// or a highlighted destination cell — the interaction controller

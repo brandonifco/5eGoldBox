@@ -31,6 +31,63 @@ public partial class CombatView
 		}
 
 		ApplyEdgeAutoScroll((float)delta);
+		UpdateHoveredCell();
+	}
+
+	// The full-lattice grid used to always draw; the user asked for it
+	// to only ever mark one cell at a time -- whichever the mouse is
+	// over, or (not built yet, no keyboard tile cursor exists in this
+	// view at all today) an arrow-key-driven selection. Redraws
+	// GridOverlay only on an actual change, not every frame, the same
+	// "don't touch the layer unless something about it changed"
+	// discipline the floor/highlight layers already follow.
+	private void UpdateHoveredCell()
+	{
+		Vector2I? hovered = TryResolveHoveredCell(out int gridX, out int gridY)
+			? new Vector2I(gridX, gridY)
+			: null;
+
+		if (hovered == _hoveredCell)
+		{
+			return;
+		}
+
+		_hoveredCell = hovered;
+		_gridOverlay.QueueRedraw();
+	}
+
+	// Inverts Project: screen-space mouse position -> the grid cell
+	// containing it, or false if the mouse isn't over the viewport at
+	// all or lands outside the real battlefield (the floor's own margin
+	// tiles, or empty background). Continuous grid-space math, not
+	// per-cell hit-testing -- correct regardless of current pan/zoom
+	// since it undoes the exact same transform Project/_combatContent
+	// apply.
+	private bool TryResolveHoveredCell(out int gridX, out int gridY)
+	{
+		gridX = 0;
+		gridY = 0;
+
+		if (!TryGetLocalMousePosition(out Vector2 viewportLocal))
+		{
+			return false;
+		}
+
+		float zoom = ZoomLevels[_zoomIndex];
+		Vector2 contentLocal = (viewportLocal - _panOffset) / zoom;
+
+		IsoMetrics metrics = Metrics;
+		float halfWidth = metrics.TileWidth / 2f;
+		float halfHeight = metrics.TileHeight / 2f;
+
+		float a = (contentLocal.X - metrics.OffsetX) / halfWidth;
+		float b = (contentLocal.Y - metrics.OffsetY) / halfHeight;
+
+		gridX = Mathf.FloorToInt((a + b) / 2f);
+		gridY = Mathf.FloorToInt((b - a) / 2f);
+
+		return gridX >= 0 && gridX < _gridWidth
+			&& gridY >= 0 && gridY < _gridHeight;
 	}
 
 	public void CycleZoom(bool zoomIn)
@@ -88,7 +145,16 @@ public partial class CombatView
 	{
 		float zoom = ZoomLevels[_zoomIndex];
 		Vector2 viewportSize = _combatViewport.Size;
-		Vector2 contentSize = _combatImage.Size * zoom;
+		// Whichever is actually bigger, the background image or the
+		// diamond itself — Metrics.ReferenceSpan means a battlefield
+		// larger than the reference now genuinely overflows the
+		// background it's drawn on, and clamping against the background
+		// alone (as this always did before that changed) would leave
+		// the overflowing part impossible to pan to.
+		IsoMetrics metrics = Metrics;
+		Vector2 contentSize = new Vector2(
+			Mathf.Max(_combatImage.Size.X, metrics.DiamondWidth),
+			Mathf.Max(_combatImage.Size.Y, metrics.DiamondHeight)) * zoom;
 		Vector2 minOffset = new(
 			Mathf.Min(0, viewportSize.X - contentSize.X),
 			Mathf.Min(0, viewportSize.Y - contentSize.Y));
