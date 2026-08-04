@@ -130,20 +130,20 @@ public sealed class WatchtowerOutcomeLifecycleTests
         AssertExploration(
             current,
             "GroundFloor",
-            x: 0,
+            x: 1,
             y: 0,
             ExplorationFacing.East);
 
         current = MoveForward(
             current,
             "GroundFloor",
-            x: 1,
+            x: 2,
             y: 0,
             ExplorationFacing.East);
         current = MoveForward(
             current,
             "GroundFloor",
-            x: 2,
+            x: 3,
             y: 0,
             ExplorationFacing.East);
         Assert.True(ExplorationRules.CanUseStairs(current));
@@ -152,7 +152,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         AssertExploration(
             current,
             "UpperFloor",
-            x: 2,
+            x: 3,
             y: 0,
             ExplorationFacing.East);
 
@@ -160,40 +160,40 @@ public sealed class WatchtowerOutcomeLifecycleTests
             current,
             ExplorationTurnDirection.Right,
             "UpperFloor",
-            x: 2,
+            x: 3,
             y: 0,
             ExplorationFacing.South);
         current = MoveForward(
             current,
             "UpperFloor",
-            x: 2,
+            x: 3,
             y: 1,
             ExplorationFacing.South);
         current = Turn(
             current,
             ExplorationTurnDirection.Right,
             "UpperFloor",
-            x: 2,
+            x: 3,
             y: 1,
             ExplorationFacing.West);
         current = MoveForward(
             current,
             "UpperFloor",
-            x: 1,
+            x: 2,
             y: 1,
             ExplorationFacing.West);
         current = Turn(
             current,
             ExplorationTurnDirection.Left,
             "UpperFloor",
-            x: 1,
+            x: 2,
             y: 1,
             ExplorationFacing.South);
         current = Turn(
             current,
             ExplorationTurnDirection.Left,
             "UpperFloor",
-            x: 1,
+            x: 2,
             y: 1,
             ExplorationFacing.East);
 
@@ -402,7 +402,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
         AssertExploration(
             continued,
             "UpperFloor",
-            x: 1,
+            x: 2,
             y: 1,
             ExplorationFacing.North);
         Assert.Equal(

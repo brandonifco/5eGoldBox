@@ -162,7 +162,7 @@ public sealed class ExplorationRulesTests
         _ = ExplorationRules.CanUseStairs(stairs);
 
         Assert.Equal("GroundFloor", exploration.Floor);
-        Assert.Equal(new GridPosition(2, 0), exploration.Position);
+        Assert.Equal(new GridPosition(3, 0), exploration.Position);
         Assert.Equal(8675309, stairs.RandomSeed);
         Assert.Equal(12, stairs.RandomValuesConsumed);
     }
@@ -213,7 +213,7 @@ public sealed class ExplorationRulesTests
             "GroundFloor",
             exploration.Floor);
         Assert.Equal(
-            new GridPosition(0, 0),
+            new GridPosition(1, 0),
             exploration.Position);
         Assert.Equal(
             ExplorationFacing.East,
@@ -563,7 +563,7 @@ WatchtowerScenarioProgress
 
         Assert.True(result.DidMove);
         Assert.Equal(
-            new GridPosition(1, 0),
+            new GridPosition(2, 0),
             moved.Position);
         Assert.Equal(
             ExplorationFacing.East,
@@ -635,7 +635,7 @@ WatchtowerScenarioProgress
             "UpperFloor",
             moved.Floor);
         Assert.Equal(
-            new GridPosition(2, 1),
+            new GridPosition(3, 1),
             moved.Position);
         Assert.Equal(
             ExplorationFacing.South,
@@ -666,10 +666,10 @@ WatchtowerScenarioProgress
             exploring.Party,
             result.State.Party);
         Assert.Equal(
-            new GridPosition(0, 0),
+            new GridPosition(1, 0),
             original.Position);
         Assert.Equal(
-            new GridPosition(0, 0),
+            new GridPosition(1, 0),
             AssertExploration(exploring).Position);
     }
 
@@ -757,7 +757,7 @@ WatchtowerScenarioProgress
             "UpperFloor",
             exploration.Floor);
         Assert.Equal(
-            new GridPosition(2, 0),
+            new GridPosition(3, 0),
             exploration.Position);
         Assert.Equal(facing, exploration.Facing);
     }
@@ -781,7 +781,7 @@ WatchtowerScenarioProgress
             "GroundFloor",
             exploration.Floor);
         Assert.Equal(
-            new GridPosition(2, 0),
+            new GridPosition(3, 0),
             exploration.Position);
     }
 
@@ -808,7 +808,7 @@ WatchtowerScenarioProgress
             "GroundFloor",
             original.Floor);
         Assert.Equal(
-            new GridPosition(2, 0),
+            new GridPosition(3, 0),
             AssertExploration(atStairs).Position);
     }
 
@@ -863,7 +863,7 @@ WatchtowerScenarioProgress
 
         Assert.True(moved.DidMove);
         Assert.Equal(
-            new GridPosition(3, 1),
+            new GridPosition(4, 1),
             AssertExploration(moved.State).Position);
     }
 
@@ -1155,21 +1155,21 @@ WatchtowerScenarioProgress
         Assert.NotNull(view);
         Assert.Equal("map.ruined-watchtower", view!.MapId);
         Assert.Equal("GroundFloor", view.Floor);
-        Assert.Equal(5, view.Width);
+        Assert.Equal(6, view.Width);
         Assert.Equal(3, view.Height);
-        Assert.Equal(new GridPosition(0, 0), view.PartyPosition);
+        Assert.Equal(new GridPosition(1, 0), view.PartyPosition);
         Assert.Equal(ExplorationFacing.East, view.PartyFacing);
         Assert.Equal(
             new HashSet<GridPosition>
             {
-                new(0, 0), new(1, 0), new(2, 0),
-                new(0, 1), new(1, 1), new(2, 1), new(3, 1),
-                new(0, 2), new(1, 2), new(2, 2), new(3, 2),
-                new(4, 1), new(4, 2)
+                new(1, 0), new(2, 0), new(3, 0),
+                new(0, 1), new(1, 1), new(2, 1), new(3, 1), new(4, 1),
+                new(1, 2), new(2, 2), new(3, 2), new(4, 2),
+                new(5, 1), new(5, 2)
             },
             view.TraversablePositions.ToHashSet());
         Assert.Equal(
-            new[] { new GridPosition(2, 0) },
+            new[] { new GridPosition(3, 0) },
             view.StairPositions);
     }
 
@@ -1185,7 +1185,7 @@ WatchtowerScenarioProgress
         ExplorationMapView? view = ExplorationRules.Query(session);
 
         Assert.NotNull(view);
-        Assert.Equal(new GridPosition(1, 0), view!.PartyPosition);
+        Assert.Equal(new GridPosition(2, 0), view!.PartyPosition);
         Assert.Equal(ExplorationFacing.South, view.PartyFacing);
     }
 
@@ -1203,8 +1203,8 @@ WatchtowerScenarioProgress
         Assert.Equal(
             new HashSet<GridPosition>
             {
-                new(0, 0), new(1, 0), new(2, 0),
-                new(0, 1), new(1, 1), new(2, 1)
+                new(1, 0), new(2, 0), new(3, 0),
+                new(1, 1), new(2, 1), new(3, 1)
             },
             view.TraversablePositions.ToHashSet());
     }
@@ -1235,23 +1235,23 @@ WatchtowerScenarioProgress
         Assert.Contains(
             view!.Doors,
             door => !door.IsLocked
-                && ConnectsEdge(door, new GridPosition(2, 1), new GridPosition(3, 1)));
+                && ConnectsEdge(door, new GridPosition(3, 1), new GridPosition(4, 1)));
         Assert.Contains(
             view.Doors,
             door => door.IsLocked
                 && ConnectsEdge(door, new GridPosition(0, 1), new GridPosition(1, 1)));
 
-        // The hidden vault, on the edge between (2, 2) and (3, 2), is an
+        // The hidden vault, on the edge between (3, 2) and (4, 2), is an
         // unrevealed secret door -- still present (a renderer needs the
         // edge to draw a plain wall rather than open passage), but
         // flagged as not yet revealed.
         Assert.Contains(
             view.Doors,
             door => !door.IsRevealed
-                && ConnectsEdge(door, new GridPosition(2, 2), new GridPosition(3, 2)));
+                && ConnectsEdge(door, new GridPosition(3, 2), new GridPosition(4, 2)));
 
         Assert.Contains(
-            new GridPosition(4, 1),
+            new GridPosition(5, 1),
             view.TreasurePositions);
     }
 
@@ -1265,7 +1265,7 @@ WatchtowerScenarioProgress
         Assert.Contains(
             view!.Doors,
             door => door.IsOpen
-                && ConnectsEdge(door, new GridPosition(2, 1), new GridPosition(3, 1)));
+                && ConnectsEdge(door, new GridPosition(3, 1), new GridPosition(4, 1)));
     }
 
     [Fact]
@@ -1281,7 +1281,7 @@ WatchtowerScenarioProgress
         Assert.Contains(
             view!.Doors,
             door => door.IsOpen
-                && ConnectsEdge(door, new GridPosition(2, 2), new GridPosition(3, 2)));
+                && ConnectsEdge(door, new GridPosition(3, 2), new GridPosition(4, 2)));
     }
 
     [Fact]
@@ -1295,16 +1295,18 @@ WatchtowerScenarioProgress
 
         Assert.NotNull(view);
         Assert.DoesNotContain(
-            new GridPosition(4, 1),
+            new GridPosition(5, 1),
             view!.TreasurePositions);
     }
 
     /// The postern's edge (between (0, 1) and (1, 1)) has no unlock path
     /// in v1, so it stays locked across every other state change tested
-    /// here -- but unlike the old its-own-tile model, (1, 1) is ordinary
-    /// floor reachable from its other three sides, so it does appear in
-    /// TraversablePositions; only the specific edge from (0, 1) stays
-    /// gated.
+    /// here. (0, 1) is a genuine one-tile locked vault (2026-08-03 --
+    /// walled on every side but this one, unlike the door's own original
+    /// shape where neither flanking tile was actually isolated); (1, 1)
+    /// is ordinary floor reachable from its other three sides, so it does
+    /// appear in TraversablePositions -- only the specific edge into the
+    /// vault stays gated.
     [Fact]
     public void Query_TheLockedPosternEdgeNeverOpens_AcrossStateChanges()
     {
@@ -1399,8 +1401,8 @@ WatchtowerScenarioProgress
         return current;
     }
 
-    /// Facing the ordinary door at (3, 1) on the Watchtower's ground floor,
-    /// from the traversable ring square at (2, 1).
+    /// Facing the ordinary door at (4, 1) on the Watchtower's ground floor,
+    /// from the traversable ring square at (3, 1).
     private static ApplicationSessionState
         CreateFacingArmoryDoor()
     {
@@ -1420,8 +1422,8 @@ WatchtowerScenarioProgress
         return current;
     }
 
-    /// Facing the bound watchman NPC at (4, 0) on the Watchtower's ground
-    /// floor, from the armory chamber square at (4, 1) -- reached by
+    /// Facing the bound watchman NPC at (5, 0) on the Watchtower's ground
+    /// floor, from the armory chamber square at (5, 1) -- reached by
     /// walking through the armory door, an ordinary unlocked door that
     /// needs no separate open step.
     private static ApplicationSessionState
@@ -1439,8 +1441,8 @@ WatchtowerScenarioProgress
         return current;
     }
 
-    /// Facing the secret door at (3, 2) on the Watchtower's ground floor,
-    /// from the traversable ring square at (2, 2).
+    /// Facing the secret door at (4, 2) on the Watchtower's ground floor,
+    /// from the traversable ring square at (3, 2).
     private static ApplicationSessionState
         CreateFacingHiddenVaultDoor()
     {
@@ -1461,9 +1463,10 @@ WatchtowerScenarioProgress
         return current;
     }
 
-    /// Facing east across the sealed postern's own locked edge (between
-    /// (0, 1) and (1, 1)) -- the Watchtower ground floor's own interior
-    /// gap -- from the traversable square at (0, 1).
+    /// Facing west across the sealed postern's own locked edge (between
+    /// (1, 1) and (0, 1)) -- (0, 1) is a genuine one-tile locked vault,
+    /// walled on every side but this one -- from the traversable square
+    /// at (1, 1).
     private static ApplicationSessionState
         CreateFacingSealedPostern()
     {
@@ -1476,13 +1479,13 @@ WatchtowerScenarioProgress
         current = ExplorationRules.MoveForward(current).State;
         current = ExplorationRules.Turn(
             current,
-            ExplorationTurnDirection.Left);
+            ExplorationTurnDirection.Right);
 
         return current;
     }
 
-    /// Standing on the armory cache treasure at (4, 1), reachable only by
-    /// walking through the ordinary door at (3, 1) first.
+    /// Standing on the armory cache treasure at (5, 1), reachable only by
+    /// walking through the ordinary door at (4, 1) first.
     private static ApplicationSessionState
         CreateAtArmoryCacheTreasure()
     {

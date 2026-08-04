@@ -174,12 +174,12 @@ WatchtowerScenarioProgress.RaidersDefeated)
     [Fact]
     public void Validate_WithPositionOnBlockedTile_Throws()
     {
-        // (3, 0) is the bound watchman's own tile -- genuinely blocked,
-        // not open floor.
+        // (4, 0), between the stairs at (3, 0) and the bound watchman's
+        // own tile at (5, 0), is genuinely blocked -- not open floor.
         AssertInvalidExplorationThrows(
             exploration => exploration with
             {
-                Position = new GridPosition(3, 0)
+                Position = new GridPosition(4, 0)
             });
     }
 
