@@ -354,7 +354,11 @@ public sealed class ConsoleSessionRunnerNoncombatTests
 
         Assert.False(expected.DidMove);
         Assert.Contains("Turned left.", output);
-        Assert.Contains("Movement blocked.", output);
+        Assert.Contains(
+            expected.Outcome == ExplorationMoveOutcome.BlockedByLockedDoor
+                ? "A locked door blocks the way forward."
+                : "A wall blocks the way forward.",
+            output);
         Assert.Contains(
             $"Position X: {expected.State.Exploration!.Position.X}",
             output);

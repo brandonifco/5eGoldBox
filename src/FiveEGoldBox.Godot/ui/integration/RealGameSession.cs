@@ -423,7 +423,15 @@ internal sealed class RealGameSession
 
 		_state = result.State;
 
-		return result.DidMove ? "Moved forward." : "Movement blocked.";
+		return result.Outcome switch
+		{
+			ExplorationMoveOutcome.Moved => "Moved forward.",
+			ExplorationMoveOutcome.MovedThroughDoorway => "You pass through a doorway.",
+			ExplorationMoveOutcome.BlockedByWall => "A wall blocks the way forward.",
+			ExplorationMoveOutcome.BlockedByLockedDoor => "A locked door blocks the way forward.",
+			_ => throw new InvalidOperationException(
+				$"Unhandled {nameof(ExplorationMoveOutcome)}: {result.Outcome}."),
+		};
 	}
 
 	private string Turn(ExplorationTurnDirection direction, string message)

@@ -6,5 +6,7 @@ public sealed record ExplorationMoveResult
 {
     public required bool DidMove { get; init; }
 
+    public required ExplorationMoveOutcome Outcome { get; init; }
+
     public required ApplicationSessionState State { get; init; }
 }

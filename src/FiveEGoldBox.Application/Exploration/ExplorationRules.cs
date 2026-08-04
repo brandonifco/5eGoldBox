@@ -128,13 +128,16 @@ public static class ExplorationRules
             ScenarioExplorationMap.FindCurrent(canonicalSession)
             ?? throw new InvalidOperationException(
                 "The exploration location has no map.");
-        bool didMove =
-            ScenarioExplorationMap.CanMoveBetween(
+        ExplorationMoveOutcome outcome =
+            ScenarioExplorationMap.DetermineMoveOutcome(
                 map,
                 exploration.Floor,
                 exploration.Position,
                 destination,
                 exploration.RevealedSecretDoorIds);
+        bool didMove =
+            outcome is ExplorationMoveOutcome.Moved
+                or ExplorationMoveOutcome.MovedThroughDoorway;
 
         ApplicationSessionState resultingSession =
             didMove
@@ -151,6 +154,7 @@ public static class ExplorationRules
         return new ExplorationMoveResult
         {
             DidMove = didMove,
+            Outcome = outcome,
             State = resultingSession
         };
     }
