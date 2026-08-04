@@ -23,7 +23,7 @@ public partial class CombatView
 		float DiamondHeight);
 
 	// Locked rather than independently fit to the viewport: both the
-	// diamond's width and height scale by the same (gridWidth+gridHeight)
+	// diamond's width and height scale by the same reference-span
 	// factor, so locking the tile ratio locks the whole bounding box's
 	// aspect ratio too, independent of grid shape — a 5x4 real encounter
 	// and a 20x16 mock one render as the same "shape of tactics game,"
@@ -33,20 +33,39 @@ public partial class CombatView
 	// skews.
 	private const float TileAspectRatio = 2f;
 
+	// Tile size used to be derived from the actual grid's own span
+	// (gridWidth+gridHeight), so every battlefield -- no matter how
+	// large -- scaled down to exactly fill the viewport with nothing
+	// left over. That made "the playing field is bigger than what's
+	// visible, scroll to see the rest" structurally impossible: there
+	// was never anything left outside the frame. ReferenceSpan fixes
+	// tile size against a constant instead (9, Watchtower's original
+	// 5+4 -- the most "typical" existing encounter, chosen so nothing
+	// already-shipped changes size), so a battlefield larger than that
+	// genuinely overflows the viewport and needs the edge auto-scroll
+	// (CombatView.Zoom.cs) to see the rest of it -- requested live by
+	// the user right after that auto-scroll shipped.
+	private const int ReferenceSpan = 9;
+
 	private IsoMetrics Metrics
 	{
 		get
 		{
 			Vector2 imageSize = _combatImage.Size;
-			int span = Math.Max(_gridWidth + _gridHeight, 1);
+			int realSpan = Math.Max(_gridWidth + _gridHeight, 1);
 
-			float tileWidthFromWidth = 2f * imageSize.X / span;
-			float tileWidthFromHeight = TileAspectRatio * 2f * imageSize.Y / span;
+			float tileWidthFromWidth = 2f * imageSize.X / ReferenceSpan;
+			float tileWidthFromHeight = TileAspectRatio * 2f * imageSize.Y / ReferenceSpan;
 			float tileWidth = Mathf.Min(tileWidthFromWidth, tileWidthFromHeight);
 			float tileHeight = tileWidth / TileAspectRatio;
 
-			float diamondWidth = span * tileWidth / 2f;
-			float diamondHeight = span * tileHeight / 2f;
+			// The diamond's own bounding box still scales with the real
+			// grid, not the reference span -- a battlefield bigger than
+			// ReferenceSpan needs a genuinely bigger diamond (that's the
+			// whole point), just built from the fixed tile size above
+			// rather than a tile size that shrinks to compensate.
+			float diamondWidth = realSpan * tileWidth / 2f;
+			float diamondHeight = realSpan * tileHeight / 2f;
 
 			// Centers the diamond's bounding box within imageSize. The
 			// + gridHeight*tileWidth/2 term exists because Project's raw
@@ -295,22 +314,29 @@ public partial class CombatView
 		}
 	}
 
-	// The tactical grid itself, now a diamond lattice — each line of
-	// constant gridY or gridX is still a straight screen-space line
-	// since Project is affine per axis, just diagonal instead of
-	// axis-aligned.
+	// Used to draw the full lattice unconditionally; now only ever marks
+	// one cell -- whichever CombatView.Zoom.cs's _hoveredCell currently
+	// names (updated every frame from the mouse, see UpdateHoveredCell)
+	// -- per the user's own request to stop showing grid lines
+	// everywhere. Each side is still a straight screen-space line since
+	// Project is affine per axis, just diagonal instead of axis-aligned.
 	private void DrawGridLines()
 	{
-		Color lineColor = new(1f, 1f, 1f, 0.18f);
-
-		for (int gy = 0; gy <= _gridHeight; gy++)
+		if (_hoveredCell is not Vector2I hovered)
 		{
-			_gridOverlay.DrawLine(Project(0, gy), Project(_gridWidth, gy), lineColor);
+			return;
 		}
 
-		for (int gx = 0; gx <= _gridWidth; gx++)
-		{
-			_gridOverlay.DrawLine(Project(gx, 0), Project(gx, _gridHeight), lineColor);
-		}
+		Color lineColor = new(1f, 1f, 1f, 0.6f);
+
+		Vector2 top = Project(hovered.X, hovered.Y);
+		Vector2 right = Project(hovered.X + 1, hovered.Y);
+		Vector2 bottom = Project(hovered.X + 1, hovered.Y + 1);
+		Vector2 left = Project(hovered.X, hovered.Y + 1);
+
+		_gridOverlay.DrawLine(top, right, lineColor);
+		_gridOverlay.DrawLine(right, bottom, lineColor);
+		_gridOverlay.DrawLine(bottom, left, lineColor);
+		_gridOverlay.DrawLine(left, top, lineColor);
 	}
 }

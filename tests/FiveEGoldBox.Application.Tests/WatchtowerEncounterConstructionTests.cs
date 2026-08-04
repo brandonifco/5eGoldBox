@@ -40,8 +40,8 @@ public sealed class WatchtowerEncounterConstructionTests
         Assert.Equal(
             "battlefield.watchtower-signal-chamber",
             encounter.Battlefield.BattlefieldId);
-        Assert.Equal(5, encounter.Battlefield.Width);
-        Assert.Equal(4, encounter.Battlefield.Height);
+        Assert.Equal(9, encounter.Battlefield.Width);
+        Assert.Equal(8, encounter.Battlefield.Height);
         Assert.Empty(encounter.Battlefield.BlockedPositions);
         Assert.Empty(encounter.Battlefield.CoverPositions);
         Assert.Empty(

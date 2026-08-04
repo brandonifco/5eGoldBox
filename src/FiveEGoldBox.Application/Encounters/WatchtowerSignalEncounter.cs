@@ -35,9 +35,9 @@ internal static class WatchtowerSignalEncounter
 
     internal const int RangedRaiderAmmunitionQuantity = 12;
 
-    internal const int BattlefieldWidth = 5;
+    internal const int BattlefieldWidth = 9;
 
-    internal const int BattlefieldHeight = 4;
+    internal const int BattlefieldHeight = 8;
 
     internal static readonly IReadOnlyList<GridPosition>
         PartyStartingPositions =

@@ -53,6 +53,10 @@
    primary   Movement|actor=party-member.fighter|target=-|reason=-|dice=-|rev=27->28|winner=-
 == Move rev 28->29 cursor 26->26 next=PlayerDecisionRequired
    primary   Movement|actor=party-member.fighter|target=-|reason=-|dice=-|rev=28->29|winner=-
-== Attack rev 29->30 cursor 26->28 next=CombatCompleted
-   primary   WeaponAttack|actor=party-member.fighter|target=combatant.watchtower-raider.ranged|reason=-|dice=#27d20=11:AttackRoll;#28d8=5:DamageRoll|rev=29->30|winner=side.party
-   automatic CombatCompleted|actor=-|target=-|reason=-|dice=-|rev=30->30|winner=side.party
+== Move rev 29->30 cursor 26->26 next=PlayerDecisionRequired
+   primary   Movement|actor=party-member.fighter|target=-|reason=-|dice=-|rev=29->30|winner=-
+== EndTurn rev 30->31 cursor 26->26 next=PlayerDecisionRequired
+   primary   TurnAdvanced|actor=party-member.fighter|target=-|reason=PlayerEndTurn|dice=-|rev=30->31|winner=-
+== Attack rev 31->32 cursor 26->28 next=CombatCompleted
+   primary   WeaponAttack|actor=party-member.rogue|target=combatant.watchtower-raider.ranged|reason=-|dice=#27d20=11:AttackRoll;#28d6=5:DamageRoll|rev=31->32|winner=side.party
+   automatic CombatCompleted|actor=-|target=-|reason=-|dice=-|rev=32->32|winner=side.party

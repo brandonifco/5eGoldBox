@@ -164,8 +164,8 @@
         {
             "EncounterId": "encounter.mill-vermin-swarm",
             "BattlefieldId": "battlefield.mill-vault-rats",
-            "Width": 4,
-            "Height": 4,
+            "Width": 8,
+            "Height": 8,
             "PartySideId": "side.party",
             "BlockedPositions": [],
             "PartyStartingPositions": [
@@ -196,8 +196,8 @@
         {
             "EncounterId": "encounter.mill-thrall-ambush",
             "BattlefieldId": "battlefield.mill-vault-ambush",
-            "Width": 4,
-            "Height": 4,
+            "Width": 8,
+            "Height": 8,
             "PartySideId": "side.party",
             "BlockedPositions": [],
             "PartyStartingPositions": [
