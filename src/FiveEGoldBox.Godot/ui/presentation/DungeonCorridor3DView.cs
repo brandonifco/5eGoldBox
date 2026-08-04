@@ -30,6 +30,18 @@ internal sealed partial class DungeonCorridor3DView : SubViewportContainer
 	private const float HalfWidth = CellSize / 2f;
 	private const float HalfHeight = WallHeight / 2f;
 
+	// The camera defaulted to Y=0 -- dead center between floor and
+	// ceiling -- which reads as floating in the middle of a tall shaft
+	// rather than standing on the floor looking up at a room. Lowering
+	// the camera toward the floor (not literally to it -- eye height,
+	// not a crawling view) leaves more headroom above the sightline than
+	// below it, which is what actually makes walls and doorways read as
+	// tall: reported live by the user after an earlier attempt at this
+	// same complaint wrongly cropped/stretched the door texture instead
+	// of moving the camera. 0.25 units below center, ~39% of the way up
+	// from the floor rather than the original 50%.
+	private const float CameraEyeHeight = -0.25f;
+
 	// Manhattan-distance flood-fill radius (in cells) from the party's
 	// own position. Generous relative to every current scenario's small
 	// maps (a handful of tiles per floor), so this comfortably covers
@@ -61,6 +73,7 @@ internal sealed partial class DungeonCorridor3DView : SubViewportContainer
 
 		Camera3D camera = new()
 		{
+			Position = new Vector3(0f, CameraEyeHeight, 0f),
 			Fov = 75f,
 			Near = 0.05f,
 			Far = CellSize * (Radius + 2),

@@ -7,19 +7,6 @@ using Godot;
 // (see DungeonWallMaterial's own comment) -- textures are cached by
 // material name so repeated Configure calls don't re-walk resource
 // paths.
-//
-// The pack's own CDoor texture draws the archway only in its bottom
-// ~40% (the rest is plain wall header) -- correct on a texture meant
-// to tile freely above a much shorter door in a taller wall panel, but
-// this renderer stretches the whole texture across one full wall-height
-// quad (DungeonCorridor3DView's WallHeight), the same as any plain wall
-// segment, so the door itself only ever read as roughly half as tall as
-// the corridor -- reported live by the user ("doors look about 4 feet
-// tall"). `_full-height.png` is a derived sibling (cropped to the
-// archway starting where its brightness sharply drops, ~y=48 of 128,
-// then stretched back to 128x128) so the door fills the same quad
-// height a wall does, same technique already used elsewhere this
-// session for off-center combat portraits.
 internal static class DungeonWallMaterials
 {
 	private static readonly Dictionary<string, DungeonWallMaterial> Cache = new();
@@ -50,7 +37,7 @@ internal static class DungeonWallMaterials
 		DungeonWallMaterial material = new()
 		{
 			WallTexture = Load(Base + "Layer 1/Brick_01-Layer_1_Center-128x128.png"),
-			DoorTexture = Load(DoorBase + "Layer 1/Brick_01-Layer_1_CDoor-128x128_full-height.png"),
+			DoorTexture = Load(DoorBase + "Layer 1/Brick_01-Layer_1_CDoor-128x128.png"),
 		};
 
 		Cache[Key] = material;
