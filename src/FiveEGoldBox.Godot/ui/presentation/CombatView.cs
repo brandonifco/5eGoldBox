@@ -33,6 +33,7 @@ public partial class CombatView : Control
 	private IReadOnlyList<CombatHighlightViewModel> _highlights =
 		Array.Empty<CombatHighlightViewModel>();
 	private int _zoomIndex;
+	private Vector2 _panOffset;
 	private Texture2D? _floorTileTexture;
 
 	// M8e: fires when the player targets a combatant (marker click/Enter)
@@ -70,6 +71,12 @@ public partial class CombatView : Control
 	{
 		_zoomIndex = 0;
 		Refresh(model);
+		// Refresh alone only clamps whatever pan offset already existed
+		// (see CombatView.Zoom.cs's own reasoning) — a fresh encounter
+		// still wants to start centered on the opening focus, the same
+		// "reset to a clean default exactly once" this method's own
+		// zoom reset already does.
+		CenterPanOnFocus();
 	}
 
 	internal void Refresh(CombatViewModel model)
@@ -85,7 +92,13 @@ public partial class CombatView : Control
 
 		RebuildCombatants();
 		RebuildHighlights();
-		ApplyZoomAndPan();
+		// Not a recenter — a turn advancing or a highlight changing
+		// shouldn't yank the view back to center every time; only
+		// _Process's own edge auto-scroll (CombatView.Zoom.cs) moves the
+		// pan offset once a real encounter is underway. This just keeps
+		// whatever offset already exists valid against the current zoom/
+		// grid, e.g. after a resize.
+		ClampPanOffset();
 		_floorLayer.QueueRedraw();
 		_gridOverlay.QueueRedraw();
 		UpdateResultBanner(model.InformationalOverlays);
@@ -116,6 +129,7 @@ public partial class CombatView : Control
 
 	private void RepositionAll()
 	{
+		ClampPanOffset();
 		RepositionCombatants();
 		RepositionHighlights();
 		_floorLayer.QueueRedraw();
