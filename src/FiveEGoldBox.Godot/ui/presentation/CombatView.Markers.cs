@@ -235,6 +235,8 @@ public partial class CombatView
 		// FocusEntered below.
 		_cursorFocusedCell = null;
 
+		Dictionary<(int X, int Y), CombatHighlightCell> cursorCellsByPosition = new();
+
 		foreach (CombatHighlightViewModel highlight in _highlights)
 		{
 			CombatHighlightCell cell = new();
@@ -252,7 +254,64 @@ public partial class CombatView
 
 			PositionHighlight(cell, gridX, gridY);
 			_highlightCells.Add(cell);
+
+			if (highlight.Kind is "move-legal" or "move-illegal")
+			{
+				cursorCellsByPosition[(gridX, gridY)] = cell;
+			}
 		}
+
+		WireCursorFocusNeighbors(cursorCellsByPosition);
+	}
+
+	// Arrow-key navigation for the full-battlefield move cursor (see
+	// EnterRealCombatMoveTargeting) needs to move along the diamond's
+	// own two axes, not Godot's default spatial nearest-neighbor guess
+	// -- on an isometric lattice "the nearest focusable control above"
+	// and "the tile that reads as directly above" aren't the same
+	// thing. Per the user's own request: Up/Down walk the axis that
+	// reads up-left/down-right on screen (grid X), Left/Right walk the
+	// one that reads up-right/down-left (grid Y) -- matching this
+	// file's own header convention ("increasing gridX moves
+	// down-and-right, increasing gridY moves down-and-left").
+	//
+	// Only wired for cursor-mode cells (a dense, full-grid set, so
+	// every direction always has a real neighbor to point at except at
+	// the battlefield's own edge) -- attack/spell targeting's sparse
+	// legal-target sets don't get this, since a directly-adjacent cell
+	// in every direction isn't guaranteed to exist there, and Godot's
+	// own automatic spatial neighbor-finding already works fine for
+	// that smaller, scattered case.
+	private static void WireCursorFocusNeighbors(
+		Dictionary<(int X, int Y), CombatHighlightCell> cellsByPosition)
+	{
+		foreach (((int x, int y), CombatHighlightCell cell) in cellsByPosition)
+		{
+			cell.FocusNeighborTop = ResolveNeighborPath(cell, cellsByPosition, x - 1, y);
+			cell.FocusNeighborBottom = ResolveNeighborPath(cell, cellsByPosition, x + 1, y);
+			cell.FocusNeighborRight = ResolveNeighborPath(cell, cellsByPosition, x, y - 1);
+			cell.FocusNeighborLeft = ResolveNeighborPath(cell, cellsByPosition, x, y + 1);
+		}
+	}
+
+	// Self-referencing when there's no real neighbor in that direction
+	// (the battlefield's own edge) clamps the cursor there instead of
+	// falling back to Godot's automatic guess, which would otherwise
+	// jump somewhere off-axis and undo the whole point of wiring these
+	// explicitly.
+	private static NodePath ResolveNeighborPath(
+		CombatHighlightCell cell,
+		Dictionary<(int X, int Y), CombatHighlightCell> cellsByPosition,
+		int x,
+		int y)
+	{
+		CombatHighlightCell target = cellsByPosition.TryGetValue(
+			(x, y),
+			out CombatHighlightCell? neighbor)
+				? neighbor
+				: cell;
+
+		return cell.GetPathTo(target);
 	}
 
 	private void RepositionHighlights()
