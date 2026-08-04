@@ -37,6 +37,7 @@ public partial class CombatView
 
 		ApplyEdgeAutoScroll((float)delta);
 		UpdateHoveredCell();
+		UpdateDebugCameraLabel();
 	}
 
 	// The full-lattice grid used to always draw; the user asked for it
