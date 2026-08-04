@@ -149,43 +149,65 @@ public partial class CombatView
 		SetPanOffset(_panOffset);
 	}
 
+	// Found live, from the debug overlay's own numbers on an 8x8 real
+	// battlefield: a focus point at content-local (278, -38) wanted a
+	// desired pan of roughly (+79, +238) to center it (viewport half
+	// minus focus), but the clamp always capped both axes at 0 -- so the
+	// resulting pan was stuck at (0, 0) no matter what CenterPanOnFocus
+	// asked for. Wrong assumption: the old clamp treated content as
+	// always starting at content-local (0, 0) and only ever needing
+	// negative pan to reveal more toward the bottom-right. That held
+	// when a diamond always fit inside the background image; it stopped
+	// holding once ReferenceSpan could center a diamond *bigger* than
+	// the image, which pushes real tiles into negative content-local
+	// coordinates on the diamond's own top-left -- content a
+	// clamp-to-[min, 0] can never pan far enough right/down to reach.
 	private void SetPanOffset(Vector2 desired)
 	{
 		float zoom = ZoomLevels[_zoomIndex];
 		Vector2 viewportSize = _combatViewport.Size;
-		// Whichever is actually bigger, the background image or the
-		// diamond itself — Metrics.ReferenceSpan means a battlefield
-		// larger than the reference now genuinely overflows the
-		// background it's drawn on, and clamping against the background
-		// alone (as this always did before that changed) would leave
-		// the overflowing part impossible to pan to.
 		IsoMetrics metrics = Metrics;
-		Vector2 contentSize = new Vector2(
-			Mathf.Max(_combatImage.Size.X, metrics.DiamondWidth),
-			Mathf.Max(_combatImage.Size.Y, metrics.DiamondHeight)) * zoom;
-		Vector2 minOffset = new(
-			Mathf.Min(0, viewportSize.X - contentSize.X),
-			Mathf.Min(0, viewportSize.Y - contentSize.Y));
+		float halfW = metrics.TileWidth / 2f;
+		float halfH = metrics.TileHeight / 2f;
+
+		// The diamond's real bounding box, from Project's own extremes --
+		// not derived from DiamondWidth/DiamondHeight alone, which are
+		// only symmetric around OffsetX for a square grid. Leftmost is
+		// grid (0, gridHeight), rightmost is (gridWidth, 0), topmost is
+		// (0, 0) (OffsetY itself, by construction), bottommost is
+		// (gridWidth, gridHeight).
+		float diamondMinX = (-_gridHeight * halfW) + metrics.OffsetX;
+		float diamondMaxX = (_gridWidth * halfW) + metrics.OffsetX;
+		float diamondMinY = metrics.OffsetY;
+		float diamondMaxY = ((_gridWidth + _gridHeight) * halfH) + metrics.OffsetY;
+
+		// Union with the background image's own rect ([0, 0]-imageSize) —
+		// whichever extends further in each direction, background or
+		// diamond, is what pan needs to keep fully covering the viewport.
+		float unionMinX = Mathf.Min(0f, diamondMinX);
+		float unionMaxX = Mathf.Max(_combatImage.Size.X, diamondMaxX);
+		float unionMinY = Mathf.Min(0f, diamondMinY);
+		float unionMaxY = Mathf.Max(_combatImage.Size.Y, diamondMaxY);
 
 		_panOffset = new Vector2(
-			Mathf.Clamp(desired.X, minOffset.X, 0),
-			Mathf.Clamp(desired.Y, minOffset.Y, 0));
+			Mathf.Clamp(
+				desired.X,
+				viewportSize.X - (unionMaxX * zoom),
+				-unionMinX * zoom),
+			Mathf.Clamp(
+				desired.Y,
+				viewportSize.Y - (unionMaxY * zoom),
+				-unionMinY * zoom));
 
 		_combatContent.Position = _panOffset;
 	}
 
-	// Pans/clamps against the full background rect (_combatImage.Size —
-	// the placeholder or the mock art, whichever is showing), exactly
-	// like the pre-isometric version did, NOT the diamond's own smaller,
-	// letterboxed bounding box. The diamond is already centered within
-	// that background by Metrics' own offsetX/offsetY; only the focus
-	// point (below) needed to become isometric-aware. Clamping against
-	// the diamond's bounds instead — tried first, reverted — shifted the
-	// whole content group (background included) to chase the diamond's
-	// center, cutting off the background's own far edge inside the
-	// viewport even at the default zoom level. SetPanOffset above is
-	// what actually applies that clamp now; this comment describes why
-	// it clamps against what it does.
+	// Purely a content-local point -- SetPanOffset above is what turns it
+	// into an actual clamped pan offset, against the union of the
+	// background rect and the diamond's own real bounding box (see its
+	// own comment). This function itself needs no clamp awareness at
+	// all; it just answers "where, in content-local space, is the thing
+	// the camera should look at."
 	private Vector2 ResolveFocusPoint()
 	{
 		CombatantMarkerViewModel? focus =
