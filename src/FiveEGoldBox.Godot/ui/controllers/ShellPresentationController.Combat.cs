@@ -30,6 +30,7 @@ internal sealed partial class ShellPresentationController
 
 	public event Action<string>? CombatantTargeted;
 	public event Action<int, int>? CombatCellTargeted;
+	public event Action<int, int>? CombatCellCursorFocused;
 
 	public CombatantMarkerViewModel? ActiveCombatant =>
 		_combatCombatants.FirstOrDefault(combatant => combatant.Id == _activeCombatantId);

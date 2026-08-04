@@ -55,6 +55,12 @@ public partial class CombatView : Control
 	// decides what either one means for the currently active command.
 	public event Action<string>? CombatantActivated;
 	public event Action<int, int>? CellActivated;
+	// Fires whenever a "move-legal"/"move-illegal" cursor cell (see
+	// CombatHighlightCell) gains keyboard/mouse focus — the interaction
+	// controller already knows which positions are legal from the same
+	// move-destination data it built the cursor grid from, so this only
+	// needs to report where the cursor is now, not judge it itself.
+	public event Action<int, int>? CellCursorFocused;
 
 	public override void _Ready()
 	{
