@@ -36,6 +36,12 @@ public partial class CombatView : Control
 	private Vector2 _panOffset;
 	private Texture2D? _floorTileTexture;
 	private Vector2I? _hoveredCell;
+	// Tracks whose turn the camera last centered on, so Refresh can tell
+	// "still the same combatant's turn" (leave the player's own scrolling
+	// alone) apart from "turn just advanced to someone else" (recenter).
+	// Starts null, which itself counts as "different" the first time
+	// Refresh runs for a fresh encounter.
+	private string? _lastCenteredCombatantId;
 
 	// M8e: fires when the player targets a combatant (marker click/Enter)
 	// or a highlighted destination cell — the interaction controller
@@ -71,13 +77,12 @@ public partial class CombatView : Control
 	internal void Configure(CombatViewModel model)
 	{
 		_zoomIndex = 0;
+		// Forces Refresh's own "did the active combatant change" check
+		// below to read as true on this first call, so a fresh encounter
+		// centers on the opening turn the same way any later turn change
+		// does — one recenter rule instead of two.
+		_lastCenteredCombatantId = null;
 		Refresh(model);
-		// Refresh alone only clamps whatever pan offset already existed
-		// (see CombatView.Zoom.cs's own reasoning) — a fresh encounter
-		// still wants to start centered on the opening focus, the same
-		// "reset to a clean default exactly once" this method's own
-		// zoom reset already does.
-		CenterPanOnFocus();
 	}
 
 	internal void Refresh(CombatViewModel model)
@@ -93,13 +98,26 @@ public partial class CombatView : Control
 
 		RebuildCombatants();
 		RebuildHighlights();
-		// Not a recenter — a turn advancing or a highlight changing
-		// shouldn't yank the view back to center every time; only
-		// _Process's own edge auto-scroll (CombatView.Zoom.cs) moves the
-		// pan offset once a real encounter is underway. This just keeps
-		// whatever offset already exists valid against the current zoom/
-		// grid, e.g. after a resize.
-		ClampPanOffset();
+
+		// Recenter exactly when whose turn it is changes — a fresh
+		// encounter (Configure resets _lastCenteredCombatantId to null
+		// first) or an ordinary turn advance both read as "different"
+		// here. A target selection or a move that doesn't end the turn
+		// leaves ActiveCombatantId alone, so the camera stays put for
+		// those, matching what the user actually asked for: center on
+		// whoever has initiative, not on every highlight change.
+		if (model.ActiveCombatantId != _lastCenteredCombatantId)
+		{
+			_lastCenteredCombatantId = model.ActiveCombatantId;
+			CenterPanOnFocus();
+		}
+		else
+		{
+			// Keeps whatever offset already exists valid against the
+			// current zoom/grid (e.g. after a resize) without moving it.
+			ClampPanOffset();
+		}
+
 		_floorLayer.QueueRedraw();
 		_gridOverlay.QueueRedraw();
 		UpdateResultBanner(model.InformationalOverlays);

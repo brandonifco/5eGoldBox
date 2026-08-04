@@ -5,23 +5,28 @@ using Godot;
 // Zoom/pan camera math — split out of CombatView.cs (see that file's
 // header). Same discrete-preset zoom RegionalMapView.Zoom.cs (M7b) uses,
 // but pan is a persistent offset now, not a value recomputed to center
-// on focus every call — the user asked for scrolling that only kicks in
-// near an edge (mouse hover, or the focus tile getting close), not a
-// camera that snaps back to center on every turn advance/highlight
-// change. _panOffset is CombatView.cs's own field; this file owns every
-// read and write of it.
+// on focus every call. Two separate mechanisms move it, deliberately not
+// fighting each other: CombatView.cs's own Refresh recenters on the
+// active combatant exactly when whose turn it is changes (a discrete
+// snap, not a per-frame force); this file's ApplyEdgeAutoScroll is pure
+// mouse-hover exploration in between turns, uncontested by anything else
+// pulling toward a different point. An earlier version also pulled the
+// pan toward keeping the active combatant within a tile margin of every
+// edge, every frame -- summed with the mouse term, so scrolling toward
+// more distant content and the focus term pulling back could cancel out
+// within a couple of frames, reading as "scrolls a fraction of an inch
+// and stops." Removed once turn-change recentering existed to cover the
+// same need without a competing continuous force. _panOffset is
+// CombatView.cs's own field; this file owns every read and write of it.
 public partial class CombatView
 {
 	private static readonly float[] ZoomLevels = { 1.0f, 1.5f, 2.0f };
 
 	// Mouse-hover edge scroll: how close (screen pixels, independent of
 	// zoom -- it's about how close to the physical viewport edge the
-	// cursor is) triggers it, and how fast it scrolls. Focus-tile edge
-	// scroll uses a tile-count margin instead (below), since "2 tiles
-	// from the edge" is what the user actually asked for there.
+	// cursor is) triggers it, and how fast it scrolls.
 	private const float EdgeScrollMarginPx = 48f;
 	private const float EdgeScrollSpeedPxPerSec = 600f;
-	private const int FocusEdgeDeadzoneTiles = 2;
 
 	public override void _Process(double delta)
 	{
@@ -121,9 +126,11 @@ public partial class CombatView
 		}
 	}
 
-	// Only ever called from Configure (a fresh encounter) and CycleZoom
-	// (an explicit zoom change) -- both are real "the view should
-	// reorient" moments, unlike an ordinary Refresh, which only clamps.
+	// Called from CombatView.cs's own Refresh whenever whose turn it is
+	// changed (which a fresh Configure always counts as, see its own
+	// comment) and from CycleZoom (an explicit zoom change) -- both are
+	// real "the view should reorient" moments, unlike every other Refresh
+	// call, which only clamps.
 	private void CenterPanOnFocus()
 	{
 		float zoom = ZoomLevels[_zoomIndex];
@@ -193,35 +200,22 @@ public partial class CombatView
 		return Project(focus.GridX + 0.5f, focus.GridY + 0.5f);
 	}
 
-	// Two independent triggers, summed into one direction before
-	// applying speed*delta so hitting both at once doesn't scroll
-	// faster than either alone: the mouse hovering near the physical
-	// viewport edge, and "the highlighted tile" (whoever's turn it is,
-	// or the selected target -- ResolveFocusPoint's own definition,
-	// reused here since it's the only singular "the highlighted tile"
-	// concept this view already has) getting within
-	// FocusEdgeDeadzoneTiles of that same edge, in current on-screen
-	// tile units so it stays correct across zoom levels.
+	// Pure mouse-hover exploration: the only trigger is the cursor
+	// sitting near the physical viewport edge. Whoever's turn it is gets
+	// its own say over the camera through CombatView.cs's own
+	// turn-change recenter instead, not a second continuous force here
+	// that would fight this one (see this file's header).
 	private void ApplyEdgeAutoScroll(float deltaSeconds)
 	{
-		Vector2 direction = Vector2.Zero;
-
-		if (TryGetLocalMousePosition(out Vector2 mouseLocal))
+		if (!TryGetLocalMousePosition(out Vector2 mouseLocal))
 		{
-			direction += ComputeEdgeDirection(
-				mouseLocal,
-				_combatViewport.Size,
-				EdgeScrollMarginPx);
+			return;
 		}
 
-		float zoom = ZoomLevels[_zoomIndex];
-		float focusDeadzonePx = FocusEdgeDeadzoneTiles * Metrics.TileHeight * zoom;
-		Vector2 focusScreenPoint = (ResolveFocusPoint() * zoom) + _panOffset;
-
-		direction += ComputeEdgeDirection(
-			focusScreenPoint,
+		Vector2 direction = ComputeEdgeDirection(
+			mouseLocal,
 			_combatViewport.Size,
-			focusDeadzonePx);
+			EdgeScrollMarginPx);
 
 		if (direction == Vector2.Zero)
 		{
