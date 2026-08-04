@@ -57,6 +57,7 @@ internal interface IShellPresentation
 	// for whichever command is currently pending.
 	event Action<string>? CombatantTargeted;
 	event Action<int, int>? CombatCellTargeted;
+	event Action<int, int>? CombatCellCursorFocused;
 
 	CombatantMarkerViewModel? ActiveCombatant { get; }
 

@@ -25,6 +25,11 @@ internal sealed partial class ShellInteractionController
 	// _pendingCombatCommand's role in .Combat.cs for the mock path.
 	private string? _pendingRealCombatCommand;
 	private IReadOnlyList<CombatMovementDestinationOption>? _pendingRealMoveDestinations;
+	// Captured once, when move targeting opens, rather than re-querying
+	// RealCombatSession.Describe() on every cursor move -- the keyboard
+	// cursor can fire this several times a second, and the battlefield's
+	// own combatant positions don't change mid-targeting anyway.
+	private HashSet<(int X, int Y)>? _pendingRealMoveOccupiedPositions;
 	private IReadOnlyList<CombatWeaponAttackOption>? _pendingRealWeaponAttacks;
 
 	// Set together with _pendingRealCombatCommand == "cast" — which spell
@@ -118,22 +123,78 @@ internal sealed partial class ShellInteractionController
 		_commandBarController.ShowCommands(commands.ToArray());
 	}
 
+	// A full-battlefield keyboard cursor, not a pre-highlighted set of
+	// legal destinations -- one CombatHighlightCell per grid cell,
+	// "move-legal" for a real CombatMovementDestinationOption's own
+	// position and "move-illegal" for everything else, so the cursor
+	// can move anywhere and read legal/illegal per tile it's actually
+	// on, matching the old Gold Box games' own tile-cursor movement
+	// instead of lighting up the whole reachable zone at once.
 	private void EnterRealCombatMoveTargeting(RealCombatSnapshot combatSnapshot)
 	{
 		_pendingRealCombatCommand = "move";
 		_pendingRealMoveDestinations = combatSnapshot.MoveDestinations;
+		_pendingRealMoveOccupiedPositions = combatSnapshot.View.Combatants
+			.Select(combatant => (combatant.GridX, combatant.GridY))
+			.ToHashSet();
 
-		IReadOnlyList<CombatHighlightViewModel> highlights = combatSnapshot.MoveDestinations
-			.Select(destination => new CombatHighlightViewModel(
-				destination.Destination.X,
-				destination.Destination.Y,
-				"move-range"))
-			.ToList();
+		HashSet<(int X, int Y)> legalPositions = combatSnapshot.MoveDestinations
+			.Select(destination => (destination.Destination.X, destination.Destination.Y))
+			.ToHashSet();
+		List<CombatHighlightViewModel> cursorCells = new();
+
+		for (int y = 0; y < combatSnapshot.View.GridHeight; y++)
+		{
+			for (int x = 0; x < combatSnapshot.View.GridWidth; x++)
+			{
+				cursorCells.Add(new CombatHighlightViewModel(
+					x,
+					y,
+					legalPositions.Contains((x, y)) ? "move-legal" : "move-illegal"));
+			}
+		}
 
 		PushContext(ShellInteractionContext.Targeting);
-		_presentationController.ShowCombatHighlights(highlights);
+		_presentationController.ShowCombatHighlights(cursorCells);
 		_presentationController.SetMessage(
 			"Choose a destination. Press Esc to cancel.");
+	}
+
+	// Reports why the cursor's current tile isn't a legal destination --
+	// "space occupied" is real, derived from the same combatant
+	// positions the cursor grid itself was built from; anything else is
+	// reported as simply out of reach, since the client has no way to
+	// tell "too far" apart from "blocked terrain" without the engine
+	// explaining itself, which it doesn't do today (CombatMovement
+	// DestinationOption is only ever a positive list of reachable tiles,
+	// never a reason a given tile is missing from it). A real "explain
+	// this tile" endpoint would be Application-layer work, not attempted
+	// here.
+	private void ResolveRealCombatCursorFocused(int gridX, int gridY)
+	{
+		if (_pendingRealCombatCommand != "move" ||
+			_pendingRealMoveDestinations is null ||
+			_pendingRealMoveOccupiedPositions is null)
+		{
+			return;
+		}
+
+		bool isLegal = _pendingRealMoveDestinations.Any(
+			destination => destination.Destination.X == gridX &&
+				destination.Destination.Y == gridY);
+
+		if (isLegal)
+		{
+			_presentationController.SetMessage(
+				"Choose a destination. Press Esc to cancel.");
+			return;
+		}
+
+		string reason = _pendingRealMoveOccupiedPositions.Contains((gridX, gridY))
+			? "Space occupied."
+			: "Out of reach.";
+
+		_presentationController.SetMessage($"{reason} Press Esc to cancel.");
 	}
 
 	// Highlights every legal (weapon, target) pair's target position,
@@ -327,6 +388,7 @@ internal sealed partial class ShellInteractionController
 	{
 		_pendingRealCombatCommand = null;
 		_pendingRealMoveDestinations = null;
+		_pendingRealMoveOccupiedPositions = null;
 		_pendingRealWeaponAttacks = null;
 		_pendingRealSpellId = null;
 		_pendingRealSpellTargets = null;

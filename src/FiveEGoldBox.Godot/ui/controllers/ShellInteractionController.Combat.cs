@@ -97,6 +97,19 @@ internal sealed partial class ShellInteractionController
 			"You move. Movement legality is not connected yet.");
 	}
 
+	// Mock combat has no full-battlefield move cursor (see
+	// EnterCombatTargeting's own comment on reusing Godot's focus system
+	// for its pre-highlighted set instead) — only real combat's move
+	// targeting produces "move-legal"/"move-illegal" cursor cells, so
+	// only it needs to hear about focus moving between them.
+	private void OnCombatCellCursorFocused(int gridX, int gridY)
+	{
+		if (_activeCombatSession is not null)
+		{
+			ResolveRealCombatCursorFocused(gridX, gridY);
+		}
+	}
+
 	private void OnCombatantTargeted(string combatantId)
 	{
 		if (_activeCombatSession is not null)

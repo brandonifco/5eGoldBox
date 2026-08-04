@@ -59,6 +59,7 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		_regionalMapView.LocationActivated += OnRegionalLocationActivated;
 		_combatView.CombatantActivated += id => CombatantTargeted?.Invoke(id);
 		_combatView.CellActivated += (x, y) => CombatCellTargeted?.Invoke(x, y);
+		_combatView.CellCursorFocused += (x, y) => CombatCellCursorFocused?.Invoke(x, y);
 	}
 
 	public PresentationMode CurrentMode { get; private set; }

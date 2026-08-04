@@ -240,6 +240,7 @@ public partial class CombatView
 			int gridX = highlight.GridX;
 			int gridY = highlight.GridY;
 			cell.Pressed += () => CellActivated?.Invoke(gridX, gridY);
+			cell.FocusEntered += () => CellCursorFocused?.Invoke(gridX, gridY);
 
 			PositionHighlight(cell, gridX, gridY);
 			_highlightCells.Add(cell);
