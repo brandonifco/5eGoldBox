@@ -230,6 +230,10 @@ public partial class CombatView
 		}
 
 		_highlightCells.Clear();
+		// The cells this pointed at are about to be freed above; a real
+		// focus change on whatever replaces them re-sets it via
+		// FocusEntered below.
+		_cursorFocusedCell = null;
 
 		foreach (CombatHighlightViewModel highlight in _highlights)
 		{
@@ -240,7 +244,11 @@ public partial class CombatView
 			int gridX = highlight.GridX;
 			int gridY = highlight.GridY;
 			cell.Pressed += () => CellActivated?.Invoke(gridX, gridY);
-			cell.FocusEntered += () => CellCursorFocused?.Invoke(gridX, gridY);
+			cell.FocusEntered += () =>
+			{
+				_cursorFocusedCell = new Vector2I(gridX, gridY);
+				CellCursorFocused?.Invoke(gridX, gridY);
+			};
 
 			PositionHighlight(cell, gridX, gridY);
 			_highlightCells.Add(cell);
@@ -328,7 +336,7 @@ public partial class CombatView
 			return;
 		}
 
-		Color lineColor = new(1f, 1f, 1f, 0.6f);
+		Color lineColor = ResolveHoverColor(hovered);
 
 		Vector2 top = Project(hovered.X, hovered.Y);
 		Vector2 right = Project(hovered.X + 1, hovered.Y);
@@ -339,5 +347,26 @@ public partial class CombatView
 		_gridOverlay.DrawLine(right, bottom, lineColor);
 		_gridOverlay.DrawLine(bottom, left, lineColor);
 		_gridOverlay.DrawLine(left, top, lineColor);
+	}
+
+	// During real-combat move targeting, the hovered cell is one of the
+	// full-battlefield "move-legal"/"move-illegal" cursor cells (see
+	// EnterRealCombatMoveTargeting) -- reads that same legality here so
+	// hovering with the mouse shows the same yellow/red the keyboard
+	// cursor shows, rather than a plain white outline that doesn't say
+	// anything about whether the tile is actually reachable. Falls back
+	// to the old neutral white outline for every other context (attack/
+	// spell targeting, or no targeting at all).
+	private Color ResolveHoverColor(Vector2I hovered)
+	{
+		CombatHighlightViewModel? highlight = _highlights.FirstOrDefault(
+			h => h.GridX == hovered.X && h.GridY == hovered.Y);
+
+		return highlight?.Kind switch
+		{
+			"move-legal" => CombatHighlightCell.CursorLegalColor,
+			"move-illegal" => CombatHighlightCell.CursorIllegalColor,
+			_ => new Color(1f, 1f, 1f, 0.6f),
+		};
 	}
 }

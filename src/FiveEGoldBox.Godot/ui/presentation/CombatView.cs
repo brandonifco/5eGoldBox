@@ -43,6 +43,14 @@ public partial class CombatView : Control
 	private Vector2 _panOffset;
 	private Texture2D? _floorTileTexture;
 	private Vector2I? _hoveredCell;
+	// Whichever highlight cell (see CombatHighlightCell) currently has
+	// keyboard/mouse focus -- set from RebuildHighlights' own
+	// FocusEntered wiring, read by ApplyEdgeAutoScroll (CombatView.
+	// Zoom.cs) so arrow-key cursor movement can scroll the view near an
+	// edge the same way mouse-hover already does, not just recenter once
+	// per turn. Cleared at the start of every RebuildHighlights, since
+	// the old cell it might have pointed at is about to be freed.
+	private Vector2I? _cursorFocusedCell;
 	// Tracks whose turn the camera last centered on, so Refresh can tell
 	// "still the same combatant's turn" (leave the player's own scrolling
 	// alone) apart from "turn just advanced to someone else" (recenter).

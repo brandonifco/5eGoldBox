@@ -20,8 +20,13 @@ using Godot;
 // can actually traverse them and report why), just never filled.
 public partial class CombatHighlightCell : Button
 {
-	private static readonly Color CursorLegalColor = new(0.95f, 0.85f, 0.25f, 1f);
-	private static readonly Color CursorIllegalColor = new(0.85f, 0.25f, 0.25f, 1f);
+	// Internal, not private -- CombatView.Markers.cs's own mouse-hover
+	// outline (DrawGridLines) reuses these so a hovered "move-legal"/
+	// "move-illegal" cell reads the same yellow/red as the keyboard
+	// cursor, rather than its own separately-chosen color drifting from
+	// this one over time.
+	internal static readonly Color CursorLegalColor = new(0.95f, 0.85f, 0.25f, 1f);
+	internal static readonly Color CursorIllegalColor = new(0.85f, 0.25f, 0.25f, 1f);
 
 	private Color _fillColor;
 	private bool _isCursorOnly;
