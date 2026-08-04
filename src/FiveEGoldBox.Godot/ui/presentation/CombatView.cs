@@ -22,6 +22,13 @@ public partial class CombatView : Control
 	private Control _combatantsLayer = null!;
 	private Control _resultBanner = null!;
 	private Label _resultLabel = null!;
+	// Temporary diagnostic overlay -- the camera math (focus point, pan
+	// clamp bounds, viewport size) has no other way to inspect what it
+	// actually computed short of screenshots and guessing, the same
+	// reason AreaMapView grew its own "(X, Y) Facing" debug overlay while
+	// diagnosing the 3D corridor. Left in rather than stripped out once
+	// the current camera bug is found, on the same reasoning.
+	private Label _debugCameraLabel = null!;
 
 	private readonly List<CombatantMarkerPin> _combatantPins = new();
 	private readonly List<CombatHighlightCell> _highlightCells = new();
@@ -61,6 +68,7 @@ public partial class CombatView : Control
 		_combatantsLayer = GetNode<Control>("%CombatantsLayer");
 		_resultBanner = GetNode<Control>("%ResultBanner");
 		_resultLabel = GetNode<Label>("%ResultLabel");
+		_debugCameraLabel = GetNode<Label>("%DebugCameraLabel");
 
 		_floorLayer.Draw += DrawFloorTiles;
 		_gridOverlay.Draw += DrawGridLines;
@@ -121,6 +129,27 @@ public partial class CombatView : Control
 		_floorLayer.QueueRedraw();
 		_gridOverlay.QueueRedraw();
 		UpdateResultBanner(model.InformationalOverlays);
+		UpdateDebugCameraLabel();
+	}
+
+	// See _debugCameraLabel's own field comment. Also called every
+	// _Process frame (CombatView.Zoom.cs) so mouse-hover edge-scroll's
+	// continuous pan changes show up live, not just at the start/end of
+	// each action. Derives the active combatant from _combatants itself
+	// rather than taking a model param, so both call sites can share it.
+	private void UpdateDebugCameraLabel()
+	{
+		CombatantMarkerViewModel? active = _combatants
+			.FirstOrDefault(combatant => combatant.Active);
+		IsoMetrics metrics = Metrics;
+
+		_debugCameraLabel.Text =
+			$"active={active?.Id ?? "(none)"} " +
+			$"grid=({active?.GridX.ToString() ?? "?"},{active?.GridY.ToString() ?? "?"}) " +
+			$"lastCentered={_lastCenteredCombatantId ?? "(none)"}\n" +
+			$"viewport={_combatViewport.Size} image={_combatImage.Size}\n" +
+			$"focus={ResolveFocusPoint()} pan={_panOffset} zoom={ZoomLevels[_zoomIndex]}\n" +
+			$"diamond=({metrics.DiamondWidth:F0},{metrics.DiamondHeight:F0}) tile=({metrics.TileWidth:F0},{metrics.TileHeight:F0})";
 	}
 
 	// Same GD.Load resource-cache reasoning as CombatView.Markers.cs's
