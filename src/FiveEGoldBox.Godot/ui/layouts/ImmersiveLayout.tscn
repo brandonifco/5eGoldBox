@@ -37,11 +37,13 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 theme_type_variation = &"ShellSafeArea"
 z_index = 10
 
 [node name="OverlayLayer" type="Control" parent="SafeArea"]
 layout_mode = 2
+mouse_filter = 2
 
 [node name="HeaderBar" parent="SafeArea/OverlayLayer" instance=ExtResource("2_header_bar")]
 unique_name_in_owner = true
