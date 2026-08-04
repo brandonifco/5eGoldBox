@@ -38,9 +38,12 @@ internal sealed partial class DungeonCorridor3DView : SubViewportContainer
 	// below it, which is what actually makes walls and doorways read as
 	// tall: reported live by the user after an earlier attempt at this
 	// same complaint wrongly cropped/stretched the door texture instead
-	// of moving the camera. 0.25 units below center, ~39% of the way up
-	// from the floor rather than the original 50%.
-	private const float CameraEyeHeight = -0.25f;
+	// of moving the camera. First guess (-0.25f) wasn't low enough --
+	// the user wants the dark door opening itself (inside the stone
+	// archway ring) to reach the height the ring currently tops out at.
+	// -0.5f, ~27% of the way up from the floor rather than the
+	// original 50%.
+	private const float CameraEyeHeight = -0.5f;
 
 	// Manhattan-distance flood-fill radius (in cells) from the party's
 	// own position. Generous relative to every current scenario's small
