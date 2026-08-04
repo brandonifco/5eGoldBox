@@ -45,6 +45,16 @@ internal sealed partial class DungeonCorridor3DView : SubViewportContainer
 	// original 50%.
 	private const float CameraEyeHeight = -0.5f;
 
+	// The camera also sat at Z=0 -- the near edge of the party's own
+	// cell (cell.Forward == 0's zNear, see Configure below), the
+	// boundary with the cell behind them, rather than where a person
+	// standing in that cell actually would be. Half a cell forward
+	// (further along -Z, the look direction) puts it at the cell's own
+	// center instead -- requested live by the user after the eye-height
+	// fix above, framed as "0.5 tiles closer to whatever direction is
+	// facing."
+	private const float CameraForwardOffset = -CellSize / 2f;
+
 	// Manhattan-distance flood-fill radius (in cells) from the party's
 	// own position. Generous relative to every current scenario's small
 	// maps (a handful of tiles per floor), so this comfortably covers
@@ -76,7 +86,7 @@ internal sealed partial class DungeonCorridor3DView : SubViewportContainer
 
 		Camera3D camera = new()
 		{
-			Position = new Vector3(0f, CameraEyeHeight, 0f),
+			Position = new Vector3(0f, CameraEyeHeight, CameraForwardOffset),
 			Fov = 75f,
 			Near = 0.05f,
 			Far = CellSize * (Radius + 2),
