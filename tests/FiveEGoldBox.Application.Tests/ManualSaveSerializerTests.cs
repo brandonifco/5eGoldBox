@@ -812,7 +812,7 @@ public sealed class ManualSaveSerializerTests
             "GroundFloor",
             exploration.Floor);
         Assert.Equal(
-            new GridPosition(0, 0),
+            new GridPosition(1, 0),
             exploration.Position);
         Assert.Equal(
             ExplorationFacing.East,
@@ -858,7 +858,7 @@ public sealed class ManualSaveSerializerTests
             "UpperFloor",
             exploration.Floor);
         Assert.Equal(
-            new GridPosition(2, 0),
+            new GridPosition(3, 0),
             exploration.Position);
         Assert.Equal(
             ExplorationFacing.East,
@@ -1002,9 +1002,9 @@ public sealed class ManualSaveSerializerTests
         JsonObject position = GetObject(
             exploration,
             "Position");
-        // (3, 0) is the bound watchman's own tile -- genuinely blocked,
-        // not open floor.
-        position["X"] = 3;
+        // (4, 0), between the stairs at (3, 0) and the bound watchman's
+        // own tile at (5, 0), is genuinely blocked -- not open floor.
+        position["X"] = 4;
         position["Y"] = 0;
 
         ManualSaveLoadResult result =
