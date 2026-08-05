@@ -44,4 +44,24 @@ public static class RepositoryLocator
             "campaign",
             "core.json");
     }
+
+    /// Unlike the single hardcoded ruleset file, scenario content is one
+    /// file per scenario -- data/scenarios/<id>/scenario.json -- so this
+    /// scans the directory rather than resolving one fixed path. Sorted by
+    /// path for a stable listing order across runs.
+    public static IReadOnlyList<string> ResolveScenarioPackPaths()
+    {
+        string scenariosRoot = Path.Combine(ResolveRepositoryRoot(), "data", "scenarios");
+
+        if (!Directory.Exists(scenariosRoot))
+        {
+            return [];
+        }
+
+        return Directory.EnumerateDirectories(scenariosRoot)
+            .Select(directory => Path.Combine(directory, "scenario.json"))
+            .Where(File.Exists)
+            .OrderBy(path => path, StringComparer.Ordinal)
+            .ToList();
+    }
 }

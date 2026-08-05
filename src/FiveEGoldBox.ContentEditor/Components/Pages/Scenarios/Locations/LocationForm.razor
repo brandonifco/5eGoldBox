@@ -1,0 +1,126 @@
+@page "/scenarios/{ScenarioId}/locations/new"
+@page "/scenarios/{ScenarioId}/locations/edit/{LocationId}"
+@inject ScenarioContentService ScenarioService
+@inject NavigationManager Navigation
+
+<PageTitle>@(_isNew ? "Add Location" : $"Edit {LocationId}")</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>@(_isNew ? "Add location" : $"Edit location: {LocationId}")</h1>
+
+    @if (_hasExplorationMap)
+    {
+        <div class="alert alert-info">
+            This location has an exploration map. This editor doesn't support editing maps
+            yet -- saving this form leaves the existing map completely unchanged.
+        </div>
+    }
+
+    <ValidationIssuesAlert Result="_saveResult" />
+
+    <EditForm Model="_model" OnValidSubmit="Save">
+        <div class="mb-3">
+            <label class="form-label">Location Id</label>
+            <InputText class="form-control" @bind-Value="_model.LocationId" disabled="@(!_isNew)" />
+            <div class="form-text">Stable identifier, e.g. <code>location.harbor-town</code>. Cannot be changed once created.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Display Name</label>
+            <InputText class="form-control" @bind-Value="_model.DisplayName" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Explorable Progress Ids</label>
+            <div class="form-text mb-1">Which of the scenario's progress markers make this location's map reachable.</div>
+            @foreach (var progressId in _progressIds)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="@("progress-" + progressId)"
+                           checked="@_model.ExplorableProgressIds.Contains(progressId)"
+                           @onchange="@((ChangeEventArgs e) => ToggleProgressId(progressId, (bool)e.Value!))" />
+                    <label class="form-check-label" for="@("progress-" + progressId)"><code>@progressId</code></label>
+                </div>
+            }
+        </div>
+
+        <div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a class="btn btn-secondary" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/locations")">Cancel</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    [Parameter]
+    public string? LocationId { get; set; }
+
+    private ScenarioSummary? _scenario;
+    private ScenarioLocationFormModel _model = new();
+    private bool _isNew;
+    private bool _hasExplorationMap;
+    private ValidationResult? _saveResult;
+    private IReadOnlyList<string> _progressIds = [];
+
+    protected override void OnInitialized()
+    {
+        _isNew = string.IsNullOrEmpty(LocationId);
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _progressIds = ScenarioService.LoadProgressIds(_scenario.FilePath);
+
+        if (!_isNew)
+        {
+            ScenarioLocationDefinitionV1? existing = ScenarioService.FindLocation(_scenario.FilePath, LocationId!);
+
+            if (existing is not null)
+            {
+                _model = ScenarioLocationFormModel.FromDefinition(existing);
+                _hasExplorationMap = existing.ExplorationMap is not null;
+            }
+        }
+    }
+
+    private void ToggleProgressId(
+        string progressId,
+        bool isChecked)
+    {
+        if (isChecked && !_model.ExplorableProgressIds.Contains(progressId))
+        {
+            _model.ExplorableProgressIds.Add(progressId);
+        }
+        else if (!isChecked)
+        {
+            _model.ExplorableProgressIds.Remove(progressId);
+        }
+    }
+
+    private void Save()
+    {
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        ScenarioLocationDefinitionV1 location = _model.ToDefinition();
+        _saveResult = ScenarioService.SaveLocation(_scenario.FilePath, location);
+
+        if (_saveResult.IsValid)
+        {
+            Navigation.NavigateTo($"scenarios/{Uri.EscapeDataString(ScenarioId)}/locations");
+        }
+    }
+}

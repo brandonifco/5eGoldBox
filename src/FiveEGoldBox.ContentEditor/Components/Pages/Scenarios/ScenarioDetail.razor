@@ -1,0 +1,53 @@
+@page "/scenarios/{ScenarioId}"
+@inject ScenarioContentService ScenarioService
+
+<PageTitle>@(_summary?.DisplayName ?? ScenarioId)</PageTitle>
+
+@if (_summary is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>@_summary.DisplayName</h1>
+    <p class="text-muted"><code>@_summary.ScenarioId</code></p>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Locations</h5>
+                    <a class="btn btn-primary" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/locations")">Manage</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Routes</h5>
+                    <a class="btn btn-primary" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/routes")">Manage</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Shops</h5>
+                    <a class="btn btn-primary" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/shops")">Manage</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    private ScenarioSummary? _summary;
+
+    protected override void OnInitialized()
+    {
+        _summary = ScenarioService.FindScenario(ScenarioId);
+    }
+}

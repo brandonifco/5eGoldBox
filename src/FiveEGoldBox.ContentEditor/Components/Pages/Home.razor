@@ -1,5 +1,6 @@
 @page "/"
 @inject RulesetContentService ContentService
+@inject ScenarioContentService ScenarioService
 
 <PageTitle>5eGoldBox Content Editor</PageTitle>
 
@@ -48,6 +49,15 @@
             </div>
         </div>
     </div>
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Scenarios</h5>
+                <p class="card-text">@_scenarioCount defined. Locations, routes, and shops -- edits <code>data/scenarios/*/scenario.json</code>.</p>
+                <a class="btn btn-primary" href="scenarios">Manage scenarios</a>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
@@ -55,6 +65,7 @@
     private int _spellCount;
     private int _equipmentItemCount;
     private int _monsterCount;
+    private int _scenarioCount;
 
     protected override void OnInitialized()
     {
@@ -62,5 +73,6 @@
         _spellCount = ContentService.LoadSpells().Count;
         _equipmentItemCount = ContentService.LoadEquipmentItems().Count;
         _monsterCount = ContentService.LoadMonsters().Count;
+        _scenarioCount = ScenarioService.ListScenarios().Count;
     }
 }

@@ -1,0 +1,142 @@
+@page "/scenarios/{ScenarioId}/routes/new"
+@page "/scenarios/{ScenarioId}/routes/edit/{RouteId}"
+@inject ScenarioContentService ScenarioService
+@inject NavigationManager Navigation
+
+<PageTitle>@(_isNew ? "Add Route" : $"Edit {RouteId}")</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>@(_isNew ? "Add route" : $"Edit route: {RouteId}")</h1>
+
+    <ValidationIssuesAlert Result="_saveResult" />
+
+    <EditForm Model="_model" OnValidSubmit="Save">
+        <div class="mb-3">
+            <label class="form-label">Route Id</label>
+            <InputText class="form-control" @bind-Value="_model.RouteId" disabled="@(!_isNew)" />
+            <div class="form-text">Stable identifier, e.g. <code>route.village-to-mill</code>. Cannot be changed once created.</div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Origin Location</label>
+                <InputSelect class="form-select" @bind-Value="_model.OriginLocationId">
+                    <option value="">(choose a location)</option>
+                    @foreach (var location in _locations)
+                    {
+                        <option value="@location.LocationId">@location.DisplayName (@location.LocationId)</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Destination Location</label>
+                <InputSelect class="form-select" @bind-Value="_model.DestinationLocationId">
+                    <option value="">(choose a location)</option>
+                    @foreach (var location in _locations)
+                    {
+                        <option value="@location.LocationId">@location.DisplayName (@location.LocationId)</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+
+        <div class="mb-3 col-md-3">
+            <label class="form-label">Final Step Index</label>
+            <InputNumber class="form-control" @bind-Value="_model.FinalStepIndex" />
+            <div class="form-text">How many steps the party takes to complete this route.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Required Progress Ids</label>
+            <div class="form-text mb-1">Which of the scenario's progress markers must be set for this route to be open. Leave all unchecked for an always-open route.</div>
+            @foreach (var progressId in _progressIds)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="@("progress-" + progressId)"
+                           checked="@_model.RequiredProgressIds.Contains(progressId)"
+                           @onchange="@((ChangeEventArgs e) => ToggleProgressId(progressId, (bool)e.Value!))" />
+                    <label class="form-check-label" for="@("progress-" + progressId)"><code>@progressId</code></label>
+                </div>
+            }
+        </div>
+
+        <div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a class="btn btn-secondary" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/routes")">Cancel</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    [Parameter]
+    public string? RouteId { get; set; }
+
+    private ScenarioSummary? _scenario;
+    private TravelRouteFormModel _model = new();
+    private bool _isNew;
+    private ValidationResult? _saveResult;
+    private IReadOnlyList<string> _progressIds = [];
+    private IReadOnlyList<ScenarioLocationDefinitionV1> _locations = [];
+
+    protected override void OnInitialized()
+    {
+        _isNew = string.IsNullOrEmpty(RouteId);
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _progressIds = ScenarioService.LoadProgressIds(_scenario.FilePath);
+        _locations = ScenarioService.LoadLocations(_scenario.FilePath);
+
+        if (!_isNew)
+        {
+            TravelRouteDefinitionV1? existing = ScenarioService.FindRoute(_scenario.FilePath, RouteId!);
+
+            if (existing is not null)
+            {
+                _model = TravelRouteFormModel.FromDefinition(existing);
+            }
+        }
+    }
+
+    private void ToggleProgressId(
+        string progressId,
+        bool isChecked)
+    {
+        if (isChecked && !_model.RequiredProgressIds.Contains(progressId))
+        {
+            _model.RequiredProgressIds.Add(progressId);
+        }
+        else if (!isChecked)
+        {
+            _model.RequiredProgressIds.Remove(progressId);
+        }
+    }
+
+    private void Save()
+    {
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        TravelRouteDefinitionV1 route = _model.ToDefinition();
+        _saveResult = ScenarioService.SaveRoute(_scenario.FilePath, route);
+
+        if (_saveResult.IsValid)
+        {
+            Navigation.NavigateTo($"scenarios/{Uri.EscapeDataString(ScenarioId)}/routes");
+        }
+    }
+}

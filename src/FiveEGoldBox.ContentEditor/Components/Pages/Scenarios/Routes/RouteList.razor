@@ -1,0 +1,76 @@
+@page "/scenarios/{ScenarioId}/routes"
+@inject ScenarioContentService ScenarioService
+
+<PageTitle>Routes -- @ScenarioId</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>Routes -- @_scenario.DisplayName</h1>
+    <a class="btn btn-secondary mb-3" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}")">&larr; Back to scenario</a>
+    <a class="btn btn-primary mb-3" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/routes/new")">Add new route</a>
+
+    <ValidationIssuesAlert Result="_lastDeleteResult" />
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Origin</th>
+                <th>Destination</th>
+                <th>Steps</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var route in _routes)
+            {
+                <tr>
+                    <td><code>@route.RouteId</code></td>
+                    <td><code>@route.OriginLocationId</code></td>
+                    <td><code>@route.DestinationLocationId</code></td>
+                    <td>@route.FinalStepIndex</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary me-1" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/routes/edit/{Uri.EscapeDataString(route.RouteId)}")">Edit</a>
+                        <DeleteButton OnConfirmed="() => Delete(route.RouteId)" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    private ScenarioSummary? _scenario;
+    private IReadOnlyList<TravelRouteDefinitionV1> _routes = [];
+    private ValidationResult? _lastDeleteResult;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+        _routes = _scenario is null ? [] : ScenarioService.LoadRoutes(_scenario.FilePath);
+    }
+
+    private void Delete(
+        string routeId)
+    {
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _lastDeleteResult = ScenarioService.DeleteRoute(_scenario.FilePath, routeId);
+        Refresh();
+    }
+}

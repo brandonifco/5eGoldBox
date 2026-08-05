@@ -1,0 +1,138 @@
+@page "/scenarios/{ScenarioId}/shops/new"
+@page "/scenarios/{ScenarioId}/shops/edit/{ShopId}"
+@inject ScenarioContentService ScenarioService
+@inject RulesetContentService RulesetService
+@inject NavigationManager Navigation
+
+<PageTitle>@(_isNew ? "Add Shop" : $"Edit {ShopId}")</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>@(_isNew ? "Add shop" : $"Edit shop: {ShopId}")</h1>
+
+    <ValidationIssuesAlert Result="_saveResult" />
+
+    <EditForm Model="_model" OnValidSubmit="Save">
+        <div class="mb-3">
+            <label class="form-label">Shop Id</label>
+            <InputText class="form-control" @bind-Value="_model.ShopId" disabled="@(!_isNew)" />
+            <div class="form-text">Stable identifier, e.g. <code>shop.hollow-mill-village.general-store</code>. Cannot be changed once created.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Display Name</label>
+            <InputText class="form-control" @bind-Value="_model.DisplayName" />
+        </div>
+
+        <div class="mb-3 col-md-6">
+            <label class="form-label">Location</label>
+            <InputSelect class="form-select" @bind-Value="_model.LocationId">
+                <option value="">(choose a location)</option>
+                @foreach (var location in _locations)
+                {
+                    <option value="@location.LocationId">@location.DisplayName (@location.LocationId)</option>
+                }
+            </InputSelect>
+        </div>
+
+        <hr />
+        <h4>Items</h4>
+
+        @for (int i = 0; i < _model.Items.Count; i++)
+        {
+            var index = i;
+            var itemRow = _model.Items[index];
+
+            <div class="row align-items-end mb-2">
+                <div class="col-md-6">
+                    <label class="form-label">Item</label>
+                    <InputSelect class="form-select" @bind-Value="itemRow.ItemId">
+                        <option value="">(choose an item)</option>
+                        @foreach (var item in _equipmentItems)
+                        {
+                            <option value="@item.Id">@item.Name (@item.Id)</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Price (gp)</label>
+                    <InputNumber class="form-control" @bind-Value="itemRow.PriceGoldPieces" />
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => _model.Items.RemoveAt(index)">Remove</button>
+                </div>
+            </div>
+        }
+
+        <button type="button" class="btn btn-sm btn-outline-primary mb-3" @onclick="AddItem">Add item</button>
+
+        <div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a class="btn btn-secondary" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/shops")">Cancel</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    [Parameter]
+    public string? ShopId { get; set; }
+
+    private ScenarioSummary? _scenario;
+    private ShopFormModel _model = new();
+    private bool _isNew;
+    private ValidationResult? _saveResult;
+    private IReadOnlyList<ScenarioLocationDefinitionV1> _locations = [];
+    private IReadOnlyList<EquipmentItemDefinition> _equipmentItems = [];
+
+    protected override void OnInitialized()
+    {
+        _isNew = string.IsNullOrEmpty(ShopId);
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _locations = ScenarioService.LoadLocations(_scenario.FilePath);
+        _equipmentItems = RulesetService.LoadEquipmentItems();
+
+        if (!_isNew)
+        {
+            ShopDefinitionV1? existing = ScenarioService.FindShop(_scenario.FilePath, ShopId!);
+
+            if (existing is not null)
+            {
+                _model = ShopFormModel.FromDefinition(existing);
+            }
+        }
+    }
+
+    private void AddItem()
+    {
+        _model.Items.Add(new ShopItemFormModel());
+    }
+
+    private void Save()
+    {
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        ShopDefinitionV1 shop = _model.ToDefinition();
+        _saveResult = ScenarioService.SaveShop(_scenario.FilePath, shop);
+
+        if (_saveResult.IsValid)
+        {
+            Navigation.NavigateTo($"scenarios/{Uri.EscapeDataString(ScenarioId)}/shops");
+        }
+    }
+}
