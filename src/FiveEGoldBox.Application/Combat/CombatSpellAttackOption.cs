@@ -6,6 +6,7 @@ public sealed record CombatSpellAttackOption
 {
     internal CombatSpellAttackOption(
         string spellId,
+        string spellName,
         bool isAvailable,
         EncounterActionUnavailabilityReason unavailabilityReason,
         IReadOnlyList<CombatTargetOption> targets,
@@ -17,6 +18,13 @@ public sealed record CombatSpellAttackOption
             throw new ArgumentException(
                 "Spell ID is required.",
                 nameof(spellId));
+        }
+
+        if (string.IsNullOrWhiteSpace(spellName))
+        {
+            throw new ArgumentException(
+                "Spell name is required.",
+                nameof(spellName));
         }
 
         ArgumentNullException.ThrowIfNull(targets);
@@ -31,6 +39,7 @@ public sealed record CombatSpellAttackOption
         }
 
         SpellId = spellId;
+        SpellName = spellName;
         IsAvailable = isAvailable;
         UnavailabilityReason = unavailabilityReason;
         Targets = Array.AsReadOnly(protectedTargets);
@@ -40,6 +49,11 @@ public sealed record CombatSpellAttackOption
     }
 
     public string SpellId { get; }
+
+    /// The ruleset's own SpellDefinition.Name, e.g. "Bless" -- SpellId
+    /// itself is a stable content ID like "spell.bless", never meant for
+    /// display.
+    public string SpellName { get; }
 
     public bool IsAvailable { get; }
 

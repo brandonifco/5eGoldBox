@@ -93,6 +93,7 @@ internal static class WatchtowerCombatResultMapper
     {
         return new CombatSpellAttackOption(
             source.SpellId,
+            source.SpellName,
             source.IsAvailable,
             source.UnavailabilityReason,
             source.Targets
@@ -200,6 +201,7 @@ internal static class WatchtowerCombatResultMapper
 
         return new CombatSpellAttackStepDetail(
             source.SpellId,
+            ResolveSpellName(source.State, source.ActorCombatantId, source.SpellId),
             source.DistanceFeet,
             attackRoll?.RollMode,
             attackRoll?.FirstRoll,
@@ -221,6 +223,32 @@ internal static class WatchtowerCombatResultMapper
                 ? null
                 : ToDamagedTargetDetail(source.TargetDamage),
             source.EffectedCombatantIds);
+    }
+
+    /// EncounterSpellCastResult only ever carries a raw SpellId -- Core
+    /// doesn't resolve ruleset display names during combat resolution, the
+    /// same reason EncounterCombatantDisplayNameResolver exists for
+    /// combatants. Unlike that resolver, no separate lookup is needed here:
+    /// the caster's own already-resolved SpellAttack (with its real name)
+    /// still sits on their CombatProfile within the same State this result
+    /// already carries.
+    private static string ResolveSpellName(
+        EncounterState state,
+        string actorCombatantId,
+        string spellId)
+    {
+        EncounterParticipantState actor = state.Participants
+            .First(participant => string.Equals(
+                participant.Combatant.CombatantId,
+                actorCombatantId,
+                StringComparison.Ordinal));
+
+        return actor.CombatProfile.SpellAttacks
+            .First(spell => string.Equals(
+                spell.SpellId,
+                spellId,
+                StringComparison.Ordinal))
+            .SpellName;
     }
 
     private static CombatConcentrationCheckStepDetail

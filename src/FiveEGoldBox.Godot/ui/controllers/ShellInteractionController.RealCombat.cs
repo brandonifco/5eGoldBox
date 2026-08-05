@@ -40,6 +40,7 @@ internal sealed partial class ShellInteractionController
 	// button and its own single-spell targeting pass rather than a
 	// flattened, ambiguous one.
 	private string? _pendingRealSpellId;
+	private string? _pendingRealSpellName;
 	private IReadOnlyList<CombatTargetOption>? _pendingRealSpellTargets;
 
 	// Called from ShellInteractionController.RealSession.cs's
@@ -148,7 +149,7 @@ internal sealed partial class ShellInteractionController
 	{
 		List<CommandViewModel> spellRows = combatSnapshot.SpellAttacks
 			.Where(spell => spell.IsAvailable)
-			.Select(spell => new CommandViewModel(spell.SpellId, spell.SpellId))
+			.Select(spell => new CommandViewModel(spell.SpellId, spell.SpellName))
 			.ToList();
 
 		ShowModalScreen(
@@ -300,6 +301,7 @@ internal sealed partial class ShellInteractionController
 
 		_pendingRealCombatCommand = "cast";
 		_pendingRealSpellId = spellId;
+		_pendingRealSpellName = spell.SpellName;
 		_pendingRealSpellTargets = spell.Targets;
 
 		Dictionary<string, CombatantMarkerViewModel> combatantsById =
@@ -326,7 +328,7 @@ internal sealed partial class ShellInteractionController
 		PushContext(ShellInteractionContext.Targeting);
 		_presentationController.ShowCombatHighlights(highlights);
 		_presentationController.SetMessage(
-			$"Choose a target for {spellId}. Press Esc to cancel.");
+			$"Choose a target for {spell.SpellName}. Press Esc to cancel.");
 	}
 
 	// Called from ShellInteractionController.Combat.cs's
@@ -413,9 +415,11 @@ internal sealed partial class ShellInteractionController
 			return;
 		}
 
+		string spellName = _pendingRealSpellName ?? spellId;
+
 		PopContext(ShellInteractionContext.Targeting);
 		ClearRealCombatTargeting();
-		ShowRealSpellCastConfirmation(spellId, combatantId);
+		ShowRealSpellCastConfirmation(spellId, spellName, combatantId);
 	}
 
 	// Shared by both cancel paths (Esc via ShellInputRouter's
@@ -429,6 +433,7 @@ internal sealed partial class ShellInteractionController
 		_pendingRealMoveOccupiedPositions = null;
 		_pendingRealWeaponAttacks = null;
 		_pendingRealSpellId = null;
+		_pendingRealSpellName = null;
 		_pendingRealSpellTargets = null;
 		_presentationController.ShowCombatHighlights(null);
 	}
@@ -471,6 +476,7 @@ internal sealed partial class ShellInteractionController
 	// of a weapon attack.
 	private void ShowRealSpellCastConfirmation(
 		string spellId,
+		string spellName,
 		string targetCombatantId)
 	{
 		PushContext(ShellInteractionContext.Confirmation);
@@ -478,7 +484,7 @@ internal sealed partial class ShellInteractionController
 
 		_confirmation.ShowConfirmation(
 			"Cast",
-			$"Cast {spellId} on {targetCombatantId}?",
+			$"Cast {spellName} on {targetCombatantId}?",
 			"Cast",
 			"Cancel",
 			onConfirmed: () =>

@@ -235,6 +235,7 @@ internal static class WatchtowerCombatDecisionFactory
         return new WatchtowerCombatSpellAttackOption
         {
             SpellId = spell.SpellId,
+            SpellName = spell.SpellName,
             IsAvailable = hasLegalTarget,
             UnavailabilityReason = spellReason,
             Targets = Array.AsReadOnly(targets),

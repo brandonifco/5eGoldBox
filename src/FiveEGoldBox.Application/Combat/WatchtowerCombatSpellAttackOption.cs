@@ -6,6 +6,8 @@ internal sealed record WatchtowerCombatSpellAttackOption
 {
     public required string SpellId { get; init; }
 
+    public required string SpellName { get; init; }
+
     public required bool IsAvailable { get; init; }
 
     public required EncounterActionUnavailabilityReason UnavailabilityReason { get; init; }
