@@ -17,7 +17,8 @@ public sealed record CombatView
         string? winningSideId,
         string partySideId,
         IReadOnlyList<CombatantView> combatants,
-        CombatDecision decision)
+        CombatDecision decision,
+        IReadOnlyList<string> initiativeOrder)
     {
         if (string.IsNullOrWhiteSpace(encounterId))
         {
@@ -42,6 +43,7 @@ public sealed record CombatView
 
         ArgumentNullException.ThrowIfNull(combatants);
         ArgumentNullException.ThrowIfNull(decision);
+        ArgumentNullException.ThrowIfNull(initiativeOrder);
 
         CombatantView[] protectedCombatants = combatants.ToArray();
 
@@ -67,6 +69,7 @@ public sealed record CombatView
         PartySideId = partySideId;
         Combatants = Array.AsReadOnly(protectedCombatants);
         Decision = decision;
+        InitiativeOrder = Array.AsReadOnly(initiativeOrder.ToArray());
     }
 
     public string EncounterId { get; }
@@ -102,6 +105,11 @@ public sealed record CombatView
     public IReadOnlyList<CombatantView> Combatants { get; }
 
     public CombatDecision Decision { get; }
+
+    /// Every combatant's own turn-order position, first-to-act to last --
+    /// CombatTurnState.InitiativeOrder has always computed this; it simply
+    /// never crossed into a client-facing view before now.
+    public IReadOnlyList<string> InitiativeOrder { get; }
 
     private static void ValidateShape(
         long revision,

@@ -188,6 +188,26 @@ internal sealed class RealCombatSession
 		bool isCompleted = decision.State == CombatDecisionState.CombatCompleted;
 		bool isPlayerTurn = decision.State == CombatDecisionState.PlayerDecisionRequired;
 
+		// The turn order strip's own entries -- looked up against the
+		// CombatantMarkerViewModels just built above rather than a second
+		// resolution pass, since every ID in view.InitiativeOrder already
+		// has a matching entry there.
+		Dictionary<string, CombatantMarkerViewModel> combatantsById =
+			combatants.ToDictionary(
+				combatant => combatant.Id,
+				StringComparer.Ordinal);
+
+		IReadOnlyList<InitiativeEntryViewModel> initiativeOrder = view
+			.InitiativeOrder
+			.Where(combatantsById.ContainsKey)
+			.Select(id => combatantsById[id])
+			.Select(combatant => new InitiativeEntryViewModel(
+				combatant.Id,
+				combatant.Label,
+				combatant.IsAlly,
+				combatant.Active))
+			.ToArray();
+
 		CombatViewModel model = new(
 			view.BattlefieldWidth,
 			view.BattlefieldHeight,
@@ -197,7 +217,9 @@ internal sealed class RealCombatSession
 			FloorTileSheetPath: CombatFloorTileCatalog.Resolve(
 				view.Combatants
 					.Where(combatant => combatant.MonsterId is not null)
-					.Select(combatant => combatant.MonsterId!)));
+					.Select(combatant => combatant.MonsterId!)),
+			RoundNumber: view.RoundNumber,
+			InitiativeOrder: initiativeOrder);
 
 		return new RealCombatSnapshot(
 			model,

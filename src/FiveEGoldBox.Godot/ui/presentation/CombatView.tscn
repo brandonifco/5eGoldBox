@@ -97,6 +97,34 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="InitiativeStrip" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+mouse_filter = 2
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 8.0
+offset_right = 300.0
+grow_horizontal = 2
+theme_type_variation = &"ShellPanel"
+
+[node name="InitiativeMargin" type="MarginContainer" parent="InitiativeStrip"]
+mouse_filter = 2
+theme_type_variation = &"ShellCompactMargin"
+
+[node name="InitiativeLayout" type="HBoxContainer" parent="InitiativeStrip/InitiativeMargin"]
+unique_name_in_owner = true
+mouse_filter = 2
+theme_type_variation = &"ShellCommandRow"
+
+[node name="RoundLabel" type="Label" parent="InitiativeStrip/InitiativeMargin/InitiativeLayout"]
+unique_name_in_owner = true
+mouse_filter = 2
+theme_type_variation = &"ShellMutedLabel"
+text = "Round 1"
+
 [node name="DebugCameraLabel" type="Label" parent="."]
 unique_name_in_owner = true
 mouse_filter = 2

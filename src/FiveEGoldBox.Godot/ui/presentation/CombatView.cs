@@ -22,6 +22,9 @@ public partial class CombatView : Control
 	private Control _combatantsLayer = null!;
 	private Control _resultBanner = null!;
 	private Label _resultLabel = null!;
+	private Control _initiativeStrip = null!;
+	private HBoxContainer _initiativeLayout = null!;
+	private Label _roundLabel = null!;
 	// Temporary diagnostic overlay -- the camera math (focus point, pan
 	// clamp bounds, viewport size) has no other way to inspect what it
 	// actually computed short of screenshots and guessing, the same
@@ -83,6 +86,9 @@ public partial class CombatView : Control
 		_resultBanner = GetNode<Control>("%ResultBanner");
 		_resultLabel = GetNode<Label>("%ResultLabel");
 		_debugCameraLabel = GetNode<Label>("%DebugCameraLabel");
+		_initiativeStrip = GetNode<Control>("%InitiativeStrip");
+		_initiativeLayout = GetNode<HBoxContainer>("%InitiativeLayout");
+		_roundLabel = GetNode<Label>("%RoundLabel");
 
 		_floorLayer.Draw += DrawFloorTiles;
 		_gridOverlay.Draw += DrawGridLines;
@@ -143,7 +149,63 @@ public partial class CombatView : Control
 		_floorLayer.QueueRedraw();
 		_gridOverlay.QueueRedraw();
 		UpdateResultBanner(model.InformationalOverlays);
+		RebuildInitiativeStrip(model);
 		UpdateDebugCameraLabel();
+	}
+
+	// The turn order, surfaced for the first time -- CombatTurnState.
+	// InitiativeOrder has always been computed, it just never reached a
+	// client until CombatView (Application)/CombatViewModel both gained
+	// the field. Null/empty (mock content) hides the whole strip rather
+	// than showing an empty box.
+	private void RebuildInitiativeStrip(CombatViewModel model)
+	{
+		bool hasOrder = model.InitiativeOrder is { Count: > 0 };
+		_initiativeStrip.Visible = hasOrder;
+
+		if (!hasOrder)
+		{
+			return;
+		}
+
+		_roundLabel.Text = $"Round {model.RoundNumber}";
+
+		// Index 0 is the persistent RoundLabel -- clear everything after it
+		// rather than the whole container, the same "clear then rebuild"
+		// discipline PartySidebar/CommandBar already use for their own
+		// dynamic rows.
+		for (int index = _initiativeLayout.GetChildCount() - 1; index > 0; index--)
+		{
+			Node child = _initiativeLayout.GetChild(index);
+			_initiativeLayout.RemoveChild(child);
+			child.QueueFree();
+		}
+
+		int ordinal = 1;
+
+		foreach (InitiativeEntryViewModel entry in model.InitiativeOrder!)
+		{
+			Label entryLabel = new()
+			{
+				Text = $"{ordinal}. {entry.Label}",
+				ThemeTypeVariation = "ShellBodyLabel",
+			};
+
+			// White for whoever's turn it is, matching the party cursor's
+			// own white-when-highlighted convention from earlier this
+			// session; the ally/enemy status colors otherwise, so the
+			// strip reads at a glance without needing a legend.
+			entryLabel.AddThemeColorOverride(
+				"font_color",
+				entry.IsActive
+					? Colors.White
+					: entry.IsAlly
+						? new Color(0.53333336f, 0.78431374f, 0.46666667f)
+						: new Color(0.92156863f, 0.36078432f, 0.36078432f));
+
+			_initiativeLayout.AddChild(entryLabel);
+			ordinal++;
+		}
 	}
 
 	// See _debugCameraLabel's own field comment. Also called every
