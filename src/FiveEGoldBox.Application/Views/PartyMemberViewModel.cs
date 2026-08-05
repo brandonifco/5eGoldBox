@@ -7,9 +7,25 @@ public sealed record PartyMemberViewModel
 
     public required string DisplayName { get; init; }
 
+    public required string RaceDisplayName { get; init; }
+
     public required string ClassDisplayName { get; init; }
+
+    public required int Level { get; init; }
 
     public required int CurrentHitPoints { get; init; }
 
     public required int MaximumHitPoints { get; init; }
+
+    public required int ArmorClass { get; init; }
+
+    public required IReadOnlyList<AbilityScoreViewModel> AbilityScores { get; init; }
+
+    public required IReadOnlyList<PreparedSpellViewModel> PreparedSpells { get; init; }
+
+    public required int CarryingCapacityPounds { get; init; }
+
+    public required decimal TotalCarriedWeightPounds { get; init; }
+
+    public required bool IsOverCarryingCapacity { get; init; }
 }

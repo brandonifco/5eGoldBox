@@ -19,6 +19,7 @@ internal sealed class ShellInputRouter
 	private readonly Action _cycleExplorationVariant;
 	private readonly Action<bool> _cycleRegionalMapZoom;
 	private readonly Action _cancelCombatTargeting;
+	private readonly Action<int> _cyclePartyHighlight;
 
 	public ShellInputRouter(
 		IShellInteractionState interactionState,
@@ -36,7 +37,8 @@ internal sealed class ShellInputRouter
 		Action advanceScriptedSession,
 		Action cycleExplorationVariant,
 		Action<bool> cycleRegionalMapZoom,
-		Action cancelCombatTargeting)
+		Action cancelCombatTargeting,
+		Action<int> cyclePartyHighlight)
 	{
 		_interactionState = interactionState;
 		_toggleImmersiveMode = toggleImmersiveMode;
@@ -54,6 +56,7 @@ internal sealed class ShellInputRouter
 		_cycleExplorationVariant = cycleExplorationVariant;
 		_cycleRegionalMapZoom = cycleRegionalMapZoom;
 		_cancelCombatTargeting = cancelCombatTargeting;
+		_cyclePartyHighlight = cyclePartyHighlight;
 	}
 
 	// Takes the base InputEvent, not InputEventKey, so the same router
@@ -66,6 +69,22 @@ internal sealed class ShellInputRouter
 			PlayerInputActions.ToggleImmersiveMode))
 		{
 			_toggleImmersiveMode();
+			return true;
+		}
+
+		// Unconditional, like ToggleImmersiveMode above -- the party panel
+		// is visible in every mode this router serves, so its cursor isn't
+		// gated to one ShellInteractionContext the way movement/targeting/
+		// the regional map's own zoom keys are.
+		if (inputEvent.IsActionPressed(PlayerInputActions.PartyCursorPrevious))
+		{
+			_cyclePartyHighlight(-1);
+			return true;
+		}
+
+		if (inputEvent.IsActionPressed(PlayerInputActions.PartyCursorNext))
+		{
+			_cyclePartyHighlight(1);
 			return true;
 		}
 

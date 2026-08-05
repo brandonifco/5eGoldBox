@@ -1,4 +1,4 @@
-internal sealed class ShellPartyPreviewController
+internal sealed class ShellPartyPreviewController : IShellPartyPreview
 {
 	private static readonly (string Name, string Health)[] PreviewParty =
 	{
@@ -31,8 +31,39 @@ internal sealed class ShellPartyPreviewController
 		{
 			_immersivePartySidebar.AddMember(
 				partyMember.MemberName,
-				partyMember.HealthText);
+				partyMember.HealthText,
+				partyMember.Selected);
 		}
+	}
+
+	// The real party, replacing the hardcoded preview -- called every real
+	// render (ShowRealSession/ShowRealCombat) so HP stays live, the same
+	// way the command bar itself is rebuilt on every refresh rather than
+	// diffed. member.Selected marks whichever member the party cursor
+	// (PageUp/PageDown) currently has highlighted.
+	public void ShowParty(PartyViewModel party)
+	{
+		_partySidebar.ClearMembers();
+
+		foreach (PartyMemberViewModel member in party.Members)
+		{
+			_partySidebar.AddMember(
+				member.DisplayName,
+				member.HealthText,
+				member.Selected);
+		}
+
+		RefreshImmersivePreview();
+	}
+
+	// Reverts to the hardcoded demo roster -- called by the mock top-level
+	// entry points (ShowExploration/ShowRegionalMap/ShowCombat) the same
+	// way they already reset _activeRealSession, so leaving a real session
+	// doesn't leave its party stuck in the sidebar.
+	public void ShowMockPreview()
+	{
+		PopulateStandardPreview();
+		RefreshImmersivePreview();
 	}
 
 	private void PopulateStandardPreview()

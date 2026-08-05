@@ -46,12 +46,13 @@ public partial class PartySidebar : PanelContainer
 
 	public void AddMember(
 		string memberName,
-		string healthText)
+		string healthText,
+		bool selected = false)
 	{
 		PartyMemberRow row =
 			PartyMemberRowScene.Instantiate<PartyMemberRow>();
 
-		row.Configure(memberName, healthText);
+		row.Configure(memberName, healthText, selected);
 		_partyMembers.AddChild(row);
 	}
 

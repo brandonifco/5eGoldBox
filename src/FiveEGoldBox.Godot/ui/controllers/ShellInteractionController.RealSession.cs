@@ -56,6 +56,7 @@ internal sealed partial class ShellInteractionController
 		ResetContext();
 
 		_activeRealSession = session;
+		RefreshPartyPreview();
 
 		RealSessionSnapshot snapshot = session.Describe();
 
@@ -201,6 +202,25 @@ internal sealed partial class ShellInteractionController
 		commands.Add(CommandViewModelTranslator.ToCommandDefinition(
 			viewCommand,
 			ShowCharacterScreen));
+
+		// Cast is likewise a client-side view toggle, same reasoning as
+		// View above -- reference-only (a caster's known spells), not
+		// wired to actual casting; ShowSpellbookScreen reports "no
+		// prepared spells" honestly for a highlighted member who isn't a
+		// caster rather than hiding the command only for them.
+		CommandViewModel castCommand = new(
+			"cast",
+			"Cast",
+			HotkeyAssigner.Assign(
+				"Cast".Select(char.ToUpperInvariant),
+				usedHotkeys,
+				"Cast"));
+
+		usedHotkeys.Add(castCommand.Hotkey![0]);
+
+		commands.Add(CommandViewModelTranslator.ToCommandDefinition(
+			castCommand,
+			ShowSpellbookScreen));
 
 		// Inventory is likewise a client-side view toggle rather than a
 		// SessionAction, same reasoning as Area above -- unlike Area,

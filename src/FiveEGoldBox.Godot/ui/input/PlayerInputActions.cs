@@ -20,6 +20,8 @@ internal static class PlayerInputActions
 	public const string ListSelectLast = "shell_list_select_last";
 	public const string RegionalMapZoomIn = "shell_regional_map_zoom_in";
 	public const string RegionalMapZoomOut = "shell_regional_map_zoom_out";
+	public const string PartyCursorPrevious = "shell_party_cursor_previous";
+	public const string PartyCursorNext = "shell_party_cursor_next";
 	public const string DevShowExplorationView =
 		"shell_dev_show_exploration_view";
 	public const string DevShowRegionalMapView =
@@ -73,11 +75,22 @@ internal static class PlayerInputActions
 		Register(ListSelectFirst, new InputEventKey { Keycode = Key.Home });
 		Register(ListSelectLast, new InputEventKey { Keycode = Key.End });
 
+		// Moved off Page Up/Down 2026-08-05 to free those keys for the
+		// party cursor below, matching the classic Gold Box games exactly
+		// (per the user's own reference screenshots) — mouse-wheel zoom
+		// on the regional map already covers the same function.
 		Register(
 			RegionalMapZoomIn,
-			new InputEventKey { Keycode = Key.Pageup });
+			new InputEventKey { Keycode = Key.Equal });
 		Register(
 			RegionalMapZoomOut,
+			new InputEventKey { Keycode = Key.Minus });
+
+		Register(
+			PartyCursorPrevious,
+			new InputEventKey { Keycode = Key.Pageup });
+		Register(
+			PartyCursorNext,
 			new InputEventKey { Keycode = Key.Pagedown });
 
 		Register(

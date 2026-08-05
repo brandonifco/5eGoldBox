@@ -119,6 +119,7 @@ public partial class AppShell : Control
 			_commandBarController,
 			_confirmationController,
 			_modalScreenController,
+			_partyPreviewController,
 			() => _themeController.Settings.ThemeVariant ==
 				UiThemeVariant.HighContrast,
 			() => _themeController.Settings.MotionPreference ==
@@ -143,7 +144,8 @@ public partial class AppShell : Control
 			AdvanceScriptedSession,
 			CycleExplorationVariant,
 			_presentationController.CycleRegionalMapZoom,
-			_interactionController.CancelCombatTargeting);
+			_interactionController.CancelCombatTargeting,
+			_interactionController.CyclePartyHighlight);
 
 		_themeController.Initialize();
 		_layoutController.Initialize();

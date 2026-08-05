@@ -22,6 +22,7 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 	private readonly IShellCommandBar _commandBarController;
 	private readonly IShellConfirmation _confirmation;
 	private readonly IShellModalScreen _modalScreen;
+	private readonly IShellPartyPreview _partyPreview;
 	private readonly Func<bool> _isHighContrastTheme;
 	private readonly Func<bool> _isReducedMotion;
 	private readonly Stack<ShellInteractionContext> _contextStack = new();
@@ -31,6 +32,7 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 		IShellCommandBar commandBarController,
 		IShellConfirmation confirmation,
 		IShellModalScreen modalScreen,
+		IShellPartyPreview partyPreview,
 		Func<bool> isHighContrastTheme,
 		Func<bool> isReducedMotion)
 	{
@@ -38,6 +40,7 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 		_commandBarController = commandBarController;
 		_confirmation = confirmation;
 		_modalScreen = modalScreen;
+		_partyPreview = partyPreview;
 		_isHighContrastTheme = isHighContrastTheme;
 		_isReducedMotion = isReducedMotion;
 		_contextStack.Push(ShellInteractionContext.CommandMenu);
@@ -66,6 +69,7 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 	{
 		ResetContext();
 		_activeRealSession = null;
+		_partyPreview.ShowMockPreview();
 		showPresentation();
 		ShowExplorationCommands();
 	}
@@ -78,6 +82,7 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 		// context in ShellInputRouter) are live as soon as the map shows.
 		ResetContext(ShellInteractionContext.SelectionList);
 		_activeRealSession = null;
+		_partyPreview.ShowMockPreview();
 		_presentationController.ShowRegionalMap();
 		ShowRegionalMapCommands();
 	}
@@ -86,6 +91,7 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 	{
 		ResetContext();
 		_activeRealSession = null;
+		_partyPreview.ShowMockPreview();
 		_presentationController.ShowCombat();
 		ShowCombatCommands();
 	}

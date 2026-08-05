@@ -214,6 +214,26 @@ internal sealed class RealGameSession
 	// dedicated intermediate view-model type and produces the
 	// presentation model directly, the same way MockSecondaryScreenContent
 	// itself does.
+	// Projects the real party into the Godot-side sidebar PartyViewModel
+	// shape (ui/models/viewmodels/) -- distinct from the Application-side
+	// one above, which is why this returns the unqualified type: it's the
+	// sidebar's own, not a collision.
+	internal PartyViewModel DescribePartyPreview()
+	{
+		FiveEGoldBox.Application.Views.PartyViewModel party =
+			SessionView.Describe(_state).Party;
+
+		return new PartyViewModel(party.Members
+			.Select(member => new PartyMemberViewModel(
+				member.PartyMemberId,
+				member.DisplayName,
+				$"{member.CurrentHitPoints} / {member.MaximumHitPoints}",
+				member.MaximumHitPoints == 0
+					? 0.0
+					: (double)member.CurrentHitPoints / member.MaximumHitPoints))
+			.ToArray());
+	}
+
 	internal ModalViewModel DescribeInventory()
 	{
 		// Fully qualified: FiveEGoldBox.Application.Views.PartyViewModel
@@ -281,26 +301,17 @@ internal sealed class RealGameSession
 			: $"Purse: {string.Join(", ", denominations)}.";
 	}
 
-	// A read-only party roster, the same shape ShowCharacterScreen's mock
-	// content already renders through -- one row per member, body text
-	// updated per selection via DescribeCharacterMember (mirrors the mock's
-	// own onRowFocused convention).
-	internal ModalViewModel DescribeCharacter()
+	// The highlighted party member's own sheet, no embedded list --
+	// switching characters happens via the party sidebar's own cursor
+	// (PageUp/PageDown, ShellInteractionController.PartyPreview.cs), the
+	// same way the classic Gold Box games worked, not a second list to
+	// click through inside this screen.
+	internal ModalViewModel DescribeCharacter(string highlightedMemberId)
 	{
-		FiveEGoldBox.Application.Views.PartyViewModel party =
-			SessionView.Describe(_state).Party;
-		string firstMemberId = party.Members[0].PartyMemberId;
-
 		return new ModalViewModel(
 			"Character",
-			DescribeCharacterMember(firstMemberId),
-			party.Members
-				.Select(member => new CommandViewModel(
-					member.PartyMemberId,
-					$"{member.DisplayName} ({member.ClassDisplayName})"))
-				.ToArray(),
-			new[] { new CommandViewModel("close", "Close", "C") },
-			SelectedRowId: firstMemberId);
+			DescribeCharacterMember(highlightedMemberId),
+			Commands: new[] { new CommandViewModel("close", "Close", "C") });
 	}
 
 	internal string DescribeCharacterMember(string partyMemberId)
@@ -311,12 +322,86 @@ internal sealed class RealGameSession
 			.Members
 			.First(candidate => candidate.PartyMemberId == partyMemberId);
 
+		string abilityLine = string.Join(
+			"  ",
+			member.AbilityScores.Select(ability =>
+				$"{ability.AbilityName[..3].ToUpperInvariant()} " +
+					$"{ability.Score} ({ability.Modifier:+0;-0})"));
+
+		string encumbranceLine = member.IsOverCarryingCapacity
+			? $"Carrying {member.TotalCarriedWeightPounds}/" +
+				$"{member.CarryingCapacityPounds} lb. (Encumbered!)"
+			: $"Carrying {member.TotalCarriedWeightPounds}/" +
+				$"{member.CarryingCapacityPounds} lb.";
+
 		// Same purse regardless of which member is focused -- currency is
 		// shared across the party, not per-character (DescribeInventory
 		// reads the identical party.Currency).
-		return $"{member.DisplayName} — {member.ClassDisplayName}, " +
-			$"{member.CurrentHitPoints}/{member.MaximumHitPoints} HP. " +
+		return $"{member.DisplayName} — {member.RaceDisplayName} " +
+			$"{member.ClassDisplayName}, Level {member.Level}\n" +
+			$"HP: {member.CurrentHitPoints}/{member.MaximumHitPoints}   " +
+			$"AC: {member.ArmorClass}\n" +
+			$"{abilityLine}\n" +
+			$"{encumbranceLine}\n" +
 			DescribePurse(party.Currency);
+	}
+
+	// The highlighted party member's own known spells -- reference only,
+	// same as DescribeCharacter, and likewise scoped to whoever the party
+	// cursor currently marks rather than a flattened list across the whole
+	// roster. A non-caster (or one with nothing prepared) reports that
+	// honestly instead of hiding the command only for them.
+	internal ModalViewModel DescribeSpellbook(string partyMemberId)
+	{
+		FiveEGoldBox.Application.Views.PartyViewModel party =
+			SessionView.Describe(_state).Party;
+		FiveEGoldBox.Application.Views.PartyMemberViewModel member = party
+			.Members
+			.First(candidate => candidate.PartyMemberId == partyMemberId);
+
+		if (member.PreparedSpells.Count == 0)
+		{
+			return new ModalViewModel(
+				"Spellbook",
+				$"{member.DisplayName} has no prepared spells.",
+				Commands: new[] { new CommandViewModel("close", "Close", "C") });
+		}
+
+		string firstSpellId = member.PreparedSpells[0].SpellId;
+
+		return new ModalViewModel(
+			"Spellbook",
+			DescribeSpellDetail(partyMemberId, firstSpellId),
+			member.PreparedSpells
+				.Select(spell => new CommandViewModel(
+					spell.SpellId,
+					spell.SpellName))
+				.ToArray(),
+			new[] { new CommandViewModel("close", "Close", "C") },
+			SelectedRowId: firstSpellId);
+	}
+
+	internal string DescribeSpellDetail(string partyMemberId, string spellId)
+	{
+		FiveEGoldBox.Application.Views.PartyViewModel party =
+			SessionView.Describe(_state).Party;
+		FiveEGoldBox.Application.Views.PartyMemberViewModel member = party
+			.Members
+			.First(candidate => candidate.PartyMemberId == partyMemberId);
+		FiveEGoldBox.Application.Views.PreparedSpellViewModel spell = member
+			.PreparedSpells
+			.First(candidate => candidate.SpellId == spellId);
+
+		string levelText = spell.Level == 0
+			? "Cantrip"
+			: $"Level {spell.Level}";
+		string concentration = spell.RequiresConcentration
+			? " Concentration."
+			: string.Empty;
+
+		return $"{spell.SpellName} — {levelText}. Range: {spell.Range}. " +
+			$"Casting Time: {spell.CastingTime}.{concentration}\n" +
+			spell.ResolutionSummary;
 	}
 
 	internal string Submit(string commandId)
