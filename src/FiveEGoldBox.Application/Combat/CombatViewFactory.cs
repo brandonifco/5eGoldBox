@@ -69,7 +69,11 @@ internal static class CombatViewFactory
             winningSideId,
             partySideId,
             combatants,
-            decision);
+            decision,
+            encounter.InitiativeOrder
+                .OrderBy(entry => entry.Position)
+                .Select(entry => entry.CombatantId)
+                .ToArray());
     }
 
     private static CombatantView CreateCombatantView(

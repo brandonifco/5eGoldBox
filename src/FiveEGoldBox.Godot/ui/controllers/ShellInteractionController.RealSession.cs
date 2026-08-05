@@ -168,19 +168,12 @@ internal sealed partial class ShellInteractionController
 		// user's own framing ("an Area view in exploration mode").
 		if (snapshot.Mode == ApplicationMode.Exploration)
 		{
-			CommandViewModel areaCommand = new(
+			AddClientSideCommand(
+				commands,
+				usedHotkeys,
 				"area-map",
 				"Area",
-				HotkeyAssigner.Assign(
-					"Area".Select(char.ToUpperInvariant),
-					usedHotkeys,
-					"Area"));
-
-			usedHotkeys.Add(areaCommand.Hotkey![0]);
-
-			commands.Add(CommandViewModelTranslator.ToCommandDefinition(
-				areaCommand,
-				() => EnterAreaMapMode(session)));
+				() => EnterAreaMapMode(session));
 		}
 
 		// View is likewise a client-side view toggle rather than a
@@ -189,38 +182,16 @@ internal sealed partial class ShellInteractionController
 		// and Inventory below. There's nothing exploration-specific about
 		// checking your own character sheet, so it's offered in every mode
 		// this method is reached from, same reasoning as Inventory.
-		CommandViewModel viewCommand = new(
-			"view",
-			"View",
-			HotkeyAssigner.Assign(
-				"View".Select(char.ToUpperInvariant),
-				usedHotkeys,
-				"View"));
-
-		usedHotkeys.Add(viewCommand.Hotkey![0]);
-
-		commands.Add(CommandViewModelTranslator.ToCommandDefinition(
-			viewCommand,
-			ShowCharacterScreen));
+		AddClientSideCommand(
+			commands, usedHotkeys, "view", "View", ShowCharacterScreen);
 
 		// Cast is likewise a client-side view toggle, same reasoning as
 		// View above -- reference-only (a caster's known spells), not
 		// wired to actual casting; ShowSpellbookScreen reports "no
 		// prepared spells" honestly for a highlighted member who isn't a
 		// caster rather than hiding the command only for them.
-		CommandViewModel castCommand = new(
-			"cast",
-			"Cast",
-			HotkeyAssigner.Assign(
-				"Cast".Select(char.ToUpperInvariant),
-				usedHotkeys,
-				"Cast"));
-
-		usedHotkeys.Add(castCommand.Hotkey![0]);
-
-		commands.Add(CommandViewModelTranslator.ToCommandDefinition(
-			castCommand,
-			ShowSpellbookScreen));
+		AddClientSideCommand(
+			commands, usedHotkeys, "cast", "Cast", ShowSpellbookScreen);
 
 		// Inventory is likewise a client-side view toggle rather than a
 		// SessionAction, same reasoning as Area above -- unlike Area,
@@ -229,19 +200,41 @@ internal sealed partial class ShellInteractionController
 		// from (Outpost/RegionalTravel/Exploration; Encounter and
 		// ScenarioConclusion both return out of ShowRealSession before
 		// reaching here).
-		CommandViewModel inventoryCommand = new(
+		AddClientSideCommand(
+			commands,
+			usedHotkeys,
 			"inventory",
 			"Inventory",
-			HotkeyAssigner.Assign(
-				"Inventory".Select(char.ToUpperInvariant),
-				usedHotkeys,
-				"Inventory"));
-
-		commands.Add(CommandViewModelTranslator.ToCommandDefinition(
-			inventoryCommand,
-			ShowInventoryScreen));
+			ShowInventoryScreen);
 
 		_commandBarController.ShowCommands(commands.ToArray());
+	}
+
+	// Every client-side view toggle (Area/View/Cast/Inventory above) was
+	// the same four-step dance repeated with only the id/label/handler
+	// varying -- assign a hotkey no earlier command already claimed,
+	// record it as claimed, translate, add. Collapsed into one helper
+	// rather than four near-identical blocks.
+	private static void AddClientSideCommand(
+		List<CommandDefinition> commands,
+		HashSet<char> usedHotkeys,
+		string commandId,
+		string label,
+		Action handler)
+	{
+		CommandViewModel commandViewModel = new(
+			commandId,
+			label,
+			HotkeyAssigner.Assign(
+				label.Select(char.ToUpperInvariant),
+				usedHotkeys,
+				label));
+
+		usedHotkeys.Add(commandViewModel.Hotkey![0]);
+
+		commands.Add(CommandViewModelTranslator.ToCommandDefinition(
+			commandViewModel,
+			handler));
 	}
 
 	// Look-only: opens the real area map, replacing the front-facing view

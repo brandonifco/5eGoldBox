@@ -19,4 +19,16 @@ internal sealed record CombatViewModel(
 	// uses. CombatView draws real tiles under the grid when set, falling
 	// back to the placeholder's flat fill otherwise. Null for mock
 	// content, which already has its own calibrated background image.
-	string? FloorTileSheetPath = null);
+	string? FloorTileSheetPath = null,
+	int RoundNumber = 1,
+	// Null/empty for mock content, which never had a real turn order to
+	// show — the initiative strip simply doesn't render for it, the same
+	// optionality convention FloorTileSheetPath/PortraitResourcePath
+	// already use.
+	IReadOnlyList<InitiativeEntryViewModel>? InitiativeOrder = null);
+
+internal sealed record InitiativeEntryViewModel(
+	string CombatantId,
+	string Label,
+	bool IsAlly,
+	bool IsActive);
