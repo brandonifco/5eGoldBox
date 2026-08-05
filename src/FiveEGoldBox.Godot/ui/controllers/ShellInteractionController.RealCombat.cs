@@ -59,7 +59,30 @@ internal sealed partial class ShellInteractionController
 		_presentationController.ConfigureCombat(combatSnapshot.View);
 		_presentationController.SetHeader(snapshot.LocationDisplayName, "Combat");
 		_presentationController.SetMessage(overrideMessage ?? "A fight has begun!");
+		ShowPartyPreviewFromCombat(combatSnapshot);
 		ShowRealCombatCommands(combatSnapshot);
+	}
+
+	// The sidebar's own live HP during a fight -- ShowRealSession's own
+	// party-preview refresh reads RealGameSession, which mid-combat HP
+	// changes don't reach until the fight ends (ResumeFromCombat), so
+	// combat needs its own refresh sourced from the battlefield's live
+	// CombatantMarkerViewModels instead.
+	private void ShowPartyPreviewFromCombat(RealCombatSnapshot combatSnapshot)
+	{
+		PartyViewModel party = new(combatSnapshot.View.Combatants
+			.Where(combatant => combatant.IsAlly)
+			.Select(combatant => new PartyMemberViewModel(
+				combatant.Id,
+				combatant.Label,
+				$"{combatant.CurrentHitPoints} / {combatant.MaximumHitPoints}",
+				combatant.MaximumHitPoints is null or 0
+					? 0.0
+					: (double)(combatant.CurrentHitPoints ?? 0) /
+						combatant.MaximumHitPoints.Value))
+			.ToArray());
+
+		_partyPreview.ShowParty(ApplyPartyHighlight(party));
 	}
 
 	private void ShowRealCombatCommands(RealCombatSnapshot combatSnapshot)

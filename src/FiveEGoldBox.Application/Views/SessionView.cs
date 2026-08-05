@@ -1,3 +1,4 @@
+using FiveEGoldBox.Application.Campaigns;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Outposts;
 using FiveEGoldBox.Application.Parties;
@@ -7,6 +8,7 @@ using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Application.Travel;
 using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Rules;
 
 namespace FiveEGoldBox.Application.Views;
 
@@ -60,22 +62,16 @@ public static class SessionView
         ScenarioDefinition scenario)
     {
         ValidatedRuleset ruleset = RulesetRegistry.Resolve(scenario.RulesetId);
+        CampaignDefinition campaign =
+            CampaignRegistry.Resolve(FrontierCampaignIds.CampaignId);
 
         return new PartyViewModel
         {
             Members = Array.AsReadOnly(party.Members
-                .Select(member => new PartyMemberViewModel
-                {
-                    PartyMemberId = member.PartyMemberId,
-                    DisplayName = member.DisplayName,
-                    ClassDisplayName = FindClassDisplayName(
-                        ruleset,
-                        member.ClassId),
-                    CurrentHitPoints =
-                        member.Health.HitPoints.CurrentHitPoints,
-                    MaximumHitPoints =
-                        member.Health.HitPoints.MaximumHitPoints
-                })
+                .Select(member => DescribePartyMember(
+                    member,
+                    campaign,
+                    ruleset))
                 .ToArray()),
             Currency = DescribeCurrency(party.Currency),
             InventoryItems = Array.AsReadOnly(party.InventoryItems
@@ -86,6 +82,88 @@ public static class SessionView
                     Quantity = item.Quantity
                 })
                 .ToArray())
+        };
+    }
+
+    /// Resolves the same CharacterSnapshot PartyEncounterMapper resolves for
+    /// combat -- ability scores, armor class, and carrying capacity are all
+    /// already computed there and simply never crossed this read-only
+    /// boundary before now.
+    private static PartyMemberViewModel DescribePartyMember(
+        PartyMemberState member,
+        CampaignDefinition campaign,
+        ValidatedRuleset ruleset)
+    {
+        CharacterDraft draft = CampaignCharacterDraftFactory.CreateDraft(
+            member,
+            campaign,
+            ruleset);
+        CharacterSnapshot snapshot = new CharacterResolver(ruleset).Resolve(draft);
+
+        return new PartyMemberViewModel
+        {
+            PartyMemberId = member.PartyMemberId,
+            DisplayName = member.DisplayName,
+            RaceDisplayName = snapshot.RaceName ?? "Unknown",
+            ClassDisplayName = FindClassDisplayName(ruleset, member.ClassId),
+            Level = snapshot.Level,
+            CurrentHitPoints = member.Health.HitPoints.CurrentHitPoints,
+            MaximumHitPoints = member.Health.HitPoints.MaximumHitPoints,
+            ArmorClass = snapshot.ArmorClass ?? 10,
+            AbilityScores = Array.AsReadOnly(Enum.GetValues<Ability>()
+                .Select(ability => new AbilityScoreViewModel
+                {
+                    AbilityName = ability.ToString(),
+                    Score = snapshot.AbilityScores[ability],
+                    Modifier = snapshot.AbilityModifiers[ability]
+                })
+                .ToArray()),
+            CarryingCapacityPounds = snapshot.CarryingCapacityPounds,
+            TotalCarriedWeightPounds = snapshot.TotalCarriedWeightPounds,
+            IsOverCarryingCapacity = snapshot.IsOverCarryingCapacity,
+            PreparedSpells = Array.AsReadOnly(snapshot.SpellAttacks
+                .Select(DescribePreparedSpell)
+                .ToArray())
+        };
+    }
+
+    private static PreparedSpellViewModel DescribePreparedSpell(
+        SpellAttack spell)
+    {
+        string resolutionSummary = spell.Resolution switch
+        {
+            SpellResolutionKind.SpellAttack => $"Attack +{spell.AttackBonus}",
+            SpellResolutionKind.SavingThrow =>
+                $"DC {spell.SaveDc} {spell.SaveAbility} save",
+            SpellResolutionKind.Automatic => "Automatic",
+            _ => spell.Resolution.ToString()
+        };
+
+        string range = spell.RangeKind switch
+        {
+            SpellRangeKind.SelfOnly => "Self",
+            SpellRangeKind.Touch => "Touch",
+            SpellRangeKind.Ranged => $"{spell.RangeFeet} ft.",
+            _ => spell.RangeKind.ToString()
+        };
+
+        string castingTime = spell.CastingTime switch
+        {
+            SpellCastingTime.Action => "Action",
+            SpellCastingTime.BonusAction => "Bonus Action",
+            SpellCastingTime.Reaction => "Reaction",
+            _ => spell.CastingTime.ToString()
+        };
+
+        return new PreparedSpellViewModel
+        {
+            SpellId = spell.SpellId,
+            SpellName = spell.SpellName,
+            Level = spell.Level,
+            CastingTime = castingTime,
+            Range = range,
+            ResolutionSummary = resolutionSummary,
+            RequiresConcentration = spell.RequiresConcentration
         };
     }
 

@@ -18,15 +18,17 @@ internal sealed partial class ShellInteractionController
 {
 	// M9b: "View" already existed as an Exploration command (M6c) and only
 	// ever printed a placeholder message — this is that placeholder's real
-	// destination. Selecting a different party member in the list updates
-	// only the body text (onRowFocused -> UpdateBody), not a full
-	// re-Configure, so paging through the roster doesn't flicker the
-	// screen shut and open again. Real/mock branch mirrors ShowInventoryScreen's.
+	// destination. Real sessions show the party cursor's own highlighted
+	// member directly (see ShellInteractionController.PartyPreview.cs) --
+	// the mock branch still shows its own embedded list, whose per-row
+	// focus (onRowFocused -> UpdateBody) is what the mock roster still
+	// pages through.
 	public void ShowCharacterScreen()
 	{
 		ShowModalScreen(
 			_activeRealSession is not null
-				? _activeRealSession.DescribeCharacter()
+				? _activeRealSession.DescribeCharacter(
+					GetHighlightedOrFirstPartyMemberId())
 				: MockSecondaryScreenContent.Character(),
 			new Dictionary<string, Action> { ["close"] = CloseModalScreen },
 			onRowFocused: memberId => _modalScreen.UpdateBody(
@@ -72,8 +74,25 @@ internal sealed partial class ShellInteractionController
 	// through the shared message log behind the still-open screen — the
 	// same honesty other unconnected shells use, just reachable per-item
 	// here instead of only on the screen as a whole.
+	// Real sessions show the party cursor's own highlighted member's known
+	// spells (reference only, same as Character) -- no "ready" action,
+	// since real casting only ever happens through combat's own Cast
+	// targeting flow, not from here.
 	public void ShowSpellbookScreen()
 	{
+		if (_activeRealSession is not null)
+		{
+			RealGameSession session = _activeRealSession;
+			string memberId = GetHighlightedOrFirstPartyMemberId();
+
+			ShowModalScreen(
+				session.DescribeSpellbook(memberId),
+				new Dictionary<string, Action> { ["close"] = CloseModalScreen },
+				onRowFocused: spellId => _modalScreen.UpdateBody(
+					session.DescribeSpellDetail(memberId, spellId)));
+			return;
+		}
+
 		ShowModalScreen(
 			MockSecondaryScreenContent.Spellbook(),
 			new Dictionary<string, Action> { ["close"] = CloseModalScreen },
