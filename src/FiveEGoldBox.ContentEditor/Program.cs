@@ -8,6 +8,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<RulesetContentService>();
+builder.Services.AddScoped<ScenarioContentService>();
 
 var app = builder.Build();
 

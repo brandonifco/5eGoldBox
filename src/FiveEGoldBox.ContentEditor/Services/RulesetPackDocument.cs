@@ -61,7 +61,7 @@ internal sealed class RulesetPackDocument
 
         List<T>? values = JsonSerializer.Deserialize<List<T>>(
             array.ToJsonString(),
-            RulesetSerialization.Options);
+            ContentSerialization.Options);
 
         return values ?? [];
     }

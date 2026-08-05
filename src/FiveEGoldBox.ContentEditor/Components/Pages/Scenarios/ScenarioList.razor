@@ -1,0 +1,36 @@
+@page "/scenarios"
+@inject ScenarioContentService ScenarioService
+
+<PageTitle>Scenarios</PageTitle>
+
+<h1>Scenarios</h1>
+
+<p class="text-muted">
+    Edits one of <code>data/scenarios/*/scenario.json</code> directly. Every save is
+    validated (through the same checks the <code>validate</code> console command uses)
+    before it touches the file on disk.
+</p>
+
+<div class="row">
+    @foreach (var scenario in _scenarios)
+    {
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">@scenario.DisplayName</h5>
+                    <p class="card-text"><code>@scenario.ScenarioId</code></p>
+                    <a class="btn btn-primary" href="@($"scenarios/{Uri.EscapeDataString(scenario.ScenarioId)}")">Open</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<ScenarioSummary> _scenarios = [];
+
+    protected override void OnInitialized()
+    {
+        _scenarios = ScenarioService.ListScenarios();
+    }
+}

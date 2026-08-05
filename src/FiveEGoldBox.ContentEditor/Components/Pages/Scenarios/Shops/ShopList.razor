@@ -1,0 +1,76 @@
+@page "/scenarios/{ScenarioId}/shops"
+@inject ScenarioContentService ScenarioService
+
+<PageTitle>Shops -- @ScenarioId</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>Shops -- @_scenario.DisplayName</h1>
+    <a class="btn btn-secondary mb-3" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}")">&larr; Back to scenario</a>
+    <a class="btn btn-primary mb-3" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/shops/new")">Add new shop</a>
+
+    <ValidationIssuesAlert Result="_lastDeleteResult" />
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Items</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var shop in _shops)
+            {
+                <tr>
+                    <td><code>@shop.ShopId</code></td>
+                    <td>@shop.DisplayName</td>
+                    <td><code>@shop.LocationId</code></td>
+                    <td>@shop.Items.Count</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary me-1" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/shops/edit/{Uri.EscapeDataString(shop.ShopId)}")">Edit</a>
+                        <DeleteButton OnConfirmed="() => Delete(shop.ShopId)" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    private ScenarioSummary? _scenario;
+    private IReadOnlyList<ShopDefinitionV1> _shops = [];
+    private ValidationResult? _lastDeleteResult;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+        _shops = _scenario is null ? [] : ScenarioService.LoadShops(_scenario.FilePath);
+    }
+
+    private void Delete(
+        string shopId)
+    {
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _lastDeleteResult = ScenarioService.DeleteShop(_scenario.FilePath, shopId);
+        Refresh();
+    }
+}

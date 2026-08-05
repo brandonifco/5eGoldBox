@@ -26,6 +26,24 @@ internal static class RulesetJsonSplicer
         byte[] documentBytes,
         string propertyName)
     {
+        if (TryFindRootPropertyValueSpan(documentBytes, propertyName, out (int Start, int End) span))
+        {
+            return span;
+        }
+
+        throw new InvalidOperationException(
+            $"The document has no root-level property named '{propertyName}'.");
+    }
+
+    /// Same as FindRootPropertyValueSpan, but returns false instead of
+    /// throwing when the property is absent -- scenario packs' own optional
+    /// root properties (Shops, currently the only one this editor writes)
+    /// can legitimately be missing from a file that has none yet.
+    internal static bool TryFindRootPropertyValueSpan(
+        byte[] documentBytes,
+        string propertyName,
+        out (int Start, int End) span)
+    {
         ArgumentNullException.ThrowIfNull(documentBytes);
         ArgumentNullException.ThrowIfNull(propertyName);
 
@@ -34,7 +52,7 @@ internal static class RulesetJsonSplicer
         if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
         {
             throw new InvalidOperationException(
-                "The ruleset pack's root is not a JSON object.");
+                "The document's root is not a JSON object.");
         }
 
         while (reader.Read())
@@ -57,7 +75,8 @@ internal static class RulesetJsonSplicer
 
                     long end = reader.BytesConsumed;
 
-                    return (checked((int)start), checked((int)end));
+                    span = (checked((int)start), checked((int)end));
+                    return true;
                 }
 
                 // Not the property we want -- skip its value without
@@ -72,8 +91,8 @@ internal static class RulesetJsonSplicer
             }
         }
 
-        throw new InvalidOperationException(
-            $"The ruleset pack has no root-level property named '{propertyName}'.");
+        span = default;
+        return false;
     }
 
     /// Replaces the named root-level property's value with replacementText,
@@ -84,10 +103,41 @@ internal static class RulesetJsonSplicer
         string propertyName,
         string replacementText)
     {
-        ArgumentNullException.ThrowIfNull(documentBytes);
-        ArgumentNullException.ThrowIfNull(replacementText);
-
         (int start, int end) = FindRootPropertyValueSpan(documentBytes, propertyName);
+        return Splice(documentBytes, start, end, replacementText);
+    }
+
+    /// Replaces propertyName's value if the root already has that property;
+    /// otherwise inserts it as a brand-new property, `,\n    "name": value`,
+    /// immediately after anchorPropertyName's own value span (a property
+    /// known to always exist, e.g. a scenario's required "Decisions"). This
+    /// is the one-time migration path for a file that predates the property
+    /// ever being written -- most current scenario files have no "Shops" key
+    /// at all, since ScenarioPackV1.Shops defaults to empty and an empty
+    /// pack was never authored with the key present.
+    internal static byte[] ReplaceOrInsertRootPropertyValue(
+        byte[] documentBytes,
+        string propertyName,
+        string replacementText,
+        string anchorPropertyName)
+    {
+        if (TryFindRootPropertyValueSpan(documentBytes, propertyName, out (int Start, int End) span))
+        {
+            return Splice(documentBytes, span.Start, span.End, replacementText);
+        }
+
+        (_, int anchorEnd) = FindRootPropertyValueSpan(documentBytes, anchorPropertyName);
+        string insertionText = $",\n    {JsonLayoutPrimitives.JsonString(propertyName)}: {replacementText}";
+        return Splice(documentBytes, anchorEnd, anchorEnd, insertionText);
+    }
+
+    private static byte[] Splice(
+        byte[] documentBytes,
+        int start,
+        int end,
+        string replacementText)
+    {
+        ArgumentNullException.ThrowIfNull(replacementText);
 
         byte[] replacementBytes = Encoding.UTF8.GetBytes(replacementText);
 
