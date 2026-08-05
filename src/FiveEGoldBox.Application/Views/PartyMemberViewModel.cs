@@ -19,6 +19,8 @@ public sealed record PartyMemberViewModel
 
     public required int ArmorClass { get; init; }
 
+    public required int SpeedFeet { get; init; }
+
     public required IReadOnlyList<AbilityScoreViewModel> AbilityScores { get; init; }
 
     public required IReadOnlyList<PreparedSpellViewModel> PreparedSpells { get; init; }

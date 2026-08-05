@@ -19,22 +19,28 @@ internal sealed partial class ShellInteractionController
 	// M9b: "View" already existed as an Exploration command (M6c) and only
 	// ever printed a placeholder message — this is that placeholder's real
 	// destination. Real sessions show the party cursor's own highlighted
-	// member directly (see ShellInteractionController.PartyPreview.cs) --
-	// the mock branch still shows its own embedded list, whose per-row
-	// focus (onRowFocused -> UpdateBody) is what the mock roster still
-	// pages through.
+	// member as a real boxed stat block (ModalViewModel.CharacterSheet) and
+	// have no rows to focus any more -- switching characters is the party
+	// cursor's job (PageUp/PageDown, ShellInteractionController.
+	// PartyPreview.cs). The mock branch is unchanged: its own embedded list
+	// still pages through MockSecondaryScreenContent's roster via
+	// onRowFocused -> UpdateBody, the same as before this split.
 	public void ShowCharacterScreen()
 	{
+		if (_activeRealSession is not null)
+		{
+			ShowModalScreen(
+				_activeRealSession.DescribeCharacter(
+					GetHighlightedOrFirstPartyMemberId()),
+				new Dictionary<string, Action> { ["close"] = CloseModalScreen });
+			return;
+		}
+
 		ShowModalScreen(
-			_activeRealSession is not null
-				? _activeRealSession.DescribeCharacter(
-					GetHighlightedOrFirstPartyMemberId())
-				: MockSecondaryScreenContent.Character(),
+			MockSecondaryScreenContent.Character(),
 			new Dictionary<string, Action> { ["close"] = CloseModalScreen },
 			onRowFocused: memberId => _modalScreen.UpdateBody(
-				_activeRealSession is not null
-					? _activeRealSession.DescribeCharacterMember(memberId)
-					: MockSecondaryScreenContent.DescribeMember(memberId)));
+				MockSecondaryScreenContent.DescribeMember(memberId)));
 	}
 
 	// M9b: Inventory has no existing Exploration command slot (M/V/C/A/E/

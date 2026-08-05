@@ -12,4 +12,8 @@ internal sealed record ModalViewModel(
 	IReadOnlyList<CommandViewModel>? ListItems = null,
 	IReadOnlyList<CommandViewModel>? Commands = null,
 	string? SelectedRowId = null,
-	string? BreadcrumbText = null);
+	string? BreadcrumbText = null,
+	// A real boxed stat-block, not text -- distinct from BodyText because
+	// the card renders it as a whole other layout (a grid, not a label),
+	// not just formatted differently. Null for every screen but Character.
+	CharacterSheetViewModel? CharacterSheet = null);

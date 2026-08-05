@@ -24,6 +24,17 @@ public partial class ModalScreenCard : PanelContainer
 	private PackedScene _commandButtonScene = null!;
 	private bool _nodesResolved;
 
+	// The Character screen's own boxed stat-block -- a real grid layout,
+	// not text, which is why it's a separate section rather than more
+	// BodyLabel formatting. Hidden for every other screen.
+	private VBoxContainer _characterSheetPanel = null!;
+	private Label _characterNameLabel = null!;
+	private Label _characterSubtitleLabel = null!;
+	private GridContainer _abilityGrid = null!;
+	private Label _statsLabel = null!;
+	private Label _encumbranceLabel = null!;
+	private Label _purseLabel = null!;
+
 	public override void _Ready()
 	{
 		EnsureNodesResolved();
@@ -52,6 +63,14 @@ public partial class ModalScreenCard : PanelContainer
 		_commandButtonScene = GD.Load<PackedScene>(
 			"res://ui/components/commands/HotkeyCommandButton.tscn");
 
+		_characterSheetPanel = GetNode<VBoxContainer>("%CharacterSheetPanel");
+		_characterNameLabel = GetNode<Label>("%CharacterNameLabel");
+		_characterSubtitleLabel = GetNode<Label>("%CharacterSubtitleLabel");
+		_abilityGrid = GetNode<GridContainer>("%AbilityGrid");
+		_statsLabel = GetNode<Label>("%StatsLabel");
+		_encumbranceLabel = GetNode<Label>("%EncumbranceLabel");
+		_purseLabel = GetNode<Label>("%PurseLabel");
+
 		_itemList.SelectionChanged += (_, itemId) => RowFocused?.Invoke(itemId);
 		_itemList.SelectionActivated += (_, itemId) => RowActivated?.Invoke(itemId);
 		_nodesResolved = true;
@@ -70,6 +89,13 @@ public partial class ModalScreenCard : PanelContainer
 
 		_bodyLabel.Text = model.BodyText ?? string.Empty;
 		_bodyLabel.Visible = !string.IsNullOrWhiteSpace(model.BodyText);
+
+		_characterSheetPanel.Visible = model.CharacterSheet is not null;
+
+		if (model.CharacterSheet is not null)
+		{
+			ApplyCharacterSheet(model.CharacterSheet);
+		}
 
 		bool hasItems = model.ListItems is { Count: > 0 };
 
@@ -127,6 +153,41 @@ public partial class ModalScreenCard : PanelContainer
 
 		_bodyLabel.Text = bodyText ?? string.Empty;
 		_bodyLabel.Visible = !string.IsNullOrWhiteSpace(bodyText);
+	}
+
+	private void ApplyCharacterSheet(CharacterSheetViewModel sheet)
+	{
+		_characterNameLabel.Text = sheet.Name;
+		_characterSubtitleLabel.Text = sheet.RaceClassLevel;
+		_statsLabel.Text =
+			$"AC {sheet.ArmorClass}   {sheet.HealthText}   " +
+				$"Speed {sheet.SpeedFeet} ft.";
+
+		_encumbranceLabel.Text = sheet.EncumbranceText;
+		// Reuses the existing warning color rather than a new style --
+		// same theme entry ShellStatusWarning already applies elsewhere
+		// for an at-a-glance-bad state.
+		_encumbranceLabel.ThemeTypeVariation = sheet.IsEncumbered
+			? "ShellStatusWarning"
+			: "ShellBodyLabel";
+
+		_purseLabel.Text = sheet.PurseText;
+
+		foreach (Node child in _abilityGrid.GetChildren())
+		{
+			_abilityGrid.RemoveChild(child);
+			child.QueueFree();
+		}
+
+		foreach (CharacterSheetAbilityViewModel ability in sheet.AbilityScores)
+		{
+			_abilityGrid.AddChild(new Label
+			{
+				Text = $"{ability.Abbreviation} {ability.Score} " +
+					$"({ability.Modifier:+0;-0})",
+				ThemeTypeVariation = "ShellBodyLabel",
+			});
+		}
 	}
 
 	private void RebuildCommandRow(

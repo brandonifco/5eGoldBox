@@ -110,6 +110,7 @@ public static class SessionView
             CurrentHitPoints = member.Health.HitPoints.CurrentHitPoints,
             MaximumHitPoints = member.Health.HitPoints.MaximumHitPoints,
             ArmorClass = snapshot.ArmorClass ?? 10,
+            SpeedFeet = snapshot.SpeedFeet ?? 30,
             AbilityScores = Array.AsReadOnly(Enum.GetValues<Ability>()
                 .Select(ability => new AbilityScoreViewModel
                 {

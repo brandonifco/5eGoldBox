@@ -10,6 +10,7 @@ public sealed record CombatSpellAttackStepDetail
 {
     internal CombatSpellAttackStepDetail(
         string spellId,
+        string spellName,
         int distanceFeet,
         D20RollMode? attackRollMode,
         int? firstAttackRoll,
@@ -34,6 +35,7 @@ public sealed record CombatSpellAttackStepDetail
             ? Array.Empty<string>()
             : Array.AsReadOnly(effectedCombatantIds.ToArray());
         SpellId = spellId;
+        SpellName = spellName;
         DistanceFeet = distanceFeet;
         AttackRollMode = attackRollMode;
         FirstAttackRoll = firstAttackRoll;
@@ -55,6 +57,11 @@ public sealed record CombatSpellAttackStepDetail
     }
 
     public string SpellId { get; }
+
+    /// The ruleset's own SpellDefinition.Name, e.g. "Bless" -- SpellId
+    /// itself is a stable content ID like "spell.bless", never meant for
+    /// display.
+    public string SpellName { get; }
 
     public int DistanceFeet { get; }
 

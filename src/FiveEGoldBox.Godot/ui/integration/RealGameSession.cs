@@ -301,20 +301,20 @@ internal sealed class RealGameSession
 			: $"Purse: {string.Join(", ", denominations)}.";
 	}
 
-	// The highlighted party member's own sheet, no embedded list --
-	// switching characters happens via the party sidebar's own cursor
-	// (PageUp/PageDown, ShellInteractionController.PartyPreview.cs), the
-	// same way the classic Gold Box games worked, not a second list to
-	// click through inside this screen.
+	// The highlighted party member's own boxed stat block, no embedded
+	// list -- switching characters happens via the party sidebar's own
+	// cursor (PageUp/PageDown, ShellInteractionController.PartyPreview.cs),
+	// the same way the classic Gold Box games worked, not a second list
+	// to click through inside this screen.
 	internal ModalViewModel DescribeCharacter(string highlightedMemberId)
 	{
 		return new ModalViewModel(
 			"Character",
-			DescribeCharacterMember(highlightedMemberId),
+			CharacterSheet: DescribeCharacterSheet(highlightedMemberId),
 			Commands: new[] { new CommandViewModel("close", "Close", "C") });
 	}
 
-	internal string DescribeCharacterMember(string partyMemberId)
+	internal CharacterSheetViewModel DescribeCharacterSheet(string partyMemberId)
 	{
 		FiveEGoldBox.Application.Views.PartyViewModel party =
 			SessionView.Describe(_state).Party;
@@ -322,28 +322,49 @@ internal sealed class RealGameSession
 			.Members
 			.First(candidate => candidate.PartyMemberId == partyMemberId);
 
-		string abilityLine = string.Join(
-			"  ",
-			member.AbilityScores.Select(ability =>
-				$"{ability.AbilityName[..3].ToUpperInvariant()} " +
-					$"{ability.Score} ({ability.Modifier:+0;-0})"));
+		// Physical (STR/DEX/CON) then mental (INT/WIS/CHA), interleaved so
+		// the card's 2-column grid fills as STR|INT, DEX|WIS, CON|CHA --
+		// member.AbilityScores itself arrives in the canonical STR/DEX/
+		// CON/INT/WIS/CHA order.
+		var physical = member.AbilityScores.Take(3).ToArray();
+		var mental = member.AbilityScores.Skip(3).ToArray();
+		List<CharacterSheetAbilityViewModel> abilities = new();
 
-		string encumbranceLine = member.IsOverCarryingCapacity
-			? $"Carrying {member.TotalCarriedWeightPounds}/" +
+		for (int index = 0; index < 3; index++)
+		{
+			abilities.Add(ToAbilityViewModel(physical[index]));
+			abilities.Add(ToAbilityViewModel(mental[index]));
+		}
+
+		string encumbranceText = member.IsOverCarryingCapacity
+			? $"{member.TotalCarriedWeightPounds}/" +
 				$"{member.CarryingCapacityPounds} lb. (Encumbered!)"
-			: $"Carrying {member.TotalCarriedWeightPounds}/" +
+			: $"{member.TotalCarriedWeightPounds}/" +
 				$"{member.CarryingCapacityPounds} lb.";
 
-		// Same purse regardless of which member is focused -- currency is
-		// shared across the party, not per-character (DescribeInventory
-		// reads the identical party.Currency).
-		return $"{member.DisplayName} — {member.RaceDisplayName} " +
-			$"{member.ClassDisplayName}, Level {member.Level}\n" +
-			$"HP: {member.CurrentHitPoints}/{member.MaximumHitPoints}   " +
-			$"AC: {member.ArmorClass}\n" +
-			$"{abilityLine}\n" +
-			$"{encumbranceLine}\n" +
-			DescribePurse(party.Currency);
+		return new CharacterSheetViewModel(
+			member.DisplayName,
+			$"{member.RaceDisplayName} {member.ClassDisplayName} — " +
+				$"Level {member.Level}",
+			$"{member.CurrentHitPoints}/{member.MaximumHitPoints} HP",
+			member.ArmorClass,
+			member.SpeedFeet,
+			abilities,
+			encumbranceText,
+			member.IsOverCarryingCapacity,
+			// Same purse regardless of which member is focused -- currency
+			// is shared across the party, not per-character
+			// (DescribeInventory reads the identical party.Currency).
+			DescribePurse(party.Currency));
+	}
+
+	private static CharacterSheetAbilityViewModel ToAbilityViewModel(
+		FiveEGoldBox.Application.Views.AbilityScoreViewModel ability)
+	{
+		return new CharacterSheetAbilityViewModel(
+			ability.AbilityName[..3].ToUpperInvariant(),
+			ability.Score,
+			ability.Modifier);
 	}
 
 	// The highlighted party member's own known spells -- reference only,

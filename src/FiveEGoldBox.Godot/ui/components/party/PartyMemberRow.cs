@@ -2,6 +2,15 @@ using Godot;
 
 public partial class PartyMemberRow : PanelContainer
 {
+	// White when the party cursor (PageUp/PageDown) highlights this row,
+	// the theme's own gold otherwise -- an explicit color override rather
+	// than swapping ThemeTypeVariation, since neither existing variation
+	// is literal white (ShellBodyLabel is a near-white off-tone) and the
+	// user asked for white specifically.
+	private static readonly Color HighlightedColor = Colors.White;
+	private static readonly Color NormalColor =
+		new(0.9254902f, 0.78039217f, 0.36078432f);
+
 	[Export]
 	public string MemberName { get; set; } = string.Empty;
 
@@ -40,11 +49,8 @@ public partial class PartyMemberRow : PanelContainer
 	{
 		_memberNameLabel.Text = MemberName;
 		_healthLabel.Text = HealthText;
-		// Reuses the existing gold "emphasis" text style rather than a new
-		// StyleBox -- the party cursor (PageUp/PageDown) marks whichever
-		// member View/Cast/Inventory currently act on.
-		_memberNameLabel.ThemeTypeVariation = Selected
-			? "ShellEmphasisLabel"
-			: "ShellBodyLabel";
+		_memberNameLabel.AddThemeColorOverride(
+			"font_color",
+			Selected ? HighlightedColor : NormalColor);
 	}
 }

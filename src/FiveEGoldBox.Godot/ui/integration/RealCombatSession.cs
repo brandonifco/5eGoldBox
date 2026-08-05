@@ -270,14 +270,14 @@ internal sealed class RealCombatSession
 		{
 			if (spell.AttackOutcome == AttackRollOutcome.Miss)
 			{
-				return $"{actor} casts {spell.SpellId} at {target} and misses.";
+				return $"{actor} casts {spell.SpellName} at {target} and misses.";
 			}
 
 			string hitWord = spell.AttackOutcome == AttackRollOutcome.CriticalHit
 				? "critically hits"
 				: "hits";
 			return AppendDownSuffix(
-				$"{actor} {hitWord} {target} with {spell.SpellId} for {spell.DamageDealt} damage.",
+				$"{actor} {hitWord} {target} with {spell.SpellName} for {spell.DamageDealt} damage.",
 				target,
 				spell.DamagedTarget);
 		}
@@ -288,7 +288,7 @@ internal sealed class RealCombatSession
 				? "fails"
 				: "succeeds on";
 			string result =
-				$"{actor} casts {spell.SpellId} on {target} — {target} {outcome} the save";
+				$"{actor} casts {spell.SpellName} on {target} — {target} {outcome} the save";
 			result += spell.DamageDealt > 0
 				? $", taking {spell.DamageDealt} damage."
 				: ".";
@@ -298,18 +298,18 @@ internal sealed class RealCombatSession
 
 		if (spell.HealingDone > 0)
 		{
-			return $"{actor} casts {spell.SpellId} on {target}, healing {spell.HealingDone} HP.";
+			return $"{actor} casts {spell.SpellName} on {target}, healing {spell.HealingDone} HP.";
 		}
 
 		if (spell.DamageDealt > 0)
 		{
 			return AppendDownSuffix(
-				$"{actor} casts {spell.SpellId} on {target} for {spell.DamageDealt} damage.",
+				$"{actor} casts {spell.SpellName} on {target} for {spell.DamageDealt} damage.",
 				target,
 				spell.DamagedTarget);
 		}
 
-		return $"{actor} casts {spell.SpellId} on {target}.";
+		return $"{actor} casts {spell.SpellName} on {target}.";
 	}
 
 	private static string AppendDownSuffix(

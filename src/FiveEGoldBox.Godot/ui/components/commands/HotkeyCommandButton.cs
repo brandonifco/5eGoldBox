@@ -44,9 +44,17 @@ public partial class HotkeyCommandButton : Button
 		}
 	}
 
+	// Bold alone (the label's own [b]X[/b] markup around its hotkey
+	// letter) wasn't visually distinct enough against ShellCommandText's
+	// uniform gold -- every FormattedLabel already brackets its hotkey in
+	// [b]/[/b], so recoloring just that span here covers every caller at
+	// once rather than touching each hand-authored string individually.
+	// The rest of the label keeps the theme's own default gold, untouched.
 	private void ApplyContent()
 	{
-		_commandLabel.Text = _formattedLabel;
+		_commandLabel.Text = _formattedLabel
+			.Replace("[b]", "[b][color=#FFFFFF]")
+			.Replace("[/b]", "[/color][/b]");
 	}
 
 	private static Shortcut CreateShortcut(Key shortcutKey)

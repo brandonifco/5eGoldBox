@@ -318,6 +318,7 @@ internal static class CombatViewFactory
             spellOptions.Add(
                 new CombatSpellAttackOption(
                     spell.SpellId,
+                    spell.SpellName,
                     hasLegalTarget,
                     hasLegalTarget
                         ? EncounterActionUnavailabilityReason.None
