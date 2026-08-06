@@ -25,6 +25,14 @@ internal sealed partial class ShellInteractionController
 	private RealGameSession? _activeRealMovementSession;
 	private RealGameSession? _activeAreaMapSession;
 
+	// The trigger we've already auto-prompted for, tracked by its own
+	// DisplayName -- the only stable identifier available at this layer
+	// (a trigger's real ID never crosses into Godot; CommandId is
+	// per-snapshot and regenerated every render, so it can't be compared
+	// across calls). Cleared whenever no trigger is available, so walking
+	// away and back re-prompts.
+	private string? _autoPromptedTriggerDisplayName;
+
 	// True whenever a real session is the one currently on screen --
 	// mirrors ShellPresentationController's own _regionalMapIsRealSession
 	// guard, generalized to hold the session itself rather than just a
@@ -123,6 +131,8 @@ internal sealed partial class ShellInteractionController
 		RealGameSession session,
 		RealSessionSnapshot snapshot)
 	{
+		TryShowAutoTriggerPrompt(session);
+
 		List<CommandDefinition> commands = new();
 		bool offersMovement = false;
 
@@ -305,6 +315,64 @@ internal sealed partial class ShellInteractionController
 
 		ShowRealSession(session, message);
 		_presentationController.AppendJournal(new[] { message });
+	}
+
+	// Called every time the real command bar would otherwise render (from
+	// ShowRealCommands, covering every non-movement re-render) and once
+	// per real-movement step (ReportMovement, .Exploration.cs) -- between
+	// the two, this fires the moment a trigger becomes available at the
+	// party's position, whether they walked there with arrow keys or
+	// arrived some other way, without waiting for them to notice a new
+	// command-bar button. The user asked for this directly: a choice
+	// overlay should pop up on its own, not sit there as one more button
+	// to find.
+	private void TryShowAutoTriggerPrompt(RealGameSession session)
+	{
+		(string CommandId, string DisplayName)? trigger =
+			session.DescribeAvailableTrigger();
+
+		if (trigger is null)
+		{
+			_autoPromptedTriggerDisplayName = null;
+			return;
+		}
+
+		if (string.Equals(
+			trigger.Value.DisplayName,
+			_autoPromptedTriggerDisplayName,
+			StringComparison.Ordinal))
+		{
+			return;
+		}
+
+		_autoPromptedTriggerDisplayName = trigger.Value.DisplayName;
+		ShowTriggerActivationConfirmation(
+			session,
+			trigger.Value.CommandId,
+			trigger.Value.DisplayName);
+	}
+
+	// Mirrors ShowRealAttackConfirmation's own shape exactly: onConfirmed
+	// submits (which re-renders everything, including resetting the
+	// context stack, via ShowRealSession inside SubmitRealCommand);
+	// onClosed always pops Confirmation regardless of outcome, restoring
+	// whatever context was underneath -- DirectMovement if the party was
+	// still walking when the prompt fired, letting them keep moving after
+	// declining.
+	private void ShowTriggerActivationConfirmation(
+		RealGameSession session,
+		string commandId,
+		string displayName)
+	{
+		PushContext(ShellInteractionContext.Confirmation);
+
+		_confirmation.ShowConfirmation(
+			displayName,
+			$"Activate {displayName}?",
+			"Activate",
+			"Not now",
+			onConfirmed: () => SubmitRealCommand(session, commandId),
+			onClosed: () => PopContext(ShellInteractionContext.Confirmation));
 	}
 
 	private void EnterRealMovementMode(RealGameSession session)

@@ -115,6 +115,25 @@ internal sealed class RealGameSession
 				: null);
 	}
 
+	// Whichever scenario trigger is available right now, if any -- read
+	// from the same command set Describe() just built, so the caller can
+	// offer it as an automatic prompt instead of a command-bar button the
+	// player has to notice themselves. Null outside Exploration mode
+	// (ScenarioTriggerRules.CanActivate never reports one there) or when
+	// nothing is available at the party's current position.
+	internal (string CommandId, string DisplayName)? DescribeAvailableTrigger()
+	{
+		foreach ((string commandId, SessionAction action) in _lastActions)
+		{
+			if (action.Kind == SessionActionKind.ActivateTrigger)
+			{
+				return (commandId, action.DisplayName);
+			}
+		}
+
+		return null;
+	}
+
 	// Grounded in RegionalTravelState's real CurrentStepIndex/FinalStepIndex
 	// rather than invented geography — the backend has no concept of map
 	// coordinates for a location, so this doesn't pretend to place things
