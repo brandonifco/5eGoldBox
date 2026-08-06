@@ -171,7 +171,10 @@ internal static class SaveGameMapper
                     Remaining = resource.Remaining,
                     Maximum = resource.Maximum
                 })
-                .ToArray()
+                .ToArray(),
+            CustomBuild = member.CustomBuild is null
+                ? null
+                : ToSaveCharacterDraft(member.CustomBuild)
         };
     }
 
@@ -198,7 +201,160 @@ internal static class SaveGameMapper
                     Remaining = resource.Remaining,
                     Maximum = resource.Maximum
                 })
-                .ToArray()
+                .ToArray(),
+            CustomBuild = member.CustomBuild is null
+                ? null
+                : ToRuntimeCharacterDraft(member.CustomBuild)
+        };
+    }
+
+    private static SaveCharacterDraftV1 ToSaveCharacterDraft(
+        CharacterDraft draft)
+    {
+        return new SaveCharacterDraftV1
+        {
+            Name = draft.Name,
+            Level = draft.Level,
+            RaceId = draft.RaceId,
+            SubraceId = draft.SubraceId,
+            ClassId = draft.ClassId,
+            BackgroundId = draft.BackgroundId,
+            AbilityScoreGenerationMethod = ToSaveAbilityScoreGenerationMethod(
+                draft.AbilityScoreGenerationMethod),
+            BaseAbilityScores = draft.BaseAbilityScores
+                .Select(score => new SaveAbilityScoreV1
+                {
+                    Ability = ToSaveAbility(score.Key),
+                    Score = score.Value
+                })
+                .ToArray(),
+            SelectedSkillIds = draft.SelectedSkillIds,
+            EquippedArmorId = draft.EquippedArmorId,
+            EquippedShieldId = draft.EquippedShieldId,
+            PreparedSpellIds = draft.PreparedSpellIds,
+            EquippedWeaponIds = draft.EquippedWeaponIds,
+            InventoryItems = draft.InventoryItems
+                .Select(item => new SavePartyInventoryItemV1
+                {
+                    ItemId = item.ItemId,
+                    Quantity = item.Quantity
+                })
+                .ToArray(),
+            Currency = ToSaveCurrency(draft.Currency)
+        };
+    }
+
+    private static CharacterDraft ToRuntimeCharacterDraft(
+        SaveCharacterDraftV1 draft)
+    {
+        ArgumentNullException.ThrowIfNull(draft.BaseAbilityScores);
+        ArgumentNullException.ThrowIfNull(draft.Currency);
+
+        return new CharacterDraft
+        {
+            Name = draft.Name,
+            Level = draft.Level,
+            RaceId = draft.RaceId,
+            SubraceId = draft.SubraceId,
+            ClassId = draft.ClassId,
+            BackgroundId = draft.BackgroundId,
+            AbilityScoreGenerationMethod = ToRuntimeAbilityScoreGenerationMethod(
+                draft.AbilityScoreGenerationMethod),
+            BaseAbilityScores = draft.BaseAbilityScores
+                .ToDictionary(
+                    score => ToRuntimeAbility(score.Ability),
+                    score => score.Score),
+            SelectedSkillIds = draft.SelectedSkillIds
+                ?? Array.Empty<string>(),
+            EquippedArmorId = draft.EquippedArmorId,
+            EquippedShieldId = draft.EquippedShieldId,
+            PreparedSpellIds = draft.PreparedSpellIds
+                ?? Array.Empty<string>(),
+            EquippedWeaponIds = draft.EquippedWeaponIds
+                ?? Array.Empty<string>(),
+            InventoryItems = (draft.InventoryItems
+                    ?? Array.Empty<SavePartyInventoryItemV1>())
+                .Select(item => new InventoryItemDraft
+                {
+                    ItemId = item.ItemId,
+                    Quantity = item.Quantity
+                })
+                .ToArray(),
+            Currency = ToRuntimeCurrency(draft.Currency)
+        };
+    }
+
+    private static SaveAbilityScoreGenerationMethodV1 ToSaveAbilityScoreGenerationMethod(
+        AbilityScoreGenerationMethod method)
+    {
+        return method switch
+        {
+            AbilityScoreGenerationMethod.Manual =>
+                SaveAbilityScoreGenerationMethodV1.Manual,
+            AbilityScoreGenerationMethod.StandardArray =>
+                SaveAbilityScoreGenerationMethodV1.StandardArray,
+            AbilityScoreGenerationMethod.PointBuy =>
+                SaveAbilityScoreGenerationMethodV1.PointBuy,
+            AbilityScoreGenerationMethod.Rolled =>
+                SaveAbilityScoreGenerationMethodV1.Rolled,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(method),
+                method,
+                "Unsupported ability score generation method.")
+        };
+    }
+
+    private static AbilityScoreGenerationMethod ToRuntimeAbilityScoreGenerationMethod(
+        SaveAbilityScoreGenerationMethodV1 method)
+    {
+        return method switch
+        {
+            SaveAbilityScoreGenerationMethodV1.Manual =>
+                AbilityScoreGenerationMethod.Manual,
+            SaveAbilityScoreGenerationMethodV1.StandardArray =>
+                AbilityScoreGenerationMethod.StandardArray,
+            SaveAbilityScoreGenerationMethodV1.PointBuy =>
+                AbilityScoreGenerationMethod.PointBuy,
+            SaveAbilityScoreGenerationMethodV1.Rolled =>
+                AbilityScoreGenerationMethod.Rolled,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(method),
+                method,
+                "Unsupported saved ability score generation method.")
+        };
+    }
+
+    private static SaveAbilityV1 ToSaveAbility(Ability ability)
+    {
+        return ability switch
+        {
+            Ability.Strength => SaveAbilityV1.Strength,
+            Ability.Dexterity => SaveAbilityV1.Dexterity,
+            Ability.Constitution => SaveAbilityV1.Constitution,
+            Ability.Intelligence => SaveAbilityV1.Intelligence,
+            Ability.Wisdom => SaveAbilityV1.Wisdom,
+            Ability.Charisma => SaveAbilityV1.Charisma,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(ability),
+                ability,
+                "Unsupported ability.")
+        };
+    }
+
+    private static Ability ToRuntimeAbility(SaveAbilityV1 ability)
+    {
+        return ability switch
+        {
+            SaveAbilityV1.Strength => Ability.Strength,
+            SaveAbilityV1.Dexterity => Ability.Dexterity,
+            SaveAbilityV1.Constitution => Ability.Constitution,
+            SaveAbilityV1.Intelligence => Ability.Intelligence,
+            SaveAbilityV1.Wisdom => Ability.Wisdom,
+            SaveAbilityV1.Charisma => Ability.Charisma,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(ability),
+                ability,
+                "Unsupported saved ability.")
         };
     }
 

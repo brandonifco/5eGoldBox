@@ -1,4 +1,8 @@
 using FiveEGoldBox.Application.Parties;
+using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Validation;
 
 namespace FiveEGoldBox.Application.Campaigns;
 
@@ -42,6 +46,12 @@ internal static class CampaignPartyCompositionValidator
         CampaignDefinition campaign,
         PartyMemberState member)
     {
+        if (member.CustomBuild is not null)
+        {
+            ValidateCustomBuildMember(campaign, member);
+            return;
+        }
+
         CampaignCharacterDefinition character = campaign.Roster
             .FirstOrDefault(candidate => string.Equals(
                 candidate.CharacterDefinitionId,
@@ -73,16 +83,133 @@ internal static class CampaignPartyCompositionValidator
         ValidateResources(campaign, character, member);
     }
 
-    /// A character has exactly the resources its class grants, at exactly the
-    /// ceilings the class sets. How much is left is play.
-    private static void ValidateResources(
+    /// The custom-build equivalent of ValidateMember above: there is no
+    /// roster entry to check against, so the build resolves through the same
+    /// CharacterResolver every other consumer of a build uses, and that
+    /// resolution is what composition is checked against instead.
+    private static void ValidateCustomBuildMember(
         CampaignDefinition campaign,
-        CampaignCharacterDefinition character,
         PartyMemberState member)
     {
-        IReadOnlyDictionary<string, int> granted =
-            CampaignResourceGrants.ForCharacter(campaign, character);
+        CharacterDraft build = member.CustomBuild!;
 
+        if (!string.Equals(
+            member.ClassId,
+            build.ClassId,
+            StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                $"Character '{member.CharacterDefinitionId}' is a {build.ClassId} in its build but a {member.ClassId} in the party.",
+                nameof(member));
+        }
+
+        ValidatedRuleset ruleset =
+            RulesetRegistry.Resolve(campaign.RulesetId);
+        CharacterResolver resolver = new(ruleset);
+        ValidationResult validation = resolver.Validate(build);
+
+        if (!validation.IsValid)
+        {
+            string reasons = string.Join(
+                "; ",
+                validation.Issues
+                    .Where(issue => issue.Severity == ValidationSeverity.Error)
+                    .Select(issue => issue.Message));
+
+            throw new ArgumentException(
+                $"Character '{member.CharacterDefinitionId}' does not resolve to a legal character: {reasons}",
+                nameof(member));
+        }
+
+        CharacterSnapshot snapshot = resolver.Resolve(build);
+
+        if (member.Health.HitPoints.MaximumHitPoints
+            != snapshot.MaxHitPoints)
+        {
+            throw new ArgumentException(
+                $"Character '{member.CharacterDefinitionId}' has {member.Health.HitPoints.MaximumHitPoints} maximum hit points but its build gives {snapshot.MaxHitPoints}.",
+                nameof(member));
+        }
+
+        ValidateCustomBuildAmmunition(ruleset, build, member);
+
+        IReadOnlyDictionary<string, int> granted =
+            CampaignResourceGrants.ForClass(campaign.RulesetId, build.ClassId!);
+
+        ValidateResourceGrants(granted, member);
+    }
+
+    /// Mirrors ValidateAmmunition, but a custom build has no declared
+    /// Ammunition field to read -- which of its equipped weapons need
+    /// ammunition is derived from the ruleset's own weapon definitions
+    /// instead. A build equipping more than one such weapon can't be
+    /// represented by PartyMemberState's single Ammunition slot; that's
+    /// rejected here rather than silently picking one.
+    private static void ValidateCustomBuildAmmunition(
+        ValidatedRuleset ruleset,
+        CharacterDraft build,
+        PartyMemberState member)
+    {
+        List<WeaponDefinition> ammunitionWeapons = build.EquippedWeaponIds
+            .Select(weaponId => ruleset.Definition.Weapons
+                .FirstOrDefault(weapon => string.Equals(
+                    weapon.Id,
+                    weaponId,
+                    StringComparison.Ordinal)))
+            .Where(weapon => weapon?.AmmunitionItemId is not null)
+            .Select(weapon => weapon!)
+            .ToList();
+
+        if (ammunitionWeapons.Count > 1)
+        {
+            throw new ArgumentException(
+                $"Character '{member.CharacterDefinitionId}' equips more than one weapon that requires ammunition, which its party state cannot represent.",
+                nameof(member));
+        }
+
+        if (ammunitionWeapons.Count == 0)
+        {
+            if (member.Ammunition is not null)
+            {
+                throw new ArgumentException(
+                    $"Character '{member.CharacterDefinitionId}' carries ammunition its build does not grant.",
+                    nameof(member));
+            }
+
+            return;
+        }
+
+        WeaponDefinition ammunitionWeapon = ammunitionWeapons[0];
+
+        AmmunitionState ammunition =
+            member.Ammunition
+            ?? throw new ArgumentException(
+                $"Character '{member.CharacterDefinitionId}' is missing the ammunition its build grants.",
+                nameof(member));
+
+        if (!string.Equals(
+                ammunition.WeaponId,
+                ammunitionWeapon.Id,
+                StringComparison.Ordinal)
+            || !string.Equals(
+                ammunition.AmmunitionItemId,
+                ammunitionWeapon.AmmunitionItemId,
+                StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                $"Character '{member.CharacterDefinitionId}' carries ammunition that does not match its build.",
+                nameof(member));
+        }
+    }
+
+    /// The shared half of ValidateResources below: given what a class grants,
+    /// check a member's live resources match exactly. Both the roster and
+    /// custom-build paths compute "granted" differently but check it the
+    /// same way once they have it.
+    private static void ValidateResourceGrants(
+        IReadOnlyDictionary<string, int> granted,
+        PartyMemberState member)
+    {
         foreach (CharacterResourceState resource in member.Resources)
         {
             if (!granted.TryGetValue(
@@ -113,6 +240,19 @@ internal static class CampaignPartyCompositionValidator
                 $"Character '{member.CharacterDefinitionId}' is missing resource '{resourceId}', which its build grants.",
                 nameof(member));
         }
+    }
+
+    /// A character has exactly the resources its class grants, at exactly the
+    /// ceilings the class sets. How much is left is play.
+    private static void ValidateResources(
+        CampaignDefinition campaign,
+        CampaignCharacterDefinition character,
+        PartyMemberState member)
+    {
+        IReadOnlyDictionary<string, int> granted =
+            CampaignResourceGrants.ForClass(campaign.RulesetId, character.ClassId);
+
+        ValidateResourceGrants(granted, member);
     }
 
     /// A character carries ammunition exactly when its build says so, and for

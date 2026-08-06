@@ -1,3 +1,4 @@
+using FiveEGoldBox.Core.Characters;
 using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
@@ -23,4 +24,13 @@ public sealed record PartyMemberState
     /// a character with nothing to spend.
     public IReadOnlyList<CharacterResourceState> Resources { get; init; }
         = Array.Empty<CharacterResourceState>();
+
+    /// The full build for a character CharacterCreationRules created, rather
+    /// than one drawn from a campaign's authored roster. Null for every
+    /// roster character (CharacterDefinitionId resolves against
+    /// CampaignDefinition.Roster instead); non-null is what tells
+    /// CampaignCharacterDraftFactory and CampaignPartyCompositionValidator to
+    /// resolve/validate this member against its own embedded build instead of
+    /// looking it up on the roster.
+    public CharacterDraft? CustomBuild { get; init; }
 }
