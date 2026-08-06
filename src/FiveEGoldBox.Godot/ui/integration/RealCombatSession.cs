@@ -20,9 +20,12 @@ using EncounterView = FiveEGoldBox.Application.Combat.CombatView;
 // since Godot re-enters on each command instead of blocking in a loop.
 //
 // Scoped deliberately to single-target actions: Move, Weapon Attack, Spell
-// Attack, End Turn. Multi-target spells (Bless's TargetCombinations) and
-// any player-facing death-saving-throw decision are proven at the backend
-// but not wired here yet.
+// Attack, End Turn. Multi-target spells (Bless's TargetCombinations) are
+// proven at the backend but not wired here yet. Death saving throws are
+// never a real player decision — CombatOperations resolves them
+// automatically the moment a dying combatant's turn comes up — so
+// "wiring" one just means narrating the roll DescribeDeathSavingThrow
+// already produces below.
 internal sealed class RealCombatSession
 {
 	private ApplicationSessionState _state;
@@ -245,6 +248,9 @@ internal sealed class RealCombatSession
 			case CombatStepKind.SpellAttack:
 				lines.Add(DescribeSpellAttack(step, displayNames));
 				break;
+			case CombatStepKind.DeathSavingThrow:
+				lines.Add(DescribeDeathSavingThrow(step, displayNames));
+				break;
 			case CombatStepKind.TurnAdvanced:
 				lines.Add(
 					$"{DescribeLabel(displayNames, step.TurnAdvancement!.EndedTurnCombatantId)}'s turn ends.");
@@ -332,6 +338,32 @@ internal sealed class RealCombatSession
 		}
 
 		return $"{actor} casts {spell.SpellName} on {target}.";
+	}
+
+	private static string DescribeDeathSavingThrow(
+		CombatStepResult step,
+		IReadOnlyDictionary<string, string> displayNames)
+	{
+		CombatDeathSavingThrowStepDetail deathSave = step.DeathSavingThrow!;
+		string actor = DescribeLabel(displayNames, step.ActorCombatantId!);
+		string tally =
+			$"{deathSave.SuccessCount} success{(deathSave.SuccessCount == 1 ? string.Empty : "es")}, " +
+			$"{deathSave.FailureCount} failure{(deathSave.FailureCount == 1 ? string.Empty : "s")}";
+
+		return deathSave.Outcome switch
+		{
+			DeathSavingThrowOutcome.RegainedHitPoint =>
+				$"{actor} rolls a natural 20 on a death save and returns to the fight with 1 hit point!",
+			DeathSavingThrowOutcome.Stabilized =>
+				$"{actor} stabilizes.",
+			DeathSavingThrowOutcome.Dead =>
+				$"{actor} fails a third death save and dies.",
+			DeathSavingThrowOutcome.Success =>
+				$"{actor} succeeds on a death save ({tally}).",
+			DeathSavingThrowOutcome.Failure =>
+				$"{actor} fails a death save ({tally}).",
+			_ => $"{actor} rolls a death save.",
+		};
 	}
 
 	private static string AppendDownSuffix(
