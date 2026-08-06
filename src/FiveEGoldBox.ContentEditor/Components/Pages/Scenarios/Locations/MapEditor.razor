@@ -1,0 +1,336 @@
+@page "/scenarios/{ScenarioId}/locations/{LocationId}/map"
+@inject ScenarioContentService ScenarioService
+@inject NavigationManager Navigation
+
+<PageTitle>Edit map: @LocationId</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else if (_model is null)
+{
+    <p class="text-danger">
+        Location <code>@LocationId</code> has no exploration map. Maps are created by
+        authoring one into the scenario file; this editor edits an existing map.
+    </p>
+    <a class="btn btn-secondary" href="@LocationsHref">Back to locations</a>
+}
+else
+{
+    <h1>Edit map: <code>@_model.MapId</code></h1>
+    <p class="text-muted">Location <code>@LocationId</code> in <code>@ScenarioId</code>.</p>
+
+    <ValidationIssuesAlert Result="_saveResult" />
+
+    <div class="row mb-3">
+        <div class="col-md-2">
+            <label class="form-label">Width</label>
+            <input type="number" class="form-control" min="1" value="@_model.Width"
+                   @onchange="@((ChangeEventArgs e) => SetWidth(e.Value?.ToString()))" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Height</label>
+            <input type="number" class="form-control" min="1" value="@_model.Height"
+                   @onchange="@((ChangeEventArgs e) => SetHeight(e.Value?.ToString()))" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Starting floor</label>
+            <select class="form-select" value="@_model.StartingFloor"
+                    @onchange="@((ChangeEventArgs e) => _model.StartingFloor = e.Value?.ToString() ?? "")">
+                @foreach (var floor in _model.Floors)
+                {
+                    <option value="@floor.Floor">@floor.Floor</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Starting position</label>
+            <div class="input-group">
+                <span class="input-group-text">X</span>
+                <input type="number" class="form-control" value="@_model.StartingX"
+                       @onchange="@((ChangeEventArgs e) => _model.StartingX = ParseInt(e.Value?.ToString(), _model.StartingX))" />
+                <span class="input-group-text">Y</span>
+                <input type="number" class="form-control" value="@_model.StartingY"
+                       @onchange="@((ChangeEventArgs e) => _model.StartingY = ParseInt(e.Value?.ToString(), _model.StartingY))" />
+            </div>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Starting facing</label>
+            <select class="form-select" value="@_model.StartingFacing"
+                    @onchange="@((ChangeEventArgs e) => SetFacing(e.Value?.ToString()))">
+                @foreach (var facing in Enum.GetValues<ExplorationFacingV1>())
+                {
+                    <option value="@facing">@facing</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3">
+        @foreach (var floor in _model.Floors)
+        {
+            <li class="nav-item">
+                <button type="button" class="nav-link @(floor == _selectedFloor ? "active" : "")"
+                        @onclick="@(() => _selectedFloor = floor)">
+                    @floor.Floor
+                </button>
+            </li>
+        }
+    </ul>
+
+    @if (_selectedFloor is not null)
+    {
+        <p class="text-muted">
+            Click a cell to toggle whether the party can walk on it.
+            @_selectedFloor.TraversablePositions.Count of @(_model.Width * _model.Height) cells are walkable on this floor.
+        </p>
+
+        <div class="map-grid mb-3"
+             style="grid-template-columns: repeat(@_model.Width, 3rem);">
+            @for (int y = 0; y < _model.Height; y++)
+            {
+                @for (int x = 0; x < _model.Width; x++)
+                {
+                    int cellX = x;
+                    int cellY = y;
+                    <button type="button"
+                            class="map-cell @CellClass(cellX, cellY)"
+                            title="@CellTitle(cellX, cellY)"
+                            @onclick="@(() => Toggle(cellX, cellY))">
+                        <span class="map-cell-coords">@cellX,@cellY</span>
+                        <span class="map-cell-markers">@CellMarkers(cellX, cellY)</span>
+                    </button>
+                }
+            }
+        </div>
+
+        <div class="map-legend text-muted mb-3">
+            <span class="legend-swatch walkable"></span> walkable
+            <span class="legend-swatch"></span> blocked
+            <span class="ms-3">★ start</span>
+            <span class="ms-2">↕ stairs</span>
+            <span class="ms-2">$ treasure</span>
+            <span class="ms-2">@("@") NPC</span>
+            <span class="ms-2">thick edge = door</span>
+        </div>
+
+        <div class="alert alert-secondary">
+            Stairs, doors, treasure and NPCs are shown here but not editable yet -- they
+            round-trip untouched when you save. An NPC's own cell is meant to stay blocked;
+            making it walkable is rejected on save.
+        </div>
+    }
+
+    <div>
+        <button type="button" class="btn btn-primary" @onclick="Save">Save map</button>
+        <a class="btn btn-secondary" href="@LocationsHref">Cancel</a>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    [Parameter]
+    public string LocationId { get; set; } = "";
+
+    private ScenarioSummary? _scenario;
+    private ExplorationMapFormModel? _model;
+    private ExplorationFloorFormModel? _selectedFloor;
+    private ValidationResult? _saveResult;
+
+    private string LocationsHref =>
+        $"scenarios/{Uri.EscapeDataString(ScenarioId)}/locations";
+
+    protected override void OnInitialized()
+    {
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        ExplorationMapDefinitionV1? map = ScenarioService.FindExplorationMap(
+            _scenario.FilePath,
+            LocationId);
+
+        if (map is null)
+        {
+            return;
+        }
+
+        _model = ExplorationMapFormModel.FromDefinition(map);
+        _selectedFloor = _model.Floors.FirstOrDefault();
+    }
+
+    private void Toggle(
+        int x,
+        int y)
+    {
+        _selectedFloor?.ToggleTraversable(x, y);
+    }
+
+    private string CellClass(
+        int x,
+        int y)
+    {
+        if (_selectedFloor is null)
+        {
+            return "";
+        }
+
+        List<string> classes = [];
+
+        if (_selectedFloor.IsTraversable(x, y))
+        {
+            classes.Add("walkable");
+        }
+
+        if (_model is not null
+            && _model.StartingFloor == _selectedFloor.Floor
+            && _model.StartingX == x
+            && _model.StartingY == y)
+        {
+            classes.Add("start");
+        }
+
+        foreach (var door in _selectedFloor.Doors.Where(d => d.Position.X == x && d.Position.Y == y))
+        {
+            classes.Add($"door-{door.Side.ToString().ToLowerInvariant()}");
+
+            if (door.IsSecret)
+            {
+                classes.Add("door-secret");
+            }
+        }
+
+        return string.Join(" ", classes);
+    }
+
+    private string CellMarkers(
+        int x,
+        int y)
+    {
+        if (_selectedFloor is null)
+        {
+            return "";
+        }
+
+        List<string> markers = [];
+
+        if (_model is not null
+            && _model.StartingFloor == _selectedFloor.Floor
+            && _model.StartingX == x
+            && _model.StartingY == y)
+        {
+            markers.Add("★");
+        }
+
+        if (_selectedFloor.Stairs.Any(s => s.Position.X == x && s.Position.Y == y))
+        {
+            markers.Add("↕");
+        }
+
+        if (_selectedFloor.Treasures.Any(t => t.Position.X == x && t.Position.Y == y))
+        {
+            markers.Add("$");
+        }
+
+        if (_selectedFloor.Npcs.Any(n => n.Position.X == x && n.Position.Y == y))
+        {
+            markers.Add("@");
+        }
+
+        return string.Concat(markers);
+    }
+
+    private string CellTitle(
+        int x,
+        int y)
+    {
+        if (_selectedFloor is null)
+        {
+            return "";
+        }
+
+        List<string> parts =
+        [
+            $"({x}, {y}) {(_selectedFloor.IsTraversable(x, y) ? "walkable" : "blocked")}"
+        ];
+
+        foreach (var stair in _selectedFloor.Stairs.Where(s => s.Position.X == x && s.Position.Y == y))
+        {
+            parts.Add($"stairs to {stair.DestinationFloor} ({stair.DestinationPosition.X}, {stair.DestinationPosition.Y})");
+        }
+
+        foreach (var door in _selectedFloor.Doors.Where(d => d.Position.X == x && d.Position.Y == y))
+        {
+            string kind = door.IsSecret ? "secret door" : "door";
+            string locked = door.IsLocked ? ", locked" : "";
+            parts.Add($"{kind} on {door.Side} side{locked} ({door.DoorId})");
+        }
+
+        foreach (var treasure in _selectedFloor.Treasures.Where(t => t.Position.X == x && t.Position.Y == y))
+        {
+            parts.Add($"treasure: {treasure.TreasureId}");
+        }
+
+        foreach (var npc in _selectedFloor.Npcs.Where(n => n.Position.X == x && n.Position.Y == y))
+        {
+            parts.Add($"NPC: {npc.Name}");
+        }
+
+        return string.Join(" · ", parts);
+    }
+
+    private void SetWidth(string? raw)
+    {
+        if (_model is not null)
+        {
+            _model.Width = Math.Max(1, ParseInt(raw, _model.Width));
+        }
+    }
+
+    private void SetHeight(string? raw)
+    {
+        if (_model is not null)
+        {
+            _model.Height = Math.Max(1, ParseInt(raw, _model.Height));
+        }
+    }
+
+    private void SetFacing(string? raw)
+    {
+        if (_model is not null && Enum.TryParse(raw, out ExplorationFacingV1 facing))
+        {
+            _model.StartingFacing = facing;
+        }
+    }
+
+    private static int ParseInt(
+        string? raw,
+        int fallback)
+    {
+        return int.TryParse(raw, out int value) ? value : fallback;
+    }
+
+    private void Save()
+    {
+        if (_scenario is null || _model is null)
+        {
+            return;
+        }
+
+        _saveResult = ScenarioService.SaveExplorationMap(
+            _scenario.FilePath,
+            LocationId,
+            _model.ToDefinition());
+
+        if (_saveResult.IsValid)
+        {
+            Navigation.NavigateTo(LocationsHref);
+        }
+    }
+}

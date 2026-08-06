@@ -1,0 +1,99 @@
+/* The grid is laid out with an inline grid-template-columns (it depends on
+   the map's own Width), so this file only styles the cells themselves. */
+
+.map-grid {
+    display: grid;
+    gap: 2px;
+    width: max-content;
+    padding: 0.5rem;
+    background-color: #d9d2c3;
+    border: 1px solid #b3a98f;
+    border-radius: 4px;
+}
+
+.map-cell {
+    position: relative;
+    width: 3rem;
+    height: 3rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    cursor: pointer;
+
+    /* Blocked is the default: dark, hatched-looking stone. */
+    background-color: #6b6455;
+    color: #efe9dc;
+    border: 1px solid #4f4a3e;
+    border-radius: 2px;
+}
+
+.map-cell:hover {
+    outline: 2px solid #0d6efd;
+    outline-offset: -2px;
+    z-index: 1;
+}
+
+.map-cell.walkable {
+    background-color: #f6f1e4;
+    color: #4a4438;
+    border-color: #b3a98f;
+}
+
+.map-cell.start {
+    box-shadow: inset 0 0 0 2px #b8860b;
+}
+
+.map-cell-coords {
+    font-size: 0.6rem;
+    opacity: 0.55;
+}
+
+.map-cell-markers {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* A door sits on the edge between two cells, so it renders as a thick
+   border on that side rather than as a glyph in the cell. */
+.map-cell.door-north {
+    border-top: 4px solid #8b4513;
+}
+
+.map-cell.door-south {
+    border-bottom: 4px solid #8b4513;
+}
+
+.map-cell.door-east {
+    border-right: 4px solid #8b4513;
+}
+
+.map-cell.door-west {
+    border-left: 4px solid #8b4513;
+}
+
+/* A secret door is drawn dashed -- it's a door the party can't see yet. */
+.map-cell.door-secret {
+    border-style: dashed;
+}
+
+.map-legend {
+    font-size: 0.875rem;
+}
+
+.legend-swatch {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    vertical-align: text-bottom;
+    background-color: #6b6455;
+    border: 1px solid #4f4a3e;
+    margin-right: 0.15rem;
+}
+
+.legend-swatch.walkable {
+    background-color: #f6f1e4;
+    border-color: #b3a98f;
+}
