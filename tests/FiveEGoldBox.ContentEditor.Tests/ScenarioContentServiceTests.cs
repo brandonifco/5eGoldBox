@@ -1,3 +1,4 @@
+using FiveEGoldBox.ContentEditor.Models;
 using FiveEGoldBox.Application.Content.V1;
 using FiveEGoldBox.ContentEditor.Services;
 
@@ -375,6 +376,91 @@ public sealed class ScenarioContentServiceTests
                 result.Issues,
                 issue => issue.Code == "scenario.map.position_out_of_bounds");
             Assert.Equal(before, File.ReadAllBytes(path));
+        });
+    }
+
+    [Fact]
+    public void ToggleTraversable_RemovingACellLeavesTheRemainingCellsInTheirOriginalOrder()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            string locationId = service.LoadLocations(path)
+                .First(location => location.ExplorationMap is not null)
+                .LocationId;
+
+            var model = ExplorationMapFormModel.FromDefinition(
+                service.FindExplorationMap(path, locationId)!);
+            ExplorationFloorFormModel floor = model.Floors[0];
+
+            var originalOrder = floor.TraversablePositions
+                .Select(p => (p.X, p.Y))
+                .ToList();
+            var removed = originalOrder[3];
+
+            floor.ToggleTraversable(removed.X, removed.Y);
+
+            Assert.Equal(
+                originalOrder.Where(cell => cell != removed),
+                floor.TraversablePositions.Select(p => (p.X, p.Y)));
+        });
+    }
+
+    [Fact]
+    public void ToggleTraversable_AddingACellAppendsItRatherThanReorderingExistingCells()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            string locationId = service.LoadLocations(path)
+                .First(location => location.ExplorationMap is not null)
+                .LocationId;
+
+            var model = ExplorationMapFormModel.FromDefinition(
+                service.FindExplorationMap(path, locationId)!);
+            ExplorationFloorFormModel floor = model.Floors[0];
+
+            var originalOrder = floor.TraversablePositions
+                .Select(p => (p.X, p.Y))
+                .ToList();
+
+            // (0, 0) is in bounds on this 6x3 map and not already walkable.
+            floor.ToggleTraversable(0, 0);
+
+            Assert.Equal(
+                originalOrder.Append((0, 0)),
+                floor.TraversablePositions.Select(p => (p.X, p.Y)));
+        });
+    }
+
+    [Fact]
+    public void ToggleTraversable_LeavesStairsDoorsTreasuresAndNpcsIntact()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            string locationId = service.LoadLocations(path)
+                .First(location => location.ExplorationMap is not null)
+                .LocationId;
+
+            var before = service.FindExplorationMap(path, locationId)!;
+            var model = ExplorationMapFormModel.FromDefinition(before);
+            model.Floors[0].ToggleTraversable(0, 0);
+
+            var result = service.SaveExplorationMap(path, locationId, model.ToDefinition());
+            Assert.True(result.IsValid, DescribeIssues(result));
+
+            var after = service.FindExplorationMap(path, locationId)!;
+
+            Assert.Equal(
+                before.Floors[0].Stairs.Select(s => (s.Position.X, s.Position.Y, s.DestinationFloor)),
+                after.Floors[0].Stairs.Select(s => (s.Position.X, s.Position.Y, s.DestinationFloor)));
+            Assert.Equal(
+                before.Floors[0].Doors.Select(d => (d.DoorId, d.Side, d.IsSecret, d.IsLocked)),
+                after.Floors[0].Doors.Select(d => (d.DoorId, d.Side, d.IsSecret, d.IsLocked)));
+            Assert.Equal(
+                before.Floors[0].Treasures.Select(t => (t.TreasureId, t.GoldPieces, t.ItemId, t.Quantity)),
+                after.Floors[0].Treasures.Select(t => (t.TreasureId, t.GoldPieces, t.ItemId, t.Quantity)));
+            Assert.Equal(
+                before.Floors[0].Npcs.Select(n => (n.NpcId, n.Name, n.DialogueText)),
+                after.Floors[0].Npcs.Select(n => (n.NpcId, n.Name, n.DialogueText)));
         });
     }
 

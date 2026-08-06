@@ -1,3 +1,4 @@
+using FiveEGoldBox.ContentEditor.Models;
 using FiveEGoldBox.ContentEditor.Services;
 
 namespace FiveEGoldBox.ContentEditor.Tests;
@@ -209,6 +210,52 @@ public sealed class ScenarioNoOpSaveFormattingTests
                     expectedFloor.Npcs.Select(n => (n.NpcId, n.Name, n.DialogueText)),
                     actualFloor.Npcs.Select(n => (n.NpcId, n.Name, n.DialogueText)));
             }
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    /// The grid editor round-trips a map through ExplorationMapFormModel, not
+    /// through the DTO directly, so this covers the failure the other map
+    /// tests can't see: TraversablePositions' hand-authored cell order is not
+    /// purely row-major, and a form model backed by an unordered set would
+    /// silently rewrite every untouched floor's cell order on first save.
+    [Theory]
+    [InlineData("watchtower")]
+    [InlineData("sunken-chapel")]
+    public void RoundTrippingAMapThroughTheFormModelProducesAByteIdenticalFile(
+        string scenarioDirectoryName)
+    {
+        string realFilePath = RepositoryLocator.ResolveScenarioPackPaths()
+            .Single(path => path.Contains(scenarioDirectoryName));
+        string tempFile = CopyToTempFile(realFilePath);
+
+        try
+        {
+            ScenarioContentService service = new();
+            byte[] before = File.ReadAllBytes(tempFile);
+
+            foreach (var location in service.LoadLocations(tempFile))
+            {
+                var map = service.FindExplorationMap(tempFile, location.LocationId);
+                if (map is null)
+                {
+                    continue;
+                }
+
+                var roundTripped = ExplorationMapFormModel.FromDefinition(map).ToDefinition();
+                var result = service.SaveExplorationMap(
+                    tempFile,
+                    location.LocationId,
+                    roundTripped);
+
+                Assert.True(result.IsValid, DescribeIssues(result));
+            }
+
+            byte[] after = File.ReadAllBytes(tempFile);
+            AssertByteIdentical(before, after);
         }
         finally
         {

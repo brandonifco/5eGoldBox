@@ -118,8 +118,9 @@ including the `Shops` property-insert path on a file that had none, and a reject
   not a raw X/Y list** (the user's own call, 2026-08-06 -- it's the "map maker" the
   original authoring-tool ask was actually about). Delivered in three slices:
   - **Phase 4a -- foundation. Done, 2026-08-06.** See the section below.
-  - **Phase 4b -- the grid component** for toggling traversable cells per floor.
-  - **Phase 4c -- feature layers** (stairs, edge-anchored doors, treasure, NPCs).
+  - **Phase 4b -- the grid component. Done, 2026-08-06.** See the section below.
+  - **Phase 4c -- feature layers** (stairs, edge-anchored doors, treasure, NPCs) --
+    making the markers 4b renders read-only into things you can place and edit.
 - **Phase 5 -- Campaign roster editor.** Separate `CampaignContentService`/
   `CampaignPackDocument`, roster CRUD (`AbilityScores` dict, `SelectedSkillIds`,
   `EquippedWeaponIds`, `Ammunition`, `PreparedSpellIds`), cross-referencing ruleset
@@ -167,8 +168,51 @@ formatting could be proven against real content before any grid component depend
 **Not done in 4a:** the form model. Deferred to 4b on purpose, so its shape is driven by
 what the grid component actually needs rather than guessed ahead of it.
 
+## Phase 4b -- done, 2026-08-06: the visual grid editor
+
+`/scenarios/{id}/locations/{locationId}/map` -- a click-to-toggle grid, one tab per
+floor, reached from an "Edit map" button on the location list (shown only for locations
+that have a map). The banner on `LocationForm` that said maps weren't editable now links
+here instead.
+
+- **`ExplorationMapFormModel`/`ExplorationFloorFormModel`** (internal, same reason every
+  scenario form model is). **`TraversablePositions` is an ordered `List`, deliberately
+  not a `HashSet`** -- committed cell order is hand-authored and not purely row-major
+  (Watchtower's ground floor ends with two cells clearly appended after the fact), so an
+  unordered set would have silently rewritten every untouched floor's cell order on the
+  first save. Toggling mutates in place: removing leaves the rest in order, adding
+  appends. `RoundTrippingAMapThroughTheFormModelProducesAByteIdenticalFile` is the guard,
+  and it covers what the 4a tests structurally could not, since those went through the
+  DTO directly rather than the form model the UI actually uses.
+- **Stairs/doors/treasure/NPCs round-trip untouched** through the floor model rather than
+  being dropped -- 4b only edits walkable cells, but saving a floor must never silently
+  destroy the features authored on it (`ToggleTraversable_LeavesStairsDoorsTreasuresAndNpcsIntact`).
+- **They also render as read-only markers**, which was worth doing now rather than
+  deferring wholesale to 4c: without them an author toggling cells has no idea what's
+  already on the map. Start/stairs/treasure/NPC are glyphs; **a door renders as a thick
+  border on the cell edge it actually sits on** (dashed when secret), matching the
+  edge-anchored `Position` + `Side` model rather than pretending a door occupies a tile.
+  Every cell carries a full tooltip (coordinates, walkability, and each feature's id).
+- **Verified live in a browser**, not just by build+test -- the repo's standing convention
+  for UI work. Confirmed: markers land exactly where the JSON puts them (14 of 18 walkable,
+  ★ at the real starting position, ↕/$/@ on their real cells); floor tabs switch to
+  UpperFloor's own 6 cells; toggling a cell and saving produced a **two-line diff on the
+  real committed file** (one cell appended, every existing cell and all formatting
+  untouched) which was then reverted; and making the NPC's own tile walkable is rejected
+  on save with `scenario.map.npc_position_already_traversable` shown in the page's
+  validation alert, leaving the file byte-identical.
+- 5 new tests (46 -> 51). Full solution gate green (Debug+Release 0 warnings; 2341 tests,
+  3 skipped, 0 failures). No public API change.
+
+**Known limitation, deliberate:** editing Width/Height doesn't prune cells that fall
+outside the new bounds -- the validator rejects the save with
+`scenario.map.position_out_of_bounds` and the author removes them by hand. Auto-pruning
+would silently delete authored content, which is worse than a clear rejection; a real fix
+belongs with 4c's editing tools, not here.
+
 ## Status (2026-08-06)
 
-Phase 1 and Phase 4a are done and merged. Phase 4b (grid component) is next. Phases 2,
-3, 4c and 5 are scoped above but not started -- pick up whichever is next via the
-standing branch/PR/merge workflow, same as every other feature in this repo.
+Phase 1, Phase 4a and Phase 4b are done and merged. Phase 4c (making the feature markers
+editable) is the natural next step. Phases 2, 3 and 5 are scoped above but not started --
+pick up whichever is next via the standing branch/PR/merge workflow, same as every other
+feature in this repo.

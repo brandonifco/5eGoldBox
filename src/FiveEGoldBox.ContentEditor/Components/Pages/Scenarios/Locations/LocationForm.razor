@@ -16,8 +16,10 @@ else
     @if (_hasExplorationMap)
     {
         <div class="alert alert-info">
-            This location has an exploration map. This editor doesn't support editing maps
-            yet -- saving this form leaves the existing map completely unchanged.
+            This location has an exploration map. Saving this form leaves the map
+            completely unchanged --
+            <a href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/locations/{Uri.EscapeDataString(LocationId!)}/map")">edit the map</a>
+            to change its layout.
         </div>
     }
 

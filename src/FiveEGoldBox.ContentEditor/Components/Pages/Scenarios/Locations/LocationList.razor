@@ -32,6 +32,10 @@ else
                     <td>@location.DisplayName</td>
                     <td>@(location.ExplorationMap is null ? "No" : "Yes")</td>
                     <td class="text-end">
+                        @if (location.ExplorationMap is not null)
+                        {
+                            <a class="btn btn-sm btn-outline-primary me-1" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/locations/{Uri.EscapeDataString(location.LocationId)}/map")">Edit map</a>
+                        }
                         <a class="btn btn-sm btn-outline-secondary me-1" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/locations/edit/{Uri.EscapeDataString(location.LocationId)}")">Edit</a>
                         <DeleteButton OnConfirmed="() => Delete(location.LocationId)" />
                     </td>
