@@ -291,9 +291,14 @@ internal sealed partial class ShellInteractionController
 		}
 	}
 
+	// Every real SessionAction a command bar button can fire (decisions,
+	// travel, stairs, triggers, treasure, NPC dialogue, shop purchases) --
+	// a real thing just happened, so it goes in the journal as well as the
+	// transient status line ShowRealSession renders.
 	private void SubmitRealCommand(RealGameSession session, string commandId)
 	{
 		string message = session.Submit(commandId);
+		_presentationController.AppendJournal(new[] { message });
 
 		ShowRealSession(session, message);
 	}

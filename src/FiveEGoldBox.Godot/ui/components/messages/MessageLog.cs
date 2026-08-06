@@ -15,12 +15,15 @@ public partial class MessageLog : PanelContainer
 	private Label _titleLabel = null!;
 	private RichTextLabel _messageTextLabel = null!;
 
-	// Accumulated lines for ResetLog/AppendLog's scrolling-transcript mode
-	// (real combat's play-by-play). SetMessage is a separate, one-shot
-	// passthrough that never touches this -- it displays a transient prompt
-	// (e.g. "Choose a target...") over whatever's currently shown without
-	// discarding accumulated log lines, so the next AppendLog restores the
-	// full transcript rather than continuing from a message SetMessage
+	// Accumulated lines for AppendLog's scrolling-transcript mode -- the
+	// whole session's adventure log (exploration and combat both), not
+	// just combat. Never reset once the app is running: it grows for as
+	// long as the client is open, the same way a real DM's own notes
+	// would. SetMessage is a separate, one-shot passthrough that never
+	// touches this -- it displays a transient prompt (e.g. "Choose a
+	// target...") over whatever's currently shown without discarding
+	// accumulated log lines, so the next AppendLog restores the full
+	// transcript rather than continuing from a message SetMessage
 	// clobbered.
 	private readonly List<string> _logLines = new();
 
@@ -41,18 +44,7 @@ public partial class MessageLog : PanelContainer
 		}
 	}
 
-	// Starts a fresh scrolling transcript, discarding whatever the previous
-	// one held -- called once when a new encounter begins.
-	public void ResetLog(IReadOnlyList<string> openingLines)
-	{
-		_logLines.Clear();
-		_logLines.AddRange(openingLines);
-		RenderLog();
-	}
-
-	// Adds to the current transcript without discarding it -- called after
-	// every subsequent combat action for as long as the same encounter is
-	// active.
+	// Adds to the running transcript.
 	public void AppendLog(IReadOnlyList<string> lines)
 	{
 		_logLines.AddRange(lines);

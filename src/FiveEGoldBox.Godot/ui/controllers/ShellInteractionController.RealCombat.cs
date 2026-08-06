@@ -71,11 +71,11 @@ internal sealed partial class ShellInteractionController
 		{
 			List<string> opening = new() { "A fight has begun!" };
 			opening.AddRange(_activeCombatSession.OpeningLines);
-			_presentationController.ResetCombatLog(opening);
+			_presentationController.AppendJournal(opening);
 		}
 		else if (lines is { Count: > 0 })
 		{
-			_presentationController.AppendCombatLog(lines);
+			_presentationController.AppendJournal(lines);
 		}
 
 		ShowPartyPreviewFromCombat(combatSnapshot);
@@ -545,10 +545,10 @@ internal sealed partial class ShellInteractionController
 	// finalNarration carries whatever the round that just completed the
 	// fight actually did -- the last attacks, deaths, and (most often, since
 	// EncounterCompletionRules only completes once every dying combatant has
-	// resolved) death saves. Previously discarded outright in favor of the
-	// terse outcome line below, which is why a party wipe could report
-	// "Defeat..." having never shown a single death-save roll that produced
-	// it -- found live, not by inspection.
+	// resolved) death saves. It's appended to the journal alongside the
+	// outcome line as its own entries rather than folded into one string --
+	// the detail lives in permanent history now, so the transient status
+	// line ShowRealSession shows next only needs the terse outcome.
 	private void ConcludeRealCombat(IReadOnlyList<string>? finalNarration)
 	{
 		RealGameSession session = _activeCombatGameSession!;
@@ -564,10 +564,16 @@ internal sealed partial class ShellInteractionController
 			? "Victory! The raiders are defeated."
 			: "Defeat...";
 
-		string message = finalNarration is { Count: > 0 }
-			? $"{string.Join(" ", finalNarration)} {outcomeLine}"
-			: outcomeLine;
+		List<string> journalLines = new();
 
-		ShowRealSession(session, message);
+		if (finalNarration is { Count: > 0 })
+		{
+			journalLines.AddRange(finalNarration);
+		}
+
+		journalLines.Add(outcomeLine);
+		_presentationController.AppendJournal(journalLines);
+
+		ShowRealSession(session, outcomeLine);
 	}
 }

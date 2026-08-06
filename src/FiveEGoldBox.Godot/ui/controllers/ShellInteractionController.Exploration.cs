@@ -62,6 +62,16 @@ internal sealed partial class ShellInteractionController
 				_activeRealMovementSession.DescribeAreaMap());
 
 			_presentationController.SetMessage(message);
+
+			// Only an actual step (or a step that failed) is journal-worthy
+			// -- turning is just adjusting the view, not a game event, and
+			// journaling it would flood the log with "Turned left."/"Turned
+			// right." on every single keypress.
+			if (intent.CommandId == ExplorationMovementCommandIds.MoveForward)
+			{
+				_presentationController.AppendJournal(new[] { message });
+			}
+
 			return;
 		}
 
