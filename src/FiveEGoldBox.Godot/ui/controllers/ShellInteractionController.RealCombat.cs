@@ -53,7 +53,7 @@ internal sealed partial class ShellInteractionController
 
 		if (combatSnapshot.IsCompleted)
 		{
-			ConcludeRealCombat();
+			ConcludeRealCombat(overrideMessage);
 			return;
 		}
 
@@ -506,7 +506,14 @@ internal sealed partial class ShellInteractionController
 	// declared conclusion, PartyDefeated) — routing back through
 	// ShowRealSession's existing dispatch means neither case needs any
 	// new presentation code here.
-	private void ConcludeRealCombat()
+	// finalNarration carries whatever the round that just completed the
+	// fight actually did -- the last attacks, deaths, and (most often, since
+	// EncounterCompletionRules only completes once every dying combatant has
+	// resolved) death saves. Previously discarded outright in favor of the
+	// terse outcome line below, which is why a party wipe could report
+	// "Defeat..." having never shown a single death-save roll that produced
+	// it -- found live, not by inspection.
+	private void ConcludeRealCombat(string? finalNarration)
 	{
 		RealGameSession session = _activeCombatGameSession!;
 		CombatOutcomeResult outcome =
@@ -517,9 +524,13 @@ internal sealed partial class ShellInteractionController
 
 		session.ResumeFromCombat(outcome.State);
 
-		string message = outcome.Outcome == CombatOutcome.PartyVictory
+		string outcomeLine = outcome.Outcome == CombatOutcome.PartyVictory
 			? "Victory! The raiders are defeated."
 			: "Defeat...";
+
+		string message = string.IsNullOrEmpty(finalNarration)
+			? outcomeLine
+			: $"{finalNarration} {outcomeLine}";
 
 		ShowRealSession(session, message);
 	}
