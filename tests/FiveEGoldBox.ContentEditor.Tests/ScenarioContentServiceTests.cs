@@ -273,6 +273,111 @@ public sealed class ScenarioContentServiceTests
 
     // ----- Helpers -----
 
+    // ----- ExplorationMap -----
+
+    [Fact]
+    public void SaveExplorationMap_AddingATraversableCellPersistsIt()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            string locationId = service.LoadLocations(path)
+                .First(location => location.ExplorationMap is not null)
+                .LocationId;
+
+            ExplorationMapDefinitionV1 map = service.FindExplorationMap(path, locationId)!;
+            ExplorationFloorDefinitionV1 groundFloor = map.Floors[0];
+
+            // (0, 0) is in bounds on this 6x3 map and not already traversable.
+            var widened = groundFloor with
+            {
+                TraversablePositions =
+                [
+                    .. groundFloor.TraversablePositions,
+                    new GridPositionV1 { X = 0, Y = 0 }
+                ]
+            };
+
+            var result = service.SaveExplorationMap(
+                path,
+                locationId,
+                map with { Floors = [widened, .. map.Floors.Skip(1)] });
+
+            Assert.True(result.IsValid, DescribeIssues(result));
+
+            var reloaded = service.FindExplorationMap(path, locationId)!;
+            Assert.Contains(
+                reloaded.Floors[0].TraversablePositions,
+                position => position is { X: 0, Y: 0 });
+        });
+    }
+
+    [Fact]
+    public void SaveExplorationMap_EditingOneLocationLeavesASiblingsMapByteUntouched()
+    {
+        WithTempScenarioFile("hollow-mill", (service, path) =>
+        {
+            var mapped = service.LoadLocations(path)
+                .Where(location => location.ExplorationMap is not null)
+                .ToList();
+
+            // Hollow Mill has exactly one mapped location today, so the
+            // sibling this guards is any *unmapped* location's absence of a
+            // map -- re-rendering one map must not invent one elsewhere.
+            string editedId = mapped[0].LocationId;
+            var untouchedIds = service.LoadLocations(path)
+                .Select(location => location.LocationId)
+                .Where(id => id != editedId)
+                .ToList();
+
+            var before = untouchedIds
+                .ToDictionary(id => id, id => ReadRawExplorationMapBytes(path, id));
+
+            var map = service.FindExplorationMap(path, editedId)!;
+            var result = service.SaveExplorationMap(path, editedId, map);
+            Assert.True(result.IsValid, DescribeIssues(result));
+
+            foreach (string id in untouchedIds)
+            {
+                Assert.Equal(before[id], ReadRawExplorationMapBytes(path, id));
+            }
+        });
+    }
+
+    [Fact]
+    public void SaveExplorationMap_RejectingAnOutOfBoundsCellLeavesTheFileUntouched()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            string locationId = service.LoadLocations(path)
+                .First(location => location.ExplorationMap is not null)
+                .LocationId;
+
+            byte[] before = File.ReadAllBytes(path);
+            ExplorationMapDefinitionV1 map = service.FindExplorationMap(path, locationId)!;
+            ExplorationFloorDefinitionV1 groundFloor = map.Floors[0];
+
+            var outOfBounds = groundFloor with
+            {
+                TraversablePositions =
+                [
+                    .. groundFloor.TraversablePositions,
+                    new GridPositionV1 { X = map.Width + 5, Y = 0 }
+                ]
+            };
+
+            var result = service.SaveExplorationMap(
+                path,
+                locationId,
+                map with { Floors = [outOfBounds, .. map.Floors.Skip(1)] });
+
+            Assert.False(result.IsValid);
+            Assert.Contains(
+                result.Issues,
+                issue => issue.Code == "scenario.map.position_out_of_bounds");
+            Assert.Equal(before, File.ReadAllBytes(path));
+        });
+    }
+
     private static void WithTempScenarioFile(
         string scenarioDirectoryName,
         Action<ScenarioContentService, string> action)

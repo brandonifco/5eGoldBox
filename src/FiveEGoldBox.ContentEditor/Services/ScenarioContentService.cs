@@ -90,7 +90,9 @@ internal sealed class ScenarioContentService
         return WriteAndValidate(
             scenarioFilePath,
             "Locations",
-            ScenarioJsonFormatting.RenderLocations(updated, document.FindRawExplorationMapText));
+            ScenarioJsonFormatting.RenderLocations(
+                updated,
+                (locationId, _) => document.FindRawExplorationMapText(locationId)));
     }
 
     internal ValidationResult DeleteLocation(
@@ -105,7 +107,39 @@ internal sealed class ScenarioContentService
         return WriteAndValidate(
             scenarioFilePath,
             "Locations",
-            ScenarioJsonFormatting.RenderLocations(updated, document.FindRawExplorationMapText));
+            ScenarioJsonFormatting.RenderLocations(
+                updated,
+                (locationId, _) => document.FindRawExplorationMapText(locationId)));
+    }
+
+    // ----- ExplorationMap -----
+
+    internal ExplorationMapDefinitionV1? FindExplorationMap(
+        string scenarioFilePath,
+        string locationId)
+    {
+        return FindLocation(scenarioFilePath, locationId)?.ExplorationMap;
+    }
+
+    /// Unlike SaveLocation, which leaves every map byte-identical, this
+    /// rewrites the named location's map from the supplied definition. Every
+    /// other location's map still copies through verbatim, so editing one
+    /// map never reformats a sibling's.
+    internal ValidationResult SaveExplorationMap(
+        string scenarioFilePath,
+        string locationId,
+        ExplorationMapDefinitionV1 map)
+    {
+        ScenarioPackDocument document = ScenarioPackDocument.Read(scenarioFilePath);
+
+        return WriteAndValidate(
+            scenarioFilePath,
+            "Locations",
+            ScenarioJsonFormatting.RenderLocations(
+                document.Locations,
+                (id, column) => id == locationId
+                    ? ScenarioJsonFormatting.RenderExplorationMap(map, column)
+                    : document.FindRawExplorationMapText(id)));
     }
 
     // ----- Routes -----

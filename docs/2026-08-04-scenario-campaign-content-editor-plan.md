@@ -114,13 +114,12 @@ including the `Shops` property-insert path on a file that had none, and a reject
   `GridPosition`), `Outcome` (`VictoryProgressId`/`DefeatProgressId` pickers sourced from
   the scenario's own `Progress.ProgressIds`).
 - **Phase 4 -- `ExplorationMap` editing** (`Floors`/`TraversablePositions`/`Stairs`/
-  `Doors`/`Treasures`/`Npcs`). An open UX decision, not pre-solved: a raw add/remove list
-  of X/Y fields is real but painful for 15-20+ cell floors (Hollow Mill's ground floor has
-  17). A small interactive click-to-toggle grid component (SVG or CSS-grid-based) matches
-  the "map maker" spirit of the original authoring-tool ask far better. Decide
-  simple-list-v1 vs. visual-grid-v2 when this phase starts. This phase can finally delete
-  the raw-byte-preservation mechanism from Phase 1's design decision #4, once editing
-  (not just preserving) is real -- or keep it as the fallback for untouched locations.
+  `Doors`/`Treasures`/`Npcs`). **The UX decision is made: visual click-to-toggle grid,
+  not a raw X/Y list** (the user's own call, 2026-08-06 -- it's the "map maker" the
+  original authoring-tool ask was actually about). Delivered in three slices:
+  - **Phase 4a -- foundation. Done, 2026-08-06.** See the section below.
+  - **Phase 4b -- the grid component** for toggling traversable cells per floor.
+  - **Phase 4c -- feature layers** (stairs, edge-anchored doors, treasure, NPCs).
 - **Phase 5 -- Campaign roster editor.** Separate `CampaignContentService`/
   `CampaignPackDocument`, roster CRUD (`AbilityScores` dict, `SelectedSkillIds`,
   `EquippedWeaponIds`, `Ammunition`, `PreparedSpellIds`), cross-referencing ruleset
@@ -128,8 +127,48 @@ including the `Shops` property-insert path on a file that had none, and a reject
   `BackgroundId` stay free-text unless/until those become editable ruleset content
   themselves (they aren't today).
 
-## Status (2026-08-04)
+## Phase 4a -- done, 2026-08-06: the ExplorationMap renderer and save path
 
-Phase 1 is done and merged. Phases 2-5 are scoped above but not started -- pick up
-whichever is next via the standing branch/PR/merge workflow, same as every other
-feature in this repo.
+The write half of map editing, with no UI yet -- deliberately sliced so the byte-exact
+formatting could be proven against real content before any grid component depends on it.
+
+- **`ScenarioJsonFormatting.RenderExplorationMap`** renders the full nested shape
+  (`Floors`/`TraversablePositions`/`Stairs`/`Doors`/`Treasures`/`Npcs`) on the existing
+  `JsonLayoutPrimitives`. Two orderings in committed content are deliberately *not* the
+  DTO's own and would have been silent corruption if assumed: a treasure writes
+  `GoldPieces` **before** `ItemId` (`TreasureDefinitionV1` declares `ItemId` first), and
+  a floor's `Stairs` is required-and-empty-rendered (`[]`, per Sunken Chapel) while
+  `Doors`/`Treasures`/`Npcs` are omitted entirely when empty. Both were found by reading
+  real content, not inferred from the types.
+- **Design decision #4 is now split rather than deleted.** A location whose map isn't
+  being edited still copies its original bytes verbatim; only the edited map is
+  re-rendered. This is what keeps Phase 1's existing byte-identity tests passing
+  untouched, and it means editing one location can never reformat a sibling's map.
+- **The Hollow Mill ordering conflict is resolved by normalizing, not by preserving.**
+  `RenderExplorationMap` writes one canonical field order (the DTO's, matching Watchtower
+  and Sunken Chapel exactly). Editing a Hollow Mill floor also reorders its
+  `Npcs`/`Doors`/`Treasures` block -- accepted, since that file is being rewritten anyway,
+  and carrying each floor's original key order through a form round trip purely to
+  preserve an inconsistency isn't worth the machinery.
+- **`ScenarioContentService.FindExplorationMap`/`SaveExplorationMap`** follow the
+  established pattern, so all 40 `scenario.map.*` validator rules already gate every save
+  through the existing write-temp/validate/commit path -- the editor gets map correctness
+  for free rather than reimplementing it.
+- **6 new tests (40 -> 46).** The load-bearing one is byte-identity: re-rendering every
+  map in Watchtower and Sunken Chapel reproduces them exactly, covering multi-floor and
+  single-floor maps, an empty `Stairs` array, secret and locked doors, a treasure with
+  gold plus item plus quantity, and an NPC. Hollow Mill gets an explicit
+  content-equality-despite-reordering test rather than being quietly excluded. Plus:
+  adding a cell persists, editing one map leaves others' bytes untouched, and an
+  out-of-bounds cell is rejected with the file left byte-identical.
+- Full solution gate green (Debug+Release 0 warnings; 2336 tests, 3 skipped, 0 failures).
+  No public API change -- everything added is internal.
+
+**Not done in 4a:** the form model. Deferred to 4b on purpose, so its shape is driven by
+what the grid component actually needs rather than guessed ahead of it.
+
+## Status (2026-08-06)
+
+Phase 1 and Phase 4a are done and merged. Phase 4b (grid component) is next. Phases 2,
+3, 4c and 5 are scoped above but not started -- pick up whichever is next via the
+standing branch/PR/merge workflow, same as every other feature in this repo.
