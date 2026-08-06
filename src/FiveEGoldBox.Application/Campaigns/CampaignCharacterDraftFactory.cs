@@ -22,6 +22,14 @@ internal static class CampaignCharacterDraftFactory
         ArgumentNullException.ThrowIfNull(campaign);
         ArgumentNullException.ThrowIfNull(ruleset);
 
+        if (member.CustomBuild is not null)
+        {
+            return member.CustomBuild with
+            {
+                InventoryItems = MergeCustomBuildAmmunition(member)
+            };
+        }
+
         CampaignCharacterDefinition character = campaign.Roster
             .FirstOrDefault(candidate => string.Equals(
                 candidate.CharacterDefinitionId,
@@ -45,6 +53,42 @@ internal static class CampaignCharacterDraftFactory
             PreparedSpellIds = character.PreparedSpellIds,
             InventoryItems = CreateInventory(member)
         };
+    }
+
+    /// Same idea as CreateInventory below, but starting from the build's own
+    /// declared inventory (which CreateInventory has nothing to start from,
+    /// since a roster character's Ammunition is its only starting inventory)
+    /// rather than replacing it outright: the live AmmunitionState still wins
+    /// over whatever quantity the build was created with, since it reflects
+    /// what has actually been spent.
+    private static IReadOnlyList<InventoryItemDraft> MergeCustomBuildAmmunition(
+        PartyMemberState member)
+    {
+        IReadOnlyList<InventoryItemDraft> baseItems =
+            member.CustomBuild!.InventoryItems;
+
+        if (member.Ammunition is null)
+        {
+            return baseItems;
+        }
+
+        List<InventoryItemDraft> merged = baseItems
+            .Where(item => !string.Equals(
+                item.ItemId,
+                member.Ammunition.AmmunitionItemId,
+                StringComparison.Ordinal))
+            .ToList();
+
+        if (member.Ammunition.RemainingQuantity > 0)
+        {
+            merged.Add(new InventoryItemDraft
+            {
+                ItemId = member.Ammunition.AmmunitionItemId,
+                Quantity = member.Ammunition.RemainingQuantity
+            });
+        }
+
+        return merged;
     }
 
     /// Ammunition is carried as inventory, and what the character has now is

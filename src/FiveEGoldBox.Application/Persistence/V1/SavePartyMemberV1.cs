@@ -21,4 +21,10 @@ internal sealed record SavePartyMemberV1
     /// exactly right for a party that had none.
     public IReadOnlyList<SaveCharacterResourceV1> Resources { get; init; }
         = Array.Empty<SaveCharacterResourceV1>();
+
+    /// Added after the format was first written. A document from before it
+    /// omits the property entirely and loads with null, exactly right for
+    /// every roster character -- CustomBuild only exists at all for a
+    /// character CharacterCreationRules created.
+    public SaveCharacterDraftV1? CustomBuild { get; init; }
 }

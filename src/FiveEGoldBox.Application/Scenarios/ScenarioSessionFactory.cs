@@ -1,5 +1,6 @@
 using FiveEGoldBox.Application.Campaigns;
 using FiveEGoldBox.Application.Exploration;
+using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Runtime;
@@ -36,6 +37,40 @@ public static class ScenarioSessionFactory
             scenario.ScenarioId,
             scenario.StartingLocationId,
             CampaignPartyFactory.CreateStartingParty(campaign),
+            randomSeed);
+    }
+
+    /// The same as CreateNew above, except the party comes from
+    /// CharacterCreationRules.CreateParty (or anywhere else that produces a
+    /// real PartyState) rather than the campaign's own authored roster.
+    ///
+    /// The party still has to be one the campaign could field --
+    /// CampaignPartyCompositionValidator checks its size against
+    /// CampaignDefinition.ActivePartySize the same way it would for the
+    /// roster path, it just resolves each member's build (class, max hit
+    /// points, resources, ammunition) against PartyMemberState.CustomBuild
+    /// instead of a roster entry.
+    public static ApplicationSessionState CreateNew(
+        string scenarioId,
+        int randomSeed,
+        PartyState party)
+    {
+        if (string.IsNullOrWhiteSpace(scenarioId))
+        {
+            throw new ArgumentException(
+                "Scenario ID is required.",
+                nameof(scenarioId));
+        }
+
+        ArgumentNullException.ThrowIfNull(party);
+
+        ScenarioDefinition scenario =
+            ScenarioDefinitionRegistry.Resolve(scenarioId);
+
+        return ApplicationSessionRules.CreateNew(
+            scenario.ScenarioId,
+            scenario.StartingLocationId,
+            party,
             randomSeed);
     }
 
