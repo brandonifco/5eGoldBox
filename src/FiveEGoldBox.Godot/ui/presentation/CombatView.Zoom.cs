@@ -8,27 +8,32 @@ using Godot;
 // on focus every call. Two separate mechanisms move it, deliberately not
 // fighting each other: CombatView.cs's own Refresh recenters on the
 // active combatant exactly when whose turn it is changes (a discrete
-// snap, not a per-frame force); this file's ApplyEdgeAutoScroll is
-// continuous mouse-hover-or-keyboard-cursor exploration in between turns.
+// snap, not a per-frame force); this file's ApplyEdgeAutoScroll is a
+// continuous keyboard-cursor-follow force in between turns, for the
+// move cursor covering more of the battlefield than fits on screen.
 // An earlier version also pulled the pan toward keeping the active
 // combatant within a tile margin of every edge, every frame -- summed
-// with the mouse term, so scrolling toward more distant content and the
-// focus term pulling back could cancel out within a couple of frames,
-// reading as "scrolls a fraction of an inch and stops." Removed once
-// turn-change recentering existed to cover the same need without a
-// competing continuous force. The keyboard-cursor term added since
-// (_cursorFocusedCell, CombatView.cs's own field) doesn't repeat that
-// mistake: it pushes away from whichever edge the cursor is actually
-// near, the same direction the player is already moving it, never pulls
-// back toward a fixed anchor the way the old active-combatant force did.
-// _panOffset is CombatView.cs's own field; this file owns every read and
-// write of it.
+// with a since-removed mouse-hover term, so scrolling toward more
+// distant content and the focus term pulling back could cancel out
+// within a couple of frames, reading as "scrolls a fraction of an inch
+// and stops." Removed once turn-change recentering existed to cover the
+// same need without a competing continuous force. The keyboard-cursor
+// term (_cursorFocusedCell, CombatView.cs's own field) doesn't repeat
+// that mistake: it pushes away from whichever edge the cursor is
+// actually near, the same direction the player is already moving it,
+// never pulls back toward a fixed anchor the way the old
+// active-combatant force did. Mouse-hover scrolling was removed
+// entirely per the user's own request -- TryGetLocalMousePosition
+// stays, still used by the hover-highlight-outline feature
+// (TryResolveHoveredCell) and by scroll-wheel zoom, neither of which
+// this change touches. _panOffset is CombatView.cs's own field; this
+// file owns every read and write of it.
 public partial class CombatView
 {
 	private static readonly float[] ZoomLevels = { 1.0f, 1.5f, 2.0f };
 
-	// Mouse-hover edge scroll: how close (screen pixels, independent of
-	// zoom -- it's about how close to the physical viewport edge the
+	// Keyboard-cursor edge scroll: how close (screen pixels, independent
+	// of zoom -- it's about how close to the physical viewport edge the
 	// cursor is) triggers it, and how fast it scrolls.
 	private const float EdgeScrollMarginPx = 48f;
 	private const float EdgeScrollSpeedPxPerSec = 600f;
@@ -228,23 +233,16 @@ public partial class CombatView
 		return Project(focus.GridX + 0.5f, focus.GridY + 0.5f);
 	}
 
-	// Two triggers, summed the same way the old (reverted) mouse+focus
-	// design was, but not the same shape -- both of these push away from
-	// whichever edge they're near, never pull back toward a fixed
-	// anchor, so they reinforce rather than fight each other. Whoever's
-	// turn it is gets its own say over the camera through CombatView.cs's
-	// own turn-change recenter instead of a third continuous force here.
+	// Pushes away from whichever edge the keyboard cursor is near, the
+	// same direction the player is already moving it, never pulling back
+	// toward a fixed anchor. Whoever's turn it is gets its own say over
+	// the camera through CombatView.cs's own turn-change recenter instead
+	// of a continuous force here. Mouse-hover used to contribute a second
+	// term here too, summed the same way; removed per the user's own
+	// request, so only the keyboard cursor scrolls the view now.
 	private void ApplyEdgeAutoScroll(float deltaSeconds)
 	{
 		Vector2 direction = Vector2.Zero;
-
-		if (TryGetLocalMousePosition(out Vector2 mouseLocal))
-		{
-			direction += ComputeEdgeDirection(
-				mouseLocal,
-				_combatViewport.Size,
-				EdgeScrollMarginPx);
-		}
 
 		if (_cursorFocusedCell is Vector2I cursorCell)
 		{

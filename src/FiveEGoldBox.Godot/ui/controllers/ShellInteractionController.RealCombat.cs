@@ -231,6 +231,19 @@ internal sealed partial class ShellInteractionController
 
 		PushContext(ShellInteractionContext.Targeting);
 		_presentationController.ShowCombatHighlights(cursorCells);
+
+		// Starts the cursor on whoever's turn it is, per the user's own
+		// request, rather than leaving it wherever Godot's default focus
+		// happens to land.
+		CombatantMarkerViewModel? activeCombatant = combatSnapshot.View.Combatants
+			.FirstOrDefault(combatant => combatant.Active);
+
+		if (activeCombatant is not null)
+		{
+			_presentationController.FocusCombatCell(
+				activeCombatant.GridX, activeCombatant.GridY);
+		}
+
 		_presentationController.SetMessage(
 			"Choose a destination. Press Esc to cancel.");
 	}

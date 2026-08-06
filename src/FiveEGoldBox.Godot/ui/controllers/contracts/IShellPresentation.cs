@@ -63,6 +63,11 @@ internal interface IShellPresentation
 
 	void ShowCombatHighlights(IReadOnlyList<CombatHighlightViewModel>? highlights);
 
+	// Gives the move cursor a real starting cell -- call right after
+	// ShowCombatHighlights opens move targeting. A no-op if the position
+	// doesn't name one of the highlighted move cells.
+	void FocusCombatCell(int gridX, int gridY);
+
 	void SelectCombatTarget(string? combatantId);
 
 	void MoveActiveCombatant(int gridX, int gridY);

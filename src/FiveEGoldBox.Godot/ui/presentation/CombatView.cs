@@ -35,6 +35,12 @@ public partial class CombatView : Control
 
 	private readonly List<CombatantMarkerPin> _combatantPins = new();
 	private readonly List<CombatHighlightCell> _highlightCells = new();
+	// Only the dense move-cursor cells (see RebuildHighlights) -- what
+	// FocusCell looks a grid position up in to give the keyboard cursor a
+	// real starting cell instead of leaving it wherever Godot's default
+	// focus happens to land.
+	private readonly Dictionary<(int X, int Y), CombatHighlightCell>
+		_cursorCellsByPosition = new();
 
 	private int _gridWidth = 1;
 	private int _gridHeight = 1;
