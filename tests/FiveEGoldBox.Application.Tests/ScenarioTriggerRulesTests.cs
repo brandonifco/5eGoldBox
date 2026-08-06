@@ -40,18 +40,6 @@ public sealed class ScenarioTriggerRulesTests
             ScenarioTriggerRules.CanActivate(state));
     }
 
-    [Fact]
-    public void CanActivate_WithWrongFacing_ReturnsFalse()
-    {
-        ApplicationSessionState state =
-            ExplorationRules.Turn(
-                WatchtowerSignalTestData.CreateSignalReadySession(),
-                ExplorationTurnDirection.Left);
-
-        Assert.False(
-            ScenarioTriggerRules.CanActivate(state));
-    }
-
     [Theory]
     [InlineData("MissionNotAccepted")]
     [InlineData("SignalActivated")]
@@ -219,20 +207,6 @@ public sealed class ScenarioTriggerRulesTests
         Assert.Throws<InvalidOperationException>(() =>
             ScenarioTriggerRules.Activate(
                 WatchtowerSignalTestData.MoveToUpperFloorStair(),
-                WatchtowerSignalTestData.CreateRuleset()));
-    }
-
-    [Fact]
-    public void Activate_WithWrongFacing_Throws()
-    {
-        ApplicationSessionState state =
-            ExplorationRules.Turn(
-                WatchtowerSignalTestData.CreateSignalReadySession(),
-                ExplorationTurnDirection.Left);
-
-        Assert.Throws<InvalidOperationException>(() =>
-            ScenarioTriggerRules.Activate(
-                state,
                 WatchtowerSignalTestData.CreateRuleset()));
     }
 

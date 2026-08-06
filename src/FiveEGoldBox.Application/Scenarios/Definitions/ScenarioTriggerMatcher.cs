@@ -6,8 +6,9 @@ namespace FiveEGoldBox.Application.Scenarios.Definitions;
 /// Decides whether the party is standing where an authored trigger fires.
 ///
 /// A trigger's conditions are all optional except its location, so one fixed to
-/// a square and a facing is checked strictly while one covering a whole location
-/// fires anywhere in it.
+/// a square is checked strictly while one covering a whole location fires
+/// anywhere in it. Location only -- which way the party is facing never
+/// gates a trigger, so a player never has to guess a direction to find one.
 internal static class ScenarioTriggerMatcher
 {
     /// The trigger the party could act on right now, if any.
@@ -44,8 +45,7 @@ internal static class ScenarioTriggerMatcher
         ExplorationState? exploration)
     {
         if (trigger.Floor is null
-            && trigger.Position is null
-            && trigger.RequiredFacing is null)
+            && trigger.Position is null)
         {
             return true;
         }
@@ -58,9 +58,7 @@ internal static class ScenarioTriggerMatcher
         return (trigger.Floor is null
                 || exploration.Floor == trigger.Floor)
             && (trigger.Position is null
-                || exploration.Position == trigger.Position)
-            && (trigger.RequiredFacing is null
-                || exploration.Facing == trigger.RequiredFacing);
+                || exploration.Position == trigger.Position);
     }
 
     /// The trigger that starts a given encounter, used when validating that a

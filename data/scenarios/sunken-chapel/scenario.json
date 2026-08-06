@@ -121,7 +121,6 @@
             "LocationId": "location.sunken-chapel",
             "Floor": "GroundFloor",
             "Position": { "X": 1, "Y": 0 },
-            "RequiredFacing": "East",
             "RequiredProgressIds": [ "chapel.charter-signed" ],
             "ResultingProgressId": "chapel.seal-broken"
         },

@@ -12,8 +12,6 @@ internal sealed record ScenarioTriggerDefinitionV1
 
     public GridPositionV1? Position { get; init; }
 
-    public ExplorationFacingV1? RequiredFacing { get; init; }
-
     public required IReadOnlyList<string> RequiredProgressIds { get; init; }
 
     public required string ResultingProgressId { get; init; }

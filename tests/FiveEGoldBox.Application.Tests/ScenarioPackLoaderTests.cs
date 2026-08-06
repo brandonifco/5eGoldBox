@@ -115,7 +115,6 @@ public sealed class ScenarioPackLoaderTests
                     "LocationId": "location.dungeon",
                     "Floor": "UpperFloor",
                     "Position": { "X": 2, "Y": 2 },
-                    "RequiredFacing": "East",
                     "RequiredProgressIds": [ "test.started" ],
                     "ResultingProgressId": "test.won",
                     "EncounterId": "encounter.test"
@@ -204,14 +203,12 @@ public sealed class ScenarioPackLoaderTests
             .Single(trigger => trigger.TriggerId == "trigger.positional");
         Assert.Equal("UpperFloor", positionalTrigger.Floor);
         Assert.Equal(new GridPosition(2, 2), positionalTrigger.Position);
-        Assert.Equal(ExplorationFacing.East, positionalTrigger.RequiredFacing);
         Assert.Equal("encounter.test", positionalTrigger.EncounterId);
 
         ScenarioTriggerDefinition plainTrigger = scenario.Triggers
             .Single(trigger => trigger.TriggerId == "trigger.plain");
         Assert.Null(plainTrigger.Floor);
         Assert.Null(plainTrigger.Position);
-        Assert.Null(plainTrigger.RequiredFacing);
         Assert.Null(plainTrigger.EncounterId);
 
         ScenarioDecisionDefinition decision = Assert.Single(scenario.Decisions);

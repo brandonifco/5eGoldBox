@@ -620,15 +620,6 @@
         "Position": {
           "$ref": "#/$defs/GridPositionV1"
         },
-        "RequiredFacing": {
-          "type": "string",
-          "enum": [
-            "North",
-            "East",
-            "South",
-            "West"
-          ]
-        },
         "RequiredProgressIds": {
           "type": "array",
           "items": {

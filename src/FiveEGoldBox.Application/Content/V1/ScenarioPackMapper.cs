@@ -260,9 +260,6 @@ internal static class ScenarioPackMapper
             Position = trigger.Position is null
                 ? null
                 : ToRuntimePosition(trigger.Position),
-            RequiredFacing = trigger.RequiredFacing is null
-                ? null
-                : ToRuntimeFacing(trigger.RequiredFacing.Value),
             RequiredProgressIds = trigger.RequiredProgressIds.ToArray(),
             ResultingProgressId = trigger.ResultingProgressId,
             EncounterId = trigger.EncounterId
