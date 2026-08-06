@@ -234,8 +234,7 @@ public partial class CombatView
 		// focus change on whatever replaces them re-sets it via
 		// FocusEntered below.
 		_cursorFocusedCell = null;
-
-		Dictionary<(int X, int Y), CombatHighlightCell> cursorCellsByPosition = new();
+		_cursorCellsByPosition.Clear();
 
 		foreach (CombatHighlightViewModel highlight in _highlights)
 		{
@@ -257,11 +256,30 @@ public partial class CombatView
 
 			if (highlight.Kind is "move-legal" or "move-illegal")
 			{
-				cursorCellsByPosition[(gridX, gridY)] = cell;
+				_cursorCellsByPosition[(gridX, gridY)] = cell;
 			}
 		}
 
-		WireCursorFocusNeighbors(cursorCellsByPosition);
+		WireCursorFocusNeighbors(_cursorCellsByPosition);
+	}
+
+	// Gives the move cursor a real starting cell instead of leaving it
+	// wherever Godot's default focus happens to land -- called right
+	// after ShowCombatHighlights opens move targeting, with the active
+	// combatant's own position, per the user's own request: the cursor
+	// should start on whoever's turn it is, not somewhere arbitrary. A
+	// silent no-op for any other highlight kind (attack/spell targeting),
+	// since only move cells are tracked here -- the active combatant is
+	// never a legal target for their own attack, so this was never a
+	// meaningful starting point for those anyway.
+	internal void FocusCell(int gridX, int gridY)
+	{
+		if (_cursorCellsByPosition.TryGetValue(
+			(gridX, gridY),
+			out CombatHighlightCell? cell))
+		{
+			cell.GrabFocus();
+		}
 	}
 
 	// Arrow-key navigation for the full-battlefield move cursor (see

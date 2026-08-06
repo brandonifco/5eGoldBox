@@ -115,6 +115,11 @@ internal sealed partial class ShellPresentationController
 		RefreshCombatView();
 	}
 
+	public void FocusCombatCell(int gridX, int gridY)
+	{
+		_combatView.FocusCell(gridX, gridY);
+	}
+
 	public void SelectCombatTarget(string? combatantId)
 	{
 		_combatSelectedTargetId = combatantId;
