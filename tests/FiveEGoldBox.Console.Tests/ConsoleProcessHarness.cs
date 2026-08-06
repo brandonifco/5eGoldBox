@@ -167,10 +167,11 @@ internal static class ConsoleProcessHarness
         string fullBaseDirectory = Path.GetFullPath(
             AppContext.BaseDirectory);
         string[] segments = fullBaseDirectory.Split(
-            [
+            new char[]
+            {
                 Path.DirectorySeparatorChar,
                 Path.AltDirectorySeparatorChar
-            ],
+            },
             StringSplitOptions.RemoveEmptyEntries);
 
         for (int index = segments.Length - 2;
