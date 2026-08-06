@@ -63,10 +63,14 @@ internal sealed partial class ShellInteractionController
 		switch (snapshot.Mode)
 		{
 			case ApplicationMode.Encounter:
+				bool isNewCombat = _activeCombatSession is null;
 				_activeCombatGameSession = session;
 				_activeCombatSession ??=
 					new RealCombatSession(session.HandOffToCombat());
-				ShowRealCombat(snapshot, overrideMessage);
+				ShowRealCombat(
+					snapshot,
+					overrideMessage is null ? null : new[] { overrideMessage },
+					isNewCombat);
 				return;
 			case ApplicationMode.ScenarioConclusion:
 				_presentationController.ShowExploration(
