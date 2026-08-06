@@ -206,6 +206,18 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		_immersiveMessageLog.SetMessage(message);
 	}
 
+	public void ResetCombatLog(IReadOnlyList<string> openingLines)
+	{
+		_messageLog.ResetLog(openingLines);
+		_immersiveMessageLog.ResetLog(openingLines);
+	}
+
+	public void AppendCombatLog(IReadOnlyList<string> lines)
+	{
+		_messageLog.AppendLog(lines);
+		_immersiveMessageLog.AppendLog(lines);
+	}
+
 	public void SetHeader(string location, string mode)
 	{
 		_headerBar.SetLocationAndMode(location, mode);

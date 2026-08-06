@@ -38,16 +38,42 @@ internal sealed class RealCombatSession
 		CombatResolutionResult opening =
 			CombatOperations.AdvanceToDecision(state);
 		_state = opening.State;
+
+		// Narrates whatever that opening processing actually did (e.g. an
+		// enemy who wins initiative acting before the party's first turn)
+		// so the combat log's first entries are the true start of the
+		// fight, not silently skipped the way they were before the log
+		// existed to show them.
+		IReadOnlyDictionary<string, string> openingDisplayNames =
+			CombatOperations.Query(_state).Combatants
+				.ToDictionary(
+					combatant => combatant.CombatantId,
+					combatant => combatant.DisplayName,
+					StringComparer.Ordinal);
+
+		List<string> openingLines = new();
+
+		foreach (CombatStepResult step in opening.AutomaticSteps)
+		{
+			DescribeStep(step, openingDisplayNames, openingLines);
+		}
+
+		OpeningLines = openingLines;
 	}
 
 	internal ApplicationSessionState State => _state;
+
+	// Whatever automatic processing ran before the party's first real
+	// decision -- empty for the ordinary case (the party simply acts
+	// first). Read once, right after construction, to seed the combat log.
+	internal IReadOnlyList<string> OpeningLines { get; }
 
 	internal RealCombatSnapshot Describe()
 	{
 		return Describe(statusMessage: null);
 	}
 
-	internal string SubmitMove(IReadOnlyList<GridPosition> path)
+	internal IReadOnlyList<string> SubmitMove(IReadOnlyList<GridPosition> path)
 	{
 		CombatDecision decision = CombatOperations.Query(_state).Decision;
 
@@ -63,7 +89,7 @@ internal sealed class RealCombatSession
 		return Advance(result);
 	}
 
-	internal string SubmitWeaponAttack(string weaponId, string targetCombatantId)
+	internal IReadOnlyList<string> SubmitWeaponAttack(string weaponId, string targetCombatantId)
 	{
 		CombatDecision decision = CombatOperations.Query(_state).Decision;
 
@@ -80,7 +106,7 @@ internal sealed class RealCombatSession
 		return Advance(result);
 	}
 
-	internal string SubmitEndTurn()
+	internal IReadOnlyList<string> SubmitEndTurn()
 	{
 		CombatDecision decision = CombatOperations.Query(_state).Decision;
 
@@ -99,7 +125,7 @@ internal sealed class RealCombatSession
 	// name additional targets (Bless) is offered here one target at a
 	// time via its own Targets list; TargetCombinations (casting on 2+ at
 	// once) is a fast-follow, same scope cut as multi-target attacks.
-	internal string SubmitSpellAttack(string spellId, string targetCombatantId)
+	internal IReadOnlyList<string> SubmitSpellAttack(string spellId, string targetCombatantId)
 	{
 		CombatDecision decision = CombatOperations.Query(_state).Decision;
 
@@ -123,7 +149,7 @@ internal sealed class RealCombatSession
 	// trip, matching Console's own loop-back. CombatDecisionState.
 	// AutomaticProcessingRequired never leaks past this method, the same
 	// invariant Console's ValidatePlayerDecision enforces.
-	private string Advance(CombatResolutionResult submitted)
+	private IReadOnlyList<string> Advance(CombatResolutionResult submitted)
 	{
 		CombatResolutionResult settled =
 			CombatOperations.AdvanceToDecision(submitted.State);
@@ -155,9 +181,12 @@ internal sealed class RealCombatSession
 			DescribeStep(step, displayNames, lines);
 		}
 
-		return lines.Count == 0
-			? "Nothing happened."
-			: string.Join(" ", lines);
+		if (lines.Count == 0)
+		{
+			lines.Add("Nothing happened.");
+		}
+
+		return lines;
 	}
 
 	private RealCombatSnapshot Describe(string? statusMessage)

@@ -71,5 +71,14 @@ internal interface IShellPresentation
 
 	void SetMessage(string message);
 
+	// The scrolling combat transcript -- distinct from SetMessage's single
+	// replaced line, which real combat still uses for transient targeting
+	// prompts ("Choose a target...") layered on top without discarding
+	// this. ResetCombatLog starts a fresh transcript (a new encounter);
+	// AppendCombatLog adds to the current one (every action after that).
+	void ResetCombatLog(IReadOnlyList<string> openingLines);
+
+	void AppendCombatLog(IReadOnlyList<string> lines);
+
 	void SetHeader(string location, string mode);
 }

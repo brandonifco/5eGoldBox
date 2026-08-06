@@ -44,24 +44,60 @@ internal sealed partial class ShellInteractionController
 	private IReadOnlyList<CombatTargetOption>? _pendingRealSpellTargets;
 
 	// Called from ShellInteractionController.RealSession.cs's
-	// ApplicationMode.Encounter case. Renders whatever RealCombatSession.
-	// Describe() reports through the same CombatView the mock content
-	// uses, or hands off to ConcludeRealCombat once the fight is over.
-	private void ShowRealCombat(RealSessionSnapshot snapshot, string? overrideMessage)
+	// ApplicationMode.Encounter case (isNewCombat true or false depending
+	// on whether _activeCombatSession was just constructed) and from
+	// ContinueRealCombat below (always isNewCombat: false, since that path
+	// only ever runs against an already-active encounter). Renders whatever
+	// RealCombatSession.Describe() reports through the same CombatView the
+	// mock content uses, or hands off to ConcludeRealCombat once the fight
+	// is over.
+	private void ShowRealCombat(
+		RealSessionSnapshot snapshot,
+		IReadOnlyList<string>? lines,
+		bool isNewCombat)
 	{
 		RealCombatSnapshot combatSnapshot = _activeCombatSession!.Describe();
 
 		if (combatSnapshot.IsCompleted)
 		{
-			ConcludeRealCombat(overrideMessage);
+			ConcludeRealCombat(lines);
 			return;
 		}
 
 		_presentationController.ConfigureCombat(combatSnapshot.View);
 		_presentationController.SetHeader(snapshot.LocationDisplayName, "Combat");
-		_presentationController.SetMessage(overrideMessage ?? "A fight has begun!");
+
+		if (isNewCombat)
+		{
+			List<string> opening = new() { "A fight has begun!" };
+			opening.AddRange(_activeCombatSession.OpeningLines);
+			_presentationController.ResetCombatLog(opening);
+		}
+		else if (lines is { Count: > 0 })
+		{
+			_presentationController.AppendCombatLog(lines);
+		}
+
 		ShowPartyPreviewFromCombat(combatSnapshot);
 		ShowRealCombatCommands(combatSnapshot);
+	}
+
+	// Re-renders an already-active encounter after a player action, the
+	// combat-log-carrying counterpart to ShowRealSession's own string-
+	// based overload -- used by every real combat action (Move, Attack,
+	// Cast, End Turn) instead of that generic entry point, since those all
+	// have RealCombatSession's own per-line narration available rather
+	// than a single pre-joined message.
+	private void ContinueRealCombat(IReadOnlyList<string> lines)
+	{
+		ResetContext();
+
+		RealGameSession session = _activeCombatGameSession!;
+		_activeRealSession = session;
+		RefreshPartyPreview();
+
+		RealSessionSnapshot snapshot = session.Describe();
+		ShowRealCombat(snapshot, lines, isNewCombat: false);
 	}
 
 	// The sidebar's own live HP during a fight -- ShowRealSession's own
@@ -355,8 +391,8 @@ internal sealed partial class ShellInteractionController
 		PopContext(ShellInteractionContext.Targeting);
 		ClearRealCombatTargeting();
 
-		string message = _activeCombatSession!.SubmitMove(match.Path);
-		ShowRealSession(_activeCombatGameSession!, message);
+		IReadOnlyList<string> lines = _activeCombatSession!.SubmitMove(match.Path);
+		ContinueRealCombat(lines);
 	}
 
 	// Called from ShellInteractionController.Combat.cs's
@@ -440,8 +476,8 @@ internal sealed partial class ShellInteractionController
 
 	private void SubmitRealEndTurn()
 	{
-		string message = _activeCombatSession!.SubmitEndTurn();
-		ShowRealSession(_activeCombatGameSession!, message);
+		IReadOnlyList<string> lines = _activeCombatSession!.SubmitEndTurn();
+		ContinueRealCombat(lines);
 	}
 
 	// Reuses the same ConfirmationDialog mechanism M6e/M8e already
@@ -461,9 +497,9 @@ internal sealed partial class ShellInteractionController
 			"Cancel",
 			onConfirmed: () =>
 			{
-				string message = _activeCombatSession!.SubmitWeaponAttack(
+				IReadOnlyList<string> lines = _activeCombatSession!.SubmitWeaponAttack(
 					weaponId, targetCombatantId);
-				ShowRealSession(_activeCombatGameSession!, message);
+				ContinueRealCombat(lines);
 			},
 			onClosed: () =>
 			{
@@ -489,9 +525,9 @@ internal sealed partial class ShellInteractionController
 			"Cancel",
 			onConfirmed: () =>
 			{
-				string message = _activeCombatSession!.SubmitSpellAttack(
+				IReadOnlyList<string> lines = _activeCombatSession!.SubmitSpellAttack(
 					spellId, targetCombatantId);
-				ShowRealSession(_activeCombatGameSession!, message);
+				ContinueRealCombat(lines);
 			},
 			onClosed: () =>
 			{
@@ -513,7 +549,7 @@ internal sealed partial class ShellInteractionController
 	// terse outcome line below, which is why a party wipe could report
 	// "Defeat..." having never shown a single death-save roll that produced
 	// it -- found live, not by inspection.
-	private void ConcludeRealCombat(string? finalNarration)
+	private void ConcludeRealCombat(IReadOnlyList<string>? finalNarration)
 	{
 		RealGameSession session = _activeCombatGameSession!;
 		CombatOutcomeResult outcome =
@@ -528,9 +564,9 @@ internal sealed partial class ShellInteractionController
 			? "Victory! The raiders are defeated."
 			: "Defeat...";
 
-		string message = string.IsNullOrEmpty(finalNarration)
-			? outcomeLine
-			: $"{finalNarration} {outcomeLine}";
+		string message = finalNarration is { Count: > 0 }
+			? $"{string.Join(" ", finalNarration)} {outcomeLine}"
+			: outcomeLine;
 
 		ShowRealSession(session, message);
 	}
