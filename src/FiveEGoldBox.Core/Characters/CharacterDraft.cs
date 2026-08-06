@@ -14,6 +14,11 @@ public sealed record CharacterDraft
 
     public string? ClassId { get; init; }
 
+    /// Always optional, unlike SubraceId's required-if-the-race-has-any
+    /// rule -- see SubclassDefinition's own doc comment for why a subclass
+    /// can legitimately be unchosen at level 1 for three of four classes.
+    public string? SubclassId { get; init; }
+
     public string? BackgroundId { get; init; }
 
     public AbilityScoreGenerationMethod AbilityScoreGenerationMethod { get; init; }

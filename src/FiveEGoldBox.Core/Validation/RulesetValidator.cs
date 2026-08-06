@@ -22,6 +22,7 @@ public static partial class RulesetValidator
         AddFeatureDefinitionIssues(issues, ruleset.Features);
         AddEquipmentSemanticIssues(issues, ruleset);
         AddSubraceIssues(issues, ruleset.Races);
+        AddSubclassIssues(issues, ruleset.Classes);
         AddDefinitionReferenceIssues(issues, ruleset);
 
         return issues.Count == 0

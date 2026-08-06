@@ -11,6 +11,11 @@ public sealed record PartyMemberViewModel
 
     public required string ClassDisplayName { get; init; }
 
+    /// Null whenever no subclass has been chosen -- always legal at level 1,
+    /// since real 5e doesn't require one from three of this ruleset's four
+    /// classes until above the only level this engine currently supports.
+    public string? SubclassDisplayName { get; init; }
+
     public required int Level { get; init; }
 
     public required int CurrentHitPoints { get; init; }

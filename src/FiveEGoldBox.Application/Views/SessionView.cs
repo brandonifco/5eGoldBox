@@ -106,6 +106,7 @@ public static class SessionView
             DisplayName = member.DisplayName,
             RaceDisplayName = snapshot.RaceName ?? "Unknown",
             ClassDisplayName = FindClassDisplayName(ruleset, member.ClassId),
+            SubclassDisplayName = snapshot.SubclassName,
             Level = snapshot.Level,
             CurrentHitPoints = member.Health.HitPoints.CurrentHitPoints,
             MaximumHitPoints = member.Health.HitPoints.MaximumHitPoints,

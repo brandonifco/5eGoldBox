@@ -181,6 +181,70 @@ public sealed class RulesetValidatorTests
     }
 
     [Fact]
+    public void Validate_WithMissingSubclassIdsOrNames_ReturnsErrors()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Classes =
+            [
+                CreateClass("class.test", "Test Class") with
+                {
+                    Subclasses =
+                    [
+                        new SubclassDefinition
+                        {
+                            Id = " ",
+                            Name = ""
+                        }
+                    ]
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.classes.subclasses.id.required");
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.classes.subclasses.name.required");
+    }
+
+    [Fact]
+    public void Validate_WithDuplicateSubclassIdsWithinSameClass_ReturnsError()
+    {
+        RulesetDefinition ruleset = new()
+        {
+            Id = "ruleset.test",
+            Name = "Test Ruleset",
+            Classes =
+            [
+                CreateClass("class.test", "Test Class") with
+                {
+                    Subclasses =
+                    [
+                        new SubclassDefinition
+                        {
+                            Id = "subclass.duplicate",
+                            Name = "Subclass One"
+                        },
+                        new SubclassDefinition
+                        {
+                            Id = "subclass.duplicate",
+                            Name = "Subclass Two"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        ValidationResult result = RulesetValidator.Validate(ruleset);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, issue => issue.Code == "ruleset.classes.subclasses.duplicate_id");
+    }
+
+    [Fact]
     public void Validate_WithInvalidTopLevelDefinitionNumericValues_ReturnsErrors()
     {
         RulesetDefinition ruleset = new()

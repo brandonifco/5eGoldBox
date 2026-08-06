@@ -34,6 +34,18 @@ public sealed partial class CharacterResolver
         return _rulesetIndex.BackgroundsById.GetValueOrDefault(draft.BackgroundId);
     }
 
+    private static SubclassDefinition? GetSelectedSubclass(
+        CharacterDraft draft,
+        ClassDefinition? selectedClass)
+    {
+        if (selectedClass is null || string.IsNullOrWhiteSpace(draft.SubclassId))
+        {
+            return null;
+        }
+
+        return selectedClass.Subclasses.SingleOrDefault(subclass => subclass.Id == draft.SubclassId);
+    }
+
     private static SubraceDefinition? GetSelectedSubrace(
         CharacterDraft draft,
         RaceDefinition? selectedRace)

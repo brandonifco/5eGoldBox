@@ -23,6 +23,7 @@ public sealed partial class CharacterResolver
         ValidateRaceSelection(draft, issues);
         ValidateSubraceSelection(draft, issues);
         ValidateClassSelection(draft, issues);
+        ValidateSubclassSelection(draft, issues);
         ValidateClassSkillChoices(draft, issues);
         ValidateBackgroundSelection(draft, issues);
         ValidateEquippedArmor(draft, issues);
@@ -247,6 +248,43 @@ public sealed partial class CharacterResolver
                 ValidationSeverity.Error,
                 "character.class.not_found",
                 $"Class '{draft.ClassId}' was not found in ruleset '{_ruleset.Id}'."));
+        }
+    }
+
+    /// Unlike ValidateSubraceSelection, a subclass is never required just
+    /// because the class declares some -- see SubclassDefinition's own doc
+    /// comment for why. This only checks that a chosen one is real and
+    /// belongs to the character's own class.
+    private void ValidateSubclassSelection(CharacterDraft draft, List<ValidationIssue> issues)
+    {
+        if (_ruleset is null
+            || _rulesetIndex is null
+            || string.IsNullOrWhiteSpace(draft.SubclassId))
+        {
+            return;
+        }
+
+        ClassDefinition? selectedClass = GetSelectedClass(draft);
+
+        if (selectedClass is null)
+        {
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Error,
+                "character.subclass.requires_class",
+                $"Subclass '{draft.SubclassId}' cannot be selected without a legal class."));
+
+            return;
+        }
+
+        bool subclassExists = selectedClass.Subclasses
+            .Any(subclass => subclass.Id == draft.SubclassId);
+
+        if (!subclassExists)
+        {
+            issues.Add(new ValidationIssue(
+                ValidationSeverity.Error,
+                "character.subclass.not_found",
+                $"Subclass '{draft.SubclassId}' was not found for class '{selectedClass.Id}'."));
         }
     }
 

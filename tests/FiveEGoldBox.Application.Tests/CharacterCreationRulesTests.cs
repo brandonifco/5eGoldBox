@@ -109,6 +109,69 @@ public sealed class CharacterCreationRulesTests
     }
 
     [Fact]
+    public void Validate_WithSubclassBelongingToItsOwnClass_IsValid()
+    {
+        CharacterDraft draft = LegalFighterDraft("Aldric") with
+        {
+            ClassId = "class.cleric",
+            SelectedSkillIds = ["skill.perception", "skill.survival"],
+            SubclassId = "subclass.life-domain"
+        };
+
+        ValidationResultAssertValid(
+            CharacterCreationRules.Validate(draft, RulesetId));
+    }
+
+    [Fact]
+    public void Validate_WithSubclassBelongingToADifferentClass_ReturnsSubclassNotFoundIssue()
+    {
+        // subclass.life-domain belongs to class.cleric, not class.fighter.
+        CharacterDraft draft = LegalFighterDraft("Aldric") with
+        {
+            SubclassId = "subclass.life-domain"
+        };
+
+        Core.Validation.ValidationResult result =
+            CharacterCreationRules.Validate(draft, RulesetId);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "character.subclass.not_found");
+    }
+
+    [Fact]
+    public void CustomBuildParty_WithASubclassChosen_SurfacesItOnTheCharacterSheet()
+    {
+        List<CharacterCreationEntry> entries = FourLegalEntries();
+        entries[0] = entries[0] with
+        {
+            Draft = entries[0].Draft with
+            {
+                ClassId = "class.cleric",
+                SelectedSkillIds = ["skill.perception", "skill.survival"],
+                SubclassId = "subclass.war-domain"
+            }
+        };
+
+        PartyState party = CharacterCreationRules.CreateParty(
+            "party.custom-test",
+            entries,
+            RulesetId);
+
+        ApplicationSessionState session = ScenarioSessionFactory.CreateNew(
+            HollowMillScenarioIds.ScenarioId,
+            randomSeed: 42,
+            party);
+
+        Views.SessionViewModel view = Views.SessionView.Describe(session);
+
+        Views.PartyMemberViewModel resolved = view.Party.Members[0];
+        Assert.Equal("War Domain", resolved.SubclassDisplayName);
+        Assert.Null(view.Party.Members[1].SubclassDisplayName);
+    }
+
+    [Fact]
     public void CreateParty_WithLegalDrafts_ProducesAFullyResolvedParty()
     {
         PartyState party = CharacterCreationRules.CreateParty(
