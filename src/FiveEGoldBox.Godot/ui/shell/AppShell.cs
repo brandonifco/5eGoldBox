@@ -66,6 +66,13 @@ public partial class AppShell : Control
 	{
 		PlayerInputActions.EnsureRegistered();
 
+		// project.godot's window/size/mode=2 sets the same thing, but isn't
+		// reliably honored by every window manager at initial map time --
+		// confirmed live, the window opened un-maximized despite that
+		// setting. Setting it again here, once the window actually exists,
+		// is the reliable fallback.
+		GetWindow().Mode = Window.ModeEnum.Maximized;
+
 		_standardLayout = GetNode<StandardLayout>("%StandardLayout");
 		_immersiveLayout = GetNode<ImmersiveLayout>("%ImmersiveLayout");
 		_confirmationDialog = GetNode<ConfirmationDialog>("%ConfirmationDialog");

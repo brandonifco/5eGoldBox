@@ -549,6 +549,10 @@ internal sealed partial class ShellInteractionController
 	// outcome line as its own entries rather than folded into one string --
 	// the detail lives in permanent history now, so the transient status
 	// line ShowRealSession shows next only needs the terse outcome.
+	// AppendJournal runs AFTER ShowRealSession for the same reason
+	// SubmitRealCommand's own does -- ShowRealSession's non-combat
+	// branches end in SetMessage, which would otherwise clobber the
+	// journal's full-list render back down to one line.
 	private void ConcludeRealCombat(IReadOnlyList<string>? finalNarration)
 	{
 		RealGameSession session = _activeCombatGameSession!;
@@ -572,8 +576,8 @@ internal sealed partial class ShellInteractionController
 		}
 
 		journalLines.Add(outcomeLine);
-		_presentationController.AppendJournal(journalLines);
 
 		ShowRealSession(session, outcomeLine);
+		_presentationController.AppendJournal(journalLines);
 	}
 }
