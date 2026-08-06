@@ -22,26 +22,35 @@ namespace FiveEGoldBox.ContentEditor.Services;
 /// at two or more" rule for Properties/AbilityModifiers. See
 /// RenderProgressIdList below.
 ///
-/// This class deliberately does NOT render ExplorationMap. That field isn't
-/// editable through this editor yet, and real committed content orders a
-/// floor's Doors/Treasures/Npcs inconsistently from file to file (Hollow
-/// Mill writes Npcs first, Watchtower writes Doors/Treasures first), so no
-/// fixed field order reproduces every file's ExplorationMap byte-for-byte.
-/// RenderLocation instead takes the exact original bytes for each
-/// location's map (from ScenarioPackDocument.FindRawExplorationMapText) and
-/// copies them through verbatim -- true byte preservation instead of an
-/// approximation that would need to reverse-engineer that ordering.
+/// ExplorationMap is rendered two different ways depending on whether the
+/// caller is editing it. A location whose map is untouched still copies the
+/// exact original bytes through verbatim (from
+/// ScenarioPackDocument.FindRawExplorationMapText), because real committed
+/// content orders a floor's Doors/Treasures/Npcs inconsistently from file to
+/// file (Hollow Mill writes Npcs first, Watchtower writes Doors/Treasures
+/// first) and no fixed field order reproduces both byte-for-byte. Editing a
+/// map goes through RenderExplorationMap instead, which writes one canonical
+/// field order -- the DTO's own, matching Watchtower and Sunken Chapel
+/// exactly. Editing a Hollow Mill floor therefore also normalizes its
+/// Npcs/Doors/Treasures ordering; that file is being rewritten anyway, and
+/// carrying each floor's original key order through the form round trip
+/// purely to preserve an inconsistency isn't worth the machinery.
 internal static class ScenarioJsonFormatting
 {
     // ----- Top-level arrays -----
 
+    /// explorationMapTextByLocationId is given the location's id and the
+    /// column its map's opening brace sits at, and returns the map's JSON
+    /// text (or null for a location with no map). Callers editing a map
+    /// render it through RenderExplorationMap at that column; callers leaving
+    /// maps alone return the original bytes verbatim.
     internal static string RenderLocations(
         IReadOnlyList<ScenarioLocationDefinitionV1> locations,
-        Func<string, string?> rawExplorationMapTextByLocationId)
+        Func<string, int, string?> explorationMapTextByLocationId)
     {
         return RenderTopLevelArray(
             locations,
-            (location, column) => RenderLocation(location, column, rawExplorationMapTextByLocationId));
+            (location, column) => RenderLocation(location, column, explorationMapTextByLocationId));
     }
 
     internal static string RenderRoutes(IReadOnlyList<TravelRouteDefinitionV1> routes)
@@ -59,13 +68,13 @@ internal static class ScenarioJsonFormatting
     private static string RenderLocation(
         ScenarioLocationDefinitionV1 location,
         int column,
-        Func<string, string?> rawExplorationMapTextByLocationId)
+        Func<string, int, string?> explorationMapTextByLocationId)
     {
         List<(string Key, string? Value)> fields =
         [
             ("LocationId", JsonString(location.LocationId)),
             ("DisplayName", JsonString(location.DisplayName)),
-            ("ExplorationMap", rawExplorationMapTextByLocationId(location.LocationId)),
+            ("ExplorationMap", explorationMapTextByLocationId(location.LocationId, column + 4)),
             ("ExplorableProgressIds", RenderProgressIdList(location.ExplorableProgressIds, column + 8))
         ];
 
@@ -116,6 +125,126 @@ internal static class ScenarioJsonFormatting
         ];
 
         return RenderCompactObject(fields);
+    }
+
+    // ----- ExplorationMapDefinitionV1 -----
+
+    internal static string RenderExplorationMap(
+        ExplorationMapDefinitionV1 map,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("MapId", JsonString(map.MapId)),
+            ("Width", map.Width.ToString(CultureInfo.InvariantCulture)),
+            ("Height", map.Height.ToString(CultureInfo.InvariantCulture)),
+            ("StartingFloor", JsonString(map.StartingFloor)),
+            ("StartingPosition", RenderGridPosition(map.StartingPosition)),
+            ("StartingFacing", JsonString(map.StartingFacing.ToString())),
+            ("Floors", RenderAlwaysExplodedArrayRequired(map.Floors, column + 8, RenderFloor))
+        ];
+
+        return RenderExplodedObject(fields, column);
+    }
+
+    private static string RenderFloor(
+        ExplorationFloorDefinitionV1 floor,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("Floor", JsonString(floor.Floor)),
+            ("TraversablePositions", RenderAlwaysExplodedArrayRequired(
+                floor.TraversablePositions,
+                column + 8,
+                (position, _) => RenderGridPosition(position))),
+            ("Stairs", RenderAlwaysExplodedArrayRequired(floor.Stairs, column + 8, RenderStair)),
+            ("Doors", RenderAlwaysExplodedArray(floor.Doors, column + 8, RenderDoor)),
+            ("Treasures", RenderAlwaysExplodedArray(floor.Treasures, column + 8, RenderTreasure)),
+            ("Npcs", RenderAlwaysExplodedArray(floor.Npcs, column + 8, RenderNpc))
+        ];
+
+        return RenderExplodedObject(fields, column);
+    }
+
+    private static string RenderStair(
+        StairDefinitionV1 stair,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("Position", RenderGridPosition(stair.Position)),
+            ("DestinationFloor", JsonString(stair.DestinationFloor)),
+            ("DestinationPosition", RenderGridPosition(stair.DestinationPosition))
+        ];
+
+        return RenderExplodedObject(fields, column);
+    }
+
+    private static string RenderDoor(
+        DoorDefinitionV1 door,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("DoorId", JsonString(door.DoorId)),
+            ("Position", RenderGridPosition(door.Position)),
+            ("Side", JsonString(door.Side.ToString())),
+            ("IsSecret", RenderBool(door.IsSecret)),
+            ("IsLocked", RenderBool(door.IsLocked))
+        ];
+
+        return RenderExplodedObject(fields, column);
+    }
+
+    /// GoldPieces deliberately precedes ItemId here, matching committed
+    /// content (Watchtower's armory cache) rather than TreasureDefinitionV1's
+    /// own property order, which declares ItemId first.
+    private static string RenderTreasure(
+        TreasureDefinitionV1 treasure,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("TreasureId", JsonString(treasure.TreasureId)),
+            ("Position", RenderGridPosition(treasure.Position)),
+            ("GoldPieces", RenderNullableInt(treasure.GoldPieces)),
+            ("ItemId", treasure.ItemId is { } itemId ? JsonString(itemId) : null),
+            ("Quantity", RenderNullableInt(treasure.Quantity))
+        ];
+
+        return RenderExplodedObject(fields, column);
+    }
+
+    private static string RenderNpc(
+        NpcDefinitionV1 npc,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("NpcId", JsonString(npc.NpcId)),
+            ("Position", RenderGridPosition(npc.Position)),
+            ("Name", JsonString(npc.Name)),
+            ("DialogueText", JsonString(npc.DialogueText))
+        ];
+
+        return RenderExplodedObject(fields, column);
+    }
+
+    private static string RenderGridPosition(GridPositionV1 position)
+    {
+        List<(string Key, string Value)> fields =
+        [
+            ("X", position.X.ToString(CultureInfo.InvariantCulture)),
+            ("Y", position.Y.ToString(CultureInfo.InvariantCulture))
+        ];
+
+        return RenderCompactObject(fields);
+    }
+
+    private static string RenderBool(bool value)
+    {
+        return value ? "true" : "false";
     }
 
     // ----- Scenario-only convention: progress-id string lists -----
