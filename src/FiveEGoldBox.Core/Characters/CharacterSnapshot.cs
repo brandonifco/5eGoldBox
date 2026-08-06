@@ -23,6 +23,10 @@ public sealed record CharacterSnapshot
 
     public string? ClassName { get; init; }
 
+    public string? SubclassId { get; init; }
+
+    public string? SubclassName { get; init; }
+
     public string? BackgroundId { get; init; }
 
     public string? BackgroundName { get; init; }

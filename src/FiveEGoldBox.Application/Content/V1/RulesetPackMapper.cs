@@ -234,7 +234,20 @@ internal static class RulesetPackMapper
                 ? null
                 : ToRuntimeAbility(characterClass.SpellcastingAbility.Value),
             SpellSlotsByLevel = characterClass.SpellSlotsByLevel
-                .ToDictionary(entry => entry.Key, entry => entry.Value)
+                .ToDictionary(entry => entry.Key, entry => entry.Value),
+            Subclasses = characterClass.Subclasses
+                .Select(ToRuntimeSubclass)
+                .ToArray()
+        };
+    }
+
+    private static SubclassDefinition ToRuntimeSubclass(
+        SubclassDefinitionV1 subclass)
+    {
+        return new SubclassDefinition
+        {
+            Id = subclass.Id,
+            Name = subclass.Name
         };
     }
 

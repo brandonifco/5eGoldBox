@@ -49,6 +49,7 @@ public sealed partial class CharacterResolver
         RaceDefinition? selectedRace = GetSelectedRace(draft);
         SubraceDefinition? selectedSubrace = GetSelectedSubrace(draft, selectedRace);
         ClassDefinition? selectedClass = GetSelectedClass(draft);
+        SubclassDefinition? selectedSubclass = GetSelectedSubclass(draft, selectedClass);
         BackgroundDefinition? selectedBackground = GetSelectedBackground(draft);
         CharacterSize size = selectedRace?.Size ?? CharacterSize.Medium;
         IReadOnlyList<CharacterSense> senses = ResolveSenses(
@@ -169,6 +170,8 @@ public sealed partial class CharacterResolver
             Level = draft.Level,
             ClassId = selectedClass?.Id,
             ClassName = selectedClass?.Name,
+            SubclassId = selectedSubclass?.Id,
+            SubclassName = selectedSubclass?.Name,
             BackgroundId = selectedBackground?.Id,
             BackgroundName = selectedBackground?.Name,
             BackgroundFeatureId = selectedBackground?.FeatureId,

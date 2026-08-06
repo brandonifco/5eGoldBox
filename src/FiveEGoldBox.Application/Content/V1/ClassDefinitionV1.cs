@@ -28,6 +28,9 @@ internal sealed record ClassDefinitionV1
     public IReadOnlyDictionary<int, IReadOnlyList<string>> FeaturesByLevel { get; init; }
         = new Dictionary<int, IReadOnlyList<string>>();
 
+    public IReadOnlyList<SubclassDefinitionV1> Subclasses { get; init; }
+        = Array.Empty<SubclassDefinitionV1>();
+
     public AbilityV1? SpellcastingAbility { get; init; }
 
     public IReadOnlyDictionary<int, int> SpellSlotsByLevel { get; init; }

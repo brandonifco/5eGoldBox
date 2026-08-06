@@ -250,6 +250,12 @@
             "Charisma"
           ]
         },
+        "Subclasses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SubclassDefinitionV1"
+          }
+        },
         "ToolProficiencies": {
           "type": "array",
           "items": {
@@ -266,6 +272,22 @@
       "additionalProperties": false,
       "required": [
         "HitDie",
+        "Id",
+        "Name"
+      ]
+    },
+    "SubclassDefinitionV1": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
         "Id",
         "Name"
       ]

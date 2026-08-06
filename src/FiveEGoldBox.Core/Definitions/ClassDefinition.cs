@@ -30,6 +30,10 @@ public sealed record ClassDefinition
     public IReadOnlyDictionary<int, IReadOnlyList<string>> FeaturesByLevel { get; init; }
         = new Dictionary<int, IReadOnlyList<string>>();
 
+    /// Identity only -- see SubclassDefinition's own doc comment for why.
+    public IReadOnlyList<SubclassDefinition> Subclasses { get; init; }
+        = Array.Empty<SubclassDefinition>();
+
     /// The ability this class casts with. Null for a class that does not cast.
     public Ability? SpellcastingAbility { get; init; }
 

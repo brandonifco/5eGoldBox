@@ -26,7 +26,11 @@
             "SavingThrowProficiencies": [ "Strength", "Constitution" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
             "SkillChoices": [ "skill.athletics", "skill.perception" ],
-            "NumberOfSkillChoices": 2
+            "NumberOfSkillChoices": 2,
+            "Subclasses": [
+                { "Id": "subclass.champion", "Name": "Champion" },
+                { "Id": "subclass.battle-master", "Name": "Battle Master" }
+            ]
         },
         {
             "Id": "class.barbarian",
@@ -46,7 +50,11 @@
             "SkillChoices": [ "skill.perception", "skill.survival" ],
             "NumberOfSkillChoices": 2,
             "SpellcastingAbility": "Wisdom",
-            "SpellSlotsByLevel": { "1": 2 }
+            "SpellSlotsByLevel": { "1": 2 },
+            "Subclasses": [
+                { "Id": "subclass.life-domain", "Name": "Life Domain" },
+                { "Id": "subclass.war-domain", "Name": "War Domain" }
+            ]
         },
         {
             "Id": "class.wizard",
@@ -57,7 +65,11 @@
             "SkillChoices": [ "skill.perception", "skill.stealth" ],
             "NumberOfSkillChoices": 2,
             "SpellcastingAbility": "Intelligence",
-            "SpellSlotsByLevel": { "1": 2 }
+            "SpellSlotsByLevel": { "1": 2 },
+            "Subclasses": [
+                { "Id": "subclass.evocation", "Name": "School of Evocation" },
+                { "Id": "subclass.abjuration", "Name": "School of Abjuration" }
+            ]
         },
         {
             "Id": "class.ranger",
@@ -80,7 +92,11 @@
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
             "SkillChoices": [ "skill.perception", "skill.stealth" ],
             "NumberOfSkillChoices": 2,
-            "FeaturesByLevel": { "1": [ "feature.sneak_attack" ] }
+            "FeaturesByLevel": { "1": [ "feature.sneak_attack" ] },
+            "Subclasses": [
+                { "Id": "subclass.thief", "Name": "Thief" },
+                { "Id": "subclass.arcane-trickster", "Name": "Arcane Trickster" }
+            ]
         }
     ],
     "Backgrounds": [
