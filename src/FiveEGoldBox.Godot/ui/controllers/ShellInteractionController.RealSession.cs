@@ -294,13 +294,17 @@ internal sealed partial class ShellInteractionController
 	// Every real SessionAction a command bar button can fire (decisions,
 	// travel, stairs, triggers, treasure, NPC dialogue, shop purchases) --
 	// a real thing just happened, so it goes in the journal as well as the
-	// transient status line ShowRealSession renders.
+	// transient status line ShowRealSession renders. AppendJournal must run
+	// AFTER ShowRealSession, not before: ShowRealSession's own non-combat
+	// branches end in a SetMessage call, which would otherwise overwrite
+	// the just-rendered full journal back down to a single line -- found
+	// live, exactly this order, the moment it shipped.
 	private void SubmitRealCommand(RealGameSession session, string commandId)
 	{
 		string message = session.Submit(commandId);
-		_presentationController.AppendJournal(new[] { message });
 
 		ShowRealSession(session, message);
+		_presentationController.AppendJournal(new[] { message });
 	}
 
 	private void EnterRealMovementMode(RealGameSession session)
