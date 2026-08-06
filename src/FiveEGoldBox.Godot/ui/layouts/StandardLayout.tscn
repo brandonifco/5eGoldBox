@@ -36,60 +36,68 @@ theme_type_variation = &"ShellMainStack"
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="MainContentSplit" type="HSplitContainer" parent="MainLayout"]
+[node name="ContentSplit" type="VSplitContainer" parent="MainLayout"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="PresentationPanel" type="PanelContainer" parent="MainLayout/MainContentSplit"]
+[node name="MainContentSplit" type="HSplitContainer" parent="MainLayout/ContentSplit"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 3.0
+
+[node name="PresentationPanel" type="PanelContainer" parent="MainLayout/ContentSplit/MainContentSplit"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"ShellPanel"
 
-[node name="PresentationMargin" type="MarginContainer" parent="MainLayout/MainContentSplit/PresentationPanel"]
+[node name="PresentationMargin" type="MarginContainer" parent="MainLayout/ContentSplit/MainContentSplit/PresentationPanel"]
 layout_mode = 2
 theme_type_variation = &"ShellContentMargin"
 
-[node name="PresentationAspect" type="AspectRatioContainer" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin"]
+[node name="PresentationAspect" type="AspectRatioContainer" parent="MainLayout/ContentSplit/MainContentSplit/PresentationPanel/PresentationMargin"]
 unique_name_in_owner = true
 layout_mode = 2
 ratio = 1.7778
 
-[node name="PresentationSurface" type="PanelContainer" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect"]
+[node name="PresentationSurface" type="PanelContainer" parent="MainLayout/ContentSplit/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"PresentationSurface"
 
-[node name="PresentationContent" type="Control" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface"]
+[node name="PresentationContent" type="Control" parent="MainLayout/ContentSplit/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface"]
 layout_mode = 2
 
-[node name="ExplorationView" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("6_exploration_view")]
+[node name="ExplorationView" parent="MainLayout/ContentSplit/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("6_exploration_view")]
 unique_name_in_owner = true
 layout_mode = 1
 
-[node name="RegionalMapView" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("7_regional_map")]
-unique_name_in_owner = true
-visible = false
-layout_mode = 1
-
-[node name="CombatView" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("8_combat")]
+[node name="RegionalMapView" parent="MainLayout/ContentSplit/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("7_regional_map")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
 
-[node name="AreaMapView" parent="MainLayout/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("9_area_map")]
+[node name="CombatView" parent="MainLayout/ContentSplit/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("8_combat")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
 
-[node name="PartySidebar" parent="MainLayout/MainContentSplit" instance=ExtResource("3_party_sidebar")]
+[node name="AreaMapView" parent="MainLayout/ContentSplit/MainContentSplit/PresentationPanel/PresentationMargin/PresentationAspect/PresentationSurface/PresentationContent" instance=ExtResource("9_area_map")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+
+[node name="PartySidebar" parent="MainLayout/ContentSplit/MainContentSplit" instance=ExtResource("3_party_sidebar")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 
-[node name="MessageLog" parent="MainLayout" instance=ExtResource("4_message_log")]
+[node name="MessageLog" parent="MainLayout/ContentSplit" instance=ExtResource("4_message_log")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 120)
+custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.0
 MessageText = "You stand at the entrance to the outpost."
 Scrollable = true
 
