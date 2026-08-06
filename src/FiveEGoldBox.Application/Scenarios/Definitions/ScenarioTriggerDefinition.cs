@@ -1,4 +1,3 @@
-using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Scenarios.Definitions;
@@ -19,9 +18,6 @@ internal sealed record ScenarioTriggerDefinition
     internal string? Floor { get; init; }
 
     internal GridPosition? Position { get; init; }
-
-    /// Some interactions only work when facing them.
-    internal ExplorationFacing? RequiredFacing { get; init; }
 
     /// Progress markers from which this trigger is available.
     internal required IReadOnlyList<string> RequiredProgressIds { get; init; }

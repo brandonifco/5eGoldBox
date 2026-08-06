@@ -14,8 +14,8 @@ namespace FiveEGoldBox.Console;
 /// Facing) fixes where the party begins. Any number of "Stair" objects
 /// (properties Floor, DestinationFloor, DestinationX, DestinationY) and
 /// "Trigger" objects (properties Floor, TriggerId, ResultingProgressId
-/// required; DisplayName, RequiredProgressIds, EncounterId, RequiredFacing
-/// optional) round out the rest. Doors/secret doors/treasure aren't
+/// required; DisplayName, RequiredProgressIds, EncounterId optional) round
+/// out the rest. Doors/secret doors/treasure aren't
 /// convertible yet -- those engine concepts don't exist (see
 /// docs/2026-07-30-adventure-authoring-tool-plan.md, Phase B).
 internal static class TiledMapConverter
@@ -171,7 +171,6 @@ internal static class TiledMapConverter
             string[] requiredProgressIds = (GetStringProperty(triggerObject.Properties, "RequiredProgressIds") ?? string.Empty)
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             string? encounterId = GetStringProperty(triggerObject.Properties, "EncounterId");
-            string? requiredFacing = GetStringProperty(triggerObject.Properties, "RequiredFacing");
 
             JsonObject trigger = new()
             {
@@ -183,11 +182,6 @@ internal static class TiledMapConverter
                 ["RequiredProgressIds"] = new JsonArray(requiredProgressIds.Select(id => (JsonNode)id).ToArray()),
                 ["ResultingProgressId"] = resultingProgressId
             };
-
-            if (requiredFacing is not null)
-            {
-                trigger["RequiredFacing"] = requiredFacing;
-            }
 
             if (encounterId is not null)
             {

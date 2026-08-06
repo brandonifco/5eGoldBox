@@ -164,6 +164,11 @@ WatchtowerScenarioProgress
         ActiveEncounterState active =
             Assert.IsType<ActiveEncounterState>(
                 state.ActiveEncounter);
+        GridPosition wrongPosition = active.ReturnContext.Position
+            with
+            {
+                X = active.ReturnContext.Position.X + 1
+            };
 
         state = state with
         {
@@ -171,8 +176,7 @@ WatchtowerScenarioProgress
             {
                 ReturnContext = active.ReturnContext with
                 {
-                    Facing =
-                        ExplorationFacing.North
+                    Position = wrongPosition
                 }
             }
         };

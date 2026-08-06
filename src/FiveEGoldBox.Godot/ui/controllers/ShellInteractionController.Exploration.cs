@@ -72,6 +72,12 @@ internal sealed partial class ShellInteractionController
 				_presentationController.AppendJournal(new[] { message });
 			}
 
+			// Catches a trigger becoming available mid-step, without
+			// waiting for the player to exit movement mode and notice a
+			// new command-bar button -- ShowRealCommands (the other call
+			// site) never runs while arrow-key movement stays active.
+			TryShowAutoTriggerPrompt(_activeRealMovementSession);
+
 			return;
 		}
 

@@ -88,8 +88,8 @@ public sealed class ScenarioDefinitionModelTests
             route.DestinationLocationId);
     }
 
-    /// The signal is a positional, facing-sensitive interaction that starts the
-    /// ambush — the model has to carry all three parts of that.
+    /// The signal is a positional interaction that starts the ambush — the
+    /// model has to carry both parts of that.
     [Fact]
     public void Definition_ExpressesTheSignalTrigger()
     {
@@ -103,9 +103,6 @@ public sealed class ScenarioDefinitionModelTests
         Assert.Equal(
             new GridPosition(1, 1),
             signal.Position);
-        Assert.Equal(
-            ExplorationFacing.East,
-            signal.RequiredFacing);
         Assert.Equal(
             WatchtowerSignalEncounter.EncounterId,
             signal.EncounterId);
@@ -250,7 +247,6 @@ public sealed class ScenarioDefinitionModelTests
                     LocationId = WatchtowerRegionalRoute.WatchtowerLocationId,
                     Floor = "UpperFloor",
                     Position = new GridPosition(1, 1),
-                    RequiredFacing = ExplorationFacing.East,
                     RequiredProgressIds =
                     [
                         WatchtowerScenarioProgress.MissionAccepted.ToString()

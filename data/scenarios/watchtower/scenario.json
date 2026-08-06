@@ -183,7 +183,6 @@
             "LocationId": "location.ruined-watchtower",
             "Floor": "UpperFloor",
             "Position": { "X": 2, "Y": 1 },
-            "RequiredFacing": "East",
             "RequiredProgressIds": [ "MissionAccepted" ],
             "ResultingProgressId": "SignalActivated",
             "EncounterId": "encounter.watchtower-signal-ambush"
