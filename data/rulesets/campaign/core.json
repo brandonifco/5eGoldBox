@@ -16,6 +16,91 @@
                 { "Ability": "Wisdom", "Amount": 1 },
                 { "Ability": "Charisma", "Amount": 1 }
             ]
+        },
+        {
+            "Id": "race.dwarf",
+            "Name": "Dwarf",
+            "BaseSpeedFeet": 25,
+            "AbilityScoreIncreases": [
+                { "Ability": "Constitution", "Amount": 2 }
+            ],
+            "Senses": [
+                { "Type": "Darkvision", "RangeFeet": 60 }
+            ],
+            "DamageResponses": [
+                { "DamageType": "damage.poison", "ResponseType": "Resistance" }
+            ],
+            "Subraces": [
+                {
+                    "Id": "subrace.hill-dwarf",
+                    "Name": "Hill Dwarf",
+                    "AbilityScoreIncreases": [
+                        { "Ability": "Wisdom", "Amount": 1 }
+                    ]
+                },
+                {
+                    "Id": "subrace.mountain-dwarf",
+                    "Name": "Mountain Dwarf",
+                    "AbilityScoreIncreases": [
+                        { "Ability": "Strength", "Amount": 2 }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "race.elf",
+            "Name": "Elf",
+            "BaseSpeedFeet": 30,
+            "AbilityScoreIncreases": [
+                { "Ability": "Dexterity", "Amount": 2 }
+            ],
+            "Senses": [
+                { "Type": "Darkvision", "RangeFeet": 60 }
+            ],
+            "Subraces": [
+                {
+                    "Id": "subrace.high-elf",
+                    "Name": "High Elf",
+                    "AbilityScoreIncreases": [
+                        { "Ability": "Intelligence", "Amount": 1 }
+                    ]
+                },
+                {
+                    "Id": "subrace.wood-elf",
+                    "Name": "Wood Elf",
+                    "AbilityScoreIncreases": [
+                        { "Ability": "Wisdom", "Amount": 1 }
+                    ]
+                }
+            ]
+        },
+        {
+            "Id": "race.halfling",
+            "Name": "Halfling",
+            "Size": "Small",
+            "BaseSpeedFeet": 25,
+            "AbilityScoreIncreases": [
+                { "Ability": "Dexterity", "Amount": 2 }
+            ],
+            "Subraces": [
+                {
+                    "Id": "subrace.lightfoot-halfling",
+                    "Name": "Lightfoot Halfling",
+                    "AbilityScoreIncreases": [
+                        { "Ability": "Charisma", "Amount": 1 }
+                    ]
+                },
+                {
+                    "Id": "subrace.stout-halfling",
+                    "Name": "Stout Halfling",
+                    "AbilityScoreIncreases": [
+                        { "Ability": "Constitution", "Amount": 1 }
+                    ],
+                    "DamageResponses": [
+                        { "DamageType": "damage.poison", "ResponseType": "Resistance" }
+                    ]
+                }
+            ]
         }
     ],
     "Classes": [
@@ -25,7 +110,16 @@
             "HitDie": "D10",
             "SavingThrowProficiencies": [ "Strength", "Constitution" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
-            "SkillChoices": [ "skill.athletics", "skill.perception" ],
+            "SkillChoices": [
+                "skill.acrobatics",
+                "skill.animal-handling",
+                "skill.athletics",
+                "skill.history",
+                "skill.insight",
+                "skill.intimidation",
+                "skill.perception",
+                "skill.survival"
+            ],
             "NumberOfSkillChoices": 2,
             "Subclasses": [
                 { "Id": "subclass.champion", "Name": "Champion" },
@@ -38,7 +132,14 @@
             "HitDie": "D12",
             "SavingThrowProficiencies": [ "Strength", "Constitution" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
-            "SkillChoices": [ "skill.athletics", "skill.survival" ],
+            "SkillChoices": [
+                "skill.animal-handling",
+                "skill.athletics",
+                "skill.intimidation",
+                "skill.nature",
+                "skill.perception",
+                "skill.survival"
+            ],
             "NumberOfSkillChoices": 2
         },
         {
@@ -47,7 +148,13 @@
             "HitDie": "D8",
             "SavingThrowProficiencies": [ "Wisdom", "Charisma" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
-            "SkillChoices": [ "skill.perception", "skill.survival" ],
+            "SkillChoices": [
+                "skill.history",
+                "skill.insight",
+                "skill.medicine",
+                "skill.persuasion",
+                "skill.religion"
+            ],
             "NumberOfSkillChoices": 2,
             "SpellcastingAbility": "Wisdom",
             "SpellSlotsByLevel": { "1": 2 },
@@ -62,7 +169,14 @@
             "HitDie": "D6",
             "SavingThrowProficiencies": [ "Intelligence", "Wisdom" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
-            "SkillChoices": [ "skill.perception", "skill.stealth" ],
+            "SkillChoices": [
+                "skill.arcana",
+                "skill.history",
+                "skill.insight",
+                "skill.investigation",
+                "skill.medicine",
+                "skill.religion"
+            ],
             "NumberOfSkillChoices": 2,
             "SpellcastingAbility": "Intelligence",
             "SpellSlotsByLevel": { "1": 2 },
@@ -78,6 +192,11 @@
             "SavingThrowProficiencies": [ "Strength", "Dexterity" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
             "SkillChoices": [
+                "skill.animal-handling",
+                "skill.athletics",
+                "skill.insight",
+                "skill.investigation",
+                "skill.nature",
                 "skill.perception",
                 "skill.stealth",
                 "skill.survival"
@@ -90,7 +209,19 @@
             "HitDie": "D8",
             "SavingThrowProficiencies": [ "Dexterity", "Intelligence" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
-            "SkillChoices": [ "skill.perception", "skill.stealth" ],
+            "SkillChoices": [
+                "skill.acrobatics",
+                "skill.athletics",
+                "skill.deception",
+                "skill.insight",
+                "skill.intimidation",
+                "skill.investigation",
+                "skill.perception",
+                "skill.performance",
+                "skill.persuasion",
+                "skill.sleight-of-hand",
+                "skill.stealth"
+            ],
             "NumberOfSkillChoices": 2,
             "FeaturesByLevel": { "1": [ "feature.sneak_attack" ] },
             "Subclasses": [
@@ -101,20 +232,106 @@
     ],
     "Backgrounds": [
         {
+            "Id": "background.acolyte",
+            "Name": "Acolyte",
+            "SkillProficiencies": [ "skill.insight", "skill.religion" ]
+        },
+        {
+            "Id": "background.criminal",
+            "Name": "Criminal",
+            "SkillProficiencies": [ "skill.deception", "skill.stealth" ]
+        },
+        {
+            "Id": "background.sage",
+            "Name": "Sage",
+            "SkillProficiencies": [ "skill.arcana", "skill.history" ]
+        },
+        {
             "Id": "background.soldier",
-            "Name": "Soldier"
+            "Name": "Soldier",
+            "SkillProficiencies": [ "skill.athletics", "skill.intimidation" ]
         }
     ],
     "Skills": [
+        {
+            "Id": "skill.acrobatics",
+            "Name": "Acrobatics",
+            "Ability": "Dexterity"
+        },
+        {
+            "Id": "skill.animal-handling",
+            "Name": "Animal Handling",
+            "Ability": "Wisdom"
+        },
+        {
+            "Id": "skill.arcana",
+            "Name": "Arcana",
+            "Ability": "Intelligence"
+        },
         {
             "Id": "skill.athletics",
             "Name": "Athletics",
             "Ability": "Strength"
         },
         {
+            "Id": "skill.deception",
+            "Name": "Deception",
+            "Ability": "Charisma"
+        },
+        {
+            "Id": "skill.history",
+            "Name": "History",
+            "Ability": "Intelligence"
+        },
+        {
+            "Id": "skill.insight",
+            "Name": "Insight",
+            "Ability": "Wisdom"
+        },
+        {
+            "Id": "skill.intimidation",
+            "Name": "Intimidation",
+            "Ability": "Charisma"
+        },
+        {
+            "Id": "skill.investigation",
+            "Name": "Investigation",
+            "Ability": "Intelligence"
+        },
+        {
+            "Id": "skill.medicine",
+            "Name": "Medicine",
+            "Ability": "Wisdom"
+        },
+        {
+            "Id": "skill.nature",
+            "Name": "Nature",
+            "Ability": "Intelligence"
+        },
+        {
             "Id": "skill.perception",
             "Name": "Perception",
             "Ability": "Wisdom"
+        },
+        {
+            "Id": "skill.performance",
+            "Name": "Performance",
+            "Ability": "Charisma"
+        },
+        {
+            "Id": "skill.persuasion",
+            "Name": "Persuasion",
+            "Ability": "Charisma"
+        },
+        {
+            "Id": "skill.religion",
+            "Name": "Religion",
+            "Ability": "Intelligence"
+        },
+        {
+            "Id": "skill.sleight-of-hand",
+            "Name": "Sleight of Hand",
+            "Ability": "Dexterity"
         },
         {
             "Id": "skill.stealth",

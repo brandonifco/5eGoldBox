@@ -69,7 +69,7 @@
                 "Wisdom": 15,
                 "Charisma": 12
             },
-            "SelectedSkillIds": [ "skill.perception", "skill.survival" ],
+            "SelectedSkillIds": [ "skill.insight", "skill.religion" ],
             "EquippedWeaponIds": [ "weapon.mace" ],
             "ZeroHitPointPolicy": "DeathSavingThrows",
             "MaximumHitPoints": 10,
@@ -96,7 +96,7 @@
                 "Wisdom": 12,
                 "Charisma": 9
             },
-            "SelectedSkillIds": [ "skill.perception", "skill.stealth" ],
+            "SelectedSkillIds": [ "skill.arcana", "skill.investigation" ],
             "EquippedWeaponIds": [ "weapon.dagger" ],
             "ZeroHitPointPolicy": "DeathSavingThrows",
             "MaximumHitPoints": 7,
