@@ -1,10 +1,19 @@
+using FiveEGoldBox.Core.Definitions;
+
 namespace FiveEGoldBox.Application.Campaigns;
 
 /// Checks a campaign is coherent before anything plays it.
-internal static class CampaignDefinitionValidator
+///
+/// Split in two: this file holds the checks a campaign can make about
+/// itself, and .Ruleset.cs holds the cross-pack checks that need the
+/// ruleset the campaign names. The ruleset is optional for the same reason
+/// ScenarioDefinitionValidator's is -- an unresolvable ruleset means those
+/// checks have nothing to check against, not that the campaign is invalid.
+internal static partial class CampaignDefinitionValidator
 {
     internal static void Validate(
-        CampaignDefinition campaign)
+        CampaignDefinition campaign,
+        ValidatedRuleset? ruleset = null)
     {
         ArgumentNullException.ThrowIfNull(campaign);
 
@@ -45,6 +54,7 @@ internal static class CampaignDefinitionValidator
         foreach (CampaignCharacterDefinition character in campaign.Roster)
         {
             ValidateCharacter(campaign, character);
+            ValidateCharacterAgainstRuleset(campaign, character, ruleset);
         }
     }
 

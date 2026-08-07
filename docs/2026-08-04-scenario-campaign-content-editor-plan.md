@@ -403,9 +403,12 @@ through and a no-op save byte-identical for every committed content file.
 
 Known gaps, none of them editor work:
 
-- **`CampaignDefinitionValidator` doesn't cross-check roster ids against the ruleset**
-  (see Phase 5 above). Closing it is an engine change, and until it is closed the
-  roster form's dropdowns are the only thing preventing a dangling class or skill id.
+- ~~**`CampaignDefinitionValidator` doesn't cross-check roster ids against the
+  ruleset.**~~ **Closed 2026-08-06**, as a follow-up engine change rather than an
+  editor one -- see CLAUDE.md's own entry. The validator now takes an optional
+  `ValidatedRuleset` and rejects a roster entry naming a race, class, background,
+  skill, weapon, prepared spell or ammunition item the ruleset does not define. The
+  editor's dropdowns are no longer the only guard; a hand-edited file is caught too.
 - **`BlockedPositions` non-empty has no committed example**, so its layout is proven
   structurally rather than byte-for-byte (see Phase 3).
 - **Nothing here edits the ruleset's races, classes, backgrounds or skills** -- they

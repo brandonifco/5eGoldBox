@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using FiveEGoldBox.Application.Content;
+using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Core.Definitions;
 
 namespace FiveEGoldBox.Application.Campaigns;
 
@@ -79,9 +81,27 @@ internal static class CampaignRegistry
         }
 
         CampaignDefinition campaign = factory();
-        CampaignDefinitionValidator.Validate(campaign);
+        CampaignDefinitionValidator.Validate(campaign, ResolveRulesetOrNull(campaign));
 
         return campaign;
+    }
+
+    /// Same defensive resolution ScenarioDefinitionRegistry and
+    /// ContentPackValidation already use: a campaign naming a ruleset that
+    /// cannot be resolved is not made *more* valid by that failure, but the
+    /// cross-pack checks simply have nothing to check against, so they are
+    /// skipped rather than turned into a second, confusing error.
+    private static ValidatedRuleset? ResolveRulesetOrNull(
+        CampaignDefinition campaign)
+    {
+        try
+        {
+            return RulesetRegistry.Resolve(campaign.RulesetId);
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
     }
 
     private static CampaignDefinition LoadFrontierCampaign()
