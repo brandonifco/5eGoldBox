@@ -141,6 +141,9 @@
     "BackgroundDefinitionV1": {
       "type": "object",
       "properties": {
+        "Description": {
+          "type": "string"
+        },
         "FeatureId": {
           "type": "string"
         },
@@ -184,6 +187,9 @@
             "type": "string"
           }
         },
+        "Description": {
+          "type": "string"
+        },
         "FeaturesByLevel": {
           "type": "object",
           "additionalProperties": {
@@ -212,6 +218,20 @@
         },
         "NumberOfSkillChoices": {
           "type": "integer"
+        },
+        "PrimaryAbilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Strength",
+              "Dexterity",
+              "Constitution",
+              "Intelligence",
+              "Wisdom",
+              "Charisma"
+            ]
+          }
         },
         "SavingThrowProficiencies": {
           "type": "array",
@@ -279,6 +299,9 @@
     "SubclassDefinitionV1": {
       "type": "object",
       "properties": {
+        "Description": {
+          "type": "string"
+        },
         "Id": {
           "type": "string"
         },
@@ -544,6 +567,9 @@
             "$ref": "#/$defs/DamageResponseDefinitionV1"
           }
         },
+        "Description": {
+          "type": "string"
+        },
         "Id": {
           "type": "string"
         },
@@ -735,6 +761,9 @@
             "$ref": "#/$defs/DamageResponseDefinitionV1"
           }
         },
+        "Description": {
+          "type": "string"
+        },
         "Id": {
           "type": "string"
         },
@@ -785,6 +814,9 @@
             "Wisdom",
             "Charisma"
           ]
+        },
+        "Description": {
+          "type": "string"
         },
         "Id": {
           "type": "string"

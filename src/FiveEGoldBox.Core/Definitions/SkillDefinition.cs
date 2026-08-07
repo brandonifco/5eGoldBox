@@ -9,4 +9,10 @@ public sealed record SkillDefinition
     public required string Name { get; init; }
 
     public required Ability Ability { get; init; }
+
+    /// Player-facing prose for a character-creation screen, so a choice is
+    /// more than a bare name to someone who does not already know 5e.
+    /// Optional: content that predates this loads unchanged, and a validator
+    /// reports what is missing rather than refusing to load it.
+    public string? Description { get; init; }
 }

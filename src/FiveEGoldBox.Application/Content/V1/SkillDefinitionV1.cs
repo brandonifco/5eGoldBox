@@ -7,4 +7,6 @@ internal sealed record SkillDefinitionV1
     public required string Name { get; init; }
 
     public required AbilityV1 Ability { get; init; }
+
+    public string? Description { get; init; }
 }

@@ -6,6 +6,8 @@ internal sealed record BackgroundDefinitionV1
 
     public required string Name { get; init; }
 
+    public string? Description { get; init; }
+
     public IReadOnlyList<string> SkillProficiencies { get; init; }
         = Array.Empty<string>();
 

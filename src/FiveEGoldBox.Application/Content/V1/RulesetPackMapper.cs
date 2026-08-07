@@ -107,6 +107,7 @@ internal static class RulesetPackMapper
         {
             Id = race.Id,
             Name = race.Name,
+            Description = race.Description,
             Size = ToRuntimeCharacterSize(race.Size),
             BaseSpeedFeet = race.BaseSpeedFeet,
             AbilityScoreIncreases = race.AbilityScoreIncreases
@@ -139,6 +140,7 @@ internal static class RulesetPackMapper
         {
             Id = subrace.Id,
             Name = subrace.Name,
+            Description = subrace.Description,
             AbilityScoreIncreases = subrace.AbilityScoreIncreases
                 .Select(ToRuntimeAbilityScoreIncrease)
                 .ToArray(),
@@ -217,8 +219,12 @@ internal static class RulesetPackMapper
         {
             Id = characterClass.Id,
             Name = characterClass.Name,
+            Description = characterClass.Description,
             HitDie = ToRuntimeDieType(characterClass.HitDie),
             SavingThrowProficiencies = characterClass.SavingThrowProficiencies
+                .Select(ToRuntimeAbility)
+                .ToArray(),
+            PrimaryAbilities = characterClass.PrimaryAbilities
                 .Select(ToRuntimeAbility)
                 .ToArray(),
             ArmorProficiencies = characterClass.ArmorProficiencies.ToArray(),
@@ -247,7 +253,8 @@ internal static class RulesetPackMapper
         return new SubclassDefinition
         {
             Id = subclass.Id,
-            Name = subclass.Name
+            Name = subclass.Name,
+            Description = subclass.Description
         };
     }
 
@@ -258,6 +265,7 @@ internal static class RulesetPackMapper
         {
             Id = background.Id,
             Name = background.Name,
+            Description = background.Description,
             SkillProficiencies = background.SkillProficiencies.ToArray(),
             ToolProficiencies = background.ToolProficiencies.ToArray(),
             Languages = background.Languages.ToArray(),
@@ -272,6 +280,7 @@ internal static class RulesetPackMapper
         {
             Id = skill.Id,
             Name = skill.Name,
+            Description = skill.Description,
             Ability = ToRuntimeAbility(skill.Ability)
         };
     }

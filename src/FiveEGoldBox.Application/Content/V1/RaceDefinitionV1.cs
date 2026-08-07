@@ -10,6 +10,8 @@ internal sealed record RaceDefinitionV1
 
     public required int BaseSpeedFeet { get; init; }
 
+    public string? Description { get; init; }
+
     public IReadOnlyList<AbilityScoreIncreaseV1> AbilityScoreIncreases { get; init; }
         = Array.Empty<AbilityScoreIncreaseV1>();
 
