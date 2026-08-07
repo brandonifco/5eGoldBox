@@ -64,25 +64,69 @@ internal sealed class ExplorationMapFormModel
             Floors = Floors.Select(floor => floor.ToDefinition()).ToList()
         };
     }
+
+    /// Suggests an id for a newly placed feature, following the committed
+    /// content's own "kind.scenario-slug.name" convention (door.watchtower
+    /// .armory-door). Uniqueness is checked across every floor, not just the
+    /// one being edited, because the validator's own id-collision rules are
+    /// map-wide. This is only a starting point -- the author is expected to
+    /// rename it to something meaningful, so it deliberately doesn't try to
+    /// be clever about what the feature is for.
+    public string SuggestFeatureId(
+        string kind)
+    {
+        string slug = MapId.StartsWith("map.", StringComparison.Ordinal)
+            ? MapId["map.".Length..]
+            : MapId;
+
+        HashSet<string> taken = new(StringComparer.Ordinal);
+
+        foreach (var floor in Floors)
+        {
+            foreach (var door in floor.Doors)
+            {
+                taken.Add(door.DoorId);
+            }
+
+            foreach (var treasure in floor.Treasures)
+            {
+                taken.Add(treasure.TreasureId);
+            }
+
+            foreach (var npc in floor.Npcs)
+            {
+                taken.Add(npc.NpcId);
+            }
+        }
+
+        for (int index = 1; ; index++)
+        {
+            string candidate = $"{kind}.{slug}.new-{index}";
+
+            if (taken.Add(candidate))
+            {
+                return candidate;
+            }
+        }
+    }
 }
 
 /// One floor's editable state. Stairs/Doors/Treasures/Npcs are carried
-/// through untouched by the grid editor -- it only toggles traversable cells
-/// today -- but they still round-trip through this model so that saving a
-/// floor never silently drops the features authored on it.
+/// through this model so that saving a floor never silently drops the
+/// features authored on it, and -- since Phase 4c -- are editable in place.
 internal sealed class ExplorationFloorFormModel
 {
     public string Floor { get; set; } = "";
 
     public List<GridPositionV1> TraversablePositions { get; set; } = [];
 
-    public List<StairDefinitionV1> Stairs { get; set; } = [];
+    public List<StairFormModel> Stairs { get; set; } = [];
 
-    public List<DoorDefinitionV1> Doors { get; set; } = [];
+    public List<DoorFormModel> Doors { get; set; } = [];
 
-    public List<TreasureDefinitionV1> Treasures { get; set; } = [];
+    public List<TreasureFormModel> Treasures { get; set; } = [];
 
-    public List<NpcDefinitionV1> Npcs { get; set; } = [];
+    public List<NpcFormModel> Npcs { get; set; } = [];
 
     public static ExplorationFloorFormModel FromDefinition(
         ExplorationFloorDefinitionV1 floor)
@@ -91,10 +135,10 @@ internal sealed class ExplorationFloorFormModel
         {
             Floor = floor.Floor,
             TraversablePositions = floor.TraversablePositions.ToList(),
-            Stairs = floor.Stairs.ToList(),
-            Doors = floor.Doors.ToList(),
-            Treasures = floor.Treasures.ToList(),
-            Npcs = floor.Npcs.ToList()
+            Stairs = floor.Stairs.Select(StairFormModel.FromDefinition).ToList(),
+            Doors = floor.Doors.Select(DoorFormModel.FromDefinition).ToList(),
+            Treasures = floor.Treasures.Select(TreasureFormModel.FromDefinition).ToList(),
+            Npcs = floor.Npcs.Select(NpcFormModel.FromDefinition).ToList()
         };
     }
 
@@ -104,12 +148,30 @@ internal sealed class ExplorationFloorFormModel
         {
             Floor = Floor,
             TraversablePositions = TraversablePositions,
-            Stairs = Stairs,
-            Doors = Doors,
-            Treasures = Treasures,
-            Npcs = Npcs
+            Stairs = Stairs.Select(stair => stair.ToDefinition()).ToList(),
+            Doors = Doors.Select(door => door.ToDefinition()).ToList(),
+            Treasures = Treasures.Select(treasure => treasure.ToDefinition()).ToList(),
+            Npcs = Npcs.Select(npc => npc.ToDefinition()).ToList()
         };
     }
+
+    public StairFormModel? FindStair(int x, int y) =>
+        Stairs.FirstOrDefault(stair => stair.X == x && stair.Y == y);
+
+    public DoorFormModel? FindDoor(int x, int y, ExplorationFacingV1 side) =>
+        Doors.FirstOrDefault(door => door.X == x && door.Y == y && door.Side == side);
+
+    public TreasureFormModel? FindTreasure(int x, int y) =>
+        Treasures.FirstOrDefault(treasure => treasure.X == x && treasure.Y == y);
+
+    public NpcFormModel? FindNpc(int x, int y) =>
+        Npcs.FirstOrDefault(npc => npc.X == x && npc.Y == y);
+
+    public bool HasAnyFeature(int x, int y) =>
+        FindStair(x, y) is not null
+        || FindTreasure(x, y) is not null
+        || FindNpc(x, y) is not null
+        || Doors.Any(door => door.X == x && door.Y == y);
 
     public bool IsTraversable(
         int x,

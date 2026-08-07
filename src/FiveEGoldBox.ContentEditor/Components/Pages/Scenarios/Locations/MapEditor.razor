@@ -81,8 +81,28 @@ else
 
     @if (_selectedFloor is not null)
     {
+        <div class="btn-group mb-2" role="group">
+            <button type="button"
+                    class="btn btn-sm @(_mode == EditMode.Walkable ? "btn-primary" : "btn-outline-primary")"
+                    @onclick="@(() => SetMode(EditMode.Walkable))">
+                Paint walkable cells
+            </button>
+            <button type="button"
+                    class="btn btn-sm @(_mode == EditMode.Features ? "btn-primary" : "btn-outline-primary")"
+                    @onclick="@(() => SetMode(EditMode.Features))">
+                Edit cell features
+            </button>
+        </div>
+
         <p class="text-muted">
-            Click a cell to toggle whether the party can walk on it.
+            @if (_mode == EditMode.Walkable)
+            {
+                <text>Click a cell to toggle whether the party can walk on it.</text>
+            }
+            else
+            {
+                <text>Click a cell to edit the stairs, doors, treasure and NPC on it.</text>
+            }
             @_selectedFloor.TraversablePositions.Count of @(_model.Width * _model.Height) cells are walkable on this floor.
         </p>
 
@@ -97,7 +117,7 @@ else
                     <button type="button"
                             class="map-cell @CellClass(cellX, cellY)"
                             title="@CellTitle(cellX, cellY)"
-                            @onclick="@(() => Toggle(cellX, cellY))">
+                            @onclick="@(() => CellClicked(cellX, cellY))">
                         <span class="map-cell-coords">@cellX,@cellY</span>
                         <span class="map-cell-markers">@CellMarkers(cellX, cellY)</span>
                     </button>
@@ -115,11 +135,167 @@ else
             <span class="ms-2">thick edge = door</span>
         </div>
 
-        <div class="alert alert-secondary">
-            Stairs, doors, treasure and NPCs are shown here but not editable yet -- they
-            round-trip untouched when you save. An NPC's own cell is meant to stay blocked;
-            making it walkable is rejected on save.
-        </div>
+        @if (_mode == EditMode.Features && _selectedCell is not null)
+        {
+            var (cx, cy) = _selectedCell.Value;
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    Features on cell (@cx, @cy) &mdash; @_selectedFloor.Floor
+                </div>
+                <div class="card-body">
+
+                    <h6>Stairs</h6>
+                    @if (_selectedFloor.FindStair(cx, cy) is { } stair)
+                    {
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Destination floor</label>
+                                <select class="form-select" value="@stair.DestinationFloor"
+                                        @onchange="@((ChangeEventArgs e) => stair.DestinationFloor = e.Value?.ToString() ?? "")">
+                                    @foreach (var floor in _model.Floors)
+                                    {
+                                        <option value="@floor.Floor">@floor.Floor</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Destination position</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">X</span>
+                                    <input type="number" class="form-control" value="@stair.DestinationX"
+                                           @onchange="@((ChangeEventArgs e) => stair.DestinationX = ParseInt(e.Value?.ToString(), stair.DestinationX))" />
+                                    <span class="input-group-text">Y</span>
+                                    <input type="number" class="form-control" value="@stair.DestinationY"
+                                           @onchange="@((ChangeEventArgs e) => stair.DestinationY = ParseInt(e.Value?.ToString(), stair.DestinationY))" />
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-outline-danger" @onclick="@(() => _selectedFloor.Stairs.Remove(stair))">Remove stairs</button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p><button type="button" class="btn btn-sm btn-outline-secondary" @onclick="@(() => AddStair(cx, cy))">Add stairs</button></p>
+                    }
+
+                    <h6>Doors</h6>
+                    <p class="form-text mt-0">
+                        A door sits on the edge between this cell and its neighbour, so it belongs to a side rather than to the cell itself.
+                    </p>
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width: 5rem;">Side</th>
+                                <th>Door Id</th>
+                                <th style="width: 7rem;">Secret</th>
+                                <th style="width: 7rem;">Locked</th>
+                                <th style="width: 6rem;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var side in Enum.GetValues<ExplorationFacingV1>())
+                            {
+                                var currentSide = side;
+                                var door = _selectedFloor.FindDoor(cx, cy, currentSide);
+                                <tr>
+                                    <td>@currentSide</td>
+                                    @if (door is null)
+                                    {
+                                        <td colspan="3" class="text-muted">No door</td>
+                                        <td><button type="button" class="btn btn-sm btn-outline-secondary" @onclick="@(() => AddDoor(cx, cy, currentSide))">Add</button></td>
+                                    }
+                                    else
+                                    {
+                                        <td>
+                                            <input class="form-control form-control-sm" value="@door.DoorId"
+                                                   @onchange="@((ChangeEventArgs e) => door.DoorId = e.Value?.ToString() ?? "")" />
+                                        </td>
+                                        <td>
+                                            <input class="form-check-input" type="checkbox" checked="@door.IsSecret"
+                                                   @onchange="@((ChangeEventArgs e) => door.IsSecret = (bool)e.Value!)" />
+                                        </td>
+                                        <td>
+                                            <input class="form-check-input" type="checkbox" checked="@door.IsLocked"
+                                                   @onchange="@((ChangeEventArgs e) => door.IsLocked = (bool)e.Value!)" />
+                                        </td>
+                                        <td><button type="button" class="btn btn-sm btn-outline-danger" @onclick="@(() => _selectedFloor.Doors.Remove(door))">Remove</button></td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <h6>Treasure</h6>
+                    @if (_selectedFloor.FindTreasure(cx, cy) is { } treasure)
+                    {
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Treasure Id</label>
+                                <input class="form-control" value="@treasure.TreasureId"
+                                       @onchange="@((ChangeEventArgs e) => treasure.TreasureId = e.Value?.ToString() ?? "")" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Gold pieces</label>
+                                <input type="number" class="form-control" value="@treasure.GoldPieces"
+                                       @onchange="@((ChangeEventArgs e) => treasure.GoldPieces = ParseOptionalInt(e.Value?.ToString()))" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Item Id</label>
+                                <input class="form-control" value="@treasure.ItemId"
+                                       @onchange="@((ChangeEventArgs e) => treasure.ItemId = e.Value?.ToString())" />
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label">Qty</label>
+                                <input type="number" class="form-control" value="@treasure.Quantity"
+                                       @onchange="@((ChangeEventArgs e) => treasure.Quantity = ParseOptionalInt(e.Value?.ToString()))" />
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-outline-danger" @onclick="@(() => _selectedFloor.Treasures.Remove(treasure))">Remove</button>
+                            </div>
+                            <div class="form-text">Leave Item Id and Qty empty for a gold-only treasure -- empty writes no property at all, rather than an empty one.</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p><button type="button" class="btn btn-sm btn-outline-secondary" @onclick="@(() => AddTreasure(cx, cy))">Add treasure</button></p>
+                    }
+
+                    <h6>NPC</h6>
+                    @if (_selectedFloor.FindNpc(cx, cy) is { } npc)
+                    {
+                        <div class="row g-2 align-items-end mb-2">
+                            <div class="col-md-4">
+                                <label class="form-label">NPC Id</label>
+                                <input class="form-control" value="@npc.NpcId"
+                                       @onchange="@((ChangeEventArgs e) => npc.NpcId = e.Value?.ToString() ?? "")" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Name</label>
+                                <input class="form-control" value="@npc.Name"
+                                       @onchange="@((ChangeEventArgs e) => npc.Name = e.Value?.ToString() ?? "")" />
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-outline-danger" @onclick="@(() => _selectedFloor.Npcs.Remove(npc))">Remove</button>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Dialogue</label>
+                                <textarea class="form-control" rows="2"
+                                          @onchange="@((ChangeEventArgs e) => npc.DialogueText = e.Value?.ToString() ?? "")">@npc.DialogueText</textarea>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning py-2 mb-0">
+                            An NPC blocks its own square, so this cell must stay <strong>not walkable</strong>. Saving is rejected otherwise.
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="mb-0"><button type="button" class="btn btn-sm btn-outline-secondary" @onclick="@(() => AddNpc(cx, cy))">Add NPC</button></p>
+                    }
+                </div>
+            </div>
+        }
     }
 
     <div>
@@ -135,10 +311,18 @@ else
     [Parameter]
     public string LocationId { get; set; } = "";
 
+    private enum EditMode
+    {
+        Walkable,
+        Features
+    }
+
     private ScenarioSummary? _scenario;
     private ExplorationMapFormModel? _model;
     private ExplorationFloorFormModel? _selectedFloor;
     private ValidationResult? _saveResult;
+    private EditMode _mode = EditMode.Walkable;
+    private (int X, int Y)? _selectedCell;
 
     private string LocationsHref =>
         $"scenarios/{Uri.EscapeDataString(ScenarioId)}/locations";
@@ -165,11 +349,114 @@ else
         _selectedFloor = _model.Floors.FirstOrDefault();
     }
 
-    private void Toggle(
+    /// One click handler, two meanings, by mode: painting a floor plan is a
+    /// bulk operation that would be miserable behind a select-then-act step,
+    /// while editing features needs a cell selected to hang a panel off.
+    private void CellClicked(
         int x,
         int y)
     {
-        _selectedFloor?.ToggleTraversable(x, y);
+        if (_mode == EditMode.Walkable)
+        {
+            _selectedFloor?.ToggleTraversable(x, y);
+            return;
+        }
+
+        _selectedCell = (x, y);
+    }
+
+    private void SetMode(EditMode mode)
+    {
+        _mode = mode;
+
+        if (mode == EditMode.Walkable)
+        {
+            _selectedCell = null;
+        }
+    }
+
+    private void AddStair(
+        int x,
+        int y)
+    {
+        if (_selectedFloor is null || _model is null)
+        {
+            return;
+        }
+
+        // Defaults to the other floor when there is exactly one, which is the
+        // common case (a two-floor building) and saves the author a step.
+        string destination = _model.Floors
+            .Select(floor => floor.Floor)
+            .FirstOrDefault(floor => floor != _selectedFloor.Floor)
+            ?? _selectedFloor.Floor;
+
+        _selectedFloor.Stairs.Add(new StairFormModel
+        {
+            X = x,
+            Y = y,
+            DestinationFloor = destination,
+            DestinationX = x,
+            DestinationY = y
+        });
+    }
+
+    private void AddDoor(
+        int x,
+        int y,
+        ExplorationFacingV1 side)
+    {
+        if (_selectedFloor is null || _model is null)
+        {
+            return;
+        }
+
+        _selectedFloor.Doors.Add(new DoorFormModel
+        {
+            DoorId = _model.SuggestFeatureId("door"),
+            X = x,
+            Y = y,
+            Side = side,
+            IsSecret = false,
+            IsLocked = false
+        });
+    }
+
+    private void AddTreasure(
+        int x,
+        int y)
+    {
+        if (_selectedFloor is null || _model is null)
+        {
+            return;
+        }
+
+        _selectedFloor.Treasures.Add(new TreasureFormModel
+        {
+            TreasureId = _model.SuggestFeatureId("treasure"),
+            X = x,
+            Y = y,
+            GoldPieces = 0
+        });
+    }
+
+    private void AddNpc(
+        int x,
+        int y)
+    {
+        if (_selectedFloor is null || _model is null)
+        {
+            return;
+        }
+
+        _selectedFloor.Npcs.Add(new NpcFormModel
+        {
+            NpcId = _model.SuggestFeatureId("npc"),
+            X = x,
+            Y = y,
+            Name = "New NPC",
+            DialogueText = ""
+        });
     }
 
     private string CellClass(
@@ -196,7 +483,7 @@ else
             classes.Add("start");
         }
 
-        foreach (var door in _selectedFloor.Doors.Where(d => d.Position.X == x && d.Position.Y == y))
+        foreach (var door in _selectedFloor.Doors.Where(d => d.X == x && d.Y == y))
         {
             classes.Add($"door-{door.Side.ToString().ToLowerInvariant()}");
 
@@ -204,6 +491,11 @@ else
             {
                 classes.Add("door-secret");
             }
+        }
+
+        if (_selectedCell is { } selected && selected.X == x && selected.Y == y)
+        {
+            classes.Add("selected");
         }
 
         return string.Join(" ", classes);
@@ -228,17 +520,17 @@ else
             markers.Add("★");
         }
 
-        if (_selectedFloor.Stairs.Any(s => s.Position.X == x && s.Position.Y == y))
+        if (_selectedFloor.FindStair(x, y) is not null)
         {
             markers.Add("↕");
         }
 
-        if (_selectedFloor.Treasures.Any(t => t.Position.X == x && t.Position.Y == y))
+        if (_selectedFloor.FindTreasure(x, y) is not null)
         {
             markers.Add("$");
         }
 
-        if (_selectedFloor.Npcs.Any(n => n.Position.X == x && n.Position.Y == y))
+        if (_selectedFloor.FindNpc(x, y) is not null)
         {
             markers.Add("@");
         }
@@ -260,24 +552,24 @@ else
             $"({x}, {y}) {(_selectedFloor.IsTraversable(x, y) ? "walkable" : "blocked")}"
         ];
 
-        foreach (var stair in _selectedFloor.Stairs.Where(s => s.Position.X == x && s.Position.Y == y))
+        foreach (var stair in _selectedFloor.Stairs.Where(s => s.X == x && s.Y == y))
         {
-            parts.Add($"stairs to {stair.DestinationFloor} ({stair.DestinationPosition.X}, {stair.DestinationPosition.Y})");
+            parts.Add($"stairs to {stair.DestinationFloor} ({stair.DestinationX}, {stair.DestinationY})");
         }
 
-        foreach (var door in _selectedFloor.Doors.Where(d => d.Position.X == x && d.Position.Y == y))
+        foreach (var door in _selectedFloor.Doors.Where(d => d.X == x && d.Y == y))
         {
             string kind = door.IsSecret ? "secret door" : "door";
             string locked = door.IsLocked ? ", locked" : "";
             parts.Add($"{kind} on {door.Side} side{locked} ({door.DoorId})");
         }
 
-        foreach (var treasure in _selectedFloor.Treasures.Where(t => t.Position.X == x && t.Position.Y == y))
+        foreach (var treasure in _selectedFloor.Treasures.Where(t => t.X == x && t.Y == y))
         {
             parts.Add($"treasure: {treasure.TreasureId}");
         }
 
-        foreach (var npc in _selectedFloor.Npcs.Where(n => n.Position.X == x && n.Position.Y == y))
+        foreach (var npc in _selectedFloor.Npcs.Where(n => n.X == x && n.Y == y))
         {
             parts.Add($"NPC: {npc.Name}");
         }
@@ -314,6 +606,18 @@ else
         int fallback)
     {
         return int.TryParse(raw, out int value) ? value : fallback;
+    }
+
+    /// Empty stays null rather than becoming 0, so clearing a treasure's
+    /// Quantity omits the property instead of writing a meaningless zero.
+    private static int? ParseOptionalInt(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        return int.TryParse(raw, out int value) ? value : null;
     }
 
     private void Save()

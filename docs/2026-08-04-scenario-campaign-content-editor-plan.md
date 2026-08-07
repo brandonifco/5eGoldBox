@@ -119,8 +119,7 @@ including the `Shops` property-insert path on a file that had none, and a reject
   original authoring-tool ask was actually about). Delivered in three slices:
   - **Phase 4a -- foundation. Done, 2026-08-06.** See the section below.
   - **Phase 4b -- the grid component. Done, 2026-08-06.** See the section below.
-  - **Phase 4c -- feature layers** (stairs, edge-anchored doors, treasure, NPCs) --
-    making the markers 4b renders read-only into things you can place and edit.
+  - **Phase 4c -- feature layers. Done, 2026-08-06.** See the section below.
 - **Phase 5 -- Campaign roster editor.** Separate `CampaignContentService`/
   `CampaignPackDocument`, roster CRUD (`AbilityScores` dict, `SelectedSkillIds`,
   `EquippedWeaponIds`, `Ammunition`, `PreparedSpellIds`), cross-referencing ruleset
@@ -210,9 +209,67 @@ outside the new bounds -- the validator rejects the save with
 would silently delete authored content, which is worse than a clear rejection; a real fix
 belongs with 4c's editing tools, not here.
 
+## Phase 4c -- done, 2026-08-06: editable feature layers
+
+The markers 4b rendered read-only are now placeable and editable, which closes out map
+authoring: a floor's walkable cells, stairs, doors, treasure and NPCs are all editable
+from the one grid.
+
+- **Two modes on one grid, not two pages.** "Paint walkable cells" keeps 4b's click-to-
+  toggle (a bulk operation that would be miserable behind a select-then-act step);
+  "Edit cell features" makes a click select a cell and open a panel for everything on it.
+  **A door is the reason a panel exists at all** -- it's edge-anchored (`Position` +
+  `Side`), so a cell click alone can't express which of the four edges it belongs to.
+  The panel gives one row per side.
+- **New mutable form models per feature type** (`StairFormModel`, `DoorFormModel`,
+  `TreasureFormModel`, `NpcFormModel`) because the V1 DTOs are records with init-only
+  properties that Blazor's binding cannot write to.
+- **Empty means absent, deliberately.** A treasure with no `ItemId`/`Quantity` must write
+  those properties *not at all*, not as `""`/`0`. `TreasureFormModel.ToDefinition`
+  normalizes blank to null and `ParseOptionalInt` keeps an empty number box null.
+- **New feature ids are suggested, not required**, following committed content's own
+  `kind.scenario-slug.name` convention and checked for collisions across *every* floor,
+  since the validator's id rules are map-wide.
+
+### The ordering bug this surfaced, and the content normalization that fixed it
+
+Extending the byte-identity round-trip test to hollow-mill **failed immediately**, and
+the failure was real rather than a bad assertion: committed content disagreed on a
+floor's property order (Hollow Mill wrote `Npcs` before `Doors`; Watchtower the reverse),
+while the 4a renderer writes one canonical order. 4a had *documented* this as an accepted
+trade-off ("editing a Hollow Mill floor also normalizes its ordering"), but 4c is what
+makes maps genuinely editable, which turned it from a footnote into a live footgun: the
+first person to edit the richest scenario's map would get a large spurious block move
+mixed into their real diff.
+
+Fixed by normalizing the committed files once through the renderer itself, via a new
+skipped-by-default `CommittedScenarioMapNormalizer` (the same un-skip/run/re-skip
+convention as `FixtureWriter`/`ContentPackSchemaWriter`). Only hollow-mill changed, by
+8 moved lines; all three scenarios were verified to parse to structurally identical
+content before and after, and the full Application suite (which covers Hollow Mill's
+scenario behaviour) passes unchanged. **A no-op save is now byte-identical for every
+scenario**, which the test asserts for all three -- so reintroducing a divergent hand
+ordering now fails a test rather than silently producing noisy diffs.
+
+- 6 new tests (51 -> 57, plus the skipped writer). Full solution gate green
+  (Debug+Release 0 warnings; 2347 passed, 4 skipped, 0 failures). No public API change.
+- **Verified live in a browser:** the mode toggle defaults to painting; selecting
+  Garrick's cell loads his real id/name/dialogue; adding a treasure auto-suggests
+  `treasure.hollow-mill.new-1` and updates the grid marker and tooltip immediately; and a
+  real save wrote a gold-only treasure with **no `ItemId`/`Quantity` properties at all**
+  alongside an edited NPC name, formatted identically to its hand-authored neighbours.
+  Test edits were reverted afterward.
+
+**One environment trap worth remembering:** the Phase 4b dev server survived `TaskStop`,
+so the next `dotnet run` failed to bind while `curl` still answered on the port -- which
+looks exactly like "the server is up" while actually serving the *previous* build. Kill
+stale `dotnet run` processes and wait for the new process's own "Now listening on" line
+rather than probing the port, or you will verify stale code.
+
 ## Status (2026-08-06)
 
-Phase 1, Phase 4a and Phase 4b are done and merged. Phase 4c (making the feature markers
-editable) is the natural next step. Phases 2, 3 and 5 are scoped above but not started --
-pick up whichever is next via the standing branch/PR/merge workflow, same as every other
-feature in this repo.
+Phase 1 and all of Phase 4 (a/b/c) are done and merged -- **exploration maps are now
+fully authorable in the editor**, which was the largest remaining gap in the adventure
+builder. Phases 2 (Decisions+Triggers), 3 (Encounters) and 5 (campaign roster) are scoped
+above but not started -- pick up whichever is next via the standing branch/PR/merge
+workflow, same as every other feature in this repo.

@@ -464,6 +464,164 @@ public sealed class ScenarioContentServiceTests
         });
     }
 
+    // ----- Map features (Phase 4c) -----
+
+    [Fact]
+    public void SaveExplorationMap_AddingADoorAndTreasurePersistsThem()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            var model = LoadMapModel(service, path, out string locationId);
+            ExplorationFloorFormModel floor = model.Floors[0];
+
+            // (2, 1) is walkable, and (2, 2) below it is too, so a door on the
+            // South edge connects two real squares -- the validator requires
+            // both sides of a door edge to be traversable.
+            floor.Doors.Add(new DoorFormModel
+            {
+                DoorId = "door.test-new",
+                X = 2,
+                Y = 1,
+                Side = ExplorationFacingV1.South,
+                IsSecret = true,
+                IsLocked = true
+            });
+            floor.Treasures.Add(new TreasureFormModel
+            {
+                TreasureId = "treasure.test-new",
+                X = 2,
+                Y = 2,
+                GoldPieces = 40
+            });
+
+            var result = service.SaveExplorationMap(path, locationId, model.ToDefinition());
+            Assert.True(result.IsValid, DescribeIssues(result));
+
+            var saved = service.FindExplorationMap(path, locationId)!.Floors[0];
+
+            var door = saved.Doors.Single(d => d.DoorId == "door.test-new");
+            Assert.Equal(ExplorationFacingV1.South, door.Side);
+            Assert.True(door.IsSecret);
+            Assert.True(door.IsLocked);
+
+            var treasure = saved.Treasures.Single(t => t.TreasureId == "treasure.test-new");
+            Assert.Equal(40, treasure.GoldPieces);
+        });
+    }
+
+    /// A gold-only treasure must write no ItemId/Quantity properties at all.
+    /// An empty text box round-tripping as "" rather than null would produce
+    /// "ItemId": "", which is a different document and a different meaning.
+    [Fact]
+    public void SaveExplorationMap_AGoldOnlyTreasureOmitsItemIdAndQuantityEntirely()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            var model = LoadMapModel(service, path, out string locationId);
+
+            model.Floors[0].Treasures.Add(new TreasureFormModel
+            {
+                TreasureId = "treasure.test-gold-only",
+                X = 2,
+                Y = 2,
+                GoldPieces = 12,
+                ItemId = "",
+                Quantity = null
+            });
+
+            var result = service.SaveExplorationMap(path, locationId, model.ToDefinition());
+            Assert.True(result.IsValid, DescribeIssues(result));
+
+            var treasure = service.FindExplorationMap(path, locationId)!
+                .Floors[0].Treasures.Single(t => t.TreasureId == "treasure.test-gold-only");
+
+            Assert.Null(treasure.ItemId);
+            Assert.Null(treasure.Quantity);
+
+            // Belt and braces: prove it at the raw-text level too, since a
+            // null DTO property and an omitted JSON property are the thing
+            // actually being asserted here.
+            string json = File.ReadAllText(path);
+            int start = json.IndexOf("treasure.test-gold-only", StringComparison.Ordinal);
+            string block = json.Substring(start, 200);
+            Assert.DoesNotContain("\"ItemId\"", block);
+            Assert.DoesNotContain("\"Quantity\"", block);
+        });
+    }
+
+    [Fact]
+    public void SaveExplorationMap_RemovingAnNpcPersistsTheRemoval()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            var model = LoadMapModel(service, path, out string locationId);
+            ExplorationFloorFormModel floor = model.Floors[0];
+
+            Assert.NotEmpty(floor.Npcs);
+            floor.Npcs.Clear();
+
+            var result = service.SaveExplorationMap(path, locationId, model.ToDefinition());
+            Assert.True(result.IsValid, DescribeIssues(result));
+
+            Assert.Empty(service.FindExplorationMap(path, locationId)!.Floors[0].Npcs);
+        });
+    }
+
+    [Fact]
+    public void SaveExplorationMap_RejectsADoorWhoseEdgeLeadsIntoAWallAndLeavesFileUntouched()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            byte[] before = File.ReadAllBytes(path);
+            var model = LoadMapModel(service, path, out string locationId);
+
+            // (0, 0) is blocked, so a door on (0, 1)'s North edge opens into
+            // a wall rather than connecting two squares.
+            model.Floors[0].Doors.Add(new DoorFormModel
+            {
+                DoorId = "door.test-into-wall",
+                X = 0,
+                Y = 1,
+                Side = ExplorationFacingV1.North
+            });
+
+            var result = service.SaveExplorationMap(path, locationId, model.ToDefinition());
+
+            Assert.False(result.IsValid);
+            Assert.Equal(before, File.ReadAllBytes(path));
+        });
+    }
+
+    [Fact]
+    public void SuggestFeatureId_AvoidsIdsAlreadyUsedOnAnyFloor()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            var model = LoadMapModel(service, path, out _);
+
+            string first = model.SuggestFeatureId("door");
+            Assert.Equal("door.ruined-watchtower.new-1", first);
+
+            // Taking the suggestion means the next one must move on rather
+            // than hand back a duplicate.
+            model.Floors[0].Doors.Add(new DoorFormModel { DoorId = first, X = 0, Y = 0 });
+            Assert.Equal("door.ruined-watchtower.new-2", model.SuggestFeatureId("door"));
+        });
+    }
+
+    private static ExplorationMapFormModel LoadMapModel(
+        ScenarioContentService service,
+        string path,
+        out string locationId)
+    {
+        locationId = service.LoadLocations(path)
+            .First(location => location.ExplorationMap is not null)
+            .LocationId;
+
+        return ExplorationMapFormModel.FromDefinition(
+            service.FindExplorationMap(path, locationId)!);
+    }
+
     private static void WithTempScenarioFile(
         string scenarioDirectoryName,
         Action<ScenarioContentService, string> action)
