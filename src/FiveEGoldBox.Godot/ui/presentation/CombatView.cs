@@ -41,6 +41,11 @@ public partial class CombatView : Control
 	// focus happens to land.
 	private readonly Dictionary<(int X, int Y), CombatHighlightCell>
 		_cursorCellsByPosition = new();
+	// Combatants that are legal targets of the targeting pass currently in
+	// progress. Empty outside targeting, which is what makes every pin
+	// focusable again. See ApplyCombatantFocusability.
+	private readonly HashSet<string> _targetableCombatantIds =
+		new(StringComparer.Ordinal);
 
 	private int _gridWidth = 1;
 	private int _gridHeight = 1;
@@ -130,6 +135,9 @@ public partial class CombatView : Control
 
 		RebuildCombatants();
 		RebuildHighlights();
+		// Must follow both: it needs the pins to exist and the highlights
+		// to know whether targeting is in progress.
+		ApplyCombatantFocusability();
 
 		// Recenter exactly when whose turn it is changes — a fresh
 		// encounter (Configure resets _lastCenteredCombatantId to null
@@ -229,7 +237,9 @@ public partial class CombatView : Control
 			$"lastCentered={_lastCenteredCombatantId ?? "(none)"}\n" +
 			$"viewport={_combatViewport.Size} image={_combatImage.Size}\n" +
 			$"focus={ResolveFocusPoint()} pan={_panOffset} zoom={ZoomLevels[_zoomIndex]}\n" +
-			$"grid=({metrics.GridPixelWidth:F0},{metrics.GridPixelHeight:F0}) tile={metrics.TileSize:F0}";
+			$"grid=({metrics.GridPixelWidth:F0},{metrics.GridPixelHeight:F0}) tile={metrics.TileSize:F0}\n" +
+			$"highlights={_highlights.Count} cursorCells={_cursorCellsByPosition.Count} " +
+			$"focus={GetViewport()?.GuiGetFocusOwner()?.Name.ToString() ?? "(none)"}";
 	}
 
 	// M8f: "completed-combat presentation states" — the one thing

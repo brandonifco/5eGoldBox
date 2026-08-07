@@ -120,6 +120,11 @@ internal sealed partial class ShellPresentationController
 		_combatView.FocusCell(gridX, gridY);
 	}
 
+	public void SetCombatTargetableCombatants(IReadOnlyList<string>? combatantIds)
+	{
+		_combatView.SetTargetableCombatants(combatantIds);
+	}
+
 	public void SelectCombatTarget(string? combatantId)
 	{
 		_combatSelectedTargetId = combatantId;

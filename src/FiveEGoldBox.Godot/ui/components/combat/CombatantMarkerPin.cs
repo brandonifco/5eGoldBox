@@ -29,6 +29,7 @@ public partial class CombatantMarkerPin : Button
 	private static readonly Color EnemyColor = new(0.8784314f, 0.34117648f, 0.29803923f);
 	private static readonly Color ActiveOutlineColor = new(0.9411765f, 0.7058824f, 0.16078432f);
 	private static readonly Color HealthTrackColor = new(0.05490196f, 0.07058824f, 0.1254902f);
+	private static readonly Color TargetCursorColor = new(1f, 1f, 1f);
 
 	// The medieval-heroes pack's _MVsv_alt_*.png strips are three
 	// 128x128 frames side by side; only the first is used for a static
@@ -54,6 +55,11 @@ public partial class CombatantMarkerPin : Button
 		FocusMode = FocusModeEnum.All;
 		ThemeTypeVariation = "CombatMarkerButton";
 		MouseDefaultCursorShape = CursorShape.PointingHand;
+		// _Draw reads HasFocus(), so a focus change has to repaint --
+		// otherwise the cursor outline only appears on the next unrelated
+		// redraw, if ever.
+		FocusEntered += QueueRedraw;
+		FocusExited += QueueRedraw;
 	}
 
 	public void Configure(
@@ -103,6 +109,23 @@ public partial class CombatantMarkerPin : Button
 		if (_active)
 		{
 			DrawRect(bounds, ActiveOutlineColor, filled: false, width: 2f);
+		}
+
+		// The targeting cursor. Without this a focused pin looked exactly
+		// like an unfocused one, so even correct focus movement was
+		// invisible -- which is how "the cursor doesn't move" survived
+		// several rounds of fixing the focus wiring underneath it.
+		//
+		// Drawn last, inset from the active outline so both can show at
+		// once, and in white so it never reads as either side's colour or
+		// as the amber "whose turn it is" marker.
+		if (HasFocus())
+		{
+			DrawRect(
+				bounds.Grow(-3f),
+				TargetCursorColor,
+				filled: false,
+				width: 2f);
 		}
 	}
 

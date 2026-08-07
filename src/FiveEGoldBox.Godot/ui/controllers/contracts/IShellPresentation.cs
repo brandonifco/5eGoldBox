@@ -68,6 +68,11 @@ internal interface IShellPresentation
 	// doesn't name one of the highlighted move cells.
 	void FocusCombatCell(int gridX, int gridY);
 
+	/// Declares which combatants the in-progress targeting pass accepts,
+	/// so the keyboard cursor steps between those and nothing else. Null
+	/// clears it.
+	void SetCombatTargetableCombatants(IReadOnlyList<string>? combatantIds);
+
 	void SelectCombatTarget(string? combatantId);
 
 	void MoveActiveCombatant(int gridX, int gridY);

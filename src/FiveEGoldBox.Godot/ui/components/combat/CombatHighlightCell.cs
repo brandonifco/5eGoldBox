@@ -51,7 +51,16 @@ public partial class CombatHighlightCell : Button
 	public void Configure(string kind)
 	{
 		(_fillColor, bool selectable, _isCursorOnly, _cursorColor) = ResolveStyle(kind);
-		FocusMode = selectable ? FocusModeEnum.All : FocusModeEnum.None;
+
+		// "valid-target" marks a combatant's square during attack/spell
+		// targeting, and attack targeting resolves by combatant id through
+		// the pin's own Pressed -- activating the cell underneath resolves
+		// nothing. Leaving it focusable let it swallow the keyboard cursor
+		// and do nothing with it. Still clickable (Disabled stays false),
+		// because mock combat does route through cells.
+		bool keyboardFocusable = selectable && kind != "valid-target";
+
+		FocusMode = keyboardFocusable ? FocusModeEnum.All : FocusModeEnum.None;
 		Disabled = !selectable;
 
 		if (IsNodeReady())

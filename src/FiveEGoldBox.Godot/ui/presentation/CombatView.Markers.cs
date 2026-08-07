@@ -245,6 +245,104 @@ public partial class CombatView
 		WireCursorFocusNeighbors(_cursorCellsByPosition);
 	}
 
+	// Focus for the whole combat view is a single pool, and combatant pins
+	// sit on a layer above the highlight cells. Left focusable during
+	// targeting, Godot's spatial neighbour search hops between combatants
+	// -- party members included -- instead of between legal targets, which
+	// is exactly what "the cursor just jumps from character to character,
+	// not enemy" was. Move targeting hid this because its cells carry
+	// explicit neighbours that bypass the search entirely.
+	//
+	// Clicking a combatant still works: a Button fires Pressed without
+	// needing focus.
+	// Attack and spell targeting resolve by combatant id through a pin's
+	// own Pressed, so the keyboard cursor has to live on the pins. When a
+	// target set is active only those pins are focusable and they are
+	// wired into a cycle, so the arrow keys step between legal targets
+	// instead of wandering across every combatant on the field -- which is
+	// what "jumps from character to character, not enemy" was.
+	//
+	// Reapplied on every Refresh rather than set once, because a mid-
+	// targeting refresh (a target selection, say) rebuilds every pin.
+	private void ApplyCombatantFocusability()
+	{
+		if (_targetableCombatantIds.Count == 0)
+		{
+			foreach (CombatantMarkerPin pin in _combatantPins)
+			{
+				pin.FocusMode = Control.FocusModeEnum.All;
+			}
+
+			return;
+		}
+
+		List<CombatantMarkerPin> targetable = new();
+
+		for (int index = 0; index < _combatants.Count; index++)
+		{
+			bool isTarget = _targetableCombatantIds.Contains(_combatants[index].Id);
+			CombatantMarkerPin pin = _combatantPins[index];
+
+			pin.FocusMode = isTarget
+				? Control.FocusModeEnum.All
+				: Control.FocusModeEnum.None;
+
+			if (isTarget)
+			{
+				targetable.Add(pin);
+			}
+		}
+
+		WireTargetCycle(targetable);
+
+		if (targetable.Count > 0 && !targetable.Any(pin => pin.HasFocus()))
+		{
+			targetable[0].GrabFocus();
+		}
+	}
+
+	// Declared by the interaction controller when combatant targeting
+	// opens, cleared when it ends.
+	internal void SetTargetableCombatants(IReadOnlyList<string>? combatantIds)
+	{
+		_targetableCombatantIds.Clear();
+
+		if (combatantIds is not null)
+		{
+			foreach (string id in combatantIds)
+			{
+				_targetableCombatantIds.Add(id);
+			}
+		}
+
+		ApplyCombatantFocusability();
+	}
+
+	// A ring in reading order: Right/Down advance, Left/Up go back, both
+	// ends wrap. Wrapping rather than clamping because with two or three
+	// scattered targets, stopping dead at the last one reads as stuck.
+	private static void WireTargetCycle(List<CombatantMarkerPin> pins)
+	{
+		if (pins.Count == 0)
+		{
+			return;
+		}
+
+		for (int index = 0; index < pins.Count; index++)
+		{
+			CombatantMarkerPin pin = pins[index];
+			NodePath next = pin.GetPathTo(pins[(index + 1) % pins.Count]);
+			NodePath previous = pin.GetPathTo(
+				pins[(index - 1 + pins.Count) % pins.Count]);
+
+			pin.FocusNeighborRight = next;
+			pin.FocusNeighborBottom = next;
+			pin.FocusNeighborLeft = previous;
+			pin.FocusNeighborTop = previous;
+		}
+	}
+
+
 	// Gives the move cursor a real starting cell instead of leaving it
 	// wherever Godot's default focus happens to land -- called right
 	// after ShowCombatHighlights opens move targeting, with the active
