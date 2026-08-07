@@ -50,7 +50,6 @@ public partial class CombatView : Control
 		Array.Empty<CombatHighlightViewModel>();
 	private int _zoomIndex;
 	private Vector2 _panOffset;
-	private Texture2D? _floorTileTexture;
 	private Vector2I? _hoveredCell;
 	// Whichever highlight cell (see CombatHighlightCell) currently has
 	// keyboard/mouse focus -- set from RebuildHighlights' own
@@ -128,7 +127,6 @@ public partial class CombatView : Control
 
 		_combatImage.Visible = model.HasArtBackground;
 		_placeholderBackground.Visible = !model.HasArtBackground;
-		_floorTileTexture = ResolveFloorTileTexture(model.FloorTileSheetPath);
 
 		RebuildCombatants();
 		RebuildHighlights();
@@ -223,7 +221,7 @@ public partial class CombatView : Control
 	{
 		CombatantMarkerViewModel? active = _combatants
 			.FirstOrDefault(combatant => combatant.Active);
-		IsoMetrics metrics = Metrics;
+		GridMetrics metrics = Metrics;
 
 		_debugCameraLabel.Text =
 			$"active={active?.Id ?? "(none)"} " +
@@ -231,16 +229,7 @@ public partial class CombatView : Control
 			$"lastCentered={_lastCenteredCombatantId ?? "(none)"}\n" +
 			$"viewport={_combatViewport.Size} image={_combatImage.Size}\n" +
 			$"focus={ResolveFocusPoint()} pan={_panOffset} zoom={ZoomLevels[_zoomIndex]}\n" +
-			$"diamond=({metrics.DiamondWidth:F0},{metrics.DiamondHeight:F0}) tile=({metrics.TileWidth:F0},{metrics.TileHeight:F0})";
-	}
-
-	// Same GD.Load resource-cache reasoning as CombatView.Markers.cs's
-	// own ResolvePortrait.
-	private static Texture2D? ResolveFloorTileTexture(string? sheetPath)
-	{
-		return sheetPath is null
-			? null
-			: GD.Load<Texture2D>(sheetPath);
+			$"grid=({metrics.GridPixelWidth:F0},{metrics.GridPixelHeight:F0}) tile={metrics.TileSize:F0}";
 	}
 
 	// M8f: "completed-combat presentation states" — the one thing

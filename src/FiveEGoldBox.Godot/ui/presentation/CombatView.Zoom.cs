@@ -92,15 +92,10 @@ public partial class CombatView
 		float zoom = ZoomLevels[_zoomIndex];
 		Vector2 contentLocal = (viewportLocal - _panOffset) / zoom;
 
-		IsoMetrics metrics = Metrics;
-		float halfWidth = metrics.TileWidth / 2f;
-		float halfHeight = metrics.TileHeight / 2f;
+		GridMetrics metrics = Metrics;
 
-		float a = (contentLocal.X - metrics.OffsetX) / halfWidth;
-		float b = (contentLocal.Y - metrics.OffsetY) / halfHeight;
-
-		gridX = Mathf.FloorToInt((a + b) / 2f);
-		gridY = Mathf.FloorToInt((b - a) / 2f);
+		gridX = Mathf.FloorToInt((contentLocal.X - metrics.OffsetX) / metrics.TileSize);
+		gridY = Mathf.FloorToInt((contentLocal.Y - metrics.OffsetY) / metrics.TileSize);
 
 		return gridX >= 0 && gridX < _gridWidth
 			&& gridY >= 0 && gridY < _gridHeight;
@@ -176,28 +171,26 @@ public partial class CombatView
 	{
 		float zoom = ZoomLevels[_zoomIndex];
 		Vector2 viewportSize = _combatViewport.Size;
-		IsoMetrics metrics = Metrics;
-		float halfW = metrics.TileWidth / 2f;
-		float halfH = metrics.TileHeight / 2f;
+		GridMetrics metrics = Metrics;
 
-		// The diamond's real bounding box, from Project's own extremes --
-		// not derived from DiamondWidth/DiamondHeight alone, which are
-		// only symmetric around OffsetX for a square grid. Leftmost is
-		// grid (0, gridHeight), rightmost is (gridWidth, 0), topmost is
-		// (0, 0) (OffsetY itself, by construction), bottommost is
-		// (gridWidth, gridHeight).
-		float diamondMinX = (-_gridHeight * halfW) + metrics.OffsetX;
-		float diamondMaxX = (_gridWidth * halfW) + metrics.OffsetX;
-		float diamondMinY = metrics.OffsetY;
-		float diamondMaxY = ((_gridWidth + _gridHeight) * halfH) + metrics.OffsetY;
+		// The battlefield's bounding box. On a square grid this is just
+		// the offset origin plus the grid's pixel span -- the isometric
+		// version had to derive it from Project's extremes on four
+		// different corners, because a diamond's bounding box is not
+		// symmetric around its offset unless the grid is square.
+		float gridMinX = metrics.OffsetX;
+		float gridMaxX = metrics.OffsetX + metrics.GridPixelWidth;
+		float gridMinY = metrics.OffsetY;
+		float gridMaxY = metrics.OffsetY + metrics.GridPixelHeight;
 
 		// Union with the background image's own rect ([0, 0]-imageSize) —
 		// whichever extends further in each direction, background or
-		// diamond, is what pan needs to keep fully covering the viewport.
-		float unionMinX = Mathf.Min(0f, diamondMinX);
-		float unionMaxX = Mathf.Max(_combatImage.Size.X, diamondMaxX);
-		float unionMinY = Mathf.Min(0f, diamondMinY);
-		float unionMaxY = Mathf.Max(_combatImage.Size.Y, diamondMaxY);
+		// battlefield, is what pan needs to keep fully covering the
+		// viewport.
+		float unionMinX = Mathf.Min(0f, gridMinX);
+		float unionMaxX = Mathf.Max(_combatImage.Size.X, gridMaxX);
+		float unionMinY = Mathf.Min(0f, gridMinY);
+		float unionMaxY = Mathf.Max(_combatImage.Size.Y, gridMaxY);
 
 		_panOffset = new Vector2(
 			Mathf.Clamp(

@@ -246,10 +246,6 @@ internal sealed class RealCombatSession
 			combatants,
 			decision.ActiveCombatantId,
 			HasArtBackground: false,
-			FloorTileSheetPath: CombatFloorTileCatalog.Resolve(
-				view.Combatants
-					.Where(combatant => combatant.MonsterId is not null)
-					.Select(combatant => combatant.MonsterId!)),
 			RoundNumber: view.RoundNumber,
 			InitiativeOrder: initiativeOrder);
 

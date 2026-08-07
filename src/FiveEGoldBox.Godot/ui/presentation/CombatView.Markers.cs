@@ -6,77 +6,68 @@ using Godot;
 // Grid lines, combatant markers, and highlight cells — split out of
 // CombatView.cs (see that file's header).
 //
-// The grid renders as a true isometric diamond (2:1 dimetric ratio, the
-// classic tactics-game look), not the straight top-down axis-aligned
-// grid this started as. (0,0) is the diamond's top vertex — increasing
-// gridX moves down-and-right, increasing gridY moves down-and-left —
-// keeping the original grid's top-left corner as the same recognizable
-// landmark it always was, read as "viewed from up and to the top-left."
+// The grid renders straight top-down on square tiles: (0,0) is the
+// battlefield's top-left corner, increasing gridX moves right, and
+// increasing gridY moves down.
+//
+// This replaced a 2:1 isometric diamond lattice, and the reason is worth
+// keeping. The diamond was chosen for the modern tactics-game look
+// (Divinity/XCOM/Fire Emblem), but it fought the Gold Box reference this
+// project is actually built on -- Pool of Radiance's combat was an
+// overhead square grid, not isometric -- and it made orthogonal arrow
+// keys structurally unable to line up with the lattice, which needed an
+// explicit FocusNeighbor axis remap to paper over. On a square grid the
+// keys map 1:1 and that workaround disappears. The user's own verdict on
+// the isometric version was that navigating it "sucks all around."
 public partial class CombatView
 {
-	private readonly record struct IsoMetrics(
-		float TileWidth,
-		float TileHeight,
+	private readonly record struct GridMetrics(
+		float TileSize,
 		float OffsetX,
 		float OffsetY,
-		float DiamondWidth,
-		float DiamondHeight);
+		float GridPixelWidth,
+		float GridPixelHeight);
 
-	// Locked rather than independently fit to the viewport: both the
-	// diamond's width and height scale by the same reference-span
-	// factor, so locking the tile ratio locks the whole bounding box's
-	// aspect ratio too, independent of grid shape — a 5x4 real encounter
-	// and a 20x16 mock one render as the same "shape of tactics game,"
-	// just scaled. Fitting both viewport dimensions independently would
-	// instead make tile shape a function of (viewport aspect, W, H),
-	// so different encounters would render with arbitrarily different
-	// skews.
-	private const float TileAspectRatio = 2f;
-
-	// Tile size used to be derived from the actual grid's own span
-	// (gridWidth+gridHeight), so every battlefield -- no matter how
-	// large -- scaled down to exactly fill the viewport with nothing
-	// left over. That made "the playing field is bigger than what's
-	// visible, scroll to see the rest" structurally impossible: there
-	// was never anything left outside the frame. ReferenceSpan fixes
-	// tile size against a constant instead (9, Watchtower's original
-	// 5+4 -- the most "typical" existing encounter, chosen so nothing
-	// already-shipped changes size), so a battlefield larger than that
+	// Tile size is fixed against a constant rather than derived from the
+	// actual grid's span, so a battlefield larger than the reference
 	// genuinely overflows the viewport and needs the edge auto-scroll
-	// (CombatView.Zoom.cs) to see the rest of it -- requested live by
-	// the user right after that auto-scroll shipped.
+	// (CombatView.Zoom.cs) to see the rest -- rather than every
+	// battlefield shrinking to fit exactly, which made "the playing
+	// field is bigger than what's visible" structurally impossible.
+	// 9 keeps existing encounters (9x8, 8x8) filling roughly the frame
+	// they already did.
 	private const int ReferenceSpan = 9;
 
-	private IsoMetrics Metrics
+	// Flat floor, mirroring GameUiTheme.tres's EGA Revival palette. Kept
+	// as literals rather than read from the theme because these are
+	// canvas draws, not themed Controls -- if the theme's ground/surface
+	// values change, change them here too.
+	private static readonly Color FloorEvenColor = new(0.09019608f, 0.11764706f, 0.19215687f);
+	private static readonly Color FloorOddColor = new(0.10980392f, 0.14117648f, 0.22352941f);
+	private static readonly Color FloorOutsideColor = new(0.05490196f, 0.07058824f, 0.1254902f);
+	private static readonly Color FloorGridColor = new(0.20784314f, 0.2509804f, 0.41568628f, 0.5f);
+
+	private GridMetrics Metrics
 	{
 		get
 		{
 			Vector2 imageSize = _combatImage.Size;
-			int realSpan = Math.Max(_gridWidth + _gridHeight, 1);
 
-			float tileWidthFromWidth = 2f * imageSize.X / ReferenceSpan;
-			float tileWidthFromHeight = TileAspectRatio * 2f * imageSize.Y / ReferenceSpan;
-			float tileWidth = Mathf.Min(tileWidthFromWidth, tileWidthFromHeight);
-			float tileHeight = tileWidth / TileAspectRatio;
+			// Square tiles: one size, taken from whichever viewport
+			// dimension is the binding constraint.
+			float tileSize = Mathf.Min(
+				imageSize.X / ReferenceSpan,
+				imageSize.Y / ReferenceSpan);
 
-			// The diamond's own bounding box still scales with the real
-			// grid, not the reference span -- a battlefield bigger than
-			// ReferenceSpan needs a genuinely bigger diamond (that's the
-			// whole point), just built from the fixed tile size above
-			// rather than a tile size that shrinks to compensate.
-			float diamondWidth = realSpan * tileWidth / 2f;
-			float diamondHeight = realSpan * tileHeight / 2f;
+			float gridPixelWidth = _gridWidth * tileSize;
+			float gridPixelHeight = _gridHeight * tileSize;
 
-			// Centers the diamond's bounding box within imageSize. The
-			// + gridHeight*tileWidth/2 term exists because Project's raw
-			// output (before this offset) for gridX=0 ranges from
-			// -gridHeight*tileWidth/2 upward, not from 0.
-			float offsetX = (imageSize.X - diamondWidth) / 2f +
-				(_gridHeight * tileWidth / 2f);
-			float offsetY = (imageSize.Y - diamondHeight) / 2f;
-
-			return new IsoMetrics(
-				tileWidth, tileHeight, offsetX, offsetY, diamondWidth, diamondHeight);
+			return new GridMetrics(
+				tileSize,
+				(imageSize.X - gridPixelWidth) / 2f,
+				(imageSize.Y - gridPixelHeight) / 2f,
+				gridPixelWidth,
+				gridPixelHeight);
 		}
 	}
 
@@ -85,13 +76,11 @@ public partial class CombatView
 	// _combatContent.
 	private Vector2 Project(float gridX, float gridY)
 	{
-		IsoMetrics metrics = Metrics;
-		float halfW = metrics.TileWidth / 2f;
-		float halfH = metrics.TileHeight / 2f;
+		GridMetrics metrics = Metrics;
 
 		return new Vector2(
-			((gridX - gridY) * halfW) + metrics.OffsetX,
-			((gridX + gridY) * halfH) + metrics.OffsetY);
+			(gridX * metrics.TileSize) + metrics.OffsetX,
+			(gridY * metrics.TileSize) + metrics.OffsetY);
 	}
 
 	private void RebuildCombatants()
@@ -104,7 +93,6 @@ public partial class CombatView
 
 		_combatantPins.Clear();
 
-		int allyIndex = 0;
 		float? allyAverageScreenX = AverageProjectedScreenX(isAlly: true);
 		float? enemyAverageScreenX = AverageProjectedScreenX(isAlly: false);
 
@@ -114,7 +102,6 @@ public partial class CombatView
 			_combatantsLayer.AddChild(pin);
 			pin.Configure(
 				combatant.Label,
-				allyIndex,
 				combatant.IsAlly,
 				combatant.Active,
 				combatant.Selected,
@@ -130,11 +117,6 @@ public partial class CombatView
 
 			PositionCombatant(pin, combatant.GridX, combatant.GridY);
 			_combatantPins.Add(pin);
-
-			if (combatant.IsAlly)
-			{
-				allyIndex++;
-			}
 		}
 	}
 
@@ -152,8 +134,8 @@ public partial class CombatView
 	// the party kept facing away from the enemy after that version
 	// shipped. One rule for both sides now: flip when the opposing side's
 	// average is to the right, never a fixed left/right rule, since
-	// either side can end up on either edge of the diamond lattice
-	// depending on the encounter's own battlefield layout.
+	// either side can end up on either edge of the battlefield depending
+	// on the encounter's own layout.
 	private bool ShouldFlipPortrait(
 		CombatantMarkerViewModel combatant,
 		float? opposingAverageScreenX)
@@ -206,18 +188,17 @@ public partial class CombatView
 		}
 	}
 
+	// Slightly inset from the full tile so a click near a cell's edge
+	// still reaches the highlight cell underneath (targeting a square vs.
+	// targeting whoever stands on it), and so adjacent tokens read as
+	// separate rather than touching.
 	private void PositionCombatant(CombatantMarkerPin pin, int gridX, int gridY)
 	{
-		IsoMetrics metrics = Metrics;
-		// tileHeight, not min(width,height): with a 2:1 tile, tileHeight
-		// is always the smaller dimension and the real limit on how much
-		// vertical room a token has before it pokes into the neighboring
-		// row's cell. tileWidth has 2x the headroom, never the binding
-		// constraint.
-		float diameter = metrics.TileHeight * 0.8f;
+		GridMetrics metrics = Metrics;
+		float extent = metrics.TileSize * 0.9f;
 		Vector2 cellCenter = Project(gridX + 0.5f, gridY + 0.5f);
 
-		pin.Size = new Vector2(diameter, diameter);
+		pin.Size = new Vector2(extent, extent);
 		pin.Position = cellCenter - (pin.Size / 2f);
 	}
 
@@ -282,33 +263,34 @@ public partial class CombatView
 		}
 	}
 
-	// Arrow-key navigation for the full-battlefield move cursor (see
-	// EnterRealCombatMoveTargeting) needs to move along the diamond's
-	// own two axes, not Godot's default spatial nearest-neighbor guess
-	// -- on an isometric lattice "the nearest focusable control above"
-	// and "the tile that reads as directly above" aren't the same
-	// thing. Per the user's own request: Up/Down walk the axis that
-	// reads up-left/down-right on screen (grid X), Left/Right walk the
-	// one that reads up-right/down-left (grid Y) -- matching this
-	// file's own header convention ("increasing gridX moves
-	// down-and-right, increasing gridY moves down-and-left").
+	// On the square grid the arrow keys and the lattice finally agree, so
+	// these are the obvious mappings: Up is one row up, Left is one
+	// column left. The isometric version had to remap the axes here
+	// (Up walked grid X, Left walked grid Y) because "the tile that
+	// reads as directly above" was not the tile directly above on a
+	// diamond -- that remap is gone with the projection that forced it.
 	//
-	// Only wired for cursor-mode cells (a dense, full-grid set, so
-	// every direction always has a real neighbor to point at except at
-	// the battlefield's own edge) -- attack/spell targeting's sparse
-	// legal-target sets don't get this, since a directly-adjacent cell
-	// in every direction isn't guaranteed to exist there, and Godot's
-	// own automatic spatial neighbor-finding already works fine for
-	// that smaller, scattered case.
+	// Still wired explicitly rather than left to Godot's automatic
+	// spatial nearest-neighbour search, for one reason the projection
+	// change does not remove: self-referencing at the battlefield edge
+	// (see ResolveNeighborPath) clamps the cursor there instead of
+	// letting it jump across the board.
+	//
+	// Only wired for cursor-mode cells (a dense, full-grid set, so every
+	// direction always has a real neighbour except at the edge) --
+	// attack/spell targeting's sparse legal-target sets don't get this,
+	// since a directly-adjacent cell in every direction isn't guaranteed
+	// to exist there, and Godot's own automatic search already works
+	// fine for that smaller, scattered case.
 	private static void WireCursorFocusNeighbors(
 		Dictionary<(int X, int Y), CombatHighlightCell> cellsByPosition)
 	{
 		foreach (((int x, int y), CombatHighlightCell cell) in cellsByPosition)
 		{
-			cell.FocusNeighborTop = ResolveNeighborPath(cell, cellsByPosition, x - 1, y);
-			cell.FocusNeighborBottom = ResolveNeighborPath(cell, cellsByPosition, x + 1, y);
-			cell.FocusNeighborRight = ResolveNeighborPath(cell, cellsByPosition, x, y - 1);
-			cell.FocusNeighborLeft = ResolveNeighborPath(cell, cellsByPosition, x, y + 1);
+			cell.FocusNeighborTop = ResolveNeighborPath(cell, cellsByPosition, x, y - 1);
+			cell.FocusNeighborBottom = ResolveNeighborPath(cell, cellsByPosition, x, y + 1);
+			cell.FocusNeighborLeft = ResolveNeighborPath(cell, cellsByPosition, x - 1, y);
+			cell.FocusNeighborRight = ResolveNeighborPath(cell, cellsByPosition, x + 1, y);
 		}
 	}
 
@@ -341,71 +323,96 @@ public partial class CombatView
 		}
 	}
 
-	// Project(gridX, gridY) (integer args) gives a cell's top vertex —
-	// CombatHighlightCell's own diamond is drawn/hit-tested relative to
-	// its node's top-left corner, so the node itself is positioned
-	// tileWidth/2 to the left of that vertex.
+	// Project(gridX, gridY) with integer args gives the cell's top-left
+	// corner directly, which is also the node's own origin -- so unlike
+	// the isometric version this needs no corrective offset.
 	private void PositionHighlight(CombatHighlightCell cell, int gridX, int gridY)
 	{
-		IsoMetrics metrics = Metrics;
-		Vector2 topVertex = Project(gridX, gridY);
+		GridMetrics metrics = Metrics;
 
-		cell.Size = new Vector2(metrics.TileWidth, metrics.TileHeight);
-		cell.Position = new Vector2(topVertex.X - (metrics.TileWidth / 2f), topVertex.Y);
+		cell.Size = new Vector2(metrics.TileSize, metrics.TileSize);
+		cell.Position = Project(gridX, gridY);
 	}
 
-	// Extra rings of floor tiles drawn beyond the battlefield's own
-	// bounds, so panning/zooming never reveals a hard edge where the
-	// floor stops and the placeholder fill shows through. A fixed
-	// margin, not derived from viewport/zoom bounds -- generous enough
-	// to cover every current scenario's small battlefields at every
-	// available zoom level, not a rigorous guarantee at arbitrary sizes.
+	// Extra rings of floor drawn beyond the battlefield's own bounds, so
+	// panning/zooming never reveals a hard edge where the floor stops and
+	// the placeholder fill shows through. A fixed margin, not derived
+	// from viewport/zoom bounds -- generous enough to cover every current
+	// scenario's small battlefields at every available zoom level, not a
+	// rigorous guarantee at arbitrary sizes.
 	private const int FloorMarginTiles = 6;
 
-	// Real isometric floor art (CombatFloorTileCatalog), drawn under the
-	// grid lines/highlights/combatants layers. Each tile's source PNG is
-	// already a diamond silhouette on a transparent 256x128 (or 128x64)
-	// canvas — the same shape Project/IsoMetrics already computes per
-	// cell — so drawing it as a plain axis-aligned rect region (no
-	// rotation/polygon UV math) lands correctly, the same technique
-	// CombatantMarkerPin.DrawPortrait already uses for portraits. Always
-	// the sheet's first (row 0, col 0) variant now -- uniform, not the
-	// deterministic-per-cell variety this started with, per the user's
-	// own request.
+	// Flat two-tone checker in the shell's own palette, replacing the
+	// photographic isometric tile art this used to sample. Two reasons:
+	// the art was locked to a diamond silhouette that no longer matches
+	// the grid, and it was one of four competing visual registers in the
+	// client (photoreal stone, photo wall panels, sprite portraits, inked
+	// map) that the palette work is meant to collapse.
+	//
+	// Unlike the old version, the margin beyond the battlefield is drawn
+	// in a *darker* tone rather than more of the same floor -- so where
+	// the playable area ends is legible instead of hidden, which matters
+	// more now that a battlefield can genuinely overflow the viewport.
 	private void DrawFloorTiles()
 	{
-		if (_floorTileTexture is null)
+		// Mock combat ships a calibrated painted battlefield; drawing flat
+		// tiles over it would hide the very thing it exists to show. The
+		// old version was gated by "is there a floor-tile texture", which
+		// only real encounters ever set — this keeps that same split now
+		// that the tiles are drawn rather than sampled.
+		if (_combatImage.Visible)
 		{
 			return;
 		}
 
-		IsoMetrics metrics = Metrics;
-		Rect2 sourceRect = new(
-			Vector2.Zero,
-			new Vector2(
-				CombatFloorTileCatalog.TileSourceWidth,
-				CombatFloorTileCatalog.TileSourceHeight));
+		GridMetrics metrics = Metrics;
+		Vector2 tile = new(metrics.TileSize, metrics.TileSize);
 
 		for (int gy = -FloorMarginTiles; gy < _gridHeight + FloorMarginTiles; gy++)
 		{
 			for (int gx = -FloorMarginTiles; gx < _gridWidth + FloorMarginTiles; gx++)
 			{
-				Vector2 topVertex = Project(gx, gy);
-				Rect2 destinationRect = new(
-					new Vector2(topVertex.X - (metrics.TileWidth / 2f), topVertex.Y),
-					new Vector2(metrics.TileWidth, metrics.TileHeight));
+				bool inBounds = gx >= 0 && gx < _gridWidth && gy >= 0 && gy < _gridHeight;
+				Color fill = inBounds
+					? ((gx + gy) % 2 == 0 ? FloorEvenColor : FloorOddColor)
+					: FloorOutsideColor;
 
-				_floorLayer.DrawTextureRectRegion(_floorTileTexture, destinationRect, sourceRect);
+				_floorLayer.DrawRect(new Rect2(Project(gx, gy), tile), fill);
 			}
+		}
+
+		DrawBattlefieldGrid(metrics);
+	}
+
+	// A hairline lattice over the playable area only, matching the shell's
+	// 1px framing. Drawn here rather than in DrawGridLines because that
+	// one is the mouse-hover marker and deliberately shows a single cell.
+	private void DrawBattlefieldGrid(GridMetrics metrics)
+	{
+		Vector2 origin = Project(0, 0);
+		float right = origin.X + metrics.GridPixelWidth;
+		float bottom = origin.Y + metrics.GridPixelHeight;
+
+		for (int gx = 0; gx <= _gridWidth; gx++)
+		{
+			float x = origin.X + (gx * metrics.TileSize);
+			_floorLayer.DrawLine(
+				new Vector2(x, origin.Y), new Vector2(x, bottom), FloorGridColor);
+		}
+
+		for (int gy = 0; gy <= _gridHeight; gy++)
+		{
+			float y = origin.Y + (gy * metrics.TileSize);
+			_floorLayer.DrawLine(
+				new Vector2(origin.X, y), new Vector2(right, y), FloorGridColor);
 		}
 	}
 
-	// Used to draw the full lattice unconditionally; now only ever marks
-	// one cell -- whichever CombatView.Zoom.cs's _hoveredCell currently
-	// names (updated every frame from the mouse, see UpdateHoveredCell)
-	// -- per the user's own request to stop showing grid lines
-	// everywhere. Each side is still a straight screen-space line since
-	// Project is affine per axis, just diagonal instead of axis-aligned.
+	// Marks whichever single cell CombatView.Zoom.cs's _hoveredCell names
+	// (updated every frame from the mouse, see UpdateHoveredCell) -- per
+	// the user's own request to stop showing grid lines everywhere. The
+	// faint full lattice under the battlefield is DrawBattlefieldGrid's
+	// job; this is the hover marker on top of it.
 	private void DrawGridLines()
 	{
 		if (_hoveredCell is not Vector2I hovered)
@@ -413,17 +420,15 @@ public partial class CombatView
 			return;
 		}
 
-		Color lineColor = ResolveHoverColor(hovered);
+		GridMetrics metrics = Metrics;
 
-		Vector2 top = Project(hovered.X, hovered.Y);
-		Vector2 right = Project(hovered.X + 1, hovered.Y);
-		Vector2 bottom = Project(hovered.X + 1, hovered.Y + 1);
-		Vector2 left = Project(hovered.X, hovered.Y + 1);
-
-		_gridOverlay.DrawLine(top, right, lineColor);
-		_gridOverlay.DrawLine(right, bottom, lineColor);
-		_gridOverlay.DrawLine(bottom, left, lineColor);
-		_gridOverlay.DrawLine(left, top, lineColor);
+		_gridOverlay.DrawRect(
+			new Rect2(
+				Project(hovered.X, hovered.Y),
+				new Vector2(metrics.TileSize, metrics.TileSize)),
+			ResolveHoverColor(hovered),
+			filled: false,
+			width: 2f);
 	}
 
 	// During real-combat move targeting, the hovered cell is one of the
