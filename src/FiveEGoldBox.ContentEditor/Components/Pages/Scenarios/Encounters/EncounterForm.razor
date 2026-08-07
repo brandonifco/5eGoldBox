@@ -1,0 +1,392 @@
+@page "/scenarios/{ScenarioId}/encounters/new"
+@page "/scenarios/{ScenarioId}/encounters/edit/{EncounterId}"
+@inject ScenarioContentService ScenarioService
+@inject RulesetContentService RulesetService
+@inject NavigationManager Navigation
+
+<PageTitle>@(_isNew ? "Add Encounter" : $"Edit {EncounterId}")</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>@(_isNew ? "Add encounter" : $"Edit encounter: {EncounterId}")</h1>
+
+    <ValidationIssuesAlert Result="_saveResult" />
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Encounter Id</label>
+            <input class="form-control" value="@_model.EncounterId" disabled="@(!_isNew)"
+                   @onchange="@((ChangeEventArgs e) => _model.EncounterId = e.Value?.ToString() ?? "")" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Battlefield Id</label>
+            <input class="form-control" value="@_model.BattlefieldId"
+                   @onchange="@((ChangeEventArgs e) => _model.BattlefieldId = e.Value?.ToString() ?? "")" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Party side Id</label>
+            <input class="form-control" value="@_model.PartySideId"
+                   @onchange="@((ChangeEventArgs e) => _model.PartySideId = e.Value?.ToString() ?? "")" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Width</label>
+            <input type="number" class="form-control" min="1" value="@_model.Width"
+                   @onchange="@((ChangeEventArgs e) => _model.Width = Math.Max(1, ParseInt(e.Value?.ToString(), _model.Width)))" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Height</label>
+            <input type="number" class="form-control" min="1" value="@_model.Height"
+                   @onchange="@((ChangeEventArgs e) => _model.Height = Math.Max(1, ParseInt(e.Value?.ToString(), _model.Height)))" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">On victory</label>
+            <select class="form-select" value="@_model.VictoryProgressId"
+                    @onchange="@((ChangeEventArgs e) => _model.VictoryProgressId = e.Value?.ToString() ?? "")">
+                <option value="">(choose a progress marker)</option>
+                @foreach (var progressId in _progressIds)
+                {
+                    <option value="@progressId">@progressId</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">On defeat</label>
+            <select class="form-select" value="@_model.DefeatProgressId"
+                    @onchange="@((ChangeEventArgs e) => _model.DefeatProgressId = e.Value?.ToString() ?? "")">
+                <option value="">(choose a progress marker)</option>
+                @foreach (var progressId in _progressIds)
+                {
+                    <option value="@progressId">@progressId</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="btn-group mb-2" role="group">
+        <button type="button" class="btn btn-sm @(_mode == PaintMode.PartyStart ? "btn-primary" : "btn-outline-primary")"
+                @onclick="@(() => _mode = PaintMode.PartyStart)">Party starting squares</button>
+        <button type="button" class="btn btn-sm @(_mode == PaintMode.Blocked ? "btn-primary" : "btn-outline-primary")"
+                @onclick="@(() => _mode = PaintMode.Blocked)">Blocked squares</button>
+        <button type="button" class="btn btn-sm @(_mode == PaintMode.Combatants ? "btn-primary" : "btn-outline-primary")"
+                @onclick="@(() => _mode = PaintMode.Combatants)">Enemies</button>
+    </div>
+
+    <p class="text-muted">
+        @switch (_mode)
+        {
+            case PaintMode.PartyStart:
+                <text>Click a square to add or remove a party starting position.</text>
+                break;
+            case PaintMode.Blocked:
+                <text>Click a square to block or unblock it.</text>
+                break;
+            default:
+                <text>Click an empty square to place an enemy, or an existing one to edit it.</text>
+                break;
+        }
+        <br />
+        <span class="@(_model.PartyStartingPositions.Count < _minimumPartyStarts ? "text-danger" : "")">
+            @_model.PartyStartingPositions.Count of @_minimumPartyStarts required party starting squares placed.
+        </span>
+        @_model.Combatants.Count enemies.
+    </p>
+
+    <div class="battlefield mb-3" style="grid-template-columns: repeat(@_model.Width, 2.5rem);">
+        @for (int y = 0; y < _model.Height; y++)
+        {
+            @for (int x = 0; x < _model.Width; x++)
+            {
+                int cellX = x;
+                int cellY = y;
+                <button type="button" class="battle-cell @CellClass(cellX, cellY)"
+                        title="@CellTitle(cellX, cellY)"
+                        @onclick="@(() => CellClicked(cellX, cellY))">
+                    @CellLabel(cellX, cellY)
+                </button>
+            }
+        }
+    </div>
+
+    <div class="text-muted small mb-3">
+        <span class="legend-chip party"></span> party start
+        <span class="legend-chip blocked ms-2"></span> blocked
+        <span class="legend-chip enemy ms-2"></span> enemy
+    </div>
+
+    @if (_mode == PaintMode.Combatants && _selectedCombatant is not null)
+    {
+        var combatant = _selectedCombatant;
+        <div class="card mb-3">
+            <div class="card-header">Enemy on (@combatant.X, @combatant.Y)</div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Combatant Id</label>
+                        <input class="form-control" value="@combatant.CombatantId"
+                               @onchange="@((ChangeEventArgs e) => combatant.CombatantId = e.Value?.ToString() ?? "")" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Monster</label>
+                        <select class="form-select" value="@combatant.MonsterId"
+                                @onchange="@((ChangeEventArgs e) => combatant.MonsterId = e.Value?.ToString() ?? "")">
+                            <option value="">(choose a monster)</option>
+                            @foreach (var monster in _monsters)
+                            {
+                                <option value="@monster.Id">@monster.Name (@monster.Id)</option>
+                            }
+                        </select>
+                        <div class="form-text">From the ruleset bestiary.</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Side Id</label>
+                        <input class="form-control" list="side-ids" value="@combatant.SideId"
+                               @onchange="@((ChangeEventArgs e) => combatant.SideId = e.Value?.ToString() ?? "")" />
+                        <datalist id="side-ids">
+                            @foreach (var sideId in _knownSideIds)
+                            {
+                                <option value="@sideId"></option>
+                            }
+                        </datalist>
+                        <div class="form-text">Combatants sharing a side fight together.</div>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-danger" @onclick="RemoveSelectedCombatant">Remove</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div>
+        <button type="button" class="btn btn-primary" @onclick="Save">Save encounter</button>
+        <a class="btn btn-secondary" href="@EncountersHref">Cancel</a>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    [Parameter]
+    public string? EncounterId { get; set; }
+
+    private enum PaintMode
+    {
+        PartyStart,
+        Blocked,
+        Combatants
+    }
+
+    private ScenarioSummary? _scenario;
+    private EncounterFormModel _model = new();
+    private bool _isNew;
+    private ValidationResult? _saveResult;
+    private PaintMode _mode = PaintMode.PartyStart;
+    private EncounterCombatantFormModel? _selectedCombatant;
+    private IReadOnlyList<string> _progressIds = [];
+    private IReadOnlyList<MonsterDefinition> _monsters = [];
+    private IReadOnlyList<string> _knownSideIds = [];
+    private int _minimumPartyStarts;
+
+    private string EncountersHref =>
+        $"scenarios/{Uri.EscapeDataString(ScenarioId)}/encounters";
+
+    protected override void OnInitialized()
+    {
+        _isNew = string.IsNullOrEmpty(EncounterId);
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _progressIds = ScenarioService.LoadProgressIds(_scenario.FilePath);
+        _monsters = RulesetService.LoadMonsters();
+        _minimumPartyStarts = ScenarioService.LoadMaximumPartyMembers(_scenario.FilePath);
+
+        // Sides aren't declared anywhere central -- they're free-form strings
+        // agreed on by the combatants that share them -- so the picker offers
+        // what this scenario already uses rather than a fixed list.
+        _knownSideIds = ScenarioService.LoadSideIds(_scenario.FilePath);
+
+        if (!_isNew)
+        {
+            var existing = ScenarioService.FindEncounter(_scenario.FilePath, EncounterId!);
+
+            if (existing is not null)
+            {
+                _model = EncounterFormModel.FromDefinition(existing);
+            }
+        }
+        else
+        {
+            _model = new EncounterFormModel
+            {
+                EncounterId = "encounter.new",
+                BattlefieldId = "battlefield.new",
+                Width = 8,
+                Height = 8,
+                PartySideId = "side.party"
+            };
+        }
+    }
+
+    private void CellClicked(
+        int x,
+        int y)
+    {
+        switch (_mode)
+        {
+            case PaintMode.PartyStart:
+                _model.TogglePartyStart(x, y);
+                break;
+
+            case PaintMode.Blocked:
+                _model.ToggleBlocked(x, y);
+                break;
+
+            default:
+                SelectOrPlaceCombatant(x, y);
+                break;
+        }
+    }
+
+    private void SelectOrPlaceCombatant(
+        int x,
+        int y)
+    {
+        var existing = _model.FindCombatant(x, y);
+
+        if (existing is not null)
+        {
+            _selectedCombatant = existing;
+            return;
+        }
+
+        string monsterId = _monsters.FirstOrDefault()?.Id ?? "";
+
+        EncounterCombatantFormModel placed = new()
+        {
+            CombatantId = _model.SuggestCombatantId(monsterId),
+            MonsterId = monsterId,
+            SideId = _knownSideIds.FirstOrDefault(side => side != _model.PartySideId) ?? "",
+            X = x,
+            Y = y
+        };
+
+        _model.Combatants.Add(placed);
+        _selectedCombatant = placed;
+    }
+
+    private void RemoveSelectedCombatant()
+    {
+        if (_selectedCombatant is null)
+        {
+            return;
+        }
+
+        _model.Combatants.Remove(_selectedCombatant);
+        _selectedCombatant = null;
+    }
+
+    private string CellClass(
+        int x,
+        int y)
+    {
+        List<string> classes = [];
+
+        if (_model.IsBlocked(x, y))
+        {
+            classes.Add("blocked");
+        }
+
+        if (_model.IsPartyStart(x, y))
+        {
+            classes.Add("party");
+        }
+
+        if (_model.FindCombatant(x, y) is { } combatant)
+        {
+            classes.Add("enemy");
+
+            if (ReferenceEquals(combatant, _selectedCombatant))
+            {
+                classes.Add("selected");
+            }
+        }
+
+        return string.Join(" ", classes);
+    }
+
+    private string CellLabel(
+        int x,
+        int y)
+    {
+        if (_model.FindCombatant(x, y) is not null)
+        {
+            return "E";
+        }
+
+        if (_model.IsPartyStart(x, y))
+        {
+            // Deployment order is meaningful -- it's the formation the party
+            // lands in -- so the square shows its own place in that order.
+            int index = _model.PartyStartingPositions
+                .FindIndex(position => position.X == x && position.Y == y);
+            return (index + 1).ToString();
+        }
+
+        return "";
+    }
+
+    private string CellTitle(
+        int x,
+        int y)
+    {
+        List<string> parts = [$"({x}, {y})"];
+
+        if (_model.IsBlocked(x, y))
+        {
+            parts.Add("blocked");
+        }
+
+        if (_model.IsPartyStart(x, y))
+        {
+            parts.Add("party starting square");
+        }
+
+        if (_model.FindCombatant(x, y) is { } combatant)
+        {
+            parts.Add($"{combatant.MonsterId} ({combatant.CombatantId})");
+        }
+
+        return string.Join(" · ", parts);
+    }
+
+    private static int ParseInt(
+        string? raw,
+        int fallback)
+    {
+        return int.TryParse(raw, out int value) ? value : fallback;
+    }
+
+    private void Save()
+    {
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _saveResult = ScenarioService.SaveEncounter(_scenario.FilePath, _model.ToDefinition());
+
+        if (_saveResult.IsValid)
+        {
+            Navigation.NavigateTo(EncountersHref);
+        }
+    }
+}

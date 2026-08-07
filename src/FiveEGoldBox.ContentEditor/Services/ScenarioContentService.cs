@@ -277,6 +277,79 @@ internal sealed class ScenarioContentService
             ScenarioJsonFormatting.RenderDecisions(updated));
     }
 
+    // ----- Encounters -----
+
+    internal IReadOnlyList<EncounterDefinitionV1> LoadEncounters(
+        string scenarioFilePath)
+    {
+        return ScenarioPackDocument.Read(scenarioFilePath).Encounters;
+    }
+
+    internal EncounterDefinitionV1? FindEncounter(
+        string scenarioFilePath,
+        string encounterId)
+    {
+        return LoadEncounters(scenarioFilePath)
+            .FirstOrDefault(encounter => encounter.EncounterId == encounterId);
+    }
+
+    internal ValidationResult SaveEncounter(
+        string scenarioFilePath,
+        EncounterDefinitionV1 encounter)
+    {
+        List<EncounterDefinitionV1> updated = Upsert(
+            LoadEncounters(scenarioFilePath),
+            encounter,
+            e => e.EncounterId);
+
+        return WriteAndValidate(
+            scenarioFilePath,
+            "Encounters",
+            ScenarioJsonFormatting.RenderEncounters(updated));
+    }
+
+    internal ValidationResult DeleteEncounter(
+        string scenarioFilePath,
+        string encounterId)
+    {
+        List<EncounterDefinitionV1> updated = LoadEncounters(scenarioFilePath)
+            .Where(encounter => encounter.EncounterId != encounterId)
+            .ToList();
+
+        return WriteAndValidate(
+            scenarioFilePath,
+            "Encounters",
+            ScenarioJsonFormatting.RenderEncounters(updated));
+    }
+
+    /// How many party starting squares an encounter needs, which is the
+    /// scenario's own maximum party size -- the validator rejects an
+    /// encounter that can't deploy a full party, so the form shows the
+    /// target rather than letting the author discover it on save.
+    internal int LoadMaximumPartyMembers(
+        string scenarioFilePath)
+    {
+        return ScenarioPackDocument.Read(scenarioFilePath).MaximumPartyMembers;
+    }
+
+    /// Side identifiers already used anywhere in this scenario. Sides are
+    /// free-form strings agreed on by the combatants that share them, not
+    /// declared content, so there is no canonical list to offer -- only what
+    /// the scenario already does.
+    internal IReadOnlyList<string> LoadSideIds(
+        string scenarioFilePath)
+    {
+        ScenarioPackDocument document = ScenarioPackDocument.Read(scenarioFilePath);
+
+        return document.Encounters
+            .SelectMany(encounter => encounter.Combatants
+                .Select(combatant => combatant.SideId)
+                .Append(encounter.PartySideId))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(sideId => sideId, StringComparer.Ordinal)
+            .ToList();
+    }
+
     /// Encounter ids for a trigger's optional encounter picker. Reading the
     /// scenario's own Encounters needs no encounter *editor* to exist, which
     /// is why Triggers didn't have to wait on the encounters phase -- the

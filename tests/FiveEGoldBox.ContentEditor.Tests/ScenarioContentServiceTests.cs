@@ -464,6 +464,157 @@ public sealed class ScenarioContentServiceTests
         });
     }
 
+    // ----- Encounters -----
+
+    /// No committed encounter has a non-empty BlockedPositions, so the
+    /// byte-identity theory can't reach this shape -- it's covered
+    /// structurally here instead, and the file still has to validate.
+    [Fact]
+    public void SaveEncounter_RoundTripsBlockedPositionsThatNoCommittedContentExercises()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            var model = EncounterFormModel.FromDefinition(
+                service.FindEncounter(path, "encounter.watchtower-signal-ambush")!);
+
+            Assert.Empty(model.BlockedPositions);
+            model.ToggleBlocked(6, 6);
+            model.ToggleBlocked(7, 6);
+
+            var result = service.SaveEncounter(path, model.ToDefinition());
+            Assert.True(result.IsValid, DescribeIssues(result));
+
+            var saved = service.FindEncounter(path, "encounter.watchtower-signal-ambush")!;
+            Assert.Equal(
+                [(6, 6), (7, 6)],
+                saved.BlockedPositions.Select(p => (p.X, p.Y)));
+        });
+    }
+
+    [Fact]
+    public void SaveEncounter_AddingACombatantPersistsItWithItsMonsterSideAndPosition()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            var model = EncounterFormModel.FromDefinition(
+                service.FindEncounter(path, "encounter.watchtower-signal-ambush")!);
+
+            model.Combatants.Add(new EncounterCombatantFormModel
+            {
+                CombatantId = "combatant.test-extra",
+                MonsterId = "monster.watchtower-raider.archer",
+                SideId = "side.watchtower-raiders",
+                X = 5,
+                Y = 5
+            });
+
+            var result = service.SaveEncounter(path, model.ToDefinition());
+            Assert.True(result.IsValid, DescribeIssues(result));
+
+            var added = service.FindEncounter(path, "encounter.watchtower-signal-ambush")!
+                .Combatants.Single(c => c.CombatantId == "combatant.test-extra");
+
+            Assert.Equal("monster.watchtower-raider.archer", added.MonsterId);
+            Assert.Equal((5, 5), (added.StartingPosition.X, added.StartingPosition.Y));
+        });
+    }
+
+    [Fact]
+    public void SaveEncounter_RejectsAMonsterTheRulesetDoesNotDefineAndLeavesFileUntouched()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            byte[] before = File.ReadAllBytes(path);
+
+            var model = EncounterFormModel.FromDefinition(
+                service.FindEncounter(path, "encounter.watchtower-signal-ambush")!);
+            model.Combatants[0].MonsterId = "monster.does-not-exist";
+
+            var result = service.SaveEncounter(path, model.ToDefinition());
+
+            Assert.False(result.IsValid);
+            Assert.Equal(before, File.ReadAllBytes(path));
+        });
+    }
+
+    [Fact]
+    public void SaveEncounter_RejectsDeployingThePartyOntoABlockedSquareAndLeavesFileUntouched()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            byte[] before = File.ReadAllBytes(path);
+
+            var model = EncounterFormModel.FromDefinition(
+                service.FindEncounter(path, "encounter.watchtower-signal-ambush")!);
+
+            // Block a square the party already deploys onto.
+            var start = model.PartyStartingPositions[0];
+            model.ToggleBlocked(start.X, start.Y);
+
+            var result = service.SaveEncounter(path, model.ToDefinition());
+
+            Assert.False(result.IsValid);
+            Assert.Equal(before, File.ReadAllBytes(path));
+        });
+    }
+
+    [Fact]
+    public void DeleteEncounter_IsRejectedWhileATriggerStillStartsIt()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            byte[] before = File.ReadAllBytes(path);
+
+            // The guard that matters most here: an encounter is only
+            // reachable through a trigger, so deleting one out from under its
+            // trigger would leave the scenario referencing nothing.
+            var result = service.DeleteEncounter(path, "encounter.watchtower-signal-ambush");
+
+            Assert.False(result.IsValid);
+            Assert.Equal(before, File.ReadAllBytes(path));
+        });
+    }
+
+    [Fact]
+    public void SuggestCombatantId_DisambiguatesWhenTheSameMonsterAppearsTwice()
+    {
+        WithTempScenarioFile("hollow-mill", (service, path) =>
+        {
+            EncounterFormModel model = new();
+
+            Assert.Equal("combatant.mill-rat", model.SuggestCombatantId("monster.mill-rat"));
+
+            model.Combatants.Add(new EncounterCombatantFormModel { CombatantId = "combatant.mill-rat" });
+            Assert.Equal("combatant.mill-rat.2", model.SuggestCombatantId("monster.mill-rat"));
+        });
+    }
+
+    [Fact]
+    public void LoadSideIds_OffersTheSidesTheScenarioAlreadyUses()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            var sides = service.LoadSideIds(path);
+
+            Assert.Contains("side.party", sides);
+            Assert.Contains("side.watchtower-raiders", sides);
+        });
+    }
+
+    [Fact]
+    public void LoadMaximumPartyMembers_ReportsHowManyStartingSquaresAnEncounterNeeds()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            int maximum = service.LoadMaximumPartyMembers(path);
+
+            Assert.Equal(
+                maximum,
+                service.FindEncounter(path, "encounter.watchtower-signal-ambush")!
+                    .PartyStartingPositions.Count);
+        });
+    }
+
     // ----- Triggers -----
 
     [Fact]

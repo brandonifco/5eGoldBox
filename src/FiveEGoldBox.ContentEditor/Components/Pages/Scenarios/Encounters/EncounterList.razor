@@ -1,0 +1,130 @@
+@page "/scenarios/{ScenarioId}/encounters"
+@inject ScenarioContentService ScenarioService
+
+<PageTitle>Encounters -- @ScenarioId</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>Encounters -- @_scenario.DisplayName</h1>
+    <a class="btn btn-secondary mb-3" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}")">&larr; Back to scenario</a>
+    <a class="btn btn-primary mb-3" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/encounters/new")">Add new encounter</a>
+
+    <p class="text-muted">
+        A fight, on its own battlefield. An encounter has to be started by a trigger --
+        one that nothing starts is rejected on save, so add the trigger before deleting
+        the encounter it points at.
+    </p>
+
+    <ValidationIssuesAlert Result="_lastDeleteResult" />
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Battlefield</th>
+                <th>Size</th>
+                <th>Opposition</th>
+                <th>Started by</th>
+                <th>Outcome</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var encounter in _encounters)
+            {
+                <tr>
+                    <td><code>@encounter.EncounterId</code></td>
+                    <td><code>@encounter.BattlefieldId</code></td>
+                    <td>@encounter.Width &times; @encounter.Height</td>
+                    <td>
+                        @foreach (var combatant in encounter.Combatants)
+                        {
+                            <div class="small"><code>@combatant.MonsterId</code> @@ (@combatant.StartingPosition.X, @combatant.StartingPosition.Y)</div>
+                        }
+                    </td>
+                    <td>
+                        @{
+                            var starters = _triggersByEncounterId.TryGetValue(encounter.EncounterId, out var list)
+                                ? list
+                                : [];
+                        }
+                        @if (starters.Count == 0)
+                        {
+                            <span class="text-danger small">nothing starts this</span>
+                        }
+                        else
+                        {
+                            @foreach (var triggerId in starters)
+                            {
+                                <div class="small"><code>@triggerId</code></div>
+                            }
+                        }
+                    </td>
+                    <td class="small">
+                        <div>win &rarr; <code>@encounter.Outcome.VictoryProgressId</code></div>
+                        <div>lose &rarr; <code>@encounter.Outcome.DefeatProgressId</code></div>
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary me-1" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/encounters/edit/{Uri.EscapeDataString(encounter.EncounterId)}")">Edit</a>
+                        <DeleteButton OnConfirmed="() => Delete(encounter.EncounterId)" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    private ScenarioSummary? _scenario;
+    private IReadOnlyList<EncounterDefinitionV1> _encounters = [];
+    private Dictionary<string, List<string>> _triggersByEncounterId = [];
+    private ValidationResult? _lastDeleteResult;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+
+        if (_scenario is null)
+        {
+            _encounters = [];
+            _triggersByEncounterId = [];
+            return;
+        }
+
+        _encounters = ScenarioService.LoadEncounters(_scenario.FilePath);
+
+        // Showing what starts each encounter turns the validator's
+        // "unreachable encounter" rule from a save-time surprise into
+        // something visible before you touch anything.
+        _triggersByEncounterId = ScenarioService.LoadTriggers(_scenario.FilePath)
+            .Where(trigger => trigger.EncounterId is not null)
+            .GroupBy(trigger => trigger.EncounterId!)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(trigger => trigger.TriggerId).ToList());
+    }
+
+    private void Delete(
+        string encounterId)
+    {
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _lastDeleteResult = ScenarioService.DeleteEncounter(_scenario.FilePath, encounterId);
+        Refresh();
+    }
+}

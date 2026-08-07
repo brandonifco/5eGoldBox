@@ -105,10 +105,7 @@ including the `Shops` property-insert path on a file that had none, and a reject
 ## Forward roadmap (not built yet)
 
 - **Phase 2 -- Decisions + Triggers. Done, 2026-08-06.** See the section below.
-- **Phase 3 -- Encounters.** `Combatants` (`MonsterId` picker cross-referencing the
-  ruleset bestiary), `PartyStartingPositions`/`BlockedPositions` (lists of
-  `GridPosition`), `Outcome` (`VictoryProgressId`/`DefeatProgressId` pickers sourced from
-  the scenario's own `Progress.ProgressIds`).
+- **Phase 3 -- Encounters. Done, 2026-08-06.** See the section below.
 - **Phase 4 -- `ExplorationMap` editing** (`Floors`/`TraversablePositions`/`Stairs`/
   `Doors`/`Treasures`/`Npcs`). **The UX decision is made: visual click-to-toggle grid,
   not a raw X/Y list** (the user's own call, 2026-08-06 -- it's the "map maker" the
@@ -314,10 +311,50 @@ mislead.
   deleting a trigger that starts an encounter is refused with
   `scenario.encounters.unreachable`, leaving the file untouched. Test edits reverted.
 
-## Status (2026-08-06)
+## Phase 3 -- done, 2026-08-06: Encounters
 
-Phase 1, Phase 2 and all of Phase 4 (a/b/c) are done and merged. **A scenario's
-structure -- locations, maps, routes, shops, decisions and triggers -- is now fully
-authorable in the editor.** What remains is Phase 3 (Encounters, the one content kind a
-trigger can point at but nobody can yet create here) and Phase 5 (campaign roster). Pick
-up either via the standing branch/PR/merge workflow.
+Full CRUD, with the battlefield edited as a **visual grid** rather than X/Y lists --
+the same call Phase 4 made for exploration maps, and for the same reason: a fight's
+shape is spatial, and a list of coordinates hides the thing you are actually authoring.
+
+- **Three paint modes over one grid** (party starting squares / blocked squares /
+  enemies), reusing 4b's mode-toggle idiom. Clicking an empty square in enemy mode
+  places a combatant and opens its panel; clicking an existing one selects it.
+- **`BlockedPositions`/`PartyStartingPositions` are ordered Lists**, same lesson as
+  `TraversablePositions`: Watchtower deploys the party (1,1), (1,2), (0,2), (0,1) --
+  a formation read clockwise, not a scan -- so an unordered set would rewrite it on
+  first save. The grid **numbers each party square with its deployment order**, which
+  makes that ordering visible rather than merely preserved.
+- **The `MonsterId` picker cross-references the ruleset bestiary** through the existing
+  `RulesetContentService.LoadMonsters()`; victory/defeat pickers come from the
+  scenario's own progress markers. `SideId` stays free text with a datalist of the
+  sides this scenario already uses -- sides aren't declared content anywhere, just
+  strings combatants agree on, so there is no canonical list to offer.
+- **The list page shows what starts each encounter**, turning the validator's
+  `scenario.encounters.unreachable` rule from a save-time surprise into something
+  visible beforehand -- an encounter nothing starts is flagged in red.
+- **The one shape no committed content exercises is `BlockedPositions` non-empty**
+  (every real encounter has `[]`). Byte-identity can't reach it, so it's covered
+  structurally instead, and the renderer follows `PartyStartingPositions`' proven
+  layout rather than inventing one.
+- 11 new tests (71 -> 82). Full solution gate green (Debug+Release 0 warnings; 2372
+  passed, 4 skipped). No public API change; no committed content changed.
+- **Verified live in a browser:** the Watchtower ambush renders as 9x8 with its four
+  party squares numbered in committed deployment order and both raiders on their real
+  squares; placing an enemy auto-suggests a combatant id, sources the monster list from
+  the bestiary and defaults the side to the scenario's existing enemy side; saving
+  produced a **6-line append** formatted identically to its neighbours; and blocking a
+  square the party deploys onto is refused with
+  `scenario.encounters.deployment_blocked` naming the exact square, file untouched.
+  Test edits reverted.
+
+## Status (2026-08-06) -- the scenario editor is complete
+
+Phases 1, 2, 3 and 4 (a/b/c) are done and merged. **Every part of a scenario is now
+authorable in the editor** -- locations, exploration maps, routes, shops, decisions,
+triggers and encounters -- with every save gated by the same validator the engine loads
+through, and a no-op save byte-identical for all three committed scenarios.
+
+Only **Phase 5 (campaign roster)** remains, and it is deliberately a different thing:
+it edits `data/campaigns/*/campaign.json`, not a scenario, so it needs its own
+`CampaignContentService`/`CampaignPackDocument` pair rather than extending these.
