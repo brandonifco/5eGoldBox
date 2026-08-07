@@ -1,0 +1,105 @@
+@page "/campaigns/{CampaignId}/roster"
+@inject CampaignContentService CampaignService
+
+<PageTitle>Roster -- @CampaignId</PageTitle>
+
+@if (_campaign is null)
+{
+    <p class="text-danger">No campaign found with id <code>@CampaignId</code>.</p>
+}
+else
+{
+    <h1>Roster -- @_campaign.DisplayName</h1>
+    <a class="btn btn-secondary mb-3" href="campaigns">&larr; Back to campaigns</a>
+    <a class="btn btn-primary mb-3" href="@($"campaigns/{Uri.EscapeDataString(CampaignId)}/roster/new")">Add roster member</a>
+
+    <p class="text-muted">
+        @_roster.Count characters, of whom @_campaign.ActivePartySize take the field.
+        The rest are reserve -- a roster may hold more than it fields, but not fewer.
+    </p>
+
+    <ValidationIssuesAlert Result="_lastDeleteResult" />
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Build</th>
+                <th>HP</th>
+                <th>Kit</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var member in _roster)
+            {
+                <tr>
+                    <td><code>@member.PartyMemberId</code></td>
+                    <td>@member.DisplayName</td>
+                    <td class="small">
+                        <div><code>@member.ClassId</code></div>
+                        <div class="text-muted"><code>@member.RaceId</code> · <code>@member.BackgroundId</code></div>
+                    </td>
+                    <td class="small">
+                        @member.CurrentHitPoints / @member.MaximumHitPoints
+                        @if (member.TemporaryHitPoints > 0)
+                        {
+                            <span class="text-muted">(+@member.TemporaryHitPoints temp)</span>
+                        }
+                    </td>
+                    <td class="small">
+                        @foreach (var weaponId in member.EquippedWeaponIds)
+                        {
+                            <div><code>@weaponId</code></div>
+                        }
+                        @if (member.Ammunition is not null)
+                        {
+                            <div class="text-muted">@member.Ammunition.Quantity &times; <code>@member.Ammunition.AmmunitionItemId</code></div>
+                        }
+                        @if (member.PreparedSpellIds.Count > 0)
+                        {
+                            <div class="text-muted">@member.PreparedSpellIds.Count prepared spells</div>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary me-1" href="@($"campaigns/{Uri.EscapeDataString(CampaignId)}/roster/edit/{Uri.EscapeDataString(member.PartyMemberId)}")">Edit</a>
+                        <DeleteButton OnConfirmed="() => Delete(member.PartyMemberId)" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public string CampaignId { get; set; } = "";
+
+    private CampaignSummary? _campaign;
+    private IReadOnlyList<CampaignCharacterDefinitionV1> _roster = [];
+    private ValidationResult? _lastDeleteResult;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _campaign = CampaignService.FindCampaign(CampaignId);
+        _roster = _campaign is null ? [] : CampaignService.LoadRoster(_campaign.FilePath);
+    }
+
+    private void Delete(
+        string partyMemberId)
+    {
+        if (_campaign is null)
+        {
+            return;
+        }
+
+        _lastDeleteResult = CampaignService.DeleteRosterMember(_campaign.FilePath, partyMemberId);
+        Refresh();
+    }
+}

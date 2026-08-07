@@ -245,4 +245,42 @@ internal static class JsonLayoutPrimitives
     {
         return new string(' ', count);
     }
+
+    /// A list of plain strings that stays on one line for one or two entries
+    /// and only explodes to one entry per line at three or more. Returns null
+    /// for an empty list so the caller's RenderExplodedObject omits the
+    /// property entirely.
+    ///
+    /// Deliberately not the same threshold RenderCompactArray uses for
+    /// ruleset content (which explodes at two or more): scenario and campaign
+    /// files were authored under one convention and core.json under another.
+    /// Both scenario progress-id lists and campaign skill/weapon/spell lists
+    /// follow this one, verified byte-for-byte against real content -- a
+    /// two-entry PreparedSpellIds stays inline, a four-entry one explodes.
+    internal static string? RenderLooseStringList(
+        IReadOnlyList<string> values,
+        int column)
+    {
+        if (values.Count == 0)
+        {
+            return null;
+        }
+
+        if (values.Count <= 2)
+        {
+            return $"[ {string.Join(", ", values.Select(JsonString))} ]";
+        }
+
+        StringBuilder sb = new();
+        sb.Append('[').Append('\n');
+
+        for (int i = 0; i < values.Count; i++)
+        {
+            sb.Append(Spaces(column)).Append(JsonString(values[i]));
+            sb.Append(i < values.Count - 1 ? ",\n" : "\n");
+        }
+
+        sb.Append(Spaces(column - 4)).Append(']');
+        return sb.ToString();
+    }
 }

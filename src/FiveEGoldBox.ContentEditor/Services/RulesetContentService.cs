@@ -168,6 +168,30 @@ public sealed class RulesetContentService
         return RulesetPackDocument.Read(_filePath).Effects;
     }
 
+    /// Reference sources for the campaign roster editor. Not editable here
+    /// -- races, classes, backgrounds and skills aren't among the four
+    /// managed content kinds -- but a roster entry has to name real ones, and
+    /// reading their ids doesn't require being able to author them.
+    public IReadOnlyList<RaceDefinition> LoadRaces()
+    {
+        return RulesetPackDocument.Read(_filePath).Races;
+    }
+
+    public IReadOnlyList<ClassDefinition> LoadClasses()
+    {
+        return RulesetPackDocument.Read(_filePath).Classes;
+    }
+
+    public IReadOnlyList<BackgroundDefinition> LoadBackgrounds()
+    {
+        return RulesetPackDocument.Read(_filePath).Backgrounds;
+    }
+
+    public IReadOnlyList<SkillDefinition> LoadSkills()
+    {
+        return RulesetPackDocument.Read(_filePath).Skills;
+    }
+
     // ----- Shared write path -----
 
     private static List<T> Upsert<T>(

@@ -9,6 +9,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddScoped<RulesetContentService>();
 builder.Services.AddScoped<ScenarioContentService>();
+builder.Services.AddScoped<CampaignContentService>();
 
 var app = builder.Build();
 

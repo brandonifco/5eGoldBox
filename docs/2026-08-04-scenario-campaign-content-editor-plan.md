@@ -113,12 +113,7 @@ including the `Shops` property-insert path on a file that had none, and a reject
   - **Phase 4a -- foundation. Done, 2026-08-06.** See the section below.
   - **Phase 4b -- the grid component. Done, 2026-08-06.** See the section below.
   - **Phase 4c -- feature layers. Done, 2026-08-06.** See the section below.
-- **Phase 5 -- Campaign roster editor.** Separate `CampaignContentService`/
-  `CampaignPackDocument`, roster CRUD (`AbilityScores` dict, `SelectedSkillIds`,
-  `EquippedWeaponIds`, `Ammunition`, `PreparedSpellIds`), cross-referencing ruleset
-  weapons/spells the same way Monster's weapon picker already does. `RaceId`/`ClassId`/
-  `BackgroundId` stay free-text unless/until those become editable ruleset content
-  themselves (they aren't today).
+- **Phase 5 -- Campaign roster editor. Done, 2026-08-06.** See the section below.
 
 ## Phase 4a -- done, 2026-08-06: the ExplorationMap renderer and save path
 
@@ -348,13 +343,71 @@ shape is spatial, and a list of coordinates hides the thing you are actually aut
   `scenario.encounters.deployment_blocked` naming the exact square, file untouched.
   Test edits reverted.
 
+## Phase 5 -- done, 2026-08-06: the campaign roster editor
+
+Roster CRUD on its own `CampaignContentService`/`CampaignPackDocument`/
+`CampaignJsonFormatting` triad, sharing only the splicer and the layout primitives
+with the scenario side -- a campaign is a different root shape in a different
+directory, not another section of a scenario.
+
+- **Three properties are omitted rather than written with their default**, which is the
+  whole reason this needs a hand-rolled renderer. `TemporaryHitPoints` is the dangerous
+  one: a *non-nullable* int only the Fighter carries, so a renderer that wrote its
+  default would silently add `"TemporaryHitPoints": 0` to five of six roster entries.
+  `Ammunition` is null for anyone without a ranged weapon and `PreparedSpellIds` empty
+  for every non-caster. The byte-identity test is what proves all three.
+- **`RenderProgressIdList` was promoted to `JsonLayoutPrimitives.RenderLooseStringList`**
+  rather than copied: campaign skill/weapon/spell lists follow the exact same "inline at
+  one or two entries, exploded at three or more" convention as scenario progress-id
+  lists (the Wizard's two prepared spells stay inline, the Cleric's four explode). The
+  scenario byte-identity tests are what proved the extraction behaviour-preserving.
+- **The plan's own guidance here was superseded and is worth recording as wrong.** It
+  said `RaceId`/`ClassId`/`BackgroundId` should "stay free-text unless/until those
+  become editable ruleset content themselves." That conflates *editable* with
+  *readable* -- the same mistake Phase 2 corrected for encounters. All of Races,
+  Classes, Backgrounds, Skills, Weapons, Spells and EquipmentItems are readable from
+  the ruleset today, so every one of those fields is a real dropdown.
+
+### A real engine gap this surfaced, documented rather than papered over
+
+A test written on the assumption that an unknown `ClassId` would be rejected **failed**:
+`CampaignDefinitionValidator` does not cross-check a roster entry's
+`RaceId`/`ClassId`/`BackgroundId`/`SelectedSkillIds`/`EquippedWeaponIds`/
+`PreparedSpellIds` against the ruleset at all. It checks hit-point sanity, unique ids,
+roster size against `ActivePartySize`, and that ammunition belongs to an equipped
+weapon -- and nothing else. A campaign naming a class that does not exist loads clean
+and only fails later, during character resolution.
+
+The test now asserts the actual behaviour and says why, and this raises the stakes on
+the pickers above: **for those fields the dropdown is the only guard there is**, not a
+convenience layered over validation. Closing the gap properly is an engine change
+(`CampaignDefinitionValidator` would need the ruleset passed in, which it currently
+never receives), deliberately not bundled into an editor phase.
+
+- 10 new tests (82 -> 92). Full solution gate green (Debug+Release 0 warnings; 2382
+  passed, 4 skipped). No public API change; no committed content changed.
+- **Verified live in a browser:** the roster lists all six characters with the Fighter's
+  temporary hit points and per-character ammunition; the form loads real
+  race/class/background/skills/weapons/ammunition from committed content; editing the
+  Rogue produced a diff that **crossed the inline-to-exploded threshold correctly**
+  (`SelectedSkillIds` 2 -> 3 entries switched format while `EquippedWeaponIds` stayed
+  inline at 2); and giving the Fighter arrows for a bow they do not wield is refused
+  with the validator's own message, file untouched. Test edits reverted.
+
 ## Status (2026-08-06) -- the scenario editor is complete
 
-Phases 1, 2, 3 and 4 (a/b/c) are done and merged. **Every part of a scenario is now
-authorable in the editor** -- locations, exploration maps, routes, shops, decisions,
-triggers and encounters -- with every save gated by the same validator the engine loads
-through, and a no-op save byte-identical for all three committed scenarios.
+**Every phase of this plan is done and merged.** Scenarios (locations, exploration
+maps, routes, shops, decisions, triggers, encounters) and campaigns (the roster) are
+both fully authorable, with every save gated by the same validator the engine loads
+through and a no-op save byte-identical for every committed content file.
 
-Only **Phase 5 (campaign roster)** remains, and it is deliberately a different thing:
-it edits `data/campaigns/*/campaign.json`, not a scenario, so it needs its own
-`CampaignContentService`/`CampaignPackDocument` pair rather than extending these.
+Known gaps, none of them editor work:
+
+- **`CampaignDefinitionValidator` doesn't cross-check roster ids against the ruleset**
+  (see Phase 5 above). Closing it is an engine change, and until it is closed the
+  roster form's dropdowns are the only thing preventing a dangling class or skill id.
+- **`BlockedPositions` non-empty has no committed example**, so its layout is proven
+  structurally rather than byte-for-byte (see Phase 3).
+- **Nothing here edits the ruleset's races, classes, backgrounds or skills** -- they
+  are readable for pickers but not authorable, which is the pre-existing scope of the
+  ruleset editor rather than something this plan changed.

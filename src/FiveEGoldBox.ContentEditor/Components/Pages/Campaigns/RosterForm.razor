@@ -1,0 +1,310 @@
+@page "/campaigns/{CampaignId}/roster/new"
+@page "/campaigns/{CampaignId}/roster/edit/{PartyMemberId}"
+@inject CampaignContentService CampaignService
+@inject RulesetContentService RulesetService
+@inject NavigationManager Navigation
+
+<PageTitle>@(_isNew ? "Add roster member" : $"Edit {PartyMemberId}")</PageTitle>
+
+@if (_campaign is null)
+{
+    <p class="text-danger">No campaign found with id <code>@CampaignId</code>.</p>
+}
+else
+{
+    <h1>@(_isNew ? "Add roster member" : $"Edit roster member: {PartyMemberId}")</h1>
+
+    <ValidationIssuesAlert Result="_saveResult" />
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Party member Id</label>
+            <input class="form-control" value="@_model.PartyMemberId" disabled="@(!_isNew)"
+                   @onchange="@((ChangeEventArgs e) => _model.PartyMemberId = e.Value?.ToString() ?? "")" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Character definition Id</label>
+            <input class="form-control" value="@_model.CharacterDefinitionId"
+                   @onchange="@((ChangeEventArgs e) => _model.CharacterDefinitionId = e.Value?.ToString() ?? "")" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Display name</label>
+            <input class="form-control" value="@_model.DisplayName"
+                   @onchange="@((ChangeEventArgs e) => _model.DisplayName = e.Value?.ToString() ?? "")" />
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Race</label>
+            <select class="form-select" value="@_model.RaceId"
+                    @onchange="@((ChangeEventArgs e) => _model.RaceId = e.Value?.ToString() ?? "")">
+                <option value="">(choose a race)</option>
+                @foreach (var race in _races)
+                {
+                    <option value="@race.Id">@race.Name (@race.Id)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Class</label>
+            <select class="form-select" value="@_model.ClassId"
+                    @onchange="@((ChangeEventArgs e) => _model.ClassId = e.Value?.ToString() ?? "")">
+                <option value="">(choose a class)</option>
+                @foreach (var characterClass in _classes)
+                {
+                    <option value="@characterClass.Id">@characterClass.Name (@characterClass.Id)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Background</label>
+            <select class="form-select" value="@_model.BackgroundId"
+                    @onchange="@((ChangeEventArgs e) => _model.BackgroundId = e.Value?.ToString() ?? "")">
+                <option value="">(choose a background)</option>
+                @foreach (var background in _backgrounds)
+                {
+                    <option value="@background.Id">@background.Name (@background.Id)</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <h5>Ability scores</h5>
+    <div class="row g-2 mb-3">
+        @foreach (var ability in Enum.GetValues<AbilityV1>())
+        {
+            var current = ability;
+            <div class="col-md-2">
+                <label class="form-label">@current</label>
+                <input type="number" class="form-control" value="@_model.ScoreFor(current)"
+                       @onchange="@((ChangeEventArgs e) => _model.SetScore(current, ParseInt(e.Value?.ToString(), _model.ScoreFor(current))))" />
+            </div>
+        }
+    </div>
+
+    <h5>Hit points</h5>
+    <div class="row g-2 mb-3">
+        <div class="col-md-3">
+            <label class="form-label">Maximum</label>
+            <input type="number" class="form-control" value="@_model.MaximumHitPoints"
+                   @onchange="@((ChangeEventArgs e) => _model.MaximumHitPoints = ParseInt(e.Value?.ToString(), _model.MaximumHitPoints))" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Current</label>
+            <input type="number" class="form-control" value="@_model.CurrentHitPoints"
+                   @onchange="@((ChangeEventArgs e) => _model.CurrentHitPoints = ParseInt(e.Value?.ToString(), _model.CurrentHitPoints))" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Temporary</label>
+            <input type="number" class="form-control" value="@_model.TemporaryHitPoints"
+                   @onchange="@((ChangeEventArgs e) => _model.TemporaryHitPoints = ParseInt(e.Value?.ToString(), _model.TemporaryHitPoints))" />
+            <div class="form-text">0 writes no property at all.</div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">At zero hit points</label>
+            <select class="form-select" value="@_model.ZeroHitPointPolicy"
+                    @onchange="@((ChangeEventArgs e) => SetZeroHitPointPolicy(e.Value?.ToString()))">
+                @foreach (var policy in Enum.GetValues<CombatantZeroHitPointPolicyV1>())
+                {
+                    <option value="@policy">@policy</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <h5>Skills</h5>
+            @foreach (var skill in _skills)
+            {
+                var current = skill;
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="@("skill-" + current.Id)"
+                           checked="@_model.SelectedSkillIds.Contains(current.Id)"
+                           @onchange="@((ChangeEventArgs e) => _model.ToggleId(_model.SelectedSkillIds, current.Id, (bool)e.Value!))" />
+                    <label class="form-check-label" for="@("skill-" + current.Id)">@current.Name</label>
+                </div>
+            }
+        </div>
+        <div class="col-md-4">
+            <h5>Equipped weapons</h5>
+            @foreach (var weapon in _weapons)
+            {
+                var current = weapon;
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="@("weapon-" + current.Id)"
+                           checked="@_model.EquippedWeaponIds.Contains(current.Id)"
+                           @onchange="@((ChangeEventArgs e) => _model.ToggleId(_model.EquippedWeaponIds, current.Id, (bool)e.Value!))" />
+                    <label class="form-check-label" for="@("weapon-" + current.Id)">@current.Name</label>
+                </div>
+            }
+        </div>
+        <div class="col-md-4">
+            <h5>Prepared spells</h5>
+            @foreach (var spell in _spells)
+            {
+                var current = spell;
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="@("spell-" + current.Id)"
+                           checked="@_model.PreparedSpellIds.Contains(current.Id)"
+                           @onchange="@((ChangeEventArgs e) => _model.ToggleId(_model.PreparedSpellIds, current.Id, (bool)e.Value!))" />
+                    <label class="form-check-label" for="@("spell-" + current.Id)">@current.Name</label>
+                </div>
+            }
+            <div class="form-text">None checked writes no property at all.</div>
+        </div>
+    </div>
+
+    <h5>Ammunition</h5>
+    <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" id="has-ammunition"
+               checked="@_model.HasAmmunition"
+               @onchange="@((ChangeEventArgs e) => SetHasAmmunition((bool)e.Value!))" />
+        <label class="form-check-label" for="has-ammunition">Carries ammunition for a ranged weapon</label>
+    </div>
+
+    @if (_model.HasAmmunition)
+    {
+        <div class="row g-2 mb-3">
+            <div class="col-md-4">
+                <label class="form-label">For weapon</label>
+                <select class="form-select" value="@_model.AmmunitionWeaponId"
+                        @onchange="@((ChangeEventArgs e) => _model.AmmunitionWeaponId = e.Value?.ToString() ?? "")">
+                    <option value="">(choose a weapon)</option>
+                    @foreach (var weapon in _weapons)
+                    {
+                        <option value="@weapon.Id">@weapon.Name</option>
+                    }
+                </select>
+                <div class="form-text">Must be a weapon this character has equipped.</div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Ammunition item</label>
+                <select class="form-select" value="@_model.AmmunitionItemId"
+                        @onchange="@((ChangeEventArgs e) => _model.AmmunitionItemId = e.Value?.ToString() ?? "")">
+                    <option value="">(choose an item)</option>
+                    @foreach (var item in _items)
+                    {
+                        <option value="@item.Id">@item.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Quantity</label>
+                <input type="number" class="form-control" value="@_model.AmmunitionQuantity"
+                       @onchange="@((ChangeEventArgs e) => _model.AmmunitionQuantity = ParseInt(e.Value?.ToString(), _model.AmmunitionQuantity))" />
+            </div>
+        </div>
+    }
+
+    <div>
+        <button type="button" class="btn btn-primary" @onclick="Save">Save</button>
+        <a class="btn btn-secondary" href="@RosterHref">Cancel</a>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string CampaignId { get; set; } = "";
+
+    [Parameter]
+    public string? PartyMemberId { get; set; }
+
+    private CampaignSummary? _campaign;
+    private CampaignRosterMemberFormModel _model = new();
+    private bool _isNew;
+    private ValidationResult? _saveResult;
+
+    private IReadOnlyList<RaceDefinition> _races = [];
+    private IReadOnlyList<ClassDefinition> _classes = [];
+    private IReadOnlyList<BackgroundDefinition> _backgrounds = [];
+    private IReadOnlyList<SkillDefinition> _skills = [];
+    private IReadOnlyList<WeaponDefinition> _weapons = [];
+    private IReadOnlyList<SpellDefinition> _spells = [];
+    private IReadOnlyList<EquipmentItemDefinition> _items = [];
+
+    private string RosterHref =>
+        $"campaigns/{Uri.EscapeDataString(CampaignId)}/roster";
+
+    protected override void OnInitialized()
+    {
+        _isNew = string.IsNullOrEmpty(PartyMemberId);
+        _campaign = CampaignService.FindCampaign(CampaignId);
+
+        if (_campaign is null)
+        {
+            return;
+        }
+
+        _races = RulesetService.LoadRaces();
+        _classes = RulesetService.LoadClasses();
+        _backgrounds = RulesetService.LoadBackgrounds();
+        _skills = RulesetService.LoadSkills();
+        _weapons = RulesetService.LoadWeapons();
+        _spells = RulesetService.LoadSpells();
+        _items = RulesetService.LoadEquipmentItems();
+
+        if (!_isNew)
+        {
+            var existing = CampaignService.FindRosterMember(_campaign.FilePath, PartyMemberId!);
+
+            if (existing is not null)
+            {
+                _model = CampaignRosterMemberFormModel.FromDefinition(existing);
+            }
+        }
+        else
+        {
+            foreach (var ability in Enum.GetValues<AbilityV1>())
+            {
+                _model.SetScore(ability, 10);
+            }
+
+            _model.MaximumHitPoints = 10;
+            _model.CurrentHitPoints = 10;
+        }
+    }
+
+    private void SetZeroHitPointPolicy(string? raw)
+    {
+        if (Enum.TryParse(raw, out CombatantZeroHitPointPolicyV1 policy))
+        {
+            _model.ZeroHitPointPolicy = policy;
+        }
+    }
+
+    private void SetHasAmmunition(bool hasAmmunition)
+    {
+        _model.HasAmmunition = hasAmmunition;
+
+        // Default the weapon to whatever this character already carries, since
+        // the validator requires the ammunition's weapon to be equipped.
+        if (hasAmmunition && string.IsNullOrEmpty(_model.AmmunitionWeaponId))
+        {
+            _model.AmmunitionWeaponId = _model.EquippedWeaponIds.FirstOrDefault() ?? "";
+        }
+    }
+
+    private static int ParseInt(
+        string? raw,
+        int fallback)
+    {
+        return int.TryParse(raw, out int value) ? value : fallback;
+    }
+
+    private void Save()
+    {
+        if (_campaign is null)
+        {
+            return;
+        }
+
+        _saveResult = CampaignService.SaveRosterMember(
+            _campaign.FilePath,
+            _model.ToDefinition());
+
+        if (_saveResult.IsValid)
+        {
+            Navigation.NavigateTo(RosterHref);
+        }
+    }
+}
