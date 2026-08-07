@@ -92,9 +92,21 @@ public static class ContentPackValidation
             return ParseFailure(exception);
         }
 
+        ValidatedRuleset? campaignRuleset;
+
         try
         {
-            CampaignDefinitionValidator.Validate(definition);
+            campaignRuleset = RulesetRegistry.Resolve(definition.RulesetId);
+        }
+        catch (ArgumentException)
+        {
+            // Same defensive resolution ValidateScenarioPack uses above.
+            campaignRuleset = null;
+        }
+
+        try
+        {
+            CampaignDefinitionValidator.Validate(definition, campaignRuleset);
         }
         catch (ArgumentException exception)
         {

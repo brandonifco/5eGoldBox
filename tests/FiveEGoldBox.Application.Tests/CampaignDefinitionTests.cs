@@ -168,6 +168,128 @@ public sealed class CampaignDefinitionTests
                 }));
     }
 
+    // ----- Cross-pack checks against the campaign's own ruleset -----
+
+    /// The ruleset is optional, and a null one skips these checks entirely
+    /// rather than failing every id -- an unresolvable ruleset means there is
+    /// nothing to check against. Every other test in this file relies on
+    /// that, since none of them pass one.
+    [Fact]
+    public void Validate_WithoutARulesetSkipsCrossPackChecksEntirely()
+    {
+        CampaignDefinition campaign = Base();
+
+        CampaignDefinitionValidator.Validate(
+            campaign with
+            {
+                Roster = ReplaceFirst(
+                    campaign,
+                    campaign.Roster[0] with { ClassId = "class.does-not-exist" })
+            });
+    }
+
+    [Theory]
+    [InlineData("RaceId", "race.does-not-exist")]
+    [InlineData("ClassId", "class.does-not-exist")]
+    [InlineData("BackgroundId", "background.does-not-exist")]
+    public void Validate_RejectsARosterEntryNamingAnIdTheRulesetDoesNotDefine(
+        string field,
+        string unknownId)
+    {
+        CampaignDefinition campaign = Base();
+        CampaignCharacterDefinition original = campaign.Roster[0];
+
+        CampaignCharacterDefinition broken = field switch
+        {
+            "RaceId" => original with { RaceId = unknownId },
+            "ClassId" => original with { ClassId = unknownId },
+            _ => original with { BackgroundId = unknownId }
+        };
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+            CampaignDefinitionValidator.Validate(
+                campaign with { Roster = ReplaceFirst(campaign, broken) },
+                Ruleset(campaign)));
+
+        Assert.Contains(unknownId, exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_RejectsAPreparedSpellTheRulesetDoesNotDefine()
+    {
+        CampaignDefinition campaign = Base();
+
+        // The Cleric is the roster's spellcaster, so this exercises a real
+        // non-empty PreparedSpellIds rather than a synthetic one.
+        CampaignCharacterDefinition caster = campaign.Roster
+            .First(character => character.PreparedSpellIds.Count > 0);
+
+        CampaignCharacterDefinition broken = caster with
+        {
+            PreparedSpellIds = [.. caster.PreparedSpellIds, "spell.does-not-exist"]
+        };
+
+        Assert.Throws<ArgumentException>(() =>
+            CampaignDefinitionValidator.Validate(
+                campaign with
+                {
+                    Roster = campaign.Roster
+                        .Select(character => character == caster ? broken : character)
+                        .ToArray()
+                },
+                Ruleset(campaign)));
+    }
+
+    [Fact]
+    public void Validate_RejectsAmmunitionMadeOfAnItemTheRulesetDoesNotDefine()
+    {
+        CampaignDefinition campaign = Base();
+
+        CampaignCharacterDefinition archer = campaign.Roster
+            .First(character => character.Ammunition is not null);
+
+        CampaignCharacterDefinition broken = archer with
+        {
+            Ammunition = archer.Ammunition! with { AmmunitionItemId = "item.does-not-exist" }
+        };
+
+        Assert.Throws<ArgumentException>(() =>
+            CampaignDefinitionValidator.Validate(
+                campaign with
+                {
+                    Roster = campaign.Roster
+                        .Select(character => character == archer ? broken : character)
+                        .ToArray()
+                },
+                Ruleset(campaign)));
+    }
+
+    /// The real committed campaign has to survive its own new checks --
+    /// otherwise this change would have broken the shipped content rather
+    /// than protected it.
+    [Fact]
+    public void Validate_AcceptsTheRealCampaignAgainstItsOwnRuleset()
+    {
+        CampaignDefinition campaign = Base();
+
+        CampaignDefinitionValidator.Validate(campaign, Ruleset(campaign));
+    }
+
+    private static CampaignCharacterDefinition[] ReplaceFirst(
+        CampaignDefinition campaign,
+        CampaignCharacterDefinition replacement)
+    {
+        return campaign.Roster
+            .Select((character, index) => index == 0 ? replacement : character)
+            .ToArray();
+    }
+
+    private static Core.Definitions.ValidatedRuleset Ruleset(
+        CampaignDefinition campaign)
+    {
+        return RulesetRegistry.Resolve(campaign.RulesetId);
+    }
+
     private static CampaignDefinition Base()
     {
         return CampaignRegistry.Resolve(FrontierCampaignIds.CampaignId);
