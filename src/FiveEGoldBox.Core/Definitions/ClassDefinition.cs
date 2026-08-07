@@ -10,7 +10,25 @@ public sealed record ClassDefinition
 
     public required DieType HitDie { get; init; }
 
+    /// Player-facing prose for a character-creation screen, so a choice is
+    /// more than a bare name to someone who does not already know 5e.
+    /// Optional: content that predates this loads unchanged, and a validator
+    /// reports what is missing rather than refusing to load it.
+    public string? Description { get; init; }
+
     public IReadOnlyList<Ability> SavingThrowProficiencies { get; init; }
+        = Array.Empty<Ability>();
+
+    /// The abilities this class actually runs on, most important first --
+    /// what a character-creation screen recommends putting the best scores
+    /// into. Deliberately separate from SavingThrowProficiencies, which is a
+    /// different fact that happens to overlap for some classes and diverge
+    /// for others (a Wizard saves on Intelligence and Wisdom but runs on
+    /// Intelligence alone).
+    ///
+    /// Advisory only: nothing validates a character against it, because a
+    /// player is entitled to build a Fighter who leads with Dexterity.
+    public IReadOnlyList<Ability> PrimaryAbilities { get; init; }
         = Array.Empty<Ability>();
 
     public IReadOnlyList<string> ArmorProficiencies { get; init; }

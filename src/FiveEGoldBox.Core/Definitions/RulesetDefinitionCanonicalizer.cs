@@ -93,6 +93,7 @@ internal static class RulesetDefinitionCanonicalizer
         return characterClass with
         {
             SavingThrowProficiencies = Protect(characterClass.SavingThrowProficiencies),
+            PrimaryAbilities = Protect(characterClass.PrimaryAbilities),
             ArmorProficiencies = Protect(characterClass.ArmorProficiencies),
             WeaponProficiencies = Protect(characterClass.WeaponProficiencies),
             ToolProficiencies = Protect(characterClass.ToolProficiencies),

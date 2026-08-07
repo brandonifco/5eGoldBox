@@ -7,6 +7,7 @@
         {
             "Id": "race.human",
             "Name": "Human",
+            "Description": "Ambitious, adaptable, and found everywhere. Humans have no single outstanding talent because they improve at everything: every one of your six ability scores rises by 1, which suits any class you care to build.",
             "BaseSpeedFeet": 30,
             "AbilityScoreIncreases": [
                 { "Ability": "Strength", "Amount": 1 },
@@ -20,6 +21,7 @@
         {
             "Id": "race.dwarf",
             "Name": "Dwarf",
+            "Description": "Stout, stubborn folk of the mountain halls, raised on stone and long memory. A dwarf's +2 Constitution makes them hard to put down, they see in the dark, and poison troubles them far less than it should. Short legs carry them only 25 feet a round.",
             "BaseSpeedFeet": 25,
             "AbilityScoreIncreases": [
                 { "Ability": "Constitution", "Amount": 2 }
@@ -34,6 +36,7 @@
                 {
                     "Id": "subrace.hill-dwarf",
                     "Name": "Hill Dwarf",
+                    "Description": "Dwarves of the foothills and the lower halls, keener-witted and hardier than their kin. +1 Wisdom.",
                     "AbilityScoreIncreases": [
                         { "Ability": "Wisdom", "Amount": 1 }
                     ]
@@ -41,6 +44,7 @@
                 {
                     "Id": "subrace.mountain-dwarf",
                     "Name": "Mountain Dwarf",
+                    "Description": "Raised on the high peaks and trained to arms from childhood. +2 Strength on top of the dwarven +2 Constitution makes them the sturdiest front line this ruleset offers.",
                     "AbilityScoreIncreases": [
                         { "Ability": "Strength", "Amount": 2 }
                     ]
@@ -50,6 +54,7 @@
         {
             "Id": "race.elf",
             "Name": "Elf",
+            "Description": "Graceful and long-lived, with a stillness that unsettles shorter-lived folk. +2 Dexterity sharpens their aim, their reflexes and their armour class alike, and darkvision lets them fight in unlit halls without a torch.",
             "BaseSpeedFeet": 30,
             "AbilityScoreIncreases": [
                 { "Ability": "Dexterity", "Amount": 2 }
@@ -61,6 +66,7 @@
                 {
                     "Id": "subrace.high-elf",
                     "Name": "High Elf",
+                    "Description": "Elves of the old cities, schooled in history, language, and the first principles of magic. +1 Intelligence.",
                     "AbilityScoreIncreases": [
                         { "Ability": "Intelligence", "Amount": 1 }
                     ]
@@ -68,6 +74,7 @@
                 {
                     "Id": "subrace.wood-elf",
                     "Name": "Wood Elf",
+                    "Description": "Elves of the deep forest, quiet-footed and watchful, more at home reading ground than reading books. +1 Wisdom.",
                     "AbilityScoreIncreases": [
                         { "Ability": "Wisdom", "Amount": 1 }
                     ]
@@ -77,6 +84,7 @@
         {
             "Id": "race.halfling",
             "Name": "Halfling",
+            "Description": "Small, cheerful, and far braver than their size suggests. +2 Dexterity and a genuine talent for going unnoticed make them natural scouts. Being Small means a 25-foot stride, and the heaviest weapons handle badly in their hands.",
             "Size": "Small",
             "BaseSpeedFeet": 25,
             "AbilityScoreIncreases": [
@@ -86,6 +94,7 @@
                 {
                     "Id": "subrace.lightfoot-halfling",
                     "Name": "Lightfoot Halfling",
+                    "Description": "Halflings who travel light and slip out of notice, comfortable among strangers and quick to charm them. +1 Charisma.",
                     "AbilityScoreIncreases": [
                         { "Ability": "Charisma", "Amount": 1 }
                     ]
@@ -93,6 +102,7 @@
                 {
                     "Id": "subrace.stout-halfling",
                     "Name": "Stout Halfling",
+                    "Description": "Halflings with dwarven blood somewhere back the line: hardier than their kin, and resistant to poison. +1 Constitution.",
                     "AbilityScoreIncreases": [
                         { "Ability": "Constitution", "Amount": 1 }
                     ],
@@ -107,8 +117,10 @@
         {
             "Id": "class.fighter",
             "Name": "Fighter",
+            "Description": "A master of weapons and armour, at home in any kind of fight. Fighters have a d10 hit die and the broadest weapon training in the game. If you want to hit reliably and still be standing at the end, this is the straightforward choice.",
             "HitDie": "D10",
             "SavingThrowProficiencies": [ "Strength", "Constitution" ],
+            "PrimaryAbilities": [ "Strength", "Dexterity" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
             "SkillChoices": [
                 "skill.acrobatics",
@@ -122,15 +134,25 @@
             ],
             "NumberOfSkillChoices": 2,
             "Subclasses": [
-                { "Id": "subclass.champion", "Name": "Champion" },
-                { "Id": "subclass.battle-master", "Name": "Battle Master" }
+                {
+                    "Id": "subclass.champion",
+                    "Name": "Champion",
+                    "Description": "A fighter who perfects the simple things: raw might, honed reflexes, and blows that land harder than they have any right to."
+                },
+                {
+                    "Id": "subclass.battle-master",
+                    "Name": "Battle Master",
+                    "Description": "A student of tactics who treats a battle as a discipline of manoeuvres, openings and answers."
+                }
             ]
         },
         {
             "Id": "class.barbarian",
             "Name": "Barbarian",
+            "Description": "A warrior who fights on fury rather than form. The d12 hit die is the largest there is, so no class absorbs more punishment. Put your best score in Strength and walk at the front.",
             "HitDie": "D12",
             "SavingThrowProficiencies": [ "Strength", "Constitution" ],
+            "PrimaryAbilities": [ "Strength", "Constitution" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
             "SkillChoices": [
                 "skill.animal-handling",
@@ -145,8 +167,10 @@
         {
             "Id": "class.cleric",
             "Name": "Cleric",
+            "Description": "A warrior-priest channelling divine power, and no bystander in a fight. Clerics cast using Wisdom and are the only source of healing magic in this ruleset, which makes one close to essential in a party of four.",
             "HitDie": "D8",
             "SavingThrowProficiencies": [ "Wisdom", "Charisma" ],
+            "PrimaryAbilities": [ "Wisdom", "Constitution" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
             "SkillChoices": [
                 "skill.history",
@@ -159,15 +183,25 @@
             "SpellcastingAbility": "Wisdom",
             "SpellSlotsByLevel": { "1": 2 },
             "Subclasses": [
-                { "Id": "subclass.life-domain", "Name": "Life Domain" },
-                { "Id": "subclass.war-domain", "Name": "War Domain" }
+                {
+                    "Id": "subclass.life-domain",
+                    "Name": "Life Domain",
+                    "Description": "A cleric of healing and preservation, devoted to holding the party together when a fight turns."
+                },
+                {
+                    "Id": "subclass.war-domain",
+                    "Name": "War Domain",
+                    "Description": "A cleric of battle, as comfortable with a weapon in hand as with a prayer on the lips."
+                }
             ]
         },
         {
             "Id": "class.wizard",
             "Name": "Wizard",
+            "Description": "A scholar of magic who trades toughness for reach. The d6 hit die is the frailest in the game, so a wizard belongs behind the line, but their spells strike at range no weapon matches. Intelligence drives everything they do.",
             "HitDie": "D6",
             "SavingThrowProficiencies": [ "Intelligence", "Wisdom" ],
+            "PrimaryAbilities": [ "Intelligence", "Constitution" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
             "SkillChoices": [
                 "skill.arcana",
@@ -181,15 +215,25 @@
             "SpellcastingAbility": "Intelligence",
             "SpellSlotsByLevel": { "1": 2 },
             "Subclasses": [
-                { "Id": "subclass.evocation", "Name": "School of Evocation" },
-                { "Id": "subclass.abjuration", "Name": "School of Abjuration" }
+                {
+                    "Id": "subclass.evocation",
+                    "Name": "School of Evocation",
+                    "Description": "A wizard specialising in raw destructive magic: fire, force and lightning, shaped and aimed."
+                },
+                {
+                    "Id": "subclass.abjuration",
+                    "Name": "School of Abjuration",
+                    "Description": "A wizard specialising in wards, shields, and the unmaking of hostile magic."
+                }
             ]
         },
         {
             "Id": "class.ranger",
             "Name": "Ranger",
+            "Description": "A hunter and tracker at the wild's edge, skilled with a bow and at reading ground others walk past. Rangers choose three skills where most classes choose two.",
             "HitDie": "D10",
             "SavingThrowProficiencies": [ "Strength", "Dexterity" ],
+            "PrimaryAbilities": [ "Dexterity", "Wisdom" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
             "SkillChoices": [
                 "skill.animal-handling",
@@ -206,8 +250,10 @@
         {
             "Id": "class.rogue",
             "Name": "Rogue",
+            "Description": "A precise, opportunistic fighter who wins by position rather than force. Sneak Attack turns a well-set-up strike into far more damage than the rogue's light weapon suggests. Dexterity is everything.",
             "HitDie": "D8",
             "SavingThrowProficiencies": [ "Dexterity", "Intelligence" ],
+            "PrimaryAbilities": [ "Dexterity", "Intelligence" ],
             "WeaponProficiencies": [ "weapon.simple", "weapon.martial" ],
             "SkillChoices": [
                 "skill.acrobatics",
@@ -225,8 +271,16 @@
             "NumberOfSkillChoices": 2,
             "FeaturesByLevel": { "1": [ "feature.sneak_attack" ] },
             "Subclasses": [
-                { "Id": "subclass.thief", "Name": "Thief" },
-                { "Id": "subclass.arcane-trickster", "Name": "Arcane Trickster" }
+                {
+                    "Id": "subclass.thief",
+                    "Name": "Thief",
+                    "Description": "A rogue in the classic mould: nimble fingers, fast climbs, and a talent for being exactly where nobody expected."
+                },
+                {
+                    "Id": "subclass.arcane-trickster",
+                    "Name": "Arcane Trickster",
+                    "Description": "A rogue who laces stealth with just enough magic to make locks, minds and expectations give way."
+                }
             ]
         }
     ],
@@ -234,21 +288,25 @@
         {
             "Id": "background.acolyte",
             "Name": "Acolyte",
+            "Description": "You served in a temple, and the habits stuck: reading scripture, and reading people. Grants proficiency in Insight and Religion.",
             "SkillProficiencies": [ "skill.insight", "skill.religion" ]
         },
         {
             "Id": "background.criminal",
             "Name": "Criminal",
+            "Description": "You made your living outside the law and were good enough at it to still be walking free. Grants proficiency in Deception and Stealth.",
             "SkillProficiencies": [ "skill.deception", "skill.stealth" ]
         },
         {
             "Id": "background.sage",
             "Name": "Sage",
+            "Description": "You spent years among books and asked one question too many. Grants proficiency in Arcana and History.",
             "SkillProficiencies": [ "skill.arcana", "skill.history" ]
         },
         {
             "Id": "background.soldier",
             "Name": "Soldier",
+            "Description": "You held a rank, carried a spear, and learned first-hand what a shield wall costs. Grants proficiency in Athletics and Intimidation.",
             "SkillProficiencies": [ "skill.athletics", "skill.intimidation" ]
         }
     ],
@@ -256,91 +314,109 @@
         {
             "Id": "skill.acrobatics",
             "Name": "Acrobatics",
+            "Description": "Keeping your feet on treacherous ground, tumbling clear of danger, and staying upright when something tries to put you down.",
             "Ability": "Dexterity"
         },
         {
             "Id": "skill.animal-handling",
             "Name": "Animal Handling",
+            "Description": "Calming a frightened beast, reading its intent, and getting a mount to do what you ask under pressure.",
             "Ability": "Wisdom"
         },
         {
             "Id": "skill.arcana",
             "Name": "Arcana",
+            "Description": "Recalling what you know of spells, magic items, and the workings of the arcane.",
             "Ability": "Intelligence"
         },
         {
             "Id": "skill.athletics",
             "Name": "Athletics",
+            "Description": "Climbing, swimming, jumping, and winning contests of raw physical force.",
             "Ability": "Strength"
         },
         {
             "Id": "skill.deception",
             "Name": "Deception",
+            "Description": "Saying what isn't true and being believed: bluffs, disguises and misdirection.",
             "Ability": "Charisma"
         },
         {
             "Id": "skill.history",
             "Name": "History",
+            "Description": "Recalling past events, fallen kingdoms, old wars, and the origins of whatever you are looking at.",
             "Ability": "Intelligence"
         },
         {
             "Id": "skill.insight",
             "Name": "Insight",
+            "Description": "Reading a person's true intent from what they do rather than what they say.",
             "Ability": "Wisdom"
         },
         {
             "Id": "skill.intimidation",
             "Name": "Intimidation",
+            "Description": "Getting your way through threats, hostility and open menace.",
             "Ability": "Charisma"
         },
         {
             "Id": "skill.investigation",
             "Name": "Investigation",
+            "Description": "Deducing from evidence: searching for what is hidden and reasoning out how something works.",
             "Ability": "Intelligence"
         },
         {
             "Id": "skill.medicine",
             "Name": "Medicine",
+            "Description": "Stabilising the dying, diagnosing illness, and telling what killed something.",
             "Ability": "Wisdom"
         },
         {
             "Id": "skill.nature",
             "Name": "Nature",
+            "Description": "Recalling what you know of terrain, weather, plants and beasts.",
             "Ability": "Intelligence"
         },
         {
             "Id": "skill.perception",
             "Name": "Perception",
+            "Description": "Noticing things: spotting the ambush, hearing the footstep, catching the detail that is out of place. The most broadly useful skill in the game.",
             "Ability": "Wisdom"
         },
         {
             "Id": "skill.performance",
             "Name": "Performance",
+            "Description": "Holding an audience with music, story or spectacle.",
             "Ability": "Charisma"
         },
         {
             "Id": "skill.persuasion",
             "Name": "Persuasion",
+            "Description": "Getting your way through tact, warmth and good faith.",
             "Ability": "Charisma"
         },
         {
             "Id": "skill.religion",
             "Name": "Religion",
+            "Description": "Recalling what you know of deities, rites, holy symbols, and the undead.",
             "Ability": "Intelligence"
         },
         {
             "Id": "skill.sleight-of-hand",
             "Name": "Sleight of Hand",
+            "Description": "Picking pockets, palming objects, and any trick that depends on quick, unseen hands.",
             "Ability": "Dexterity"
         },
         {
             "Id": "skill.stealth",
             "Name": "Stealth",
+            "Description": "Moving unseen and unheard, and staying that way once something starts looking.",
             "Ability": "Dexterity"
         },
         {
             "Id": "skill.survival",
             "Name": "Survival",
+            "Description": "Tracking a quarry, foraging, navigating wilderness, and reading the weather before it turns.",
             "Ability": "Wisdom"
         }
     ],

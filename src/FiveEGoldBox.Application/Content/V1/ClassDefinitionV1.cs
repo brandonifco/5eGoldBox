@@ -8,7 +8,12 @@ internal sealed record ClassDefinitionV1
 
     public required DieTypeV1 HitDie { get; init; }
 
+    public string? Description { get; init; }
+
     public IReadOnlyList<AbilityV1> SavingThrowProficiencies { get; init; }
+        = Array.Empty<AbilityV1>();
+
+    public IReadOnlyList<AbilityV1> PrimaryAbilities { get; init; }
         = Array.Empty<AbilityV1>();
 
     public IReadOnlyList<string> ArmorProficiencies { get; init; }
