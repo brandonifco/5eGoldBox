@@ -25,16 +25,21 @@ namespace FiveEGoldBox.ContentEditor.Services;
 /// ExplorationMap is rendered two different ways depending on whether the
 /// caller is editing it. A location whose map is untouched still copies the
 /// exact original bytes through verbatim (from
-/// ScenarioPackDocument.FindRawExplorationMapText), because real committed
-/// content orders a floor's Doors/Treasures/Npcs inconsistently from file to
-/// file (Hollow Mill writes Npcs first, Watchtower writes Doors/Treasures
-/// first) and no fixed field order reproduces both byte-for-byte. Editing a
-/// map goes through RenderExplorationMap instead, which writes one canonical
-/// field order -- the DTO's own, matching Watchtower and Sunken Chapel
-/// exactly. Editing a Hollow Mill floor therefore also normalizes its
-/// Npcs/Doors/Treasures ordering; that file is being rewritten anyway, and
-/// carrying each floor's original key order through the form round trip
-/// purely to preserve an inconsistency isn't worth the machinery.
+/// ScenarioPackDocument.FindRawExplorationMapText); an edited one goes
+/// through RenderExplorationMap, which writes one canonical field order --
+/// the DTO's own.
+///
+/// Committed content used to disagree on that order (Hollow Mill wrote a
+/// floor's Npcs before its Doors, Watchtower the reverse), which meant a
+/// no-op save was byte-identical for one file and a large spurious block
+/// move for the other. Rather than carry each floor's original key order
+/// through the form round trip purely to preserve an inconsistency, the
+/// committed files were normalized to this renderer's own order once, via
+/// CommittedScenarioMapNormalizer. A no-op save is now byte-identical for
+/// every scenario, which ScenarioNoOpSaveFormattingTests asserts for all
+/// three -- so this comment is load-bearing: reintroducing a hand-authored
+/// ordering that disagrees with the DTO's will fail that test rather than
+/// silently produce noisy diffs.
 internal static class ScenarioJsonFormatting
 {
     // ----- Top-level arrays -----

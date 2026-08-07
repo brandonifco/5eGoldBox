@@ -80,14 +80,6 @@
                                 "DestinationPosition": { "X": 0, "Y": 0 }
                             }
                         ],
-                        "Npcs": [
-                            {
-                                "NpcId": "npc.hollow-mill.garrick",
-                                "Position": { "X": 3, "Y": 0 },
-                                "Name": "Garrick, the Miller's Hand",
-                                "DialogueText": "Thank the stars, someone came. The grain's crawling with vermin the size of hounds, and something worse moves in the dark below. I didn't dare go further."
-                            }
-                        ],
                         "Doors": [
                             {
                                 "DoorId": "door.hollow-mill.hidden-larder",
@@ -102,6 +94,14 @@
                                 "TreasureId": "treasure.hollow-mill.hidden-larder",
                                 "Position": { "X": 4, "Y": 3 },
                                 "GoldPieces": 15
+                            }
+                        ],
+                        "Npcs": [
+                            {
+                                "NpcId": "npc.hollow-mill.garrick",
+                                "Position": { "X": 3, "Y": 0 },
+                                "Name": "Garrick, the Miller's Hand",
+                                "DialogueText": "Thank the stars, someone came. The grain's crawling with vermin the size of hounds, and something worse moves in the dark below. I didn't dare go further."
                             }
                         ]
                     },

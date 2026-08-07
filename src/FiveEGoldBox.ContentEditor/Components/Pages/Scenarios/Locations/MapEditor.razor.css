@@ -46,6 +46,14 @@
     box-shadow: inset 0 0 0 2px #b8860b;
 }
 
+/* The cell whose feature panel is open. Outlined rather than filled so it
+   doesn't fight the walkable/blocked colours it sits on top of. */
+.map-cell.selected {
+    outline: 3px solid #0d6efd;
+    outline-offset: -3px;
+    z-index: 2;
+}
+
 .map-cell-coords {
     font-size: 0.6rem;
     opacity: 0.55;

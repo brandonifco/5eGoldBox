@@ -222,9 +222,15 @@ public sealed class ScenarioNoOpSaveFormattingTests
     /// tests can't see: TraversablePositions' hand-authored cell order is not
     /// purely row-major, and a form model backed by an unordered set would
     /// silently rewrite every untouched floor's cell order on first save.
+    /// hollow-mill matters specifically: it holds the only gold-only treasure
+    /// in committed content (no ItemId, no Quantity), which is the one case
+    /// where the form model's empty-string-to-null normalization has to be
+    /// right or the save writes "ItemId": "" where the property should be
+    /// absent entirely.
     [Theory]
     [InlineData("watchtower")]
     [InlineData("sunken-chapel")]
+    [InlineData("hollow-mill")]
     public void RoundTrippingAMapThroughTheFormModelProducesAByteIdenticalFile(
         string scenarioDirectoryName)
     {
