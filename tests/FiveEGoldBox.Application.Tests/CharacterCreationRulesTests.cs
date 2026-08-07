@@ -296,6 +296,121 @@ public sealed class CharacterCreationRulesTests
             proficient);
     }
 
+    /// The read half of creation. Resolving a ruleset is internal to
+    /// Application, so without this a client could validate a draft it had no
+    /// way to build the choices for.
+    [Fact]
+    public void DescribeOptions_ReturnsTheRealShippedContent()
+    {
+        CharacterCreationOptions options =
+            CharacterCreationRules.DescribeOptions(RulesetId);
+
+        Assert.Contains(options.Races, race => race.Id == "race.dwarf");
+        Assert.Contains(options.Classes, cls => cls.Id == "class.wizard");
+        Assert.Contains(
+            options.Backgrounds,
+            background => background.Id == "background.sage");
+        Assert.Contains(options.Skills, skill => skill.Id == "skill.arcana");
+        Assert.Contains(options.Spells, spell => spell.Id == "spell.bless");
+
+        // A client renders choices in the order content declares them, so the
+        // ruleset's own authored order is preserved rather than sorted.
+        Assert.Equal("race.human", options.Races[0].Id);
+
+        // Enough shape to drive a real wizard: a race's subraces and a class's
+        // own skill list both arrive with it.
+        Assert.Equal(
+            2,
+            options.Races
+                .Single(race => race.Id == "race.dwarf")
+                .Subraces.Count);
+
+        Assert.Equal(
+            8,
+            options.Classes
+                .Single(cls => cls.Id == "class.fighter")
+                .SkillChoices.Count);
+    }
+
+    [Fact]
+    public void DescribeOptions_WithNoRulesetId_Throws()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            CharacterCreationRules.DescribeOptions(string.Empty));
+    }
+
+    [Fact]
+    public void Validate_PreparedSpellOnANonCaster_IsRejected()
+    {
+        CharacterDraft draft = LegalFighterDraft("Aldric") with
+        {
+            PreparedSpellIds = ["spell.bless"]
+        };
+
+        Core.Validation.ValidationResult result =
+            CharacterCreationRules.Validate(draft, RulesetId);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "character.spells.not_a_caster");
+    }
+
+    [Fact]
+    public void Validate_UnknownPreparedSpell_IsRejected()
+    {
+        CharacterDraft draft = LegalClericDraft("Aldric") with
+        {
+            PreparedSpellIds = ["spell.does-not-exist"]
+        };
+
+        Core.Validation.ValidationResult result =
+            CharacterCreationRules.Validate(draft, RulesetId);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "character.spells.not_found");
+    }
+
+    [Fact]
+    public void Validate_DuplicatePreparedSpells_AreRejected()
+    {
+        CharacterDraft draft = LegalClericDraft("Aldric") with
+        {
+            PreparedSpellIds = ["spell.bless", "spell.bless"]
+        };
+
+        Core.Validation.ValidationResult result =
+            CharacterCreationRules.Validate(draft, RulesetId);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "character.spells.duplicate");
+    }
+
+    [Fact]
+    public void Validate_RealPreparedSpellsOnACaster_AreAccepted()
+    {
+        CharacterDraft draft = LegalClericDraft("Aldric") with
+        {
+            PreparedSpellIds = ["spell.bless", "spell.cure-wounds"]
+        };
+
+        ValidationResultAssertValid(
+            CharacterCreationRules.Validate(draft, RulesetId));
+    }
+
+    private static CharacterDraft LegalClericDraft(string name)
+    {
+        return LegalFighterDraft(name) with
+        {
+            ClassId = "class.cleric",
+            SelectedSkillIds = ["skill.insight", "skill.religion"]
+        };
+    }
+
     private static int ScoreOf(
         Views.PartyMemberViewModel member,
         Ability ability)

@@ -24,6 +24,30 @@ namespace FiveEGoldBox.Application.Characters;
 /// Rolled method.
 public static class CharacterCreationRules
 {
+    /// What a client may offer a player to choose from. Resolving a ruleset
+    /// is otherwise internal to this assembly (RulesetRegistry), so without
+    /// this a client can validate a draft it had no way to build the choices
+    /// for.
+    public static CharacterCreationOptions DescribeOptions(string rulesetId)
+    {
+        RequireRulesetId(rulesetId);
+
+        RulesetDefinition ruleset = RulesetRegistry
+            .Resolve(rulesetId)
+            .Definition;
+
+        return new CharacterCreationOptions
+        {
+            Races = ruleset.Races,
+            Classes = ruleset.Classes,
+            Backgrounds = ruleset.Backgrounds,
+            Skills = ruleset.Skills,
+            Weapons = ruleset.Weapons,
+            Spells = ruleset.Spells,
+            EquipmentItems = ruleset.EquipmentItems
+        };
+    }
+
     public static ValidationResult Validate(
         CharacterDraft draft,
         string rulesetId)
@@ -31,11 +55,14 @@ public static class CharacterCreationRules
         ArgumentNullException.ThrowIfNull(draft);
         RequireRulesetId(rulesetId);
 
+        ValidatedRuleset ruleset = RulesetRegistry.Resolve(rulesetId);
+
         List<ValidationIssue> issues = new(
             CheckCreationScope(draft));
 
-        CharacterResolver resolver = new(
-            RulesetRegistry.Resolve(rulesetId));
+        issues.AddRange(CheckPreparedSpells(draft, ruleset));
+
+        CharacterResolver resolver = new(ruleset);
 
         issues.AddRange(resolver.Validate(draft).Issues);
 
@@ -97,7 +124,7 @@ public static class CharacterCreationRules
                     nameof(entries));
             }
 
-            RequireLegalCharacter(entry, resolver);
+            RequireLegalCharacter(entry, resolver, ruleset);
             RequireSingleAmmunitionWeapon(ruleset, entry);
 
             CharacterSnapshot snapshot = resolver.Resolve(entry.Draft);
@@ -114,10 +141,12 @@ public static class CharacterCreationRules
 
     private static void RequireLegalCharacter(
         CharacterCreationEntry entry,
-        CharacterResolver resolver)
+        CharacterResolver resolver,
+        ValidatedRuleset ruleset)
     {
         List<ValidationIssue> issues = new(
             CheckCreationScope(entry.Draft));
+        issues.AddRange(CheckPreparedSpells(entry.Draft, ruleset));
         issues.AddRange(resolver.Validate(entry.Draft).Issues);
 
         ValidationResult validation = new(issues);
@@ -161,6 +190,71 @@ public static class CharacterCreationRules
                 ValidationSeverity.Error,
                 "character.creation.ability_generation.unsupported",
                 "Player-created characters must use the standard array or point buy.");
+        }
+    }
+
+    /// CharacterResolver.Validate checks nothing at all about
+    /// PreparedSpellIds -- not that a spell exists, not that the character
+    /// can cast. That was survivable while every character came from a
+    /// campaign roster, since CampaignDefinitionValidator cross-checks a
+    /// roster entry's spells against the ruleset; a player-created character
+    /// goes through neither, so an unknown spell would surface much later as
+    /// a resolution failure, and a prepared spell on a non-caster would
+    /// simply never be castable with nothing saying why.
+    private static IEnumerable<ValidationIssue> CheckPreparedSpells(
+        CharacterDraft draft,
+        ValidatedRuleset ruleset)
+    {
+        if (draft.PreparedSpellIds.Count == 0)
+        {
+            yield break;
+        }
+
+        ClassDefinition? selectedClass = draft.ClassId is null
+            ? null
+            : ruleset.Definition.Classes.FirstOrDefault(
+                characterClass => string.Equals(
+                    characterClass.Id,
+                    draft.ClassId,
+                    StringComparison.Ordinal));
+
+        // An unresolvable class is already reported as
+        // character.class.required/not_found; saying it again here as a
+        // spellcasting problem would be noise.
+        if (selectedClass is not null
+            && selectedClass.SpellcastingAbility is null)
+        {
+            yield return new ValidationIssue(
+                ValidationSeverity.Error,
+                "character.spells.not_a_caster",
+                $"Class '{selectedClass.Id}' cannot prepare spells.");
+        }
+
+        if (draft.PreparedSpellIds.Distinct(StringComparer.Ordinal).Count()
+            != draft.PreparedSpellIds.Count)
+        {
+            yield return new ValidationIssue(
+                ValidationSeverity.Error,
+                "character.spells.duplicate",
+                "Prepared spells must not contain duplicates.");
+        }
+
+        foreach (string spellId in draft.PreparedSpellIds)
+        {
+            bool spellExists = ruleset.Definition.Spells.Any(
+                spell => string.Equals(
+                    spell.Id,
+                    spellId,
+                    StringComparison.Ordinal));
+
+            if (!spellExists)
+            {
+                yield return new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "character.spells.not_found",
+                    $"Prepared spell '{spellId}' was not found in ruleset " +
+                        $"'{ruleset.Definition.Id}'.");
+            }
         }
     }
 
