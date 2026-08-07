@@ -42,10 +42,11 @@ public partial class CombatView
 	// as literals rather than read from the theme because these are
 	// canvas draws, not themed Controls -- if the theme's ground/surface
 	// values change, change them here too.
-	private static readonly Color FloorEvenColor = new(0.09019608f, 0.11764706f, 0.19215687f);
-	private static readonly Color FloorOddColor = new(0.10980392f, 0.14117648f, 0.22352941f);
+	private static readonly Color FloorColor = new(0.10196078f, 0.12549020f, 0.20000000f);
+	private static readonly Color FloorBlotchColor = new(0.08235294f, 0.10588235f, 0.17254902f);
+	private static readonly Color FloorSpeckleColor = new(0.17254902f, 0.22352941f, 0.32156864f);
 	private static readonly Color FloorOutsideColor = new(0.05490196f, 0.07058824f, 0.1254902f);
-	private static readonly Color FloorGridColor = new(0.20784314f, 0.2509804f, 0.41568628f, 0.5f);
+	private static readonly Color FloorGridColor = new(0.20784314f, 0.2509804f, 0.41568628f, 0.42f);
 
 	private GridMetrics Metrics
 	{
@@ -342,51 +343,94 @@ public partial class CombatView
 	// rigorous guarantee at arbitrary sizes.
 	private const int FloorMarginTiles = 6;
 
-	// Flat two-tone checker in the shell's own palette, replacing the
-	// photographic isometric tile art this used to sample. Two reasons:
-	// the art was locked to a diamond silhouette that no longer matches
-	// the grid, and it was one of four competing visual registers in the
-	// client (photoreal stone, photo wall panels, sprite portraits, inked
-	// map) that the palette work is meant to collapse.
+	// One continuous ground, not a per-cell fill.
 	//
-	// Unlike the old version, the margin beyond the battlefield is drawn
-	// in a *darker* tone rather than more of the same floor -- so where
-	// the playable area ends is legible instead of hidden, which matters
+	// This started as a two-tone checker, and the checker is what made the
+	// battlefield read as a chess board rather than a place: it announces
+	// the lattice on every square whether or not anything is happening
+	// there. Everything decorative here is therefore placed by *position*
+	// and deliberately does not line up with cell boundaries. A tiling
+	// ground texture, if one is ever added, has to be sampled the same way
+	// -- drawn per cell it would reintroduce exactly the seam pattern the
+	// checker was creating.
+	//
+	// The margin beyond the battlefield stays a flat darker tone, so where
+	// the playable area ends is legible rather than hidden -- which matters
 	// more now that a battlefield can genuinely overflow the viewport.
 	private void DrawFloorTiles()
 	{
-		// Mock combat ships a calibrated painted battlefield; drawing flat
-		// tiles over it would hide the very thing it exists to show. The
-		// old version was gated by "is there a floor-tile texture", which
-		// only real encounters ever set — this keeps that same split now
-		// that the tiles are drawn rather than sampled.
+		// Mock combat ships a calibrated painted battlefield; drawing over
+		// it would hide the very thing it exists to show. The original
+		// version was gated by "is there a floor-tile texture", which only
+		// real encounters ever set — this keeps that same split now that
+		// the floor is drawn rather than sampled.
 		if (_combatImage.Visible)
 		{
 			return;
 		}
 
 		GridMetrics metrics = Metrics;
-		Vector2 tile = new(metrics.TileSize, metrics.TileSize);
 
-		for (int gy = -FloorMarginTiles; gy < _gridHeight + FloorMarginTiles; gy++)
+		Rect2 outside = new(
+			Project(-FloorMarginTiles, -FloorMarginTiles),
+			new Vector2(
+				(_gridWidth + (2 * FloorMarginTiles)) * metrics.TileSize,
+				(_gridHeight + (2 * FloorMarginTiles)) * metrics.TileSize));
+		_floorLayer.DrawRect(outside, FloorOutsideColor);
+
+		Rect2 battlefield = new(
+			Project(0, 0),
+			new Vector2(metrics.GridPixelWidth, metrics.GridPixelHeight));
+		_floorLayer.DrawRect(battlefield, FloorColor);
+
+		DrawFloorVariation(battlefield);
+
+		// The lattice is only drawn while something is being targeted --
+		// see DrawBattlefieldGrid.
+		if (_highlights.Count > 0)
 		{
-			for (int gx = -FloorMarginTiles; gx < _gridWidth + FloorMarginTiles; gx++)
-			{
-				bool inBounds = gx >= 0 && gx < _gridWidth && gy >= 0 && gy < _gridHeight;
-				Color fill = inBounds
-					? ((gx + gy) % 2 == 0 ? FloorEvenColor : FloorOddColor)
-					: FloorOutsideColor;
-
-				_floorLayer.DrawRect(new Rect2(Project(gx, gy), tile), fill);
-			}
+			DrawBattlefieldGrid(metrics);
 		}
-
-		DrawBattlefieldGrid(metrics);
 	}
 
-	// A hairline lattice over the playable area only, matching the shell's
-	// 1px framing. Drawn here rather than in DrawGridLines because that
-	// one is the mouse-hover marker and deliberately shows a single cell.
+	// Damp blotches and speckle, so a flat fill does not read as empty
+	// paper. Positions come from a fixed-seed sequence rather than the
+	// clock or the cell index: stable across the redraws RebuildCombatants
+	// triggers constantly, and unrelated to the grid.
+	private void DrawFloorVariation(Rect2 area)
+	{
+		uint seed = 0x9E3779B9;
+
+		float Next()
+		{
+			seed = (seed * 1664525u) + 1013904223u;
+			return ((seed >> 8) & 0xFFFF) / 65535f;
+		}
+
+		for (int i = 0; i < 7; i++)
+		{
+			Vector2 center = area.Position +
+				new Vector2(Next() * area.Size.X, Next() * area.Size.Y);
+			float radius = area.Size.X * (0.06f + (Next() * 0.10f));
+			_floorLayer.DrawCircle(center, radius, FloorBlotchColor);
+		}
+
+		int speckleCount = Mathf.Clamp(
+			(int)(area.Size.X * area.Size.Y / 1400f), 40, 420);
+
+		for (int i = 0; i < speckleCount; i++)
+		{
+			Vector2 at = area.Position +
+				new Vector2(Next() * area.Size.X, Next() * area.Size.Y);
+			_floorLayer.DrawRect(new Rect2(at, new Vector2(1.5f, 1.5f)), FloorSpeckleColor);
+		}
+	}
+
+	// Only drawn while a target or destination is being chosen, which is
+	// when squares actually matter. The Gold Box originals drew no lattice
+	// at all -- you inferred the squares from where the sprites stood --
+	// and a permanently visible grid was the other half of what made this
+	// look like a board game.
 	private void DrawBattlefieldGrid(GridMetrics metrics)
 	{
 		Vector2 origin = Project(0, 0);
