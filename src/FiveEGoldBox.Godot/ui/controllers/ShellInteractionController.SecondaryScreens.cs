@@ -170,7 +170,12 @@ internal sealed partial class ShellInteractionController
 		ModalViewModel model,
 		IReadOnlyDictionary<string, Action> commandHandlers,
 		Action<string>? onRowFocused = null,
-		Action<string>? onRowActivated = null)
+		Action<string>? onRowActivated = null,
+		// Runs after the context pop and shortcut restore below, for a
+		// caller that has somewhere to go once its screen closes — the
+		// character-creation flow, which has no game running behind it and
+		// so cannot simply reveal what was underneath.
+		Action? onClosed = null)
 	{
 		PushContext(ShellInteractionContext.ModalScreen);
 		// Must happen every open, not just the first: opening a second
@@ -190,6 +195,7 @@ internal sealed partial class ShellInteractionController
 			{
 				PopContext(ShellInteractionContext.ModalScreen);
 				_commandBarController.RestoreShortcuts();
+				onClosed?.Invoke();
 			});
 	}
 

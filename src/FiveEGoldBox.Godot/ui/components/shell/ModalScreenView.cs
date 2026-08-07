@@ -32,7 +32,9 @@ public partial class ModalScreenView : Control
 		IReadOnlyDictionary<string, Action> commandHandlers,
 		Action<string>? onRowFocused,
 		Action<string>? onRowActivated,
-		Action? onClosed)
+		Action? onClosed,
+		Action<string>? onTextChanged = null,
+		Action? onTextSubmitted = null)
 	{
 		if (IsOpen)
 		{
@@ -42,6 +44,8 @@ public partial class ModalScreenView : Control
 		_card = CardScene.Instantiate<ModalScreenCard>();
 		_card.RowFocused += id => onRowFocused?.Invoke(id);
 		_card.RowActivated += id => onRowActivated?.Invoke(id);
+		_card.TextChanged += text => onTextChanged?.Invoke(text);
+		_card.TextSubmitted += () => onTextSubmitted?.Invoke();
 
 		_onClosed = onClosed;
 

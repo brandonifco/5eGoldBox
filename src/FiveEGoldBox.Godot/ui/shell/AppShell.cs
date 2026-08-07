@@ -1,5 +1,6 @@
 using System;
 using FiveEGoldBox.Application.Exploration;
+using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Runtime;
@@ -130,7 +131,9 @@ public partial class AppShell : Control
 			() => _themeController.Settings.ThemeVariant ==
 				UiThemeVariant.HighContrast,
 			() => _themeController.Settings.MotionPreference ==
-				UiMotionPreference.Reduced);
+				UiMotionPreference.Reduced,
+			StartPremadeGame,
+			StartCreatedGame);
 
 		_scenarioPicker = new MockScenarioPicker();
 		_scriptedSession = new MockScriptedSession();
@@ -166,8 +169,46 @@ public partial class AppShell : Control
 		// ShellInteractionController.RealCombat.cs) for Move, single-
 		// target Weapon Attack, and End Turn — spellcasting and multi-
 		// target attacks are proven at the backend but not wired here yet.
+		// The debug jump-to-position override (FIVEEGOLDBOX_DEBUG_*) exists
+		// to land straight on a specific tile, so it deliberately skips the
+		// title screen entirely — going through New Game every time would
+		// defeat the point of it.
+		if (HasDebugPositionOverride())
+		{
+			StartPremadeGame();
+			return;
+		}
+
+		_interactionController.ShowTitleScreen();
+	}
+
+	// The pre-made party: the campaign's own authored roster, which is what
+	// every scenario is balanced around and what booting the app did
+	// unconditionally before the title screen existed.
+	private void StartPremadeGame()
+	{
 		_realSession = CreateRealSession();
 		_interactionController.ShowRealSession(_realSession);
+	}
+
+	// A party the player built through the character-creation wizard. Same
+	// scenario and seed as the pre-made path — only the party differs.
+	private void StartCreatedGame(PartyState party)
+	{
+		_realSession = new RealGameSession(
+			ScenarioSessionFactory.CreateNew(
+				DefaultScenarioId,
+				DefaultRandomSeed,
+				party));
+
+		_interactionController.ShowRealSession(_realSession);
+	}
+
+	private static bool HasDebugPositionOverride()
+	{
+		return !string.IsNullOrEmpty(
+			System.Environment.GetEnvironmentVariable(
+				DebugLocationIdEnvironmentVariable));
 	}
 
 	// Builds the session AppShell hands to RealGameSession. The normal path

@@ -8,7 +8,9 @@ internal interface IShellModalScreen
 		IReadOnlyDictionary<string, Action> commandHandlers,
 		Action<string>? onRowFocused = null,
 		Action<string>? onRowActivated = null,
-		Action? onClosed = null);
+		Action? onClosed = null,
+		Action<string>? onTextChanged = null,
+		Action? onTextSubmitted = null);
 
 	void CloseScreen();
 
