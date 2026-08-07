@@ -1,0 +1,46 @@
+@page "/campaigns"
+@inject CampaignContentService CampaignService
+
+<PageTitle>Campaigns</PageTitle>
+
+<h1>Campaigns</h1>
+
+<p class="text-muted">
+    A campaign owns the party roster every scenario is played with, and names
+    which scenarios belong to it.
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Ruleset</th>
+            <th>Active party size</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var campaign in _campaigns)
+        {
+            <tr>
+                <td><code>@campaign.CampaignId</code></td>
+                <td>@campaign.DisplayName</td>
+                <td><code>@campaign.RulesetId</code></td>
+                <td>@campaign.ActivePartySize</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" href="@($"campaigns/{Uri.EscapeDataString(campaign.CampaignId)}/roster")">Manage roster</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private IReadOnlyList<CampaignSummary> _campaigns = [];
+
+    protected override void OnInitialized()
+    {
+        _campaigns = CampaignService.LoadCampaigns();
+    }
+}

@@ -51,6 +51,17 @@ internal sealed class RulesetPackDocument
 
     internal List<EffectDefinition> Effects => ReadList<EffectDefinition>("Effects");
 
+    /// Read-only here on purpose: these four aren't editable in this tool,
+    /// but a campaign roster still has to point at real ones, and reading
+    /// ids is a separate concern from authoring the things they name.
+    internal List<RaceDefinition> Races => ReadList<RaceDefinition>("Races");
+
+    internal List<ClassDefinition> Classes => ReadList<ClassDefinition>("Classes");
+
+    internal List<BackgroundDefinition> Backgrounds => ReadList<BackgroundDefinition>("Backgrounds");
+
+    internal List<SkillDefinition> Skills => ReadList<SkillDefinition>("Skills");
+
     private List<T> ReadList<T>(
         string propertyName)
     {

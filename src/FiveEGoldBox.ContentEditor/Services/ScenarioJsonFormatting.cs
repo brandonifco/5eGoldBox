@@ -95,7 +95,7 @@ internal static class ScenarioJsonFormatting
             ("LocationId", JsonString(location.LocationId)),
             ("DisplayName", JsonString(location.DisplayName)),
             ("ExplorationMap", explorationMapTextByLocationId(location.LocationId, column + 4)),
-            ("ExplorableProgressIds", RenderProgressIdList(location.ExplorableProgressIds, column + 8))
+            ("ExplorableProgressIds", RenderLooseStringList(location.ExplorableProgressIds, column + 8))
         ];
 
         return RenderExplodedObject(fields, column);
@@ -113,7 +113,7 @@ internal static class ScenarioJsonFormatting
             ("OriginLocationId", JsonString(route.OriginLocationId)),
             ("DestinationLocationId", JsonString(route.DestinationLocationId)),
             ("FinalStepIndex", route.FinalStepIndex.ToString(CultureInfo.InvariantCulture)),
-            ("RequiredProgressIds", RenderProgressIdList(route.RequiredProgressIds, column + 8))
+            ("RequiredProgressIds", RenderLooseStringList(route.RequiredProgressIds, column + 8))
         ];
 
         return RenderExplodedObject(fields, column);
@@ -229,7 +229,7 @@ internal static class ScenarioJsonFormatting
             ("LocationId", JsonString(trigger.LocationId)),
             ("Floor", trigger.Floor is null ? null : JsonString(trigger.Floor)),
             ("Position", trigger.Position is null ? null : RenderGridPosition(trigger.Position)),
-            ("RequiredProgressIds", RenderProgressIdList(trigger.RequiredProgressIds, column + 8)),
+            ("RequiredProgressIds", RenderLooseStringList(trigger.RequiredProgressIds, column + 8)),
             ("ResultingProgressId", JsonString(trigger.ResultingProgressId)),
             ("EncounterId", trigger.EncounterId is null ? null : JsonString(trigger.EncounterId))
         ];
@@ -248,7 +248,7 @@ internal static class ScenarioJsonFormatting
             ("DecisionId", JsonString(decision.DecisionId)),
             ("DisplayName", JsonString(decision.DisplayName)),
             ("LocationId", JsonString(decision.LocationId)),
-            ("RequiredProgressIds", RenderProgressIdList(decision.RequiredProgressIds, column + 8)),
+            ("RequiredProgressIds", RenderLooseStringList(decision.RequiredProgressIds, column + 8)),
             ("Options", RenderAlwaysExplodedArrayRequired(decision.Options, column + 8, RenderDecisionOption))
         ];
 
@@ -393,42 +393,4 @@ internal static class ScenarioJsonFormatting
         return value ? "true" : "false";
     }
 
-    // ----- Scenario-only convention: progress-id string lists -----
-
-    /// ExplorableProgressIds/RequiredProgressIds stay on one line for one or
-    /// two entries and only explode to one entry per line at three or more
-    /// -- confirmed against real content (Watchtower's two-entry
-    /// ExplorableProgressIds and Hollow Mill's two-entry Trigger's
-    /// RequiredProgressIds both stay inline; every three-or-more-entry list
-    /// in committed content explodes). This is deliberately not the same
-    /// threshold RenderCompactArray uses for ruleset content (which
-    /// explodes at two or more) -- the two files were authored under
-    /// different conventions and this class matches scenario content's own.
-    private static string? RenderProgressIdList(
-        IReadOnlyList<string> progressIds,
-        int column)
-    {
-        if (progressIds.Count == 0)
-        {
-            return null;
-        }
-
-        if (progressIds.Count <= 2)
-        {
-            string inline = string.Join(", ", progressIds.Select(JsonString));
-            return $"[ {inline} ]";
-        }
-
-        StringBuilder sb = new();
-        sb.Append('[').Append('\n');
-
-        for (int i = 0; i < progressIds.Count; i++)
-        {
-            sb.Append(Spaces(column)).Append(JsonString(progressIds[i]));
-            sb.Append(i < progressIds.Count - 1 ? ",\n" : "\n");
-        }
-
-        sb.Append(Spaces(column - 4)).Append(']');
-        return sb.ToString();
-    }
 }
