@@ -14,10 +14,10 @@ using Godot;
 // user asked for this directly: no more lighting up every reachable
 // tile, just a single cursor that moves with the keyboard and reads
 // legal/illegal per tile it's actually on). These draw nothing at all
-// unless focused, then a diamond outline in the tile's own shape
-// instead of a filled diamond -- legal cells are still real Buttons the
-// same way "valid-target" cells are, illegal ones too (so the cursor
-// can actually traverse them and report why), just never filled.
+// unless focused, then an outline in the tile's own shape instead of a
+// filled cell -- legal cells are still real Buttons the same way
+// "valid-target" cells are, illegal ones too (so the cursor can actually
+// traverse them and report why), just never filled.
 public partial class CombatHighlightCell : Button
 {
 	// Internal, not private -- CombatView.Markers.cs's own mouse-hover
@@ -36,14 +36,13 @@ public partial class CombatHighlightCell : Button
 	{
 		ThemeTypeVariation = "CombatMarkerButton";
 		MouseDefaultCursorShape = CursorShape.PointingHand;
-		// Suppresses Godot's own rectangular focus stylebox (the theme's
-		// shared CombatMarkerButton/styles/focus, a plain rectangle) --
-		// this class draws its own diamond-shaped cursor outline in
-		// _Draw instead, matching the tile's real shape. Reusing the
-		// already-empty "normal" stylebox rather than adding a new theme
-		// resource. Applies to every kind, not just the cursor-only
-		// ones -- the same stray rectangle would show through a filled
-		// "valid-target" diamond too, just unreported until now.
+		// Suppresses the theme's shared CombatMarkerButton/styles/focus
+		// stylebox so it never double-draws over this class's own cursor
+		// outline in _Draw. Reusing the already-empty "normal" stylebox
+		// rather than adding a new theme resource. Still needed on the
+		// square grid: the theme's focus style is a 2px amber rect that
+		// would otherwise sit on top of, and disagree with, the
+		// legal/illegal cursor colour.
 		AddThemeStyleboxOverride("focus", GetThemeStylebox("normal"));
 		FocusEntered += QueueRedraw;
 		FocusExited += QueueRedraw;
@@ -52,7 +51,16 @@ public partial class CombatHighlightCell : Button
 	public void Configure(string kind)
 	{
 		(_fillColor, bool selectable, _isCursorOnly, _cursorColor) = ResolveStyle(kind);
-		FocusMode = selectable ? FocusModeEnum.All : FocusModeEnum.None;
+
+		// "valid-target" marks a combatant's square during attack/spell
+		// targeting, and attack targeting resolves by combatant id through
+		// the pin's own Pressed -- activating the cell underneath resolves
+		// nothing. Leaving it focusable let it swallow the keyboard cursor
+		// and do nothing with it. Still clickable (Disabled stays false),
+		// because mock combat does route through cells.
+		bool keyboardFocusable = selectable && kind != "valid-target";
+
+		FocusMode = keyboardFocusable ? FocusModeEnum.All : FocusModeEnum.None;
 		Disabled = !selectable;
 
 		if (IsNodeReady())
@@ -61,55 +69,28 @@ public partial class CombatHighlightCell : Button
 		}
 	}
 
+	// The cell fills its whole node rect now that the grid is square. The
+	// isometric version drew a diamond inset in that rect and needed a
+	// matching _HasPoint override, since Control's default hit-test is
+	// the rectangular bounding box and would otherwise have registered
+	// clicks on a diamond's invisible corners. Both are gone: the drawn
+	// shape and the default hit-test are the same rectangle again.
 	public override void _Draw()
 	{
-		Vector2[] points = DiamondPoints(Size);
-		Vector2[] outline = { points[0], points[1], points[2], points[3], points[0] };
+		Rect2 rect = new(Vector2.Zero, Size);
 
 		if (_isCursorOnly)
 		{
 			if (HasFocus())
 			{
-				DrawPolyline(outline, _cursorColor, width: 2.5f, antialiased: true);
+				DrawRect(rect, _cursorColor, filled: false, width: 2.5f);
 			}
 
 			return;
 		}
 
-		DrawColoredPolygon(points, _fillColor);
-		DrawPolyline(outline, new Color(_fillColor, 0.9f), width: 1.5f, antialiased: true);
-	}
-
-	private static Vector2[] DiamondPoints(Vector2 size)
-	{
-		Vector2 half = size / 2f;
-		return new[]
-		{
-			new Vector2(half.X, 0f),     // top
-			new Vector2(size.X, half.Y), // right
-			new Vector2(half.X, size.Y), // bottom
-			new Vector2(0f, half.Y),     // left
-		};
-	}
-
-	// A rhombus centered at (half.X, half.Y) with half-extents `half` is
-	// the L1 ("taxicab") unit ball scaled by `half`:
-	// |dx|/half.X + |dy|/half.Y <= 1. Exact for a rhombus, O(1) — no
-	// generic point-in-polygon test needed. Without this override,
-	// Control's default hit-test is the full rectangular bounding box,
-	// so clicking a diamond's invisible corner would wrongly register as
-	// a click on this cell.
-	public override bool _HasPoint(Vector2 point)
-	{
-		Vector2 half = Size / 2f;
-
-		if (half.X <= 0f || half.Y <= 0f)
-		{
-			return false;
-		}
-
-		Vector2 centered = point - half;
-		return (Mathf.Abs(centered.X) / half.X) + (Mathf.Abs(centered.Y) / half.Y) <= 1f;
+		DrawRect(rect, _fillColor);
+		DrawRect(rect, new Color(_fillColor, 0.9f), filled: false, width: 1.5f);
 	}
 
 	private static (Color Fill, bool Selectable, bool IsCursorOnly, Color CursorColor) ResolveStyle(

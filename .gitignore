@@ -61,3 +61,7 @@ desktop.ini
 .env.*
 *.local
 secrets.json
+
+# Blender auto-backup files (written beside every save)
+*.blend1
+*.blend2

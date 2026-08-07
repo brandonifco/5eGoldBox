@@ -3,8 +3,8 @@
 [ext_resource type="Script" uid="uid://d5h9n3q7u1x4z" path="res://ui/components/commands/HotkeyCommandButton.cs" id="1_hotkey_command_button"]
 
 [node name="HotkeyCommandButton" type="Button"]
-custom_minimum_size = Vector2(0, 40)
-size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 34)
+size_flags_horizontal = 0
 theme_type_variation = &"ShellCommandButton"
 shortcut_in_tooltip = false
 script = ExtResource("1_hotkey_command_button")

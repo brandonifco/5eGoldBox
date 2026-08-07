@@ -301,6 +301,7 @@ internal sealed partial class ShellInteractionController
 				.ToDictionary(combatant => combatant.Id, StringComparer.Ordinal);
 		HashSet<string> seenTargets = new(StringComparer.Ordinal);
 		List<CombatHighlightViewModel> highlights = new();
+		List<string> targetIds = new();
 
 		foreach (CombatWeaponAttackOption weapon in combatSnapshot.WeaponAttacks)
 		{
@@ -323,15 +324,32 @@ internal sealed partial class ShellInteractionController
 				{
 					highlights.Add(new CombatHighlightViewModel(
 						combatant.GridX, combatant.GridY, "valid-target"));
+					targetIds.Add(target.TargetCombatantId);
 				}
 			}
 		}
 
+		if (highlights.Count == 0)
+		{
+			// CombatWeaponAttackOption.IsAvailable is already "has a legal
+			// target" (CombatViewFactory), so the command guard above
+			// should make this unreachable. Kept because the failure mode
+			// if it ever is reached -- a targeting context with nothing in
+			// it and no way out but Esc -- is silent and baffling.
+			_pendingRealCombatCommand = null;
+			_pendingRealWeaponAttacks = null;
+			_presentationController.SetMessage("No target within reach.");
+			return;
+		}
+
 		PushContext(ShellInteractionContext.Targeting);
 		_presentationController.ShowCombatHighlights(highlights);
+		_presentationController.SetCombatTargetableCombatants(targetIds);
 		_presentationController.SetMessage(
 			"Choose a target to attack. Press Esc to cancel.");
 	}
+
+
 
 	// One spell's own Targets only — no cross-option flattening needed,
 	// since each spell already got its own command-bar button (see
@@ -357,6 +375,7 @@ internal sealed partial class ShellInteractionController
 			combatSnapshot.View.Combatants
 				.ToDictionary(combatant => combatant.Id, StringComparer.Ordinal);
 		List<CombatHighlightViewModel> highlights = new();
+		List<string> targetIds = new();
 
 		foreach (CombatTargetOption target in spell.Targets)
 		{
@@ -371,11 +390,13 @@ internal sealed partial class ShellInteractionController
 			{
 				highlights.Add(new CombatHighlightViewModel(
 					combatant.GridX, combatant.GridY, "valid-target"));
+				targetIds.Add(target.TargetCombatantId);
 			}
 		}
 
 		PushContext(ShellInteractionContext.Targeting);
 		_presentationController.ShowCombatHighlights(highlights);
+		_presentationController.SetCombatTargetableCombatants(targetIds);
 		_presentationController.SetMessage(
 			$"Choose a target for {spell.SpellName}. Press Esc to cancel.");
 	}
@@ -485,6 +506,7 @@ internal sealed partial class ShellInteractionController
 		_pendingRealSpellName = null;
 		_pendingRealSpellTargets = null;
 		_presentationController.ShowCombatHighlights(null);
+		_presentationController.SetCombatTargetableCombatants(null);
 	}
 
 	private void SubmitRealEndTurn()

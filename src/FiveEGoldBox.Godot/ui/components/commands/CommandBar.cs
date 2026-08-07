@@ -6,12 +6,12 @@ public partial class CommandBar : PanelContainer
 	public bool Immersive { get; set; }
 
 	private MarginContainer _commandMargin = null!;
-	private HBoxContainer _commandLayout = null!;
+	private HFlowContainer _commandLayout = null!;
 
 	public override void _Ready()
 	{
 		_commandMargin = GetNode<MarginContainer>("%CommandMargin");
-		_commandLayout = GetNode<HBoxContainer>("%CommandLayout");
+		_commandLayout = GetNode<HFlowContainer>("%CommandLayout");
 
 		ApplyThemeVariations();
 	}
