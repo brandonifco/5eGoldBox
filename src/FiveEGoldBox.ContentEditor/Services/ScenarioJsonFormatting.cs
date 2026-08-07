@@ -78,6 +78,11 @@ internal static class ScenarioJsonFormatting
         return RenderTopLevelArray(decisions, RenderDecision);
     }
 
+    internal static string RenderEncounters(IReadOnlyList<EncounterDefinitionV1> encounters)
+    {
+        return RenderTopLevelArray(encounters, RenderEncounter);
+    }
+
     // ----- ScenarioLocationDefinitionV1 -----
 
     private static string RenderLocation(
@@ -140,6 +145,71 @@ internal static class ScenarioJsonFormatting
         ];
 
         return RenderCompactObject(fields);
+    }
+
+    // ----- EncounterDefinitionV1 -----
+
+    /// BlockedPositions is required-and-always-rendered (every committed
+    /// encounter carries it, all of them empty today, written inline as []),
+    /// which is the same shape a floor's Stairs already had. Note the
+    /// non-empty case has no committed example to check byte-for-byte
+    /// against, so it follows PartyStartingPositions' proven layout rather
+    /// than a guess of its own.
+    private static string RenderEncounter(
+        EncounterDefinitionV1 encounter,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("EncounterId", JsonString(encounter.EncounterId)),
+            ("BattlefieldId", JsonString(encounter.BattlefieldId)),
+            ("Width", encounter.Width.ToString(CultureInfo.InvariantCulture)),
+            ("Height", encounter.Height.ToString(CultureInfo.InvariantCulture)),
+            ("PartySideId", JsonString(encounter.PartySideId)),
+            ("BlockedPositions", RenderCompactArrayRequired(
+                encounter.BlockedPositions,
+                column + 8,
+                RenderGridPosition)),
+            ("PartyStartingPositions", RenderCompactArrayRequired(
+                encounter.PartyStartingPositions,
+                column + 8,
+                RenderGridPosition)),
+            ("Combatants", RenderAlwaysExplodedArrayRequired(
+                encounter.Combatants,
+                column + 8,
+                RenderEncounterCombatant)),
+            ("Outcome", RenderEncounterOutcome(encounter.Outcome, column + 4))
+        ];
+
+        return RenderExplodedObject(fields, column);
+    }
+
+    private static string RenderEncounterCombatant(
+        EncounterCombatantDefinitionV1 combatant,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("CombatantId", JsonString(combatant.CombatantId)),
+            ("MonsterId", JsonString(combatant.MonsterId)),
+            ("SideId", JsonString(combatant.SideId)),
+            ("StartingPosition", RenderGridPosition(combatant.StartingPosition))
+        ];
+
+        return RenderExplodedObject(fields, column);
+    }
+
+    private static string RenderEncounterOutcome(
+        EncounterOutcomeDefinitionV1 outcome,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("VictoryProgressId", JsonString(outcome.VictoryProgressId)),
+            ("DefeatProgressId", JsonString(outcome.DefeatProgressId))
+        ];
+
+        return RenderExplodedObject(fields, column);
     }
 
     // ----- ScenarioTriggerDefinitionV1 -----

@@ -154,6 +154,36 @@ public sealed class ScenarioNoOpSaveFormattingTests
         }
     }
 
+    /// Every committed encounter carries an empty BlockedPositions, so that
+    /// inline [] shape is proven here; the non-empty case has no committed
+    /// example to check against and is covered structurally instead (see
+    /// ScenarioContentServiceTests).
+    [Theory]
+    [MemberData(nameof(RealScenarioFilePaths))]
+    public void ResavingEveryExistingEncounterOneAtATimeProducesAByteIdenticalFile(
+        string realFilePath)
+    {
+        string tempFile = CopyToTempFile(realFilePath);
+
+        try
+        {
+            ScenarioContentService service = new();
+            byte[] before = File.ReadAllBytes(tempFile);
+
+            foreach (var encounter in service.LoadEncounters(tempFile))
+            {
+                var result = service.SaveEncounter(tempFile, encounter);
+                Assert.True(result.IsValid, DescribeIssues(result));
+            }
+
+            AssertByteIdentical(before, File.ReadAllBytes(tempFile));
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
     /// Covers the optional-property shapes that only appear in real content:
     /// a trigger with no EncounterId (Hollow Mill's non-combat triggers) and
     /// one with all of Floor/Position/EncounterId set (Watchtower's ambush).

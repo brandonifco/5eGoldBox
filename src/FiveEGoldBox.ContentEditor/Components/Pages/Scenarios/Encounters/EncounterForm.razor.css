@@ -1,0 +1,86 @@
+/* A battlefield is a plain tactical grid, deliberately not styled like the
+   exploration map's parchment cartography -- it is a different kind of thing
+   and should not read as the same view. */
+
+.battlefield {
+    display: grid;
+    gap: 1px;
+    width: max-content;
+    padding: 0.5rem;
+    background-color: #2f3237;
+    border-radius: 4px;
+}
+
+.battle-cell {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+
+    background-color: #4a4f57;
+    color: #e8eaed;
+    border: 1px solid #3a3e45;
+    border-radius: 2px;
+}
+
+.battle-cell:hover {
+    outline: 2px solid #7aa7ff;
+    outline-offset: -2px;
+    z-index: 1;
+}
+
+.battle-cell.blocked {
+    background-color: #23262a;
+    color: #6b7280;
+}
+
+.battle-cell.party {
+    background-color: #2f6f4f;
+    color: #eafff3;
+}
+
+.battle-cell.enemy {
+    background-color: #8c3b3b;
+    color: #ffecec;
+}
+
+/* An enemy standing on a blocked or party square is a real authoring error
+   the validator rejects, so enemy colouring deliberately wins over both --
+   the mistake should be visible rather than hidden underneath. */
+.battle-cell.enemy.blocked,
+.battle-cell.enemy.party {
+    background-color: #8c3b3b;
+}
+
+.battle-cell.selected {
+    outline: 3px solid #ffd166;
+    outline-offset: -3px;
+    z-index: 2;
+}
+
+.legend-chip {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    vertical-align: text-bottom;
+    border-radius: 2px;
+    border: 1px solid #3a3e45;
+}
+
+.legend-chip.party {
+    background-color: #2f6f4f;
+}
+
+.legend-chip.blocked {
+    background-color: #23262a;
+}
+
+.legend-chip.enemy {
+    background-color: #8c3b3b;
+}
