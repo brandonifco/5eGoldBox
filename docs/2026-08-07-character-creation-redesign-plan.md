@@ -60,19 +60,17 @@ equivalent), and a **fixed party size** the creation flow fills.
 
 Investigated before planning, because they set the cost of the description work:
 
-- **`~/5eData` has no prose whatsoever.** The sibling project is
-  mechanically complete (9 races, 9 subraces, 12 classes, 40 subclasses, 13
-  backgrounds) but every entry is structured mechanics plus a PHB page citation.
-  There is nothing to port. Its own CLAUDE.md is explicit that the two projects
-  are never wired together; it remains a useful cross-check, not a source.
+- **There is no existing prose anywhere to port.** Every description has to be
+  written; none of the project's own content, in any form, already carries it.
 - **The two PHB HTML files in `docs/` are copyrighted.** Local reference only —
   they must not be a source for shipped text.
 - **SRD 5.1 is CC-BY-4.0** and carries real descriptive text for races and
   classes. It is thin on backgrounds (Acolyte essentially alone) and has no
   per-skill flavour, so those need original prose.
-- **`primaryAbilityIds` is a modelled concept in 5eData's class data.** That is
-  exactly the input a recommendation needs, which means recommendations can be
-  *derived from content* rather than hardcoded in the UI.
+- **A class's primary ability is a first-class concept in 5e itself** — the PHB
+  class tables carry it as its own column, distinct from saving throws. Modelling
+  it on `ClassDefinition` is what lets a recommendation be *derived from content*
+  rather than hardcoded in the UI.
 
 ## Decisions
 
