@@ -11,7 +11,8 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"ShellCompactMargin"
 
-[node name="CommandLayout" type="HBoxContainer" parent="CommandMargin"]
+[node name="CommandLayout" type="HFlowContainer" parent="CommandMargin"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"ShellCommandRow"
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
