@@ -1,0 +1,261 @@
+@page "/scenarios/{ScenarioId}/triggers/new"
+@page "/scenarios/{ScenarioId}/triggers/edit/{TriggerId}"
+@inject ScenarioContentService ScenarioService
+@inject NavigationManager Navigation
+
+<PageTitle>@(_isNew ? "Add Trigger" : $"Edit {TriggerId}")</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>@(_isNew ? "Add trigger" : $"Edit trigger: {TriggerId}")</h1>
+
+    <ValidationIssuesAlert Result="_saveResult" />
+
+    <EditForm Model="_model" OnValidSubmit="Save">
+        <div class="mb-3">
+            <label class="form-label">Trigger Id</label>
+            <InputText class="form-control" @bind-Value="_model.TriggerId" disabled="@(!_isNew)" />
+            <div class="form-text">Stable identifier, e.g. <code>trigger.signal-mechanism</code>. Cannot be changed once created.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Display Name</label>
+            <InputText class="form-control" @bind-Value="_model.DisplayName" />
+            <div class="form-text">What the player sees offered, e.g. "Signal mechanism".</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Location</label>
+            <select class="form-select" value="@_model.LocationId"
+                    @onchange="@((ChangeEventArgs e) => SetLocation(e.Value?.ToString()))">
+                <option value="">(choose a location)</option>
+                @foreach (var location in _locations)
+                {
+                    <option value="@location.LocationId">@location.DisplayName (@location.LocationId)</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3 form-check">
+            <input class="form-check-input" type="checkbox" id="fixed-to-square"
+                   checked="@_model.IsFixedToASquare"
+                   @onchange="@((ChangeEventArgs e) => SetFixedToASquare((bool)e.Value!))" />
+            <label class="form-check-label" for="fixed-to-square">Fires only on one specific square</label>
+            <div class="form-text">
+                Leave unchecked for a trigger that is available anywhere in the location.
+                A square-fixed trigger needs the location to have a map.
+            </div>
+        </div>
+
+        @if (_model.IsFixedToASquare)
+        {
+            @if (_floors.Count == 0)
+            {
+                <div class="alert alert-warning">
+                    <code>@(_model.LocationId is { Length: > 0 } ? _model.LocationId : "This location")</code>
+                    has no exploration map, so it has no squares to fix a trigger to.
+                    Either pick a different location or uncheck the box above.
+                </div>
+            }
+            else
+            {
+                <div class="row g-2 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Floor</label>
+                        <select class="form-select" value="@_model.Floor"
+                                @onchange="@((ChangeEventArgs e) => _model.Floor = e.Value?.ToString() ?? "")">
+                            @foreach (var floor in _floors)
+                            {
+                                <option value="@floor">@floor</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Square</label>
+                        <div class="input-group">
+                            <span class="input-group-text">X</span>
+                            <input type="number" class="form-control" value="@_model.X"
+                                   @onchange="@((ChangeEventArgs e) => _model.X = ParseInt(e.Value?.ToString(), _model.X))" />
+                            <span class="input-group-text">Y</span>
+                            <input type="number" class="form-control" value="@_model.Y"
+                                   @onchange="@((ChangeEventArgs e) => _model.Y = ParseInt(e.Value?.ToString(), _model.Y))" />
+                        </div>
+                        <div class="form-text">
+                            Must be a square the party can walk on --
+                            <a href="@MapHref" target="_blank">check the map</a>.
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+
+        <div class="mb-3">
+            <label class="form-label">Required progress</label>
+            <div class="form-text mb-1">The trigger is only offered once all of these are true.</div>
+            @foreach (var progressId in _progressIds)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="@("req-" + progressId)"
+                           checked="@_model.RequiredProgressIds.Contains(progressId)"
+                           @onchange="@((ChangeEventArgs e) => ToggleRequired(progressId, (bool)e.Value!))" />
+                    <label class="form-check-label" for="@("req-" + progressId)"><code>@progressId</code></label>
+                </div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Resulting progress</label>
+            <select class="form-select" value="@_model.ResultingProgressId"
+                    @onchange="@((ChangeEventArgs e) => _model.ResultingProgressId = e.Value?.ToString() ?? "")">
+                <option value="">(choose a progress marker)</option>
+                @foreach (var progressId in _progressIds)
+                {
+                    <option value="@progressId">@progressId</option>
+                }
+            </select>
+            <div class="form-text">What the scenario advances to once this fires.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Encounter (optional)</label>
+            <select class="form-select" value="@_model.EncounterId"
+                    @onchange="@((ChangeEventArgs e) => _model.EncounterId = e.Value?.ToString() ?? "")">
+                <option value="">(no fight -- just advance progress)</option>
+                @foreach (var encounterId in _encounterIds)
+                {
+                    <option value="@encounterId">@encounterId</option>
+                }
+            </select>
+            <div class="form-text">
+                Encounters are authored in the scenario file directly; this editor doesn't
+                create them yet, so the list shows what already exists.
+            </div>
+        </div>
+
+        <div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a class="btn btn-secondary" href="@TriggersHref">Cancel</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    [Parameter]
+    public string? TriggerId { get; set; }
+
+    private ScenarioSummary? _scenario;
+    private ScenarioTriggerFormModel _model = new();
+    private bool _isNew;
+    private ValidationResult? _saveResult;
+    private IReadOnlyList<string> _progressIds = [];
+    private IReadOnlyList<ScenarioLocationDefinitionV1> _locations = [];
+    private IReadOnlyList<string> _encounterIds = [];
+    private IReadOnlyList<string> _floors = [];
+
+    private string TriggersHref =>
+        $"scenarios/{Uri.EscapeDataString(ScenarioId)}/triggers";
+
+    private string MapHref =>
+        $"scenarios/{Uri.EscapeDataString(ScenarioId)}/locations/{Uri.EscapeDataString(_model.LocationId)}/map";
+
+    protected override void OnInitialized()
+    {
+        _isNew = string.IsNullOrEmpty(TriggerId);
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _progressIds = ScenarioService.LoadProgressIds(_scenario.FilePath);
+        _locations = ScenarioService.LoadLocations(_scenario.FilePath);
+        _encounterIds = ScenarioService.LoadEncounterIds(_scenario.FilePath);
+
+        if (!_isNew)
+        {
+            var existing = ScenarioService.FindTrigger(_scenario.FilePath, TriggerId!);
+
+            if (existing is not null)
+            {
+                _model = ScenarioTriggerFormModel.FromDefinition(existing);
+            }
+        }
+
+        RefreshFloors();
+    }
+
+    private void SetLocation(string? locationId)
+    {
+        _model.LocationId = locationId ?? "";
+        RefreshFloors();
+
+        // A floor from the previous location almost certainly doesn't exist
+        // on the new one, and silently keeping it would save a trigger that
+        // fails validation for a reason the form never showed.
+        if (!_floors.Contains(_model.Floor))
+        {
+            _model.Floor = _floors.FirstOrDefault() ?? "";
+        }
+    }
+
+    private void SetFixedToASquare(bool isFixed)
+    {
+        _model.IsFixedToASquare = isFixed;
+
+        if (isFixed && string.IsNullOrEmpty(_model.Floor))
+        {
+            _model.Floor = _floors.FirstOrDefault() ?? "";
+        }
+    }
+
+    private void RefreshFloors()
+    {
+        _floors = _scenario is null || string.IsNullOrEmpty(_model.LocationId)
+            ? []
+            : ScenarioService.LoadFloorIds(_scenario.FilePath, _model.LocationId);
+    }
+
+    private void ToggleRequired(
+        string progressId,
+        bool isChecked)
+    {
+        if (isChecked && !_model.RequiredProgressIds.Contains(progressId))
+        {
+            _model.RequiredProgressIds.Add(progressId);
+        }
+        else if (!isChecked)
+        {
+            _model.RequiredProgressIds.Remove(progressId);
+        }
+    }
+
+    private static int ParseInt(
+        string? raw,
+        int fallback)
+    {
+        return int.TryParse(raw, out int value) ? value : fallback;
+    }
+
+    private void Save()
+    {
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _saveResult = ScenarioService.SaveTrigger(_scenario.FilePath, _model.ToDefinition());
+
+        if (_saveResult.IsValid)
+        {
+            Navigation.NavigateTo(TriggersHref);
+        }
+    }
+}

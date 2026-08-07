@@ -1,0 +1,106 @@
+@page "/scenarios/{ScenarioId}/triggers"
+@inject ScenarioContentService ScenarioService
+
+<PageTitle>Triggers -- @ScenarioId</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>Triggers -- @_scenario.DisplayName</h1>
+    <a class="btn btn-secondary mb-3" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}")">&larr; Back to scenario</a>
+    <a class="btn btn-primary mb-3" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/triggers/new")">Add new trigger</a>
+
+    <p class="text-muted">
+        A trigger fires when the party is standing somewhere specific with the right
+        progress already made. It advances progress, and may start an encounter.
+    </p>
+
+    <ValidationIssuesAlert Result="_lastDeleteResult" />
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Where</th>
+                <th>Needs progress</th>
+                <th>Then</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var trigger in _triggers)
+            {
+                <tr>
+                    <td><code>@trigger.TriggerId</code></td>
+                    <td>@trigger.DisplayName</td>
+                    <td>
+                        <code>@trigger.LocationId</code>
+                        @if (trigger.Floor is not null && trigger.Position is not null)
+                        {
+                            <br />
+                            <span class="text-muted small">@trigger.Floor (@trigger.Position.X, @trigger.Position.Y)</span>
+                        }
+                        else
+                        {
+                            <br />
+                            <span class="text-muted small">anywhere in the location</span>
+                        }
+                    </td>
+                    <td>
+                        @foreach (var progressId in trigger.RequiredProgressIds)
+                        {
+                            <div><code>@progressId</code></div>
+                        }
+                    </td>
+                    <td>
+                        <div><code>@trigger.ResultingProgressId</code></div>
+                        @if (trigger.EncounterId is not null)
+                        {
+                            <div class="small">fights <code>@trigger.EncounterId</code></div>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary me-1" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/triggers/edit/{Uri.EscapeDataString(trigger.TriggerId)}")">Edit</a>
+                        <DeleteButton OnConfirmed="() => Delete(trigger.TriggerId)" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    private ScenarioSummary? _scenario;
+    private IReadOnlyList<ScenarioTriggerDefinitionV1> _triggers = [];
+    private ValidationResult? _lastDeleteResult;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+        _triggers = _scenario is null ? [] : ScenarioService.LoadTriggers(_scenario.FilePath);
+    }
+
+    private void Delete(
+        string triggerId)
+    {
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _lastDeleteResult = ScenarioService.DeleteTrigger(_scenario.FilePath, triggerId);
+        Refresh();
+    }
+}

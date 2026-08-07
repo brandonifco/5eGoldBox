@@ -37,6 +37,24 @@ else
                 </div>
             </div>
         </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Decisions</h5>
+                    <p class="card-text text-muted small">Choices offered at a location.</p>
+                    <a class="btn btn-primary" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/decisions")">Manage</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Triggers</h5>
+                    <p class="card-text text-muted small">What fires when the party reaches a spot.</p>
+                    <a class="btn btn-primary" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/triggers")">Manage</a>
+                </div>
+            </div>
+        </div>
     </div>
 }
 

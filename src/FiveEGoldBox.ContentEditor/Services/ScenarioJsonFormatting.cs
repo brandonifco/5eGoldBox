@@ -68,6 +68,16 @@ internal static class ScenarioJsonFormatting
         return RenderTopLevelArray(shops, RenderShop);
     }
 
+    internal static string RenderTriggers(IReadOnlyList<ScenarioTriggerDefinitionV1> triggers)
+    {
+        return RenderTopLevelArray(triggers, RenderTrigger);
+    }
+
+    internal static string RenderDecisions(IReadOnlyList<ScenarioDecisionDefinitionV1> decisions)
+    {
+        return RenderTopLevelArray(decisions, RenderDecision);
+    }
+
     // ----- ScenarioLocationDefinitionV1 -----
 
     private static string RenderLocation(
@@ -130,6 +140,67 @@ internal static class ScenarioJsonFormatting
         ];
 
         return RenderCompactObject(fields);
+    }
+
+    // ----- ScenarioTriggerDefinitionV1 -----
+
+    /// Floor, Position and EncounterId are each independently optional and
+    /// are omitted entirely rather than written as null -- RenderExplodedObject
+    /// drops a null-valued field, which is exactly the committed shape (Hollow
+    /// Mill's non-combat triggers carry no EncounterId at all).
+    private static string RenderTrigger(
+        ScenarioTriggerDefinitionV1 trigger,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("TriggerId", JsonString(trigger.TriggerId)),
+            ("DisplayName", JsonString(trigger.DisplayName)),
+            ("LocationId", JsonString(trigger.LocationId)),
+            ("Floor", trigger.Floor is null ? null : JsonString(trigger.Floor)),
+            ("Position", trigger.Position is null ? null : RenderGridPosition(trigger.Position)),
+            ("RequiredProgressIds", RenderProgressIdList(trigger.RequiredProgressIds, column + 8)),
+            ("ResultingProgressId", JsonString(trigger.ResultingProgressId)),
+            ("EncounterId", trigger.EncounterId is null ? null : JsonString(trigger.EncounterId))
+        ];
+
+        return RenderExplodedObject(fields, column);
+    }
+
+    // ----- ScenarioDecisionDefinitionV1 -----
+
+    private static string RenderDecision(
+        ScenarioDecisionDefinitionV1 decision,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("DecisionId", JsonString(decision.DecisionId)),
+            ("DisplayName", JsonString(decision.DisplayName)),
+            ("LocationId", JsonString(decision.LocationId)),
+            ("RequiredProgressIds", RenderProgressIdList(decision.RequiredProgressIds, column + 8)),
+            ("Options", RenderAlwaysExplodedArrayRequired(decision.Options, column + 8, RenderDecisionOption))
+        ];
+
+        return RenderExplodedObject(fields, column);
+    }
+
+    /// A declining option ("Not yet") legitimately advances no progress, so a
+    /// null ResultingProgressId writes no property at all.
+    private static string RenderDecisionOption(
+        ScenarioDecisionOptionDefinitionV1 option,
+        int column)
+    {
+        List<(string Key, string? Value)> fields =
+        [
+            ("OptionId", JsonString(option.OptionId)),
+            ("DisplayName", JsonString(option.DisplayName)),
+            ("ResultingProgressId", option.ResultingProgressId is null
+                ? null
+                : JsonString(option.ResultingProgressId))
+        ];
+
+        return RenderExplodedObject(fields, column);
     }
 
     // ----- ExplorationMapDefinitionV1 -----
