@@ -114,7 +114,7 @@ public sealed class CharacterCreationRulesTests
         CharacterDraft draft = LegalFighterDraft("Aldric") with
         {
             ClassId = "class.cleric",
-            SelectedSkillIds = ["skill.perception", "skill.survival"],
+            SelectedSkillIds = ["skill.insight", "skill.religion"],
             SubclassId = "subclass.life-domain"
         };
 
@@ -149,7 +149,7 @@ public sealed class CharacterCreationRulesTests
             Draft = entries[0].Draft with
             {
                 ClassId = "class.cleric",
-                SelectedSkillIds = ["skill.perception", "skill.survival"],
+                SelectedSkillIds = ["skill.insight", "skill.religion"],
                 SubclassId = "subclass.war-domain"
             }
         };
@@ -169,6 +169,140 @@ public sealed class CharacterCreationRulesTests
         Views.PartyMemberViewModel resolved = view.Party.Members[0];
         Assert.Equal("War Domain", resolved.SubclassDisplayName);
         Assert.Null(view.Party.Members[1].SubclassDisplayName);
+    }
+
+    /// A race that declares subraces must have one chosen -- the rule existed
+    /// long before any shipped race had a subrace to choose, so until the
+    /// dwarf/elf/halfling content landed nothing exercised it against real
+    /// content.
+    [Fact]
+    public void Validate_RaceWithSubraces_RequiresOneToBeChosen()
+    {
+        CharacterDraft draft = LegalFighterDraft("Aldric") with
+        {
+            RaceId = "race.dwarf"
+        };
+
+        Core.Validation.ValidationResult result =
+            CharacterCreationRules.Validate(draft, RulesetId);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "character.subrace.required");
+    }
+
+    /// Race and subrace ability-score increases stack, and a race's own
+    /// BaseSpeedFeet is no longer uniformly 30 -- both only became observable
+    /// once a second race existed.
+    [Fact]
+    public void CustomBuildParty_MountainDwarf_StacksRaceAndSubraceIncreases()
+    {
+        List<CharacterCreationEntry> entries = FourLegalEntries();
+        entries[0] = entries[0] with
+        {
+            Draft = entries[0].Draft with
+            {
+                RaceId = "race.dwarf",
+                SubraceId = "subrace.mountain-dwarf"
+            }
+        };
+
+        PartyState party = CharacterCreationRules.CreateParty(
+            "party.custom-test",
+            entries,
+            RulesetId);
+
+        Views.SessionViewModel view = Views.SessionView.Describe(
+            ScenarioSessionFactory.CreateNew(
+                HollowMillScenarioIds.ScenarioId,
+                randomSeed: 42,
+                party));
+
+        Views.PartyMemberViewModel resolved = view.Party.Members[0];
+
+        Assert.Equal("Dwarf", resolved.RaceDisplayName);
+        Assert.Equal(25, resolved.SpeedFeet);
+
+        // Base 15 Strength + 2 from Mountain Dwarf, base 13 Constitution
+        // + 2 from Dwarf itself.
+        Assert.Equal(17, ScoreOf(resolved, Ability.Strength));
+        Assert.Equal(15, ScoreOf(resolved, Ability.Constitution));
+
+        // The human fighter beside them keeps the human's own speed and its
+        // +1-to-everything increase (base 15 Strength + 1), rather than
+        // picking up anything the dwarf brought.
+        Assert.Equal(30, view.Party.Members[1].SpeedFeet);
+        Assert.Equal(
+            16,
+            ScoreOf(view.Party.Members[1], Ability.Strength));
+    }
+
+    /// Class skill lists are wider than the number a class may choose, so a
+    /// selection off its own list is now a real, reachable rejection rather
+    /// than an unreachable rule -- every class previously offered exactly as
+    /// many skills as it required.
+    [Fact]
+    public void Validate_SkillOutsideTheClassList_IsRejected()
+    {
+        CharacterDraft draft = LegalFighterDraft("Aldric") with
+        {
+            ClassId = "class.wizard",
+
+            // Both are real skills, and neither is on the wizard's list.
+            SelectedSkillIds = ["skill.athletics", "skill.stealth"]
+        };
+
+        Core.Validation.ValidationResult result =
+            CharacterCreationRules.Validate(draft, RulesetId);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "character.skills.not_available");
+    }
+
+    /// A background contributes skill proficiencies on top of the class's own
+    /// chosen ones. Backgrounds carried no mechanical payload at all until the
+    /// acolyte/criminal/sage content landed beside the soldier.
+    [Fact]
+    public void Resolve_BackgroundSkillProficiencies_AddToTheClassChoices()
+    {
+        CharacterDraft draft = LegalFighterDraft("Aldric") with
+        {
+            ClassId = "class.wizard",
+            BackgroundId = "background.sage",
+            SelectedSkillIds = ["skill.insight", "skill.investigation"]
+        };
+
+        CharacterResolver resolver = new(
+            Scenarios.RulesetRegistry.Resolve(RulesetId));
+
+        CharacterSnapshot snapshot = resolver.Resolve(draft);
+
+        IReadOnlyList<string> proficient = snapshot.SkillBonuses
+            .Where(skill => skill.IsProficient)
+            .Select(skill => skill.SkillId)
+            .OrderBy(skillId => skillId, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(
+            [
+                "skill.arcana",
+                "skill.history",
+                "skill.insight",
+                "skill.investigation"
+            ],
+            proficient);
+    }
+
+    private static int ScoreOf(
+        Views.PartyMemberViewModel member,
+        Ability ability)
+    {
+        return member.AbilityScores
+            .Single(score => score.AbilityName == ability.ToString())
+            .Score;
     }
 
     [Fact]
@@ -361,9 +495,8 @@ public sealed class CharacterCreationRulesTests
     }
 
     /// A legal, level-1 human fighter built against the real shipped
-    /// ruleset -- standard array scores, both of the fighter's two class
-    /// skill choices (it offers exactly two and requires exactly two), and
-    /// its own longsword.
+    /// ruleset -- standard array scores, two of the eight skills the fighter
+    /// offers (it requires exactly two), and its own longsword.
     private static CharacterDraft LegalFighterDraft(string name)
     {
         return new CharacterDraft
