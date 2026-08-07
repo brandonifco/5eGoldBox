@@ -464,6 +464,168 @@ public sealed class ScenarioContentServiceTests
         });
     }
 
+    // ----- Triggers -----
+
+    [Fact]
+    public void SaveTrigger_AddsALocationWideTriggerWithNoFloorPositionOrEncounter()
+    {
+        WithTempScenarioFile("hollow-mill", (service, path) =>
+        {
+            ScenarioTriggerFormModel model = new()
+            {
+                TriggerId = "trigger.test-wide",
+                DisplayName = "Test trigger",
+                LocationId = "location.hollow-mill-village",
+                IsFixedToASquare = false,
+                RequiredProgressIds = ["mill.rumor-heard"],
+                ResultingProgressId = "mill.commission-accepted"
+            };
+
+            var result = service.SaveTrigger(path, model.ToDefinition());
+
+            Assert.True(result.IsValid, DescribeIssues(result));
+
+            var saved = service.FindTrigger(path, "trigger.test-wide")!;
+            Assert.Null(saved.Floor);
+            Assert.Null(saved.Position);
+            Assert.Null(saved.EncounterId);
+        });
+    }
+
+    [Fact]
+    public void SaveTrigger_RejectsASquareThePartyCannotReachAndLeavesFileUntouched()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            byte[] before = File.ReadAllBytes(path);
+
+            // (0, 0) is blocked on Watchtower's ground floor.
+            ScenarioTriggerFormModel model = new()
+            {
+                TriggerId = "trigger.test-impassable",
+                DisplayName = "Test trigger",
+                LocationId = "location.ruined-watchtower",
+                IsFixedToASquare = true,
+                Floor = "GroundFloor",
+                X = 0,
+                Y = 0,
+                RequiredProgressIds = ["MissionAccepted"],
+                ResultingProgressId = "SignalActivated"
+            };
+
+            var result = service.SaveTrigger(path, model.ToDefinition());
+
+            Assert.False(result.IsValid);
+            Assert.Equal(before, File.ReadAllBytes(path));
+        });
+    }
+
+    [Fact]
+    public void SaveTrigger_RejectsAnUnknownEncounterAndLeavesFileUntouched()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            byte[] before = File.ReadAllBytes(path);
+
+            var existing = service.FindTrigger(path, "trigger.watchtower-signal")!;
+            var result = service.SaveTrigger(
+                path,
+                existing with { EncounterId = "encounter.does-not-exist" });
+
+            Assert.False(result.IsValid);
+            Assert.Equal(before, File.ReadAllBytes(path));
+        });
+    }
+
+    [Fact]
+    public void LoadEncounterIds_ReturnsTheScenariosOwnEncountersForTheTriggerPicker()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            // The picker is what lets Triggers ship without an encounter
+            // editor existing: reading encounters needs no write support.
+            Assert.Contains("encounter.watchtower-signal-ambush", service.LoadEncounterIds(path));
+        });
+    }
+
+    [Fact]
+    public void LoadFloorIds_ReturnsTheFloorsOfTheNamedLocationOnly()
+    {
+        WithTempScenarioFile("watchtower", (service, path) =>
+        {
+            Assert.Equal(
+                ["GroundFloor", "UpperFloor"],
+                service.LoadFloorIds(path, "location.ruined-watchtower"));
+
+            // The outpost has no map at all, so it has no floors to offer.
+            Assert.Empty(service.LoadFloorIds(path, "location.outpost"));
+        });
+    }
+
+    [Fact]
+    public void DeleteTrigger_RemovesAnExistingTrigger()
+    {
+        WithTempScenarioFile("hollow-mill", (service, path) =>
+        {
+            // A trigger that starts an encounter can't simply be deleted --
+            // the validator rejects an encounter nothing can start -- so this
+            // uses one of Hollow Mill's non-combat triggers.
+            var result = service.DeleteTrigger(path, "trigger.herbalist-alcove");
+
+            Assert.True(result.IsValid, DescribeIssues(result));
+            Assert.Null(service.FindTrigger(path, "trigger.herbalist-alcove"));
+        });
+    }
+
+    // ----- Decisions -----
+
+    [Fact]
+    public void SaveDecision_RoundTripsOptionsIncludingOneThatAdvancesNoProgress()
+    {
+        WithTempScenarioFile("hollow-mill", (service, path) =>
+        {
+            var existing = service.FindDecision(path, "decision.mill-commission")!;
+            var model = ScenarioDecisionFormModel.FromDefinition(existing);
+
+            model.Options.Add(new ScenarioDecisionOptionFormModel
+            {
+                OptionId = "TestDecline",
+                DisplayName = "Walk away",
+                ResultingProgressId = ""
+            });
+
+            var result = service.SaveDecision(path, model.ToDefinition());
+            Assert.True(result.IsValid, DescribeIssues(result));
+
+            var saved = service.FindDecision(path, "decision.mill-commission")!;
+            var added = saved.Options.Single(option => option.OptionId == "TestDecline");
+            Assert.Null(added.ResultingProgressId);
+
+            // The declining option must write no property at all, not "".
+            string json = File.ReadAllText(path);
+            int start = json.IndexOf("TestDecline", StringComparison.Ordinal);
+            Assert.DoesNotContain("\"ResultingProgressId\"", json.Substring(start, 150));
+        });
+    }
+
+    [Fact]
+    public void SaveDecision_RejectsAnOptionNamingAnUnknownProgressMarkerAndLeavesFileUntouched()
+    {
+        WithTempScenarioFile("hollow-mill", (service, path) =>
+        {
+            byte[] before = File.ReadAllBytes(path);
+
+            var existing = service.FindDecision(path, "decision.mill-commission")!;
+            var model = ScenarioDecisionFormModel.FromDefinition(existing);
+            model.Options[0].ResultingProgressId = "mill.does-not-exist";
+
+            var result = service.SaveDecision(path, model.ToDefinition());
+
+            Assert.False(result.IsValid);
+            Assert.Equal(before, File.ReadAllBytes(path));
+        });
+    }
+
     // ----- Map features (Phase 4c) -----
 
     [Fact]

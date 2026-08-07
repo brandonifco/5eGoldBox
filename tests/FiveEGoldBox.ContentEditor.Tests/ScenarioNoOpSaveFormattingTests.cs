@@ -10,11 +10,13 @@ namespace FiveEGoldBox.ContentEditor.Tests;
 /// actually reproduces real hand-authored content, not just
 /// plausible-looking content.
 ///
-/// Saving a location leaves every map's original bytes untouched, so those
-/// tests hold for all three files. Saving a *map* re-renders it, which is
-/// byte-identical for the two files already written in the canonical field
-/// order and a deliberate normalization for Hollow Mill -- see
-/// ResavingAHollowMillMapNormalizesFloorFieldOrderWithoutChangingContent.
+/// Saving a location leaves every map's original bytes untouched; saving a
+/// map re-renders it. Both are byte-identical for all three files now that
+/// Hollow Mill's floor field order has been normalized to the renderer's own
+/// (see ScenarioJsonFormatting's header and CommittedScenarioMapNormalizer) --
+/// before that, Hollow Mill was excluded here because re-rendering it moved
+/// a block, which is exactly the kind of silent noise these tests exist to
+/// catch rather than tolerate.
 public sealed class ScenarioNoOpSaveFormattingTests
 {
     public static IEnumerable<object[]> RealScenarioFilePaths()
@@ -118,6 +120,7 @@ public sealed class ScenarioNoOpSaveFormattingTests
     [Theory]
     [InlineData("watchtower")]
     [InlineData("sunken-chapel")]
+    [InlineData("hollow-mill")]
     public void ResavingEveryExistingMapOneAtATimeProducesAByteIdenticalFile(
         string scenarioDirectoryName)
     {
@@ -151,65 +154,59 @@ public sealed class ScenarioNoOpSaveFormattingTests
         }
     }
 
-    /// Hollow Mill's ground floor writes Npcs before Doors/Treasures, which
-    /// no single canonical order can reproduce alongside Watchtower's
-    /// opposite ordering. Re-rendering its map therefore normalizes that
-    /// ordering -- an accepted, deliberate change (see
-    /// ScenarioJsonFormatting's header). What must NOT change is the content
-    /// itself, which is what this asserts: same cells, stairs, doors,
-    /// treasures and NPCs, and a file that still validates.
-    [Fact]
-    public void ResavingAHollowMillMapNormalizesFloorFieldOrderWithoutChangingContent()
+    /// Covers the optional-property shapes that only appear in real content:
+    /// a trigger with no EncounterId (Hollow Mill's non-combat triggers) and
+    /// one with all of Floor/Position/EncounterId set (Watchtower's ambush).
+    /// Writing an absent optional as null rather than omitting it would fail
+    /// here rather than quietly changing every trigger in the file.
+    [Theory]
+    [MemberData(nameof(RealScenarioFilePaths))]
+    public void ResavingEveryExistingTriggerOneAtATimeProducesAByteIdenticalFile(
+        string realFilePath)
     {
-        string realFilePath = RepositoryLocator.ResolveScenarioPackPaths()
-            .Single(path => path.Contains("hollow-mill"));
         string tempFile = CopyToTempFile(realFilePath);
 
         try
         {
             ScenarioContentService service = new();
-            string locationId = service.LoadLocations(tempFile)
-                .First(location => location.ExplorationMap is not null)
-                .LocationId;
+            byte[] before = File.ReadAllBytes(tempFile);
 
-            var before = service.FindExplorationMap(tempFile, locationId);
-            Assert.NotNull(before);
-
-            var result = service.SaveExplorationMap(tempFile, locationId, before);
-            Assert.True(result.IsValid, DescribeIssues(result));
-
-            var after = service.FindExplorationMap(tempFile, locationId);
-            Assert.NotNull(after);
-
-            Assert.Equal(before.MapId, after.MapId);
-            Assert.Equal(before.Width, after.Width);
-            Assert.Equal(before.Height, after.Height);
-            Assert.Equal(before.StartingFloor, after.StartingFloor);
-            Assert.Equal(before.StartingFacing, after.StartingFacing);
-            Assert.Equal(before.Floors.Count, after.Floors.Count);
-
-            for (int i = 0; i < before.Floors.Count; i++)
+            foreach (var trigger in service.LoadTriggers(tempFile))
             {
-                var expectedFloor = before.Floors[i];
-                var actualFloor = after.Floors[i];
-
-                Assert.Equal(expectedFloor.Floor, actualFloor.Floor);
-                Assert.Equal(
-                    expectedFloor.TraversablePositions.Select(p => (p.X, p.Y)),
-                    actualFloor.TraversablePositions.Select(p => (p.X, p.Y)));
-                Assert.Equal(
-                    expectedFloor.Stairs.Select(s => (s.Position.X, s.Position.Y, s.DestinationFloor)),
-                    actualFloor.Stairs.Select(s => (s.Position.X, s.Position.Y, s.DestinationFloor)));
-                Assert.Equal(
-                    expectedFloor.Doors.Select(d => (d.DoorId, d.Side, d.IsSecret, d.IsLocked)),
-                    actualFloor.Doors.Select(d => (d.DoorId, d.Side, d.IsSecret, d.IsLocked)));
-                Assert.Equal(
-                    expectedFloor.Treasures.Select(t => (t.TreasureId, t.GoldPieces, t.ItemId, t.Quantity)),
-                    actualFloor.Treasures.Select(t => (t.TreasureId, t.GoldPieces, t.ItemId, t.Quantity)));
-                Assert.Equal(
-                    expectedFloor.Npcs.Select(n => (n.NpcId, n.Name, n.DialogueText)),
-                    actualFloor.Npcs.Select(n => (n.NpcId, n.Name, n.DialogueText)));
+                var result = service.SaveTrigger(tempFile, trigger);
+                Assert.True(result.IsValid, DescribeIssues(result));
             }
+
+            AssertByteIdentical(before, File.ReadAllBytes(tempFile));
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    /// Decisions nest a variable-length Options array whose entries have their
+    /// own optional ResultingProgressId -- a declining option ("Not yet")
+    /// legitimately advances nothing and must write no property at all.
+    [Theory]
+    [MemberData(nameof(RealScenarioFilePaths))]
+    public void ResavingEveryExistingDecisionOneAtATimeProducesAByteIdenticalFile(
+        string realFilePath)
+    {
+        string tempFile = CopyToTempFile(realFilePath);
+
+        try
+        {
+            ScenarioContentService service = new();
+            byte[] before = File.ReadAllBytes(tempFile);
+
+            foreach (var decision in service.LoadDecisions(tempFile))
+            {
+                var result = service.SaveDecision(tempFile, decision);
+                Assert.True(result.IsValid, DescribeIssues(result));
+            }
+
+            AssertByteIdentical(before, File.ReadAllBytes(tempFile));
         }
         finally
         {

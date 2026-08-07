@@ -1,0 +1,204 @@
+@page "/scenarios/{ScenarioId}/decisions/new"
+@page "/scenarios/{ScenarioId}/decisions/edit/{DecisionId}"
+@inject ScenarioContentService ScenarioService
+@inject NavigationManager Navigation
+
+<PageTitle>@(_isNew ? "Add Decision" : $"Edit {DecisionId}")</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>@(_isNew ? "Add decision" : $"Edit decision: {DecisionId}")</h1>
+
+    <ValidationIssuesAlert Result="_saveResult" />
+
+    <EditForm Model="_model" OnValidSubmit="Save">
+        <div class="mb-3">
+            <label class="form-label">Decision Id</label>
+            <InputText class="form-control" @bind-Value="_model.DecisionId" disabled="@(!_isNew)" />
+            <div class="form-text">Stable identifier, e.g. <code>decision.mill-commission</code>. Cannot be changed once created.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Display Name</label>
+            <InputText class="form-control" @bind-Value="_model.DisplayName" />
+            <div class="form-text">The prompt the player sees, e.g. "Look into the spoiled grain".</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Location</label>
+            <select class="form-select" value="@_model.LocationId"
+                    @onchange="@((ChangeEventArgs e) => _model.LocationId = e.Value?.ToString() ?? "")">
+                <option value="">(choose a location)</option>
+                @foreach (var location in _locations)
+                {
+                    <option value="@location.LocationId">@location.DisplayName (@location.LocationId)</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Required progress</label>
+            <div class="form-text mb-1">The decision is only offered once all of these are true.</div>
+            @foreach (var progressId in _progressIds)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="@("req-" + progressId)"
+                           checked="@_model.RequiredProgressIds.Contains(progressId)"
+                           @onchange="@((ChangeEventArgs e) => ToggleRequired(progressId, (bool)e.Value!))" />
+                    <label class="form-check-label" for="@("req-" + progressId)"><code>@progressId</code></label>
+                </div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Options</label>
+            <div class="form-text mb-2">
+                A decision needs at least two options to be a choice. Leave an option's
+                resulting progress blank for one that declines and changes nothing.
+            </div>
+
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Option Id</th>
+                        <th>Display Name</th>
+                        <th>Resulting progress</th>
+                        <th style="width: 6rem;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var option in _model.Options)
+                    {
+                        var current = option;
+                        <tr>
+                            <td>
+                                <input class="form-control form-control-sm" value="@current.OptionId"
+                                       @onchange="@((ChangeEventArgs e) => current.OptionId = e.Value?.ToString() ?? "")" />
+                            </td>
+                            <td>
+                                <input class="form-control form-control-sm" value="@current.DisplayName"
+                                       @onchange="@((ChangeEventArgs e) => current.DisplayName = e.Value?.ToString() ?? "")" />
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm" value="@current.ResultingProgressId"
+                                        @onchange="@((ChangeEventArgs e) => current.ResultingProgressId = e.Value?.ToString() ?? "")">
+                                    <option value="">(declines -- no progress)</option>
+                                    @foreach (var progressId in _progressIds)
+                                    {
+                                        <option value="@progressId">@progressId</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        @onclick="@(() => _model.Options.Remove(current))">Remove</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="AddOption">Add option</button>
+        </div>
+
+        <div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a class="btn btn-secondary" href="@DecisionsHref">Cancel</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    [Parameter]
+    public string? DecisionId { get; set; }
+
+    private ScenarioSummary? _scenario;
+    private ScenarioDecisionFormModel _model = new();
+    private bool _isNew;
+    private ValidationResult? _saveResult;
+    private IReadOnlyList<string> _progressIds = [];
+    private IReadOnlyList<ScenarioLocationDefinitionV1> _locations = [];
+
+    private string DecisionsHref =>
+        $"scenarios/{Uri.EscapeDataString(ScenarioId)}/decisions";
+
+    protected override void OnInitialized()
+    {
+        _isNew = string.IsNullOrEmpty(DecisionId);
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _progressIds = ScenarioService.LoadProgressIds(_scenario.FilePath);
+        _locations = ScenarioService.LoadLocations(_scenario.FilePath);
+
+        if (!_isNew)
+        {
+            var existing = ScenarioService.FindDecision(_scenario.FilePath, DecisionId!);
+
+            if (existing is not null)
+            {
+                _model = ScenarioDecisionFormModel.FromDefinition(existing);
+            }
+        }
+        else
+        {
+            // A decision with fewer than two options isn't a choice, so a new
+            // one starts with the shape it will actually need.
+            _model.Options.Add(new ScenarioDecisionOptionFormModel
+            {
+                OptionId = "AcceptMission",
+                DisplayName = "Accept"
+            });
+            _model.Options.Add(new ScenarioDecisionOptionFormModel
+            {
+                OptionId = "NotYet",
+                DisplayName = "Not yet"
+            });
+        }
+    }
+
+    private void AddOption()
+    {
+        _model.Options.Add(new ScenarioDecisionOptionFormModel());
+    }
+
+    private void ToggleRequired(
+        string progressId,
+        bool isChecked)
+    {
+        if (isChecked && !_model.RequiredProgressIds.Contains(progressId))
+        {
+            _model.RequiredProgressIds.Add(progressId);
+        }
+        else if (!isChecked)
+        {
+            _model.RequiredProgressIds.Remove(progressId);
+        }
+    }
+
+    private void Save()
+    {
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _saveResult = ScenarioService.SaveDecision(_scenario.FilePath, _model.ToDefinition());
+
+        if (_saveResult.IsValid)
+        {
+            Navigation.NavigateTo(DecisionsHref);
+        }
+    }
+}

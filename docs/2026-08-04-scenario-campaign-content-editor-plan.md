@@ -104,11 +104,7 @@ including the `Shops` property-insert path on a file that had none, and a reject
 
 ## Forward roadmap (not built yet)
 
-- **Phase 2 -- Decisions + Triggers.** `Options` (variable-length, 2-3 seen in real
-  content). `Trigger`'s independently-optional `Floor`/`Position`/`RequiredFacing`/
-  `EncounterId` (`EncounterId` picker sourced from the scenario's own `Encounters` --
-  decide whether this phase should follow Phase 3 or ship first with a type-the-id
-  caveat, when it starts).
+- **Phase 2 -- Decisions + Triggers. Done, 2026-08-06.** See the section below.
 - **Phase 3 -- Encounters.** `Combatants` (`MonsterId` picker cross-referencing the
   ruleset bestiary), `PartyStartingPositions`/`BlockedPositions` (lists of
   `GridPosition`), `Outcome` (`VictoryProgressId`/`DefeatProgressId` pickers sourced from
@@ -266,10 +262,62 @@ looks exactly like "the server is up" while actually serving the *previous* buil
 stale `dotnet run` processes and wait for the new process's own "Now listening on" line
 rather than probing the port, or you will verify stale code.
 
+## Phase 2 -- done, 2026-08-06: Decisions and Triggers
+
+Full CRUD for both, on the same List/Form + byte-preserving-splice discipline every other
+section uses. These are how a scenario actually branches, so they were the last piece of
+scenario *structure* still only editable by hand.
+
+**The phase's own open question resolved cheaply, and the answer was "ship first."** The
+plan asked whether Triggers had to wait for Phase 3 so a trigger could pick a real
+encounter, or ship with a type-the-id caveat. Neither: `Encounters` already sits in the
+pack root and is *readable* today -- authoring an encounter editor is a separate concern
+from reading the ids of encounters that already exist. `LoadEncounterIds` sources a real
+dropdown with no Phase 3 dependency and no caveat.
+
+- **A trigger is either fixed to one square or fires anywhere in its location.** The DTO
+  makes `Floor` and `Position` independently optional and the validator only checks each
+  when present, but authoring them independently is meaningless -- a `Position` with no
+  `Floor` is ungated on a multi-floor map. `ScenarioTriggerFormModel` collapses the pair
+  behind one `IsFixedToASquare` flag and writes both or neither.
+- **The Floor picker follows the chosen Location**, sourced from that location's own map
+  (`LoadFloorIds`). Changing location to one with no map hides the square controls and
+  explains why rather than silently offering floors that don't exist; changing to a
+  different mapped location resets a floor that no longer exists, since keeping it would
+  save a trigger that fails validation for a reason the form never showed.
+- **Absent optionals are omitted, never written empty** -- `EncounterId` on a non-combat
+  trigger, and a declining decision option's `ResultingProgressId` ("Not yet" advances
+  nothing). Both are covered by byte-identity tests across all three real files, which is
+  what proves the renderers reproduce hand-authored content rather than something that
+  merely parses the same.
+- **A new decision starts with two options**, since a decision with fewer isn't a choice.
+
+### Cleanup carried in this phase
+
+Adding hollow-mill to the map byte-identity theory showed 4c's normalization had left two
+things stale, both fixed here: `ResavingEveryExistingMapOneAtATimeProducesAByteIdenticalFile`
+still excluded hollow-mill (a 4a workaround that no longer applies -- it now passes for
+all three), and `ResavingAHollowMillMapNormalizesFloorFieldOrderWithoutChangingContent`
+had become strictly weaker than the byte-identity coverage that replaced it, with a doc
+comment asserting a divergence that no longer exists. Removed rather than left to
+mislead.
+
+- 10 new tests (57 -> 71, hollow-mill added to two existing theories, one redundant test
+  removed). Full solution gate green (Debug+Release 0 warnings; 2361 passed, 4 skipped).
+  No public API change.
+- **Verified live in a browser:** the trigger list makes Hollow Mill's branch legible at a
+  glance (both cellar approaches landing on `mill.vermin-roused` via different encounters);
+  an edit form loads real floors/progress/encounter from committed content; switching to
+  a mapless location hides the square controls with an actionable warning; adding a
+  declining decision option and saving produced a **4-line diff with no
+  `ResultingProgressId` property at all**, formatted identically to its neighbours; and
+  deleting a trigger that starts an encounter is refused with
+  `scenario.encounters.unreachable`, leaving the file untouched. Test edits reverted.
+
 ## Status (2026-08-06)
 
-Phase 1 and all of Phase 4 (a/b/c) are done and merged -- **exploration maps are now
-fully authorable in the editor**, which was the largest remaining gap in the adventure
-builder. Phases 2 (Decisions+Triggers), 3 (Encounters) and 5 (campaign roster) are scoped
-above but not started -- pick up whichever is next via the standing branch/PR/merge
-workflow, same as every other feature in this repo.
+Phase 1, Phase 2 and all of Phase 4 (a/b/c) are done and merged. **A scenario's
+structure -- locations, maps, routes, shops, decisions and triggers -- is now fully
+authorable in the editor.** What remains is Phase 3 (Encounters, the one content kind a
+trigger can point at but nobody can yet create here) and Phase 5 (campaign roster). Pick
+up either via the standing branch/PR/merge workflow.

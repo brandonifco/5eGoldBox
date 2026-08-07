@@ -1,0 +1,103 @@
+@page "/scenarios/{ScenarioId}/decisions"
+@inject ScenarioContentService ScenarioService
+
+<PageTitle>Decisions -- @ScenarioId</PageTitle>
+
+@if (_scenario is null)
+{
+    <p class="text-danger">No scenario found with id <code>@ScenarioId</code>.</p>
+}
+else
+{
+    <h1>Decisions -- @_scenario.DisplayName</h1>
+    <a class="btn btn-secondary mb-3" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}")">&larr; Back to scenario</a>
+    <a class="btn btn-primary mb-3" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/decisions/new")">Add new decision</a>
+
+    <p class="text-muted">
+        A decision is a choice offered at a location once the right progress has been
+        made. Each option may advance progress, or decline and change nothing.
+    </p>
+
+    <ValidationIssuesAlert Result="_lastDeleteResult" />
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Where</th>
+                <th>Needs progress</th>
+                <th>Options</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var decision in _decisions)
+            {
+                <tr>
+                    <td><code>@decision.DecisionId</code></td>
+                    <td>@decision.DisplayName</td>
+                    <td><code>@decision.LocationId</code></td>
+                    <td>
+                        @foreach (var progressId in decision.RequiredProgressIds)
+                        {
+                            <div><code>@progressId</code></div>
+                        }
+                    </td>
+                    <td>
+                        @foreach (var option in decision.Options)
+                        {
+                            <div>
+                                @option.DisplayName
+                                @if (option.ResultingProgressId is null)
+                                {
+                                    <span class="text-muted small">(declines)</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">&rarr; <code>@option.ResultingProgressId</code></span>
+                                }
+                            </div>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary me-1" href="@($"scenarios/{Uri.EscapeDataString(ScenarioId)}/decisions/edit/{Uri.EscapeDataString(decision.DecisionId)}")">Edit</a>
+                        <DeleteButton OnConfirmed="() => Delete(decision.DecisionId)" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public string ScenarioId { get; set; } = "";
+
+    private ScenarioSummary? _scenario;
+    private IReadOnlyList<ScenarioDecisionDefinitionV1> _decisions = [];
+    private ValidationResult? _lastDeleteResult;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _scenario = ScenarioService.FindScenario(ScenarioId);
+        _decisions = _scenario is null ? [] : ScenarioService.LoadDecisions(_scenario.FilePath);
+    }
+
+    private void Delete(
+        string decisionId)
+    {
+        if (_scenario is null)
+        {
+            return;
+        }
+
+        _lastDeleteResult = ScenarioService.DeleteDecision(_scenario.FilePath, decisionId);
+        Refresh();
+    }
+}

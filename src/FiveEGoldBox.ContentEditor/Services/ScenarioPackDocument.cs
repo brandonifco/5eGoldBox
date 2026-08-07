@@ -61,6 +61,15 @@ internal sealed class ScenarioPackDocument
 
     internal IReadOnlyList<ShopDefinitionV1> Shops => _pack.Shops;
 
+    internal IReadOnlyList<ScenarioTriggerDefinitionV1> Triggers => _pack.Triggers;
+
+    internal IReadOnlyList<ScenarioDecisionDefinitionV1> Decisions => _pack.Decisions;
+
+    /// Exposed read-only for a trigger's encounter picker. Encounters are not
+    /// editable here yet -- that's a later phase -- but they are readable, so
+    /// a trigger can point at a real one today instead of a typed-in id.
+    internal IReadOnlyList<EncounterDefinitionV1> Encounters => _pack.Encounters;
+
     /// The scenario's own closed set of progress-id strings -- the picker
     /// source for ExplorableProgressIds/RequiredProgressIds checkbox groups,
     /// the same way ruleset content's cross-references get pickers rather

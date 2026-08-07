@@ -187,6 +187,124 @@ internal sealed class ScenarioContentService
             ScenarioJsonFormatting.RenderRoutes(updated));
     }
 
+    // ----- Triggers -----
+
+    internal IReadOnlyList<ScenarioTriggerDefinitionV1> LoadTriggers(
+        string scenarioFilePath)
+    {
+        return ScenarioPackDocument.Read(scenarioFilePath).Triggers;
+    }
+
+    internal ScenarioTriggerDefinitionV1? FindTrigger(
+        string scenarioFilePath,
+        string triggerId)
+    {
+        return LoadTriggers(scenarioFilePath)
+            .FirstOrDefault(trigger => trigger.TriggerId == triggerId);
+    }
+
+    internal ValidationResult SaveTrigger(
+        string scenarioFilePath,
+        ScenarioTriggerDefinitionV1 trigger)
+    {
+        List<ScenarioTriggerDefinitionV1> updated = Upsert(
+            LoadTriggers(scenarioFilePath),
+            trigger,
+            t => t.TriggerId);
+
+        return WriteAndValidate(
+            scenarioFilePath,
+            "Triggers",
+            ScenarioJsonFormatting.RenderTriggers(updated));
+    }
+
+    internal ValidationResult DeleteTrigger(
+        string scenarioFilePath,
+        string triggerId)
+    {
+        List<ScenarioTriggerDefinitionV1> updated = LoadTriggers(scenarioFilePath)
+            .Where(trigger => trigger.TriggerId != triggerId)
+            .ToList();
+
+        return WriteAndValidate(
+            scenarioFilePath,
+            "Triggers",
+            ScenarioJsonFormatting.RenderTriggers(updated));
+    }
+
+    // ----- Decisions -----
+
+    internal IReadOnlyList<ScenarioDecisionDefinitionV1> LoadDecisions(
+        string scenarioFilePath)
+    {
+        return ScenarioPackDocument.Read(scenarioFilePath).Decisions;
+    }
+
+    internal ScenarioDecisionDefinitionV1? FindDecision(
+        string scenarioFilePath,
+        string decisionId)
+    {
+        return LoadDecisions(scenarioFilePath)
+            .FirstOrDefault(decision => decision.DecisionId == decisionId);
+    }
+
+    internal ValidationResult SaveDecision(
+        string scenarioFilePath,
+        ScenarioDecisionDefinitionV1 decision)
+    {
+        List<ScenarioDecisionDefinitionV1> updated = Upsert(
+            LoadDecisions(scenarioFilePath),
+            decision,
+            d => d.DecisionId);
+
+        return WriteAndValidate(
+            scenarioFilePath,
+            "Decisions",
+            ScenarioJsonFormatting.RenderDecisions(updated));
+    }
+
+    internal ValidationResult DeleteDecision(
+        string scenarioFilePath,
+        string decisionId)
+    {
+        List<ScenarioDecisionDefinitionV1> updated = LoadDecisions(scenarioFilePath)
+            .Where(decision => decision.DecisionId != decisionId)
+            .ToList();
+
+        return WriteAndValidate(
+            scenarioFilePath,
+            "Decisions",
+            ScenarioJsonFormatting.RenderDecisions(updated));
+    }
+
+    /// Encounter ids for a trigger's optional encounter picker. Reading the
+    /// scenario's own Encounters needs no encounter *editor* to exist, which
+    /// is why Triggers didn't have to wait on the encounters phase -- the
+    /// picker is sourced from real committed content today.
+    internal IReadOnlyList<string> LoadEncounterIds(
+        string scenarioFilePath)
+    {
+        return ScenarioPackDocument.Read(scenarioFilePath).Encounters
+            .Select(encounter => encounter.EncounterId)
+            .ToList();
+    }
+
+    /// Floor identifiers declared by any location's exploration map, for a
+    /// trigger's Floor picker. A trigger names a floor of whichever location
+    /// it sits in, so this is filtered by location rather than global.
+    internal IReadOnlyList<string> LoadFloorIds(
+        string scenarioFilePath,
+        string locationId)
+    {
+        return ScenarioPackDocument.Read(scenarioFilePath).Locations
+            .FirstOrDefault(location => location.LocationId == locationId)
+            ?.ExplorationMap
+            ?.Floors
+            .Select(floor => floor.Floor)
+            .ToList()
+            ?? [];
+    }
+
     // ----- Shops -----
 
     internal IReadOnlyList<ShopDefinitionV1> LoadShops(
