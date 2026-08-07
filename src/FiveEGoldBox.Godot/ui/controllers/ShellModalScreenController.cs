@@ -19,14 +19,18 @@ internal sealed class ShellModalScreenController : IShellModalScreen
 		IReadOnlyDictionary<string, Action> commandHandlers,
 		Action<string>? onRowFocused = null,
 		Action<string>? onRowActivated = null,
-		Action? onClosed = null)
+		Action? onClosed = null,
+		Action<string>? onTextChanged = null,
+		Action? onTextSubmitted = null)
 	{
 		_view.ShowScreen(
 			model,
 			commandHandlers,
 			onRowFocused,
 			onRowActivated,
-			onClosed);
+			onClosed,
+			onTextChanged,
+			onTextSubmitted);
 	}
 
 	public void CloseScreen()

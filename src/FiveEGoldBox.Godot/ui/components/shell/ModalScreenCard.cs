@@ -16,6 +16,15 @@ public partial class ModalScreenCard : PanelContainer
 	public event Action<string>? RowFocused;
 	public event Action<string>? RowActivated;
 
+	// Fires as the player types, so a wizard step can enable or disable its
+	// own "Next" against what is currently in the field rather than only
+	// finding out once they try to leave.
+	public event Action<string>? TextChanged;
+
+	// Enter in the text field means the same thing as activating a row does
+	// elsewhere: take the step's primary action.
+	public event Action? TextSubmitted;
+
 	private Label _breadcrumbLabel = null!;
 	private Label _titleLabel = null!;
 	private Label _bodyLabel = null!;
@@ -27,6 +36,7 @@ public partial class ModalScreenCard : PanelContainer
 	// The Character screen's own boxed stat-block -- a real grid layout,
 	// not text, which is why it's a separate section rather than more
 	// BodyLabel formatting. Hidden for every other screen.
+	private LineEdit _textEntryField = null!;
 	private VBoxContainer _characterSheetPanel = null!;
 	private Label _characterNameLabel = null!;
 	private Label _characterSubtitleLabel = null!;
@@ -60,6 +70,7 @@ public partial class ModalScreenCard : PanelContainer
 		_bodyLabel = GetNode<Label>("%BodyLabel");
 		_itemList = GetNode<SelectionList>("%ItemList");
 		_commandRow = GetNode<HBoxContainer>("%CommandRow");
+		_textEntryField = GetNode<LineEdit>("%TextEntryField");
 		_commandButtonScene = GD.Load<PackedScene>(
 			"res://ui/components/commands/HotkeyCommandButton.tscn");
 
@@ -73,6 +84,8 @@ public partial class ModalScreenCard : PanelContainer
 
 		_itemList.SelectionChanged += (_, itemId) => RowFocused?.Invoke(itemId);
 		_itemList.SelectionActivated += (_, itemId) => RowActivated?.Invoke(itemId);
+		_textEntryField.TextChanged += text => TextChanged?.Invoke(text);
+		_textEntryField.TextSubmitted += _ => TextSubmitted?.Invoke();
 		_nodesResolved = true;
 	}
 
@@ -95,6 +108,18 @@ public partial class ModalScreenCard : PanelContainer
 		if (model.CharacterSheet is not null)
 		{
 			ApplyCharacterSheet(model.CharacterSheet);
+		}
+
+		_textEntryField.Visible = model.TextEntry is not null;
+
+		if (model.TextEntry is not null)
+		{
+			_textEntryField.Text = model.TextEntry.InitialValue;
+			_textEntryField.PlaceholderText = model.TextEntry.PlaceholderText;
+
+			// Put the caret after any text carried back in (stepping back
+			// onto an already-named character), rather than before it.
+			_textEntryField.CaretColumn = model.TextEntry.InitialValue.Length;
 		}
 
 		bool hasItems = model.ListItems is { Count: > 0 };
@@ -130,6 +155,14 @@ public partial class ModalScreenCard : PanelContainer
 	// an error, easy to miss without checking stderr.
 	internal void FocusInitialControl()
 	{
+		// A text step is asking the player to type; landing focus anywhere
+		// but the field would make them tab to it first.
+		if (_textEntryField.Visible)
+		{
+			_textEntryField.GrabFocus();
+			return;
+		}
+
 		if (_itemList.Visible)
 		{
 			_itemList.FocusSelected();

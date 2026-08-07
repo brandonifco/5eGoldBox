@@ -16,4 +16,13 @@ internal sealed record ModalViewModel(
 	// A real boxed stat-block, not text -- distinct from BodyText because
 	// the card renders it as a whole other layout (a grid, not a label),
 	// not just formatted differently. Null for every screen but Character.
-	CharacterSheetViewModel? CharacterSheet = null);
+	CharacterSheetViewModel? CharacterSheet = null,
+	// A free-text field, for the one thing a player types rather than
+	// picks: their character's name. Null everywhere else, and mutually
+	// exclusive with ListItems in practice -- a step either offers choices
+	// or asks for text, never both.
+	ModalTextEntryViewModel? TextEntry = null);
+
+internal sealed record ModalTextEntryViewModel(
+	string InitialValue,
+	string PlaceholderText);

@@ -25,6 +25,14 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 	private readonly IShellPartyPreview _partyPreview;
 	private readonly Func<bool> _isHighContrastTheme;
 	private readonly Func<bool> _isReducedMotion;
+
+	// AppShell owns session construction, so the title screen asks it to
+	// start a game rather than building one itself — the same separation
+	// that already keeps RealGameSession out of this controller's hands.
+	private readonly Action _startPremadeGame;
+	private readonly Action<FiveEGoldBox.Application.Parties.PartyState>
+		_startCreatedGame;
+
 	private readonly Stack<ShellInteractionContext> _contextStack = new();
 
 	public ShellInteractionController(
@@ -34,8 +42,12 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 		IShellModalScreen modalScreen,
 		IShellPartyPreview partyPreview,
 		Func<bool> isHighContrastTheme,
-		Func<bool> isReducedMotion)
+		Func<bool> isReducedMotion,
+		Action startPremadeGame,
+		Action<FiveEGoldBox.Application.Parties.PartyState> startCreatedGame)
 	{
+		_startPremadeGame = startPremadeGame;
+		_startCreatedGame = startCreatedGame;
 		_presentationController = presentationController;
 		_commandBarController = commandBarController;
 		_confirmation = confirmation;
