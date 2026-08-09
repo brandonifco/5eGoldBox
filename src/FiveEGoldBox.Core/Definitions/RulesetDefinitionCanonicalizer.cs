@@ -28,6 +28,7 @@ internal static class RulesetDefinitionCanonicalizer
     {
         return spell with
         {
+            ClassIds = Protect(spell.ClassIds),
             Effects = Protect(spell.Effects)
         };
     }

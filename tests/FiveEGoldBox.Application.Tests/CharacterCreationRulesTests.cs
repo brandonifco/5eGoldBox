@@ -402,6 +402,27 @@ public sealed class CharacterCreationRulesTests
             CharacterCreationRules.Validate(draft, RulesetId));
     }
 
+    /// Fire Bolt is a real, existing spell -- just not one class.cleric's
+    /// own list names. A Cleric preparing it should be rejected the same
+    /// deliberate way an unknown spell ID is, not silently accepted just
+    /// because the spell itself is real.
+    [Fact]
+    public void Validate_PreparedSpellNotOnTheClassList_IsRejected()
+    {
+        CharacterDraft draft = LegalClericDraft("Aldric") with
+        {
+            PreparedSpellIds = ["spell.fire-bolt"]
+        };
+
+        Core.Validation.ValidationResult result =
+            CharacterCreationRules.Validate(draft, RulesetId);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Issues,
+            issue => issue.Code == "character.spells.not_on_class_list");
+    }
+
     private static CharacterDraft LegalClericDraft(string name)
     {
         return LegalFighterDraft(name) with

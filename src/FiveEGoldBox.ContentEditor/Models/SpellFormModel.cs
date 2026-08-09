@@ -11,7 +11,14 @@ public sealed class SpellFormModel
 
     public string Name { get; set; } = "";
 
+    /// "" means no description authored yet.
+    public string Description { get; set; } = "";
+
     public SpellCostKind Cost { get; set; } = SpellCostKind.Cantrip;
+
+    /// Which classes may prepare this spell. Empty means no class
+    /// currently may -- a real gap, not a placeholder for "everyone."
+    public List<string> ClassIds { get; set; } = [];
 
     public int Level { get; set; }
 
@@ -53,7 +60,9 @@ public sealed class SpellFormModel
         {
             Id = spell.Id,
             Name = spell.Name,
+            Description = spell.Description ?? "",
             Cost = spell.Cost,
+            ClassIds = spell.ClassIds.ToList(),
             Level = spell.Level,
             CastingTime = spell.CastingTime,
             RangeKind = spell.RangeKind,
@@ -77,7 +86,9 @@ public sealed class SpellFormModel
         {
             Id = Id,
             Name = Name,
+            Description = string.IsNullOrWhiteSpace(Description) ? null : Description,
             Cost = Cost,
+            ClassIds = ClassIds,
             Level = Level,
             CastingTime = CastingTime,
             RangeKind = RangeKind,
@@ -92,6 +103,22 @@ public sealed class SpellFormModel
             RequiresConcentration = RequiresConcentration,
             DurationRounds = DurationRounds
         };
+    }
+
+    /// Same shape as CampaignRosterMemberFormModel's own ToggleId.
+    public void ToggleId(
+        List<string> ids,
+        string id,
+        bool isChecked)
+    {
+        if (isChecked && !ids.Contains(id))
+        {
+            ids.Add(id);
+        }
+        else if (!isChecked)
+        {
+            ids.Remove(id);
+        }
     }
 }
 

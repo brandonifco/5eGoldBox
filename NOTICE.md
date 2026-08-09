@@ -7,8 +7,12 @@ its own terms.
 ## System Reference Document 5.1
 
 Some player-facing descriptive text in `data/rulesets/campaign/core.json` —
-specifically the race, subrace, class and subclass descriptions — is derived
-from the System Reference Document 5.1.
+specifically the race, subrace, class, subclass and spell descriptions — is
+derived from the System Reference Document 5.1. Spell text is trimmed to what
+this ruleset actually implements: upcast-scaling clauses are omitted (this
+engine has no leveling system), and Magic Missile's description states 1d4
+force damage per dart rather than the SRD's 1d4+1, matching this ruleset's
+own `spell.magic-missile` definition rather than the source text.
 
 > This work includes material taken from the System Reference Document 5.1
 > ("SRD 5.1") by Wizards of the Coast LLC and available at

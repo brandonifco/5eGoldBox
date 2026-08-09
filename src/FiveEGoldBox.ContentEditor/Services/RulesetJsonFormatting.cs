@@ -92,7 +92,9 @@ internal static class RulesetJsonFormatting
         [
             ("Id", JsonString(spell.Id)),
             ("Name", JsonString(spell.Name)),
+            ("Description", spell.Description is { } description ? JsonString(description) : null),
             ("Cost", JsonString(spell.Cost.ToString())),
+            ("ClassIds", RenderLooseStringList(spell.ClassIds, column + 8)),
             ("Level", spell.Level.ToString(CultureInfo.InvariantCulture)),
             ("CastingTime", JsonString(spell.CastingTime.ToString())),
             ("RangeKind", JsonString(spell.RangeKind.ToString())),

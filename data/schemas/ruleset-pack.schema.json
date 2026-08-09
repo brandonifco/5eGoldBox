@@ -846,12 +846,21 @@
             "Reaction"
           ]
         },
+        "ClassIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "Cost": {
           "type": "string",
           "enum": [
             "Cantrip",
             "Slot"
           ]
+        },
+        "Description": {
+          "type": "string"
         },
         "DurationRounds": {
           "type": "integer"
