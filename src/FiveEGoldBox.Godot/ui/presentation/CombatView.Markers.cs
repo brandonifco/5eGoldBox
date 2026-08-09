@@ -236,7 +236,7 @@ public partial class CombatView
 			PositionHighlight(cell, gridX, gridY);
 			_highlightCells.Add(cell);
 
-			if (highlight.Kind is "move-legal" or "move-illegal")
+			if (highlight.Kind is "cursor-legal" or "cursor-illegal")
 			{
 				_cursorCellsByPosition[(gridX, gridY)] = cell;
 			}
@@ -253,20 +253,30 @@ public partial class CombatView
 	// not enemy" was. Move targeting hid this because its cells carry
 	// explicit neighbours that bypass the search entirely.
 	//
-	// Clicking a combatant still works: a Button fires Pressed without
-	// needing focus.
-	// Attack and spell targeting resolve by combatant id through a pin's
-	// own Pressed, so the keyboard cursor has to live on the pins. When a
-	// target set is active only those pins are focusable and they are
-	// wired into a cycle, so the arrow keys step between legal targets
+	// Clicking a combatant still works regardless of FocusMode: a Button
+	// fires Pressed on a mouse click without needing focus at all, which
+	// is what lets a direct click on a pin keep working as a shortcut
+	// even while the pins themselves are unfocusable below.
+	//
+	// Real weapon-attack targeting resolves by combatant id through a
+	// pin's own Pressed, so its keyboard cursor has to live on the pins:
+	// when a target set is active only those pins are focusable and they
+	// are wired into a cycle, so the arrow keys step between legal targets
 	// instead of wandering across every combatant on the field -- which is
-	// what "jumps from character to character, not enemy" was.
+	// what "jumps from character to character, not enemy" was. Real spell
+	// targeting instead drives its cursor from the full-battlefield
+	// "cursor-legal"/"cursor-illegal" cells (see EnterRealCombatSpellTargeting)
+	// so it can look anywhere the way area-of-effect spells eventually
+	// need to, not just cycle a short target list -- so it restricts with
+	// an *empty* id list specifically to take every pin out of the
+	// keyboard-focus pool without pretending there's a target cycle to
+	// wire, leaving the cells as the only thing arrow keys can reach.
 	//
 	// Reapplied on every Refresh rather than set once, because a mid-
 	// targeting refresh (a target selection, say) rebuilds every pin.
 	private void ApplyCombatantFocusability()
 	{
-		if (_targetableCombatantIds.Count == 0)
+		if (!_targetableCombatantsRestricted)
 		{
 			foreach (CombatantMarkerPin pin in _combatantPins)
 			{
@@ -302,10 +312,16 @@ public partial class CombatView
 	}
 
 	// Declared by the interaction controller when combatant targeting
-	// opens, cleared when it ends.
+	// opens, cleared when it ends. A null list means no restriction (the
+	// idle default); a non-null list -- including an empty one -- means
+	// restricted, and an empty restricted list is exactly how real spell
+	// targeting asks for every pin to go unfocusable (see
+	// ApplyCombatantFocusability's own comment on why that has to be
+	// distinct from "unrestricted").
 	internal void SetTargetableCombatants(IReadOnlyList<string>? combatantIds)
 	{
 		_targetableCombatantIds.Clear();
+		_targetableCombatantsRestricted = combatantIds is not null;
 
 		if (combatantIds is not null)
 		{
@@ -343,15 +359,18 @@ public partial class CombatView
 	}
 
 
-	// Gives the move cursor a real starting cell instead of leaving it
-	// wherever Godot's default focus happens to land -- called right
-	// after ShowCombatHighlights opens move targeting, with the active
-	// combatant's own position, per the user's own request: the cursor
-	// should start on whoever's turn it is, not somewhere arbitrary. A
-	// silent no-op for any other highlight kind (attack/spell targeting),
-	// since only move cells are tracked here -- the active combatant is
-	// never a legal target for their own attack, so this was never a
-	// meaningful starting point for those anyway.
+	// Gives a full-battlefield cursor a real starting cell instead of
+	// leaving it wherever Godot's default focus happens to land, rather
+	// than a fixed rule about what that starting cell is -- the caller
+	// decides. Move targeting calls this with the active combatant's own
+	// position (the cursor should start on whoever's turn it is, per the
+	// user's own request); spell targeting calls it with the first legal
+	// target's position (the cursor should start on a real target, per a
+	// separate later request, then be free to roam anywhere for spells
+	// that eventually target an area rather than a creature). A silent
+	// no-op for any position with no tracked cursor cell -- real attack
+	// targeting still drives its cursor from the pins, not this grid, so
+	// it never calls this at all.
 	internal void FocusCell(int gridX, int gridY)
 	{
 		if (_cursorCellsByPosition.TryGetValue(
@@ -376,11 +395,12 @@ public partial class CombatView
 	// letting it jump across the board.
 	//
 	// Only wired for cursor-mode cells (a dense, full-grid set, so every
-	// direction always has a real neighbour except at the edge) --
-	// attack/spell targeting's sparse legal-target sets don't get this,
-	// since a directly-adjacent cell in every direction isn't guaranteed
-	// to exist there, and Godot's own automatic search already works
-	// fine for that smaller, scattered case.
+	// direction always has a real neighbour except at the edge) -- real
+	// attack targeting's sparse legal-target set doesn't get this, since
+	// a directly-adjacent cell in every direction isn't guaranteed to
+	// exist there, and Godot's own automatic search already works fine
+	// for that smaller, scattered case. Move and spell targeting both
+	// use the dense grid, so both get this.
 	private static void WireCursorFocusNeighbors(
 		Dictionary<(int X, int Y), CombatHighlightCell> cellsByPosition)
 	{
@@ -573,14 +593,15 @@ public partial class CombatView
 			width: 2f);
 	}
 
-	// During real-combat move targeting, the hovered cell is one of the
-	// full-battlefield "move-legal"/"move-illegal" cursor cells (see
-	// EnterRealCombatMoveTargeting) -- reads that same legality here so
-	// hovering with the mouse shows the same yellow/red the keyboard
-	// cursor shows, rather than a plain white outline that doesn't say
-	// anything about whether the tile is actually reachable. Falls back
-	// to the old neutral white outline for every other context (attack/
-	// spell targeting, or no targeting at all).
+	// During real-combat move or spell targeting, the hovered cell is one
+	// of the full-battlefield "cursor-legal"/"cursor-illegal" cursor cells
+	// (see EnterRealCombatMoveTargeting/EnterRealCombatSpellTargeting) --
+	// reads that same legality here so hovering with the mouse shows the
+	// same yellow/red the keyboard cursor shows, rather than a plain white
+	// outline that doesn't say anything about whether the tile is actually
+	// a legal choice. Falls back to the old neutral white outline for
+	// every other context (real attack targeting's sparse pin cycle, or
+	// no targeting at all).
 	private Color ResolveHoverColor(Vector2I hovered)
 	{
 		CombatHighlightViewModel? highlight = _highlights.FirstOrDefault(
@@ -588,8 +609,8 @@ public partial class CombatView
 
 		return highlight?.Kind switch
 		{
-			"move-legal" => CombatHighlightCell.CursorLegalColor,
-			"move-illegal" => CombatHighlightCell.CursorIllegalColor,
+			"cursor-legal" => CombatHighlightCell.CursorLegalColor,
+			"cursor-illegal" => CombatHighlightCell.CursorIllegalColor,
 			_ => new Color(1f, 1f, 1f, 0.6f),
 		};
 	}

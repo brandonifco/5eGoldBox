@@ -42,6 +42,13 @@ internal sealed partial class ShellInteractionController
 	private string? _pendingRealSpellId;
 	private string? _pendingRealSpellName;
 	private IReadOnlyList<CombatTargetOption>? _pendingRealSpellTargets;
+	// A legal target's grid position -> its combatant id, captured once
+	// when spell targeting opens (positions don't move mid-targeting, the
+	// same reasoning _pendingRealMoveOccupiedPositions already relies on).
+	// What the full-battlefield cursor resolves a cell activation/focus
+	// against — see EnterRealCombatSpellTargeting's own comment on why
+	// spell targeting drives its cursor from cells, not the pins.
+	private Dictionary<(int X, int Y), string>? _pendingRealSpellTargetPositions;
 
 	// Called from ShellInteractionController.RealSession.cs's
 	// ApplicationMode.Encounter case (isNewCombat true or false depending
@@ -200,11 +207,13 @@ internal sealed partial class ShellInteractionController
 
 	// A full-battlefield keyboard cursor, not a pre-highlighted set of
 	// legal destinations -- one CombatHighlightCell per grid cell,
-	// "move-legal" for a real CombatMovementDestinationOption's own
-	// position and "move-illegal" for everything else, so the cursor
+	// "cursor-legal" for a real CombatMovementDestinationOption's own
+	// position and "cursor-illegal" for everything else, so the cursor
 	// can move anywhere and read legal/illegal per tile it's actually
 	// on, matching the old Gold Box games' own tile-cursor movement
-	// instead of lighting up the whole reachable zone at once.
+	// instead of lighting up the whole reachable zone at once. Spell
+	// targeting (EnterRealCombatSpellTargeting) reuses the same cell kind
+	// for the same reason, once it needed the same shape.
 	private void EnterRealCombatMoveTargeting(RealCombatSnapshot combatSnapshot)
 	{
 		_pendingRealCombatCommand = "move";
@@ -225,7 +234,7 @@ internal sealed partial class ShellInteractionController
 				cursorCells.Add(new CombatHighlightViewModel(
 					x,
 					y,
-					legalPositions.Contains((x, y)) ? "move-legal" : "move-illegal"));
+					legalPositions.Contains((x, y)) ? "cursor-legal" : "cursor-illegal"));
 			}
 		}
 
@@ -248,6 +257,24 @@ internal sealed partial class ShellInteractionController
 			"Choose a destination. Press Esc to cancel.");
 	}
 
+	// Dispatches to whichever full-battlefield cursor is actually open --
+	// move and spell targeting each report their own reason for the
+	// current tile, since "not a legal move" and "not a legal spell
+	// target" mean different things and come from different data. A real
+	// attack targeting cursor never fires this at all (see CombatView.cs's
+	// own comment on CellCursorFocused) — it still drives its cursor from
+	// the pins, not these cells.
+	private void ResolveRealCombatCursorFocused(int gridX, int gridY)
+	{
+		if (_pendingRealCombatCommand == "cast")
+		{
+			ResolveRealSpellCursorFocused(gridX, gridY);
+			return;
+		}
+
+		ResolveRealMoveCursorFocused(gridX, gridY);
+	}
+
 	// Reports why the cursor's current tile isn't a legal destination --
 	// "space occupied" is real, derived from the same combatant
 	// positions the cursor grid itself was built from; anything else is
@@ -258,7 +285,7 @@ internal sealed partial class ShellInteractionController
 	// never a reason a given tile is missing from it). A real "explain
 	// this tile" endpoint would be Application-layer work, not attempted
 	// here.
-	private void ResolveRealCombatCursorFocused(int gridX, int gridY)
+	private void ResolveRealMoveCursorFocused(int gridX, int gridY)
 	{
 		if (_pendingRealCombatCommand != "move" ||
 			_pendingRealMoveDestinations is null ||
@@ -283,6 +310,34 @@ internal sealed partial class ShellInteractionController
 			: "Out of reach.";
 
 		_presentationController.SetMessage($"{reason} Press Esc to cancel.");
+	}
+
+	// Reports whether the cursor's current tile is a legal target for the
+	// spell being cast. Every spell today only ever resolves against a
+	// specific creature, so there is only one reason a tile can be
+	// illegal ("not a target") — unlike movement there's no occupied/
+	// out-of-reach split to make, since standing on empty ground and
+	// standing on the wrong creature both mean the same thing here. That
+	// may need to grow a real reason once a spell can legally miss for a
+	// specific cause (an ally-only spell aimed at an enemy, say).
+	private void ResolveRealSpellCursorFocused(int gridX, int gridY)
+	{
+		if (_pendingRealSpellTargetPositions is null)
+		{
+			return;
+		}
+
+		string spellName = _pendingRealSpellName ?? "this spell";
+
+		if (_pendingRealSpellTargetPositions.ContainsKey((gridX, gridY)))
+		{
+			_presentationController.SetMessage(
+				$"Choose a target for {spellName}. Press Esc to cancel.");
+			return;
+		}
+
+		_presentationController.SetMessage(
+			$"Not a valid target for {spellName}. Press Esc to cancel.");
 	}
 
 	// Highlights every legal (weapon, target) pair's target position,
@@ -351,6 +406,22 @@ internal sealed partial class ShellInteractionController
 
 
 
+	// A full-battlefield keyboard cursor, the same shape
+	// EnterRealCombatMoveTargeting already built -- one CombatHighlightCell
+	// per grid cell, "cursor-legal" for a legal target's own position and
+	// "cursor-illegal" for everything else, rather than a sparse pin-cycle
+	// restricted to today's known targets. Every spell currently in the
+	// ruleset only ever resolves against a specific creature, so a legal
+	// cell today is always exactly a target's square -- but the cursor
+	// itself doesn't know that, and shouldn't: an eventual area-of-effect
+	// spell needs to look anywhere on the field, not cycle a short target
+	// list, and a spell that must hit one specific creature (Hold Person,
+	// Charm Person, Cause Light Wounds -- none authored yet) is the
+	// opposite, narrower case that will need its own restriction once it
+	// exists. This is the free-roam shape; the pin-cycle shape real
+	// weapon-attack targeting still uses is what a specific-target-only
+	// spell would reuse instead, once one is authored.
+	//
 	// One spell's own Targets only — no cross-option flattening needed,
 	// since each spell already got its own command-bar button (see
 	// ShowRealCombatCommands).
@@ -374,38 +445,90 @@ internal sealed partial class ShellInteractionController
 		Dictionary<string, CombatantMarkerViewModel> combatantsById =
 			combatSnapshot.View.Combatants
 				.ToDictionary(combatant => combatant.Id, StringComparer.Ordinal);
-		List<CombatHighlightViewModel> highlights = new();
-		List<string> targetIds = new();
+		Dictionary<(int X, int Y), string> targetPositions = new();
+		(int X, int Y)? firstTargetPosition = null;
 
 		foreach (CombatTargetOption target in spell.Targets)
 		{
-			if (!target.IsAvailable)
+			if (!target.IsAvailable ||
+				!combatantsById.TryGetValue(
+					target.TargetCombatantId,
+					out CombatantMarkerViewModel? combatant))
 			{
 				continue;
 			}
 
-			if (combatantsById.TryGetValue(
-				target.TargetCombatantId,
-				out CombatantMarkerViewModel? combatant))
+			(int X, int Y) position = (combatant.GridX, combatant.GridY);
+			targetPositions[position] = target.TargetCombatantId;
+			firstTargetPosition ??= position;
+		}
+
+		_pendingRealSpellTargetPositions = targetPositions;
+
+		List<CombatHighlightViewModel> cursorCells = new();
+
+		for (int y = 0; y < combatSnapshot.View.GridHeight; y++)
+		{
+			for (int x = 0; x < combatSnapshot.View.GridWidth; x++)
 			{
-				highlights.Add(new CombatHighlightViewModel(
-					combatant.GridX, combatant.GridY, "valid-target"));
-				targetIds.Add(target.TargetCombatantId);
+				cursorCells.Add(new CombatHighlightViewModel(
+					x,
+					y,
+					targetPositions.ContainsKey((x, y)) ? "cursor-legal" : "cursor-illegal"));
 			}
 		}
 
 		PushContext(ShellInteractionContext.Targeting);
-		_presentationController.ShowCombatHighlights(highlights);
-		_presentationController.SetCombatTargetableCombatants(targetIds);
+		_presentationController.ShowCombatHighlights(cursorCells);
+		// An empty, non-null restriction — not the target-id list itself —
+		// so every pin goes unfocusable and the cursor cells above are the
+		// only thing arrow keys can reach. See CombatView.Markers.cs's
+		// ApplyCombatantFocusability for why this has to be empty-and-
+		// restricted rather than null-and-unrestricted. A direct mouse
+		// click on a pin still resolves the cast via ResolveRealCombatant
+		// Targeted/ResolveRealSpellTargeted regardless — Button.Pressed
+		// fires on click independent of FocusMode.
+		_presentationController.SetCombatTargetableCombatants(Array.Empty<string>());
+
+		if (firstTargetPosition is (int startX, int startY))
+		{
+			// Deferred, not called directly like EnterRealCombatMoveTargeting's
+			// own FocusCombatCell call -- this method is reached by way of
+			// EnterRealCombatSpellMenu's onRowActivated, which calls
+			// CloseModalScreen() immediately before this runs.
+			// CloseModalScreen -> ModalBackdrop.CloseModal -> RestorePreviousFocus
+			// already queued its own deferred GrabFocus, restoring focus to
+			// whatever was focused before the spell list opened (the Cast
+			// button) -- a synchronous GrabFocus here would win the moment
+			// it's called, then immediately lose it when that queued call
+			// runs at end of frame. Deferring this call too, queued strictly
+			// after that one, makes it win instead: the same "last deferred
+			// call in a frame wins" rule ModalScreenView.ShowScreen's own
+			// comment already documents for the identical class of race.
+			Callable.From(() =>
+				_presentationController.FocusCombatCell(startX, startY)).CallDeferred();
+		}
+
 		_presentationController.SetMessage(
 			$"Choose a target for {spell.SpellName}. Press Esc to cancel.");
 	}
 
 	// Called from ShellInteractionController.Combat.cs's
 	// OnCombatCellTargeted, ahead of the mock-content handling, whenever
-	// real combat owns the pending targeting flow.
+	// real combat owns the pending targeting flow. Move and spell
+	// targeting both drive their cursor from full-battlefield cells now,
+	// so both are resolved by grid position here rather than combatant id
+	// — a real attack targeting resolves by id instead
+	// (ResolveRealCombatantTargeted), since it still drives its cursor
+	// from the pins.
 	private void ResolveRealCombatCellTargeted(int gridX, int gridY)
 	{
+		if (_pendingRealCombatCommand == "cast")
+		{
+			ResolveRealSpellCellTargeted(gridX, gridY);
+			return;
+		}
+
 		if (_pendingRealCombatCommand != "move" ||
 			_pendingRealMoveDestinations is null)
 		{
@@ -427,6 +550,24 @@ internal sealed partial class ShellInteractionController
 
 		IReadOnlyList<string> lines = _activeCombatSession!.SubmitMove(match.Path);
 		ContinueRealCombat(lines);
+	}
+
+	// The cursor-cell counterpart to ResolveRealSpellTargeted below —
+	// looks up whichever combatant (if any) the activated cell belongs to
+	// and defers to the exact same validation/confirmation path a direct
+	// pin click already uses, so there's only one place that decides
+	// whether a cast actually resolves.
+	private void ResolveRealSpellCellTargeted(int gridX, int gridY)
+	{
+		if (_pendingRealSpellTargetPositions is null ||
+			!_pendingRealSpellTargetPositions.TryGetValue(
+				(gridX, gridY),
+				out string? combatantId))
+		{
+			return;
+		}
+
+		ResolveRealSpellTargeted(combatantId);
 	}
 
 	// Called from ShellInteractionController.Combat.cs's
@@ -505,6 +646,7 @@ internal sealed partial class ShellInteractionController
 		_pendingRealSpellId = null;
 		_pendingRealSpellName = null;
 		_pendingRealSpellTargets = null;
+		_pendingRealSpellTargetPositions = null;
 		_presentationController.ShowCombatHighlights(null);
 		_presentationController.SetCombatTargetableCombatants(null);
 	}

@@ -2,27 +2,31 @@ using Godot;
 
 // A translucent square marking one grid cell's tactical significance —
 // script-only, mirrors CombatantMarkerPin's role but for empty cells
-// rather than combatants. "valid-target"/"move-range" (attack/spell
-// targeting, and mock combat's own move targeting) are real destinations
-// (focusable/clickable); "invalid-target" is shown but never focusable,
-// the same Disabled-entry precedent SelectionList already established
-// (M4/M5) for "visible, not choosable."
+// rather than combatants. "valid-target"/"move-range" (real attack
+// targeting's sparse pin-cycle cells, and mock combat's own move
+// targeting) are real destinations (focusable/clickable); "invalid-target"
+// is shown but never focusable, the same Disabled-entry precedent
+// SelectionList already established (M4/M5) for "visible, not choosable."
 //
-// "move-legal"/"move-illegal" are a different kind of cell entirely —
-// used for real-combat move targeting's full-battlefield keyboard
-// cursor rather than a pre-highlighted set of legal destinations (the
+// "cursor-legal"/"cursor-illegal" are a different kind of cell entirely —
+// a full-battlefield keyboard cursor rather than a pre-highlighted set of
+// legal destinations, first built for real-combat move targeting (the
 // user asked for this directly: no more lighting up every reachable
 // tile, just a single cursor that moves with the keyboard and reads
-// legal/illegal per tile it's actually on). These draw nothing at all
-// unless focused, then an outline in the tile's own shape instead of a
-// filled cell -- legal cells are still real Buttons the same way
-// "valid-target" cells are, illegal ones too (so the cursor can actually
-// traverse them and report why), just never filled.
+// legal/illegal per tile it's actually on) and reused as-is for real
+// spell targeting once that needed the same shape -- a spell can
+// eventually need to look anywhere on the field (area-of-effect), not
+// just cycle a short list of legal creatures, and this is the cell that
+// already does that. These draw nothing at all unless focused, then an
+// outline in the tile's own shape instead of a filled cell -- legal
+// cells are still real Buttons the same way "valid-target" cells are,
+// illegal ones too (so the cursor can actually traverse them and report
+// why), just never filled.
 public partial class CombatHighlightCell : Button
 {
 	// Internal, not private -- CombatView.Markers.cs's own mouse-hover
-	// outline (DrawGridLines) reuses these so a hovered "move-legal"/
-	// "move-illegal" cell reads the same yellow/red as the keyboard
+	// outline (DrawGridLines) reuses these so a hovered "cursor-legal"/
+	// "cursor-illegal" cell reads the same yellow/red as the keyboard
 	// cursor, rather than its own separately-chosen color drifting from
 	// this one over time.
 	internal static readonly Color CursorLegalColor = new(0.95f, 0.85f, 0.25f, 1f);
@@ -98,8 +102,8 @@ public partial class CombatHighlightCell : Button
 	{
 		return kind switch
 		{
-			"move-legal" => (Colors.Transparent, true, true, CursorLegalColor),
-			"move-illegal" => (Colors.Transparent, true, true, CursorIllegalColor),
+			"cursor-legal" => (Colors.Transparent, true, true, CursorLegalColor),
+			"cursor-illegal" => (Colors.Transparent, true, true, CursorIllegalColor),
 			// Mock combat's own move targeting (MockCombatContent.
 			// MoveRangeHighlights) still produces this -- real combat's
 			// move targeting is the only thing that moved to the cursor
