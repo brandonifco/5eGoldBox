@@ -13,10 +13,17 @@ namespace FiveEGoldBox.Application.Campaigns;
 /// member carries, so it cannot be resolved as a different character's.
 internal static class CampaignCharacterDraftFactory
 {
+    /// level is the party's own current level (PartyState.Level), not
+    /// anything baked into the member or its build -- the whole party
+    /// advances together (see PartyState.Level's own doc comment), so a
+    /// resolved draft always reflects where the party stands today, roster
+    /// character or player-built alike, regardless of what level a custom
+    /// build happened to be validated at when it was first created.
     internal static CharacterDraft CreateDraft(
         PartyMemberState member,
         CampaignDefinition campaign,
-        ValidatedRuleset ruleset)
+        ValidatedRuleset ruleset,
+        int level)
     {
         ArgumentNullException.ThrowIfNull(member);
         ArgumentNullException.ThrowIfNull(campaign);
@@ -26,6 +33,7 @@ internal static class CampaignCharacterDraftFactory
         {
             return member.CustomBuild with
             {
+                Level = level,
                 InventoryItems = MergeCustomBuildAmmunition(member)
             };
         }
@@ -41,7 +49,7 @@ internal static class CampaignCharacterDraftFactory
         return new CharacterDraft
         {
             Name = member.DisplayName,
-            Level = 1,
+            Level = level,
             RaceId = character.RaceId,
             ClassId = character.ClassId,
             BackgroundId = ResolveBackgroundId(character, ruleset),
@@ -53,6 +61,47 @@ internal static class CampaignCharacterDraftFactory
             PreparedSpellIds = character.PreparedSpellIds,
             InventoryItems = CreateInventory(member)
         };
+    }
+
+    /// How many more maximum hit points a member's build resolves to at
+    /// `level` than it does at level 1.
+    ///
+    /// A delta, not an absolute value, deliberately: a roster character's
+    /// authored CampaignCharacterDefinition.MaximumHitPoints is a hand-tuned
+    /// number that is not required to reproduce CharacterResolver's own
+    /// level-1 hit-die-plus-Constitution formula exactly (and, checked
+    /// against real roster content, several do not) -- the resolver's
+    /// internal hit-point math (HitDiceRules, CalculateMaxHitPoints) is Core-
+    /// internal besides, unreachable from here directly. Resolving twice and
+    /// taking the difference sidesteps both problems: whatever the level-1
+    /// number actually is, this is exactly how much more the same build
+    /// would have gained reaching `level`.
+    ///
+    /// Short-circuits at level 1 without resolving anything: every party is
+    /// level 1 today, and a level-1 member's build is not required to be
+    /// independently resolvable through CharacterResolver for composition
+    /// validation to pass -- it never was before advancement existed, and a
+    /// delta of zero needs no resolution to know.
+    internal static int GetHitPointDeltaSinceLevelOne(
+        PartyMemberState member,
+        CampaignDefinition campaign,
+        ValidatedRuleset ruleset,
+        int level)
+    {
+        if (level <= 1)
+        {
+            return 0;
+        }
+
+        CharacterDraft levelOneDraft = CreateDraft(member, campaign, ruleset, 1);
+        CharacterResolver resolver = new(ruleset);
+        int levelOneHitPoints =
+            resolver.Resolve(levelOneDraft).MaxHitPoints ?? 0;
+        int currentHitPoints =
+            resolver.Resolve(levelOneDraft with { Level = level }).MaxHitPoints
+                ?? 0;
+
+        return currentHitPoints - levelOneHitPoints;
     }
 
     /// Same idea as CreateInventory below, but starting from the build's own

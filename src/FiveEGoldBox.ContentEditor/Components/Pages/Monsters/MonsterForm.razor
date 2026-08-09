@@ -50,6 +50,11 @@
                 }
             </InputSelect>
         </div>
+        <div class="col-md-4">
+            <label class="form-label">Experience Value</label>
+            <InputNumber class="form-control" @bind-Value="_model.ExperienceValue" />
+            <div class="form-text">Awarded to the party when this monster is defeated.</div>
+        </div>
         <div class="col-md-4 d-flex align-items-end">
             <div class="form-check">
                 <InputCheckbox class="form-check-input" id="isProficient" @bind-Value="_model.IsProficientWithWeapons" />

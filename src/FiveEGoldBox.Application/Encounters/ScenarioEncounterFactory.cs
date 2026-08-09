@@ -46,7 +46,8 @@ internal static class ScenarioEncounterFactory
                     party.Members[index],
                     ruleset,
                     definition.PartySideId,
-                    definition.PartyStartingPositions[index]);
+                    definition.PartyStartingPositions[index],
+                    party.Level);
 
             participants.Add(participant.Setup);
             initiativeBonuses.Add(participant.InitiativeBonus);

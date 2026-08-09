@@ -322,6 +322,7 @@ public sealed class ScenarioDefinitionValidatorTests
                         })
                         .ToArray(),
                     ProficiencyBonus = 2,
+                    ExperienceValue = 25,
                     Weapons =
                     [
                         new MonsterWeaponDefinition { WeaponId = weaponId }

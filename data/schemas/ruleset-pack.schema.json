@@ -456,6 +456,9 @@
         "ArmorClass": {
           "type": "integer"
         },
+        "ExperienceValue": {
+          "type": "integer"
+        },
         "Id": {
           "type": "string"
         },
@@ -492,6 +495,7 @@
       "required": [
         "AbilityModifiers",
         "ArmorClass",
+        "ExperienceValue",
         "Id",
         "MaximumHitPoints",
         "MovementSpeedFeet",

@@ -133,6 +133,14 @@ public sealed class RulesetValidatorMonsterDefinitionsTests
     }
 
     [Fact]
+    public void Validate_WithNegativeExperienceValue_ReturnsError()
+    {
+        AssertRejects(
+            Valid() with { ExperienceValue = -1 },
+            "ruleset.monsters.experience_negative");
+    }
+
+    [Fact]
     public void Validate_WithAnUndefinedZeroHitPointPolicy_ReturnsError()
     {
         AssertRejects(
@@ -281,6 +289,7 @@ public sealed class RulesetValidatorMonsterDefinitionsTests
                 })
                 .ToArray(),
             ProficiencyBonus = 2,
+            ExperienceValue = 25,
             Weapons = [new MonsterWeaponDefinition { WeaponId = "weapon.test" }]
         };
     }

@@ -30,6 +30,8 @@ public sealed class MonsterFormModel
 
     public int ProficiencyBonus { get; set; }
 
+    public int ExperienceValue { get; set; }
+
     public bool IsProficientWithWeapons { get; set; } = true;
 
     public List<MonsterWeaponFormModel> Weapons { get; set; } = [];
@@ -46,6 +48,7 @@ public sealed class MonsterFormModel
             MovementSpeedFeet = monster.MovementSpeedFeet,
             ZeroHitPointPolicy = monster.ZeroHitPointPolicy,
             ProficiencyBonus = monster.ProficiencyBonus,
+            ExperienceValue = monster.ExperienceValue,
             IsProficientWithWeapons = monster.IsProficientWithWeapons,
             Weapons = monster.Weapons.Select(MonsterWeaponFormModel.FromDefinition).ToList()
         };
@@ -76,6 +79,7 @@ public sealed class MonsterFormModel
             ZeroHitPointPolicy = ZeroHitPointPolicy,
             AbilityModifiers = AbilityModifiers.Select(row => row.ToDefinition()).ToList(),
             ProficiencyBonus = ProficiencyBonus,
+            ExperienceValue = ExperienceValue,
             IsProficientWithWeapons = IsProficientWithWeapons,
             Weapons = Weapons.Select(row => row.ToDefinition()).ToList()
         };

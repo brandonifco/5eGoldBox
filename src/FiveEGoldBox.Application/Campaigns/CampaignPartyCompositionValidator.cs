@@ -38,17 +38,18 @@ internal static class CampaignPartyCompositionValidator
         foreach (PartyMemberState member in party.Members)
         {
             ArgumentNullException.ThrowIfNull(member);
-            ValidateMember(campaign, member);
+            ValidateMember(campaign, member, party.Level);
         }
     }
 
     private static void ValidateMember(
         CampaignDefinition campaign,
-        PartyMemberState member)
+        PartyMemberState member,
+        int level)
     {
         if (member.CustomBuild is not null)
         {
-            ValidateCustomBuildMember(campaign, member);
+            ValidateCustomBuildMember(campaign, member, level);
             return;
         }
 
@@ -71,11 +72,27 @@ internal static class CampaignPartyCompositionValidator
                 nameof(member));
         }
 
+        ValidatedRuleset ruleset =
+            RulesetRegistry.Resolve(campaign.RulesetId);
+
+        // The roster's own MaximumHitPoints is a level-1 baseline, hand-
+        // authored independently of CharacterResolver's own formula (the
+        // two are not guaranteed to agree, and checked against real roster
+        // content, do not always). Advancement beyond level 1 is applied as
+        // a delta on top of that baseline, not by replacing it with a fresh
+        // resolver value -- see GetHitPointDeltaSinceLevelOne's own comment.
+        int expectedMaximumHitPoints = character.MaximumHitPoints
+            + CampaignCharacterDraftFactory.GetHitPointDeltaSinceLevelOne(
+                member,
+                campaign,
+                ruleset,
+                level);
+
         if (member.Health.HitPoints.MaximumHitPoints
-            != character.MaximumHitPoints)
+            != expectedMaximumHitPoints)
         {
             throw new ArgumentException(
-                $"Character '{member.CharacterDefinitionId}' has {member.Health.HitPoints.MaximumHitPoints} maximum hit points but its build gives {character.MaximumHitPoints}.",
+                $"Character '{member.CharacterDefinitionId}' has {member.Health.HitPoints.MaximumHitPoints} maximum hit points but its build gives {expectedMaximumHitPoints} at level {level}.",
                 nameof(member));
         }
 
@@ -89,7 +106,8 @@ internal static class CampaignPartyCompositionValidator
     /// resolution is what composition is checked against instead.
     private static void ValidateCustomBuildMember(
         CampaignDefinition campaign,
-        PartyMemberState member)
+        PartyMemberState member,
+        int level)
     {
         CharacterDraft build = member.CustomBuild!;
 
@@ -121,13 +139,18 @@ internal static class CampaignPartyCompositionValidator
                 nameof(member));
         }
 
-        CharacterSnapshot snapshot = resolver.Resolve(build);
+        // A custom build carries no separately-authored HP baseline the way
+        // a roster character does, so there is nothing to diverge from --
+        // resolving directly at the party's current level is exact, not an
+        // approximation the way the roster path's delta is.
+        CharacterSnapshot snapshot =
+            resolver.Resolve(build with { Level = level });
 
         if (member.Health.HitPoints.MaximumHitPoints
             != snapshot.MaxHitPoints)
         {
             throw new ArgumentException(
-                $"Character '{member.CharacterDefinitionId}' has {member.Health.HitPoints.MaximumHitPoints} maximum hit points but its build gives {snapshot.MaxHitPoints}.",
+                $"Character '{member.CharacterDefinitionId}' has {member.Health.HitPoints.MaximumHitPoints} maximum hit points but its build gives {snapshot.MaxHitPoints} at level {level}.",
                 nameof(member));
         }
 

@@ -557,6 +557,7 @@
                 { "Ability": "Charisma", "Modifier": 0 }
             ],
             "ProficiencyBonus": 2,
+            "ExperienceValue": 25,
             "Weapons": [ { "WeaponId": "weapon.watchtower-raider.scimitar" } ]
         },
         {
@@ -575,6 +576,7 @@
                 { "Ability": "Charisma", "Modifier": 0 }
             ],
             "ProficiencyBonus": 2,
+            "ExperienceValue": 25,
             "Weapons": [ { "WeaponId": "weapon.watchtower-raider.shortbow", "AmmunitionItemId": "item.arrow", "AmmunitionQuantity": 12 } ]
         },
         {
@@ -593,6 +595,7 @@
                 { "Ability": "Charisma", "Modifier": -3 }
             ],
             "ProficiencyBonus": 2,
+            "ExperienceValue": 25,
             "Weapons": [ { "WeaponId": "weapon.chapel-guardian.dagger" } ]
         },
         {
@@ -611,6 +614,7 @@
                 { "Ability": "Charisma", "Modifier": -3 }
             ],
             "ProficiencyBonus": 2,
+            "ExperienceValue": 25,
             "Weapons": [ { "WeaponId": "weapon.chapel-guardian.dagger" } ]
         },
         {
@@ -629,6 +633,7 @@
                 { "Ability": "Charisma", "Modifier": -3 }
             ],
             "ProficiencyBonus": 2,
+            "ExperienceValue": 25,
             "Weapons": [ { "WeaponId": "weapon.mill-rat.bite" } ]
         },
         {
@@ -647,6 +652,7 @@
                 { "Ability": "Charisma", "Modifier": -2 }
             ],
             "ProficiencyBonus": 2,
+            "ExperienceValue": 50,
             "Weapons": [ { "WeaponId": "weapon.mill-thrall.cleaver" } ]
         }
     ],

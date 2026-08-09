@@ -1,9 +1,12 @@
+using FiveEGoldBox.Application.Campaigns;
 using FiveEGoldBox.Application.Encounters;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Scenarios.Definitions;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Rules;
 using FiveEGoldBox.Core.Runtime;
 
 namespace FiveEGoldBox.Application.Combat;
@@ -75,6 +78,19 @@ public static class CombatOutcomeRules
             throw new ArgumentException(
                 "The completed encounter has an unsupported winner.",
                 nameof(session));
+        }
+
+        // No XP for a defeat -- real 5e doesn't award it, and this engine
+        // has nothing resembling a "learned from losing" mechanic either.
+        if (isPartyVictory)
+        {
+            ValidatedRuleset ruleset =
+                RulesetRegistry.Resolve(scenario.RulesetId);
+
+            projectedParty = AwardExperienceAndLevelUp(
+                projectedParty,
+                encounterDefinition,
+                ruleset);
         }
 
         string resultingProgressId = isPartyVictory
@@ -203,6 +219,97 @@ public static class CombatOutcomeRules
         return source with
         {
             Members = Array.AsReadOnly(projectedMembers)
+        };
+    }
+
+    /// Sums ExperienceValue for the defeated (non-party) side, adds it to
+    /// the party's running total, and -- if the new total crosses a
+    /// threshold AdvancementRules declares -- bumps Level and grants every
+    /// member the same real hit-point delta CampaignPartyCompositionValidator
+    /// would then expect of them, so a leveled party is never left in a
+    /// state that check would reject the moment it is next validated.
+    private static PartyState AwardExperienceAndLevelUp(
+        PartyState party,
+        EncounterDefinition encounterDefinition,
+        ValidatedRuleset ruleset)
+    {
+        int experienceGained = encounterDefinition.Combatants
+            .Where(combatant => !string.Equals(
+                combatant.SideId,
+                encounterDefinition.PartySideId,
+                StringComparison.Ordinal))
+            .Sum(combatant => ruleset.Definition.Monsters
+                .First(monster => string.Equals(
+                    monster.Id,
+                    combatant.MonsterId,
+                    StringComparison.Ordinal))
+                .ExperienceValue);
+
+        int newExperienceTotal = party.ExperienceTotal + experienceGained;
+        int oldLevel = party.Level;
+        int newLevel = AdvancementRules.GetLevelForExperience(
+            newExperienceTotal);
+
+        if (newLevel <= oldLevel)
+        {
+            return party with { ExperienceTotal = newExperienceTotal };
+        }
+
+        CampaignDefinition campaign =
+            CampaignRegistry.Resolve(FrontierCampaignIds.CampaignId);
+
+        PartyMemberState[] leveledMembers = party.Members
+            .Select(member =>
+            {
+                int hitPointsGained =
+                    CampaignCharacterDraftFactory.GetHitPointDeltaSinceLevelOne(
+                        member,
+                        campaign,
+                        ruleset,
+                        newLevel)
+                    - CampaignCharacterDraftFactory.GetHitPointDeltaSinceLevelOne(
+                        member,
+                        campaign,
+                        ruleset,
+                        oldLevel);
+
+                // Current HP only rises alongside maximum for a member who
+                // is already conscious (positive current HP) -- ApplicationSessionRules
+                // requires a creature at 0 HP to carry no death-saving-throw
+                // progress once it has any hit points again, so a downed or
+                // dead member jumping straight from 0 to positive current HP
+                // here would leave their recorded stabilize/failure state
+                // invalid. Real 5e does not revive or heal on a level-up
+                // either -- only maximum HP moves for them; a downed
+                // member's own path back to positive HP is however it always
+                // was, unrelated to the party leveling up around them.
+                bool isConscious =
+                    member.Health.HitPoints.CurrentHitPoints > 0;
+
+                return member with
+                {
+                    Health = member.Health with
+                    {
+                        HitPoints = member.Health.HitPoints with
+                        {
+                            MaximumHitPoints =
+                                member.Health.HitPoints.MaximumHitPoints
+                                    + hitPointsGained,
+                            CurrentHitPoints = isConscious
+                                ? member.Health.HitPoints.CurrentHitPoints
+                                    + hitPointsGained
+                                : member.Health.HitPoints.CurrentHitPoints
+                        }
+                    }
+                };
+            })
+            .ToArray();
+
+        return party with
+        {
+            Members = Array.AsReadOnly(leveledMembers),
+            ExperienceTotal = newExperienceTotal,
+            Level = newLevel
         };
     }
 
