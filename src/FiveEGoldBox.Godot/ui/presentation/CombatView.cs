@@ -35,17 +35,28 @@ public partial class CombatView : Control
 
 	private readonly List<CombatantMarkerPin> _combatantPins = new();
 	private readonly List<CombatHighlightCell> _highlightCells = new();
-	// Only the dense move-cursor cells (see RebuildHighlights) -- what
-	// FocusCell looks a grid position up in to give the keyboard cursor a
-	// real starting cell instead of leaving it wherever Godot's default
-	// focus happens to land.
+	// Only the dense full-battlefield cursor cells (see RebuildHighlights)
+	// -- what FocusCell looks a grid position up in to give the keyboard
+	// cursor a real starting cell instead of leaving it wherever Godot's
+	// default focus happens to land. Shared by move and spell targeting
+	// alike; either can populate this.
 	private readonly Dictionary<(int X, int Y), CombatHighlightCell>
 		_cursorCellsByPosition = new();
 	// Combatants that are legal targets of the targeting pass currently in
-	// progress. Empty outside targeting, which is what makes every pin
-	// focusable again. See ApplyCombatantFocusability.
+	// progress, for the sparse pin-cycle style of targeting (real weapon
+	// attacks). Empty and unrestricted outside targeting, which is what
+	// makes every pin focusable again -- see ApplyCombatantFocusability
+	// and the distinction it draws against _targetableCombatantsRestricted.
 	private readonly HashSet<string> _targetableCombatantIds =
 		new(StringComparer.Ordinal);
+	// True whenever SetTargetableCombatants was last called with a
+	// non-null list, even an empty one -- an empty *restricted* set (real
+	// spell targeting, which drives its cursor from full-grid cells
+	// instead of the pins) must leave every pin unfocusable, which an
+	// empty _targetableCombatantIds alone can't distinguish from "no
+	// restriction is active at all" (the idle default, and real weapon
+	// attack targeting's own reset on exit).
+	private bool _targetableCombatantsRestricted;
 
 	private int _gridWidth = 1;
 	private int _gridHeight = 1;
@@ -76,10 +87,10 @@ public partial class CombatView : Control
 	// decides what either one means for the currently active command.
 	public event Action<string>? CombatantActivated;
 	public event Action<int, int>? CellActivated;
-	// Fires whenever a "move-legal"/"move-illegal" cursor cell (see
+	// Fires whenever a "cursor-legal"/"cursor-illegal" cursor cell (see
 	// CombatHighlightCell) gains keyboard/mouse focus — the interaction
 	// controller already knows which positions are legal from the same
-	// move-destination data it built the cursor grid from, so this only
+	// destination/target data it built the cursor grid from, so this only
 	// needs to report where the cursor is now, not judge it itself.
 	public event Action<int, int>? CellCursorFocused;
 
