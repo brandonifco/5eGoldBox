@@ -346,6 +346,7 @@ internal static class RulesetPackMapper
                 .Select(ToRuntimeMonsterAbilityModifier)
                 .ToArray(),
             ProficiencyBonus = monster.ProficiencyBonus,
+            ExperienceValue = monster.ExperienceValue,
             IsProficientWithWeapons = monster.IsProficientWithWeapons,
             Weapons = monster.Weapons
                 .Select(ToRuntimeMonsterWeapon)

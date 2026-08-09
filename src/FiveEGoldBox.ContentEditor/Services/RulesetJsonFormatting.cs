@@ -163,6 +163,7 @@ internal static class RulesetJsonFormatting
             ("ZeroHitPointPolicy", JsonString(monster.ZeroHitPointPolicy.ToString())),
             ("AbilityModifiers", RenderCompactArrayRequired(monster.AbilityModifiers, column + 8, RenderAbilityModifier)),
             ("ProficiencyBonus", monster.ProficiencyBonus.ToString(CultureInfo.InvariantCulture)),
+            ("ExperienceValue", monster.ExperienceValue.ToString(CultureInfo.InvariantCulture)),
             ("IsProficientWithWeapons", !monster.IsProficientWithWeapons ? "false" : null),
             ("Weapons", RenderCompactArrayRequired(monster.Weapons, column + 8, RenderMonsterWeapon))
         ];

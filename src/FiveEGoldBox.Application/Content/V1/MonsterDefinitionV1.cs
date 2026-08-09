@@ -18,6 +18,8 @@ internal sealed record MonsterDefinitionV1
 
     public required int ProficiencyBonus { get; init; }
 
+    public required int ExperienceValue { get; init; }
+
     public bool IsProficientWithWeapons { get; init; } = true;
 
     public required IReadOnlyList<MonsterWeaponDefinitionV1> Weapons { get; init; }

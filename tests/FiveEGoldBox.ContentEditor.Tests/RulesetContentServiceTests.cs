@@ -264,6 +264,7 @@ public sealed class RulesetContentServiceTests
                     new MonsterAbilityModifier { Ability = Ability.Charisma, Modifier = -1 }
                 ],
                 ProficiencyBonus = 2,
+                ExperienceValue = 25,
                 Weapons = [new MonsterWeaponDefinition { WeaponId = "weapon.dagger" }]
             };
 
@@ -297,6 +298,7 @@ public sealed class RulesetContentServiceTests
                     // complete set of exactly six.
                 ],
                 ProficiencyBonus = 2,
+                ExperienceValue = 25,
                 Weapons = [new MonsterWeaponDefinition { WeaponId = "weapon.dagger" }]
             };
 
@@ -334,6 +336,7 @@ public sealed class RulesetContentServiceTests
                     new MonsterAbilityModifier { Ability = Ability.Charisma, Modifier = 0 }
                 ],
                 ProficiencyBonus = 2,
+                ExperienceValue = 25,
                 Weapons = [new MonsterWeaponDefinition { WeaponId = "weapon.does-not-exist" }]
             };
 

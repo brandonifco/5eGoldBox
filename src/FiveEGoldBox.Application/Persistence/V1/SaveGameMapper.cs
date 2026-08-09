@@ -95,7 +95,9 @@ internal static class SaveGameMapper
                     ItemId = item.ItemId,
                     Quantity = item.Quantity
                 })
-                .ToArray()
+                .ToArray(),
+            ExperienceTotal = party.ExperienceTotal,
+            Level = party.Level
         };
     }
 
@@ -119,7 +121,9 @@ internal static class SaveGameMapper
                     ItemId = item.ItemId,
                     Quantity = item.Quantity
                 })
-                .ToArray()
+                .ToArray(),
+            ExperienceTotal = party.ExperienceTotal,
+            Level = party.Level
         };
     }
 

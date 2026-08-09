@@ -71,7 +71,8 @@ public static class SessionView
                 .Select(member => DescribePartyMember(
                     member,
                     campaign,
-                    ruleset))
+                    ruleset,
+                    party.Level))
                 .ToArray()),
             Currency = DescribeCurrency(party.Currency),
             InventoryItems = Array.AsReadOnly(party.InventoryItems
@@ -92,12 +93,14 @@ public static class SessionView
     private static PartyMemberViewModel DescribePartyMember(
         PartyMemberState member,
         CampaignDefinition campaign,
-        ValidatedRuleset ruleset)
+        ValidatedRuleset ruleset,
+        int level)
     {
         CharacterDraft draft = CampaignCharacterDraftFactory.CreateDraft(
             member,
             campaign,
-            ruleset);
+            ruleset,
+            level);
         CharacterSnapshot snapshot = new CharacterResolver(ruleset).Resolve(draft);
 
         return new PartyMemberViewModel

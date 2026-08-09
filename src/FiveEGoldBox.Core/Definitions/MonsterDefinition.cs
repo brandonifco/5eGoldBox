@@ -26,6 +26,12 @@ public sealed record MonsterDefinition
 
     public required int ProficiencyBonus { get; init; }
 
+    /// Experience the party earns for defeating this monster, awarded on a
+    /// completed encounter's winning side. A CR-derived value, not computed
+    /// from anything else on this record -- HP/AC/weapons say how dangerous a
+    /// fight is, not how much it should be worth.
+    public required int ExperienceValue { get; init; }
+
     /// Whether this monster is proficient with the weapons it carries. Stat
     /// blocks are proficient with their own gear as a rule, so this defaults
     /// accordingly.

@@ -45,6 +45,14 @@ public static partial class RulesetValidator
                     $"Ruleset monster '{monster.Id}' has a negative proficiency bonus."));
             }
 
+            if (monster.ExperienceValue < 0)
+            {
+                issues.Add(new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "ruleset.monsters.experience_negative",
+                    $"Ruleset monster '{monster.Id}' has a negative experience value."));
+            }
+
             if (!Enum.IsDefined(monster.ZeroHitPointPolicy))
             {
                 issues.Add(new ValidationIssue(

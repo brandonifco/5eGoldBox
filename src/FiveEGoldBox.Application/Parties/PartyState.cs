@@ -15,4 +15,13 @@ public sealed record PartyState
 
     public IReadOnlyList<PartyInventoryItemState> InventoryItems { get; init; }
         = Array.Empty<PartyInventoryItemState>();
+
+    /// Same simplification as Currency, applied to advancement: the whole
+    /// party fights every encounter together with nobody benched, so a
+    /// shared total and level produce the same practical outcome as
+    /// per-character tracking without four independent level-up moments
+    /// potentially drifting out of sync.
+    public int ExperienceTotal { get; init; }
+
+    public int Level { get; init; } = 1;
 }

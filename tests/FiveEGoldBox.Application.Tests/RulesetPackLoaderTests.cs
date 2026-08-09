@@ -106,6 +106,7 @@ public sealed class RulesetPackLoaderTests
                         { "Ability": "Charisma", "Modifier": 0 }
                     ],
                     "ProficiencyBonus": 2,
+                    "ExperienceValue": 25,
                     "Weapons": [
                         {
                             "WeaponId": "weapon.test",
@@ -232,6 +233,7 @@ public sealed class RulesetPackLoaderTests
         MonsterDefinition monster = Assert.Single(ruleset.Monsters);
         Assert.Equal(12, monster.MaximumHitPoints);
         Assert.Equal(13, monster.ArmorClass);
+        Assert.Equal(25, monster.ExperienceValue);
         Assert.Equal(
             CombatantZeroHitPointPolicy.Defeated,
             monster.ZeroHitPointPolicy);

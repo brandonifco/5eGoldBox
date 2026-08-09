@@ -465,6 +465,140 @@ public sealed class CombatOutcomeRulesTests
                 "class.rogue").Ammunition);
     }
 
+    /// The Watchtower ambush's two raiders (25 XP each, per the ruleset's
+    /// authored content) sum to 50 -- real content, not a synthetic number,
+    /// so this also proves the encounter's own Combatants/MonsterId wiring
+    /// actually reaches the ruleset's bestiary.
+    [Fact]
+    public void Finalize_PartyVictory_AwardsExperienceForDefeatedMonsters()
+    {
+        ApplicationSessionState result =
+            CombatOutcomeRules.Finalize(
+                WatchtowerCombatOutcomeTestData
+                    .CreatePartyVictorySession())
+                .State;
+
+        Assert.Equal(50, result.Party.ExperienceTotal);
+    }
+
+    /// Real 5e awards no experience for a defeat, and this engine has
+    /// nothing resembling a consolation mechanic either.
+    [Fact]
+    public void Finalize_RaiderVictory_DoesNotAwardExperience()
+    {
+        ApplicationSessionState result =
+            CombatOutcomeRules.Finalize(
+                WatchtowerCombatOutcomeTestData
+                    .CreateRaiderVictorySession())
+                .State;
+
+        Assert.Equal(0, result.Party.ExperienceTotal);
+        Assert.Equal(1, result.Party.Level);
+    }
+
+    /// 250 (starting) + 50 (this fight) = 300, which is exactly the level-2
+    /// threshold -- crossing it bumps Level and grants every member real,
+    /// class-specific hit points, not just an incremented counter.
+    [Fact]
+    public void Finalize_PartyVictory_WhenExperienceCrossesThreshold_LevelsUpAndGrantsHitPoints()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatOutcomeTestData
+                .CreatePartyVictorySession();
+        source = source with
+        {
+            Party = source.Party with { ExperienceTotal = 250 }
+        };
+
+        ApplicationSessionState result =
+            CombatOutcomeRules.Finalize(source).State;
+
+        Assert.Equal(300, result.Party.ExperienceTotal);
+        Assert.Equal(2, result.Party.Level);
+
+        // Compared against the encounter participant's own post-combat
+        // health, not source.Party.Members -- the party's stored health
+        // still reflects pre-combat state at this point in the test, since
+        // ProjectParty only folds the encounter's outcome onto it inside
+        // Finalize itself.
+        foreach (PartyMemberState postCombat in source.Party.Members
+            .Select(member => member with
+            {
+                Health = WatchtowerCombatOutcomeTestData
+                    .GetParticipant(source, member.PartyMemberId)
+                    .Combatant.Health
+            }))
+        {
+            PartyMemberState after =
+                WatchtowerCombatOutcomeTestData.GetPartyMember(
+                    result,
+                    postCombat.ClassId);
+
+            Assert.True(
+                after.Health.HitPoints.MaximumHitPoints
+                    > postCombat.Health.HitPoints.MaximumHitPoints,
+                $"{postCombat.ClassId} should have gained maximum hit points leveling up.");
+
+            // Only a member who was already conscious (the fighter, per
+            // CreatePartyVictorySession) also gains current HP -- a downed
+            // or dead member (the stable cleric, the dead wizard) stays
+            // exactly where they were: real 5e does not revive or heal
+            // anyone just because the party as a whole leveled up, and
+            // ApplicationSessionRules would reject a 0-HP member with
+            // recorded death-save progress suddenly showing positive
+            // current HP.
+            if (postCombat.Health.HitPoints.CurrentHitPoints > 0)
+            {
+                Assert.Equal(
+                    after.Health.HitPoints.MaximumHitPoints
+                        - postCombat.Health.HitPoints.MaximumHitPoints,
+                    after.Health.HitPoints.CurrentHitPoints
+                        - postCombat.Health.HitPoints.CurrentHitPoints);
+            }
+            else
+            {
+                Assert.Equal(
+                    postCombat.Health.HitPoints.CurrentHitPoints,
+                    after.Health.HitPoints.CurrentHitPoints);
+            }
+        }
+
+        ApplicationSessionRules.Validate(result);
+    }
+
+    /// 200 (starting) + 50 (this fight) = 250, short of the 300 threshold --
+    /// the party gains experience but neither Level nor anyone's hit points
+    /// move.
+    [Fact]
+    public void Finalize_PartyVictory_WhenExperienceDoesNotCrossThreshold_DoesNotLevelUp()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatOutcomeTestData
+                .CreatePartyVictorySession();
+        source = source with
+        {
+            Party = source.Party with { ExperienceTotal = 200 }
+        };
+
+        ApplicationSessionState result =
+            CombatOutcomeRules.Finalize(source).State;
+
+        Assert.Equal(250, result.Party.ExperienceTotal);
+        Assert.Equal(1, result.Party.Level);
+
+        foreach (PartyMemberState before in source.Party.Members)
+        {
+            PartyMemberState after =
+                WatchtowerCombatOutcomeTestData.GetPartyMember(
+                    result,
+                    before.ClassId);
+
+            Assert.Equal(
+                before.Health.HitPoints.MaximumHitPoints,
+                after.Health.HitPoints.MaximumHitPoints);
+        }
+    }
+
     [Fact]
     public void Finalize_PreservesAllUnrelatedPartyData()
     {

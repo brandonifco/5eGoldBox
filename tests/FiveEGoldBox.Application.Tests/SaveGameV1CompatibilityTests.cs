@@ -1,9 +1,11 @@
+using FiveEGoldBox.Application.Campaigns;
 using FiveEGoldBox.Application.Exploration;
 using FiveEGoldBox.Application.Parties;
 using FiveEGoldBox.Application.Persistence;
 using FiveEGoldBox.Application.Scenarios;
 using FiveEGoldBox.Application.Sessions;
 using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
 
 namespace FiveEGoldBox.Application.Tests;
 
@@ -59,6 +61,11 @@ public sealed class SaveGameV1CompatibilityTests
         // defaulting to a party that never carried any currency or items.
         Assert.Equal(new CurrencyAmount(), loaded.Party.Currency);
         Assert.Empty(loaded.Party.InventoryItems);
+
+        // Same story for ExperienceTotal/Level: a document from before
+        // advancement existed loads as a fresh, unlevelled party.
+        Assert.Equal(0, loaded.Party.ExperienceTotal);
+        Assert.Equal(1, loaded.Party.Level);
     }
 
     [Fact]
@@ -204,6 +211,70 @@ public sealed class SaveGameV1CompatibilityTests
                 .Select(item => (item.ItemId, item.Quantity)),
             reloaded.Party.InventoryItems
                 .Select(item => (item.ItemId, item.Quantity)));
+    }
+
+    /// None of the frozen fixtures carry experience or level -- they predate
+    /// advancement existing at all. A level-2 party has to carry HP that
+    /// actually matches level 2 (CampaignPartyCompositionValidator checks
+    /// this now), so every member's stored maximum/current hit points are
+    /// bumped by the same real GetHitPointDeltaSinceLevelOne math the
+    /// validator itself uses -- this proves the save format round-trips a
+    /// genuinely valid leveled party, not just that two integers survive
+    /// serialization in isolation.
+    [Fact]
+    public void LoadSaveLoad_PreservesNonDefaultExperienceAndLevel()
+    {
+        ApplicationSessionState loaded = LoadFixture(OutpostFixture);
+        CampaignDefinition campaign =
+            CampaignRegistry.Resolve(FrontierCampaignIds.CampaignId);
+        ValidatedRuleset ruleset =
+            RulesetRegistry.Resolve(campaign.RulesetId);
+
+        ApplicationSessionState leveled = loaded with
+        {
+            Party = loaded.Party with
+            {
+                Members = loaded.Party.Members
+                    .Select(member =>
+                    {
+                        int delta =
+                            CampaignCharacterDraftFactory
+                                .GetHitPointDeltaSinceLevelOne(
+                                    member,
+                                    campaign,
+                                    ruleset,
+                                    2);
+
+                        return member with
+                        {
+                            Health = member.Health with
+                            {
+                                HitPoints = member.Health.HitPoints with
+                                {
+                                    MaximumHitPoints =
+                                        member.Health.HitPoints
+                                            .MaximumHitPoints
+                                            + delta,
+                                    CurrentHitPoints =
+                                        member.Health.HitPoints
+                                            .CurrentHitPoints
+                                            + delta
+                                }
+                            }
+                        };
+                    })
+                    .ToArray(),
+                ExperienceTotal = 350,
+                Level = 2
+            }
+        };
+
+        string reserialized = ManualSaveSerializer.Serialize(leveled);
+        ApplicationSessionState reloaded =
+            LoadFixtureFromJson(reserialized);
+
+        Assert.Equal(350, reloaded.Party.ExperienceTotal);
+        Assert.Equal(2, reloaded.Party.Level);
     }
 
     /// ExplorationState.RevealedSecretDoorIds/CollectedTreasureIds

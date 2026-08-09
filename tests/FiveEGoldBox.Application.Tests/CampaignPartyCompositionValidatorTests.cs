@@ -1,5 +1,7 @@
 using FiveEGoldBox.Application.Campaigns;
 using FiveEGoldBox.Application.Parties;
+using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Core.Definitions;
 
 namespace FiveEGoldBox.Application.Tests;
 
@@ -86,6 +88,62 @@ public sealed class CampaignPartyCompositionValidatorTests
 
         Assert.Throws<ArgumentException>(() =>
             CampaignPartyCompositionValidator.Validate(Campaign(), party));
+    }
+
+    /// A level-2 party's members are expected to carry level-2 hit points,
+    /// not the level-1 baseline the roster authors -- staying at the level-1
+    /// number once the party has advanced is exactly as wrong as claiming
+    /// more than the build gives at level 1 (the test just above this one).
+    [Fact]
+    public void Validate_RejectsLevel1HitPointsOnALevel2Party()
+    {
+        PartyState party = CreateParty() with { Level = 2 };
+
+        Assert.Throws<ArgumentException>(() =>
+            CampaignPartyCompositionValidator.Validate(Campaign(), party));
+    }
+
+    /// The positive case: every member's hit points bumped by exactly the
+    /// delta CharacterResolver says levels 1-to-2 are worth for their own
+    /// class and Constitution is a party this campaign could have produced.
+    [Fact]
+    public void Validate_AcceptsCorrectLevel2HitPoints()
+    {
+        CampaignDefinition campaign = Campaign();
+        ValidatedRuleset ruleset = RulesetRegistry.Resolve(campaign.RulesetId);
+        PartyState party = CreateParty();
+
+        PartyMemberState[] leveled = party.Members
+            .Select(member =>
+            {
+                int delta =
+                    CampaignCharacterDraftFactory.GetHitPointDeltaSinceLevelOne(
+                        member,
+                        campaign,
+                        ruleset,
+                        2);
+
+                return member with
+                {
+                    Health = member.Health with
+                    {
+                        HitPoints = member.Health.HitPoints with
+                        {
+                            MaximumHitPoints =
+                                member.Health.HitPoints.MaximumHitPoints
+                                    + delta,
+                            CurrentHitPoints =
+                                member.Health.HitPoints.CurrentHitPoints
+                                    + delta
+                        }
+                    }
+                };
+            })
+            .ToArray();
+
+        CampaignPartyCompositionValidator.Validate(
+            campaign,
+            party with { Members = Array.AsReadOnly(leveled), Level = 2 });
     }
 
     [Fact]

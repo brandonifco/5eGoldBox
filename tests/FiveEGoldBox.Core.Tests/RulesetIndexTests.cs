@@ -80,6 +80,7 @@ public sealed class RulesetIndexTests
                 })
                 .ToArray(),
             ProficiencyBonus = 2,
+            ExperienceValue = 25,
             Weapons = [new MonsterWeaponDefinition { WeaponId = "weapon.test" }]
         };
 

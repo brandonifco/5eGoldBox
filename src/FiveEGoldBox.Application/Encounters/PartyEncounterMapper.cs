@@ -13,7 +13,8 @@ internal static class PartyEncounterMapper
         PartyMemberState member,
         ValidatedRuleset ruleset,
         string sideId,
-        GridPosition startingPosition)
+        GridPosition startingPosition,
+        int level)
     {
         ArgumentNullException.ThrowIfNull(member);
         ArgumentNullException.ThrowIfNull(ruleset);
@@ -23,7 +24,8 @@ internal static class PartyEncounterMapper
                 member,
                 CampaignRegistry.Resolve(
                     FrontierCampaignIds.CampaignId),
-                ruleset);
+                ruleset,
+                level);
         CharacterSnapshot snapshot =
             new CharacterResolver(ruleset).Resolve(draft);
 
