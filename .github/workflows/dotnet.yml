@@ -87,8 +87,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GODOT_VERSION: 4.7-stable
-      GODOT_ARCHIVE: Godot_v4.7-stable_mono_linux_x86_64.zip
+      GODOT_VERSION: 4.7.1-stable
+      GODOT_ARCHIVE: Godot_v4.7.1-stable_mono_linux_x86_64.zip
 
     steps:
       - name: Checkout
@@ -117,7 +117,7 @@ jobs:
           unzip -q /tmp/godot.zip -d ~/godot-engine
 
       # The extracted binary keeps its versioned filename (e.g.
-      # Godot_v4.7-stable_mono_linux.x86_64), not `godot` -- symlink it so
+      # Godot_v4.7.1-stable_mono_linux.x86_64), not `godot` -- symlink it so
       # every command below (and CLAUDE.md's own documented commands) can
       # just call `godot`.
       - name: Install Godot as `godot` on PATH
