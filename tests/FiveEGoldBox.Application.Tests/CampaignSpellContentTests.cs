@@ -31,6 +31,7 @@ public sealed class CampaignSpellContentTests
         Assert.Equal(SpellCostKind.Cantrip, spell.Cost);
         Assert.Equal(SpellResolutionKind.SpellAttack, spell.Resolution);
         Assert.Equal(DieType.D10, Assert.Single(spell.Effects).Dice.Die);
+        Assert.Equal([CampaignRulesetIds.WizardClassId], spell.ClassIds);
     }
 
     [Fact]
@@ -42,6 +43,7 @@ public sealed class CampaignSpellContentTests
         Assert.Equal(SpellResolutionKind.SavingThrow, spell.Resolution);
         Assert.Equal(Ability.Dexterity, spell.SaveAbility);
         Assert.Equal(SpellSaveOutcome.Negates, spell.SaveOutcome);
+        Assert.Equal([CampaignRulesetIds.ClericClassId], spell.ClassIds);
     }
 
     [Fact]
@@ -56,6 +58,7 @@ public sealed class CampaignSpellContentTests
         SpellEffectDefinition effect = Assert.Single(spell.Effects);
         Assert.Equal(SpellEffectKind.Healing, effect.Kind);
         Assert.True(effect.AddsSpellcastingModifier);
+        Assert.Equal([CampaignRulesetIds.ClericClassId], spell.ClassIds);
     }
 
     /// The one spell that uses the bonus action the encounter has always
@@ -70,6 +73,7 @@ public sealed class CampaignSpellContentTests
         Assert.Equal(
             SpellEffectKind.Healing,
             Assert.Single(spell.Effects).Kind);
+        Assert.Equal([CampaignRulesetIds.ClericClassId], spell.ClassIds);
     }
 
     [Fact]
@@ -80,6 +84,7 @@ public sealed class CampaignSpellContentTests
         Assert.Equal(SpellResolutionKind.Automatic, spell.Resolution);
         Assert.Equal(3, spell.MaximumTargets);
         Assert.Equal(3, Assert.Single(spell.Effects).Instances);
+        Assert.Equal([CampaignRulesetIds.WizardClassId], spell.ClassIds);
     }
 
     [Fact]
@@ -92,6 +97,7 @@ public sealed class CampaignSpellContentTests
         Assert.Equal(10, spell.DurationRounds);
         Assert.Equal(3, spell.MaximumTargets);
         Assert.Empty(spell.Effects);
+        Assert.Equal([CampaignRulesetIds.ClericClassId], spell.ClassIds);
     }
 
     /// Every die these spells roll is one the deterministic sequence can
@@ -103,6 +109,39 @@ public sealed class CampaignSpellContentTests
         Assert.All(
             Spells().SelectMany(spell => spell.Effects),
             effect => Assert.True(Enum.IsDefined(effect.Dice.Die)));
+    }
+
+    /// Description is optional on the DTO (existing content that predates
+    /// it still loads), but every spell this ruleset actually ships should
+    /// carry real, original prose -- the same guarantee
+    /// CampaignCharacterChoiceContentTests already holds races/classes/
+    /// backgrounds/skills to, extended here since spells aren't part of
+    /// CharacterCreationOptions and so aren't covered by that file.
+    [Fact]
+    public void EverySpell_HasADescription()
+    {
+        Assert.All(
+            Spells(),
+            spell => Assert.False(
+                string.IsNullOrWhiteSpace(spell.Description),
+                $"Spell '{spell.Id}' has no description, so a creation " +
+                    "screen can only show its bare name."));
+    }
+
+    /// A spell with no ClassIds isn't a spell nobody happens to have picked
+    /// yet -- it's one no character creation draft could ever legally
+    /// prepare (CharacterCreationRules.CheckPreparedSpells rejects it
+    /// regardless of class). Every shipped spell should be reachable by at
+    /// least one of the ruleset's own casters.
+    [Fact]
+    public void EverySpell_NamesAtLeastOneClass()
+    {
+        Assert.All(
+            Spells(),
+            spell => Assert.False(
+                spell.ClassIds.Count == 0,
+                $"Spell '{spell.Id}' names no class, so no character " +
+                    "could ever legally prepare it."));
     }
 
     private static IReadOnlyList<SpellDefinition> Spells()

@@ -21,6 +21,29 @@
         <InputText class="form-control" @bind-Value="_model.Name" />
     </div>
 
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="_model.Description" />
+        <div class="form-text">Player-facing prose for a character-creation screen. Leave blank if none is authored yet.</div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Classes</label>
+        <div>
+            @foreach (var characterClass in _classes)
+            {
+                var current = characterClass;
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="@("class-" + current.Id)"
+                           checked="@_model.ClassIds.Contains(current.Id)"
+                           @onchange="@((ChangeEventArgs e) => _model.ToggleId(_model.ClassIds, current.Id, (bool)e.Value!))" />
+                    <label class="form-check-label" for="@("class-" + current.Id)">@current.Name</label>
+                </div>
+            }
+        </div>
+        <div class="form-text">Which classes may prepare this spell. Leaving every box unchecked means no class currently can.</div>
+    </div>
+
     <div class="row mb-3">
         <div class="col-md-3">
             <label class="form-label">Cost</label>
@@ -216,12 +239,14 @@
     private bool _isNew;
     private ValidationResult? _saveResult;
     private IReadOnlyList<EffectDefinition> _effects = [];
+    private IReadOnlyList<ClassDefinition> _classes = [];
     private IReadOnlyList<string> _knownDamageTypes = [];
 
     protected override void OnInitialized()
     {
         _isNew = string.IsNullOrEmpty(Id);
         _effects = ContentService.LoadEffects();
+        _classes = ContentService.LoadClasses();
 
         _knownDamageTypes = ContentService.LoadWeapons()
             .Select(w => w.DamageType)

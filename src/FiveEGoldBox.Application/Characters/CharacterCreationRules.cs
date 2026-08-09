@@ -241,19 +241,35 @@ public static class CharacterCreationRules
 
         foreach (string spellId in draft.PreparedSpellIds)
         {
-            bool spellExists = ruleset.Definition.Spells.Any(
-                spell => string.Equals(
-                    spell.Id,
+            SpellDefinition? spell = ruleset.Definition.Spells.FirstOrDefault(
+                candidate => string.Equals(
+                    candidate.Id,
                     spellId,
                     StringComparison.Ordinal));
 
-            if (!spellExists)
+            if (spell is null)
             {
                 yield return new ValidationIssue(
                     ValidationSeverity.Error,
                     "character.spells.not_found",
                     $"Prepared spell '{spellId}' was not found in ruleset " +
                         $"'{ruleset.Definition.Id}'.");
+
+                continue;
+            }
+
+            // An unresolvable class already reported its own issue above;
+            // skip the class-list check rather than reporting a second,
+            // meaningless one against a class that doesn't exist.
+            if (selectedClass is not null
+                && !spell.ClassIds.Contains(
+                    selectedClass.Id, StringComparer.Ordinal))
+            {
+                yield return new ValidationIssue(
+                    ValidationSeverity.Error,
+                    "character.spells.not_on_class_list",
+                    $"Spell '{spellId}' is not on {selectedClass.Id}'s " +
+                        "spell list.");
             }
         }
     }

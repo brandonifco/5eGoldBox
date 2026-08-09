@@ -6,7 +6,12 @@ internal sealed record SpellDefinitionV1
 
     public required string Name { get; init; }
 
+    public string? Description { get; init; }
+
     public required SpellCostKindV1 Cost { get; init; }
+
+    public IReadOnlyList<string> ClassIds { get; init; }
+        = Array.Empty<string>();
 
     public required int Level { get; init; }
 

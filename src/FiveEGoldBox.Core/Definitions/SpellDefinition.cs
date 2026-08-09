@@ -4,17 +4,33 @@ namespace FiveEGoldBox.Core.Definitions;
 
 /// A spell, as authored content.
 ///
-/// Deliberately describes what a spell does rather than how it is cast: range,
+/// Mostly describes what a spell does rather than how it is cast: range,
 /// targeting and resolution are stated, and the encounter rules decide
-/// legality from them the same way they do for a weapon. Nothing here is
-/// specific to who is casting.
+/// legality from them the same way they do for a weapon. ClassIds is the one
+/// exception -- without it, any caster could prepare any spell regardless of
+/// class, which is why it exists.
 public sealed record SpellDefinition
 {
     public required string Id { get; init; }
 
     public required string Name { get; init; }
 
+    /// Player-facing prose for a character-creation screen, so a choice is
+    /// more than a bare name to someone who does not already know 5e.
+    /// Optional: content that predates this loads unchanged. Original
+    /// wording, not sourced from the PHB -- that text is fully copyrighted
+    /// (unlike the SRD, which the race/class/background prose draws on)
+    /// and isn't eligible to ship as game content.
+    public string? Description { get; init; }
+
     public required SpellCostKind Cost { get; init; }
+
+    /// Which classes may prepare this spell, by class ID. Empty means no
+    /// class currently may -- not "any class may," the opposite of what an
+    /// absent restriction would otherwise silently mean. A spell every
+    /// shipped caster can actually use should always name at least one.
+    public IReadOnlyList<string> ClassIds { get; init; }
+        = Array.Empty<string>();
 
     /// The slot level this spell is cast at. Zero for a cantrip.
     public required int Level { get; init; }

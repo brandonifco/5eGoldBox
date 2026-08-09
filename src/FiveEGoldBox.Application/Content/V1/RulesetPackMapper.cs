@@ -391,7 +391,9 @@ internal static class RulesetPackMapper
         {
             Id = spell.Id,
             Name = spell.Name,
+            Description = spell.Description,
             Cost = ToRuntimeSpellCostKind(spell.Cost),
+            ClassIds = spell.ClassIds.ToArray(),
             Level = spell.Level,
             CastingTime = ToRuntimeSpellCastingTime(spell.CastingTime),
             RangeKind = ToRuntimeSpellRangeKind(spell.RangeKind),
