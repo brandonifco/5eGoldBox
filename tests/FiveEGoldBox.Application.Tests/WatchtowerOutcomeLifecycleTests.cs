@@ -225,10 +225,10 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
         current = ExecuteBoundedPartyVictoryCombatScript(current);
 
-        WatchtowerCombatResolutionResult completionResult =
-            WatchtowerCombatRules.AdvanceToDecision(current);
+        EncounterCombatResolutionResult completionResult =
+            EncounterCombatRules.AdvanceToDecision(current);
         current = completionResult.State;
-        WatchtowerCombatDecision completionDecision =
+        EncounterCombatDecision completionDecision =
             completionResult.ResultingDecision;
 
         Assert.Equal(
@@ -444,8 +444,8 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
         for (int turn = 0; turn < 60; turn++)
         {
-            WatchtowerCombatResolutionResult advanced =
-                WatchtowerCombatRules.AdvanceToDecision(current);
+            EncounterCombatResolutionResult advanced =
+                EncounterCombatRules.AdvanceToDecision(current);
 
             current = advanced.State;
 
@@ -456,7 +456,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
                 return current;
             }
 
-            WatchtowerCombatDecision decision =
+            EncounterCombatDecision decision =
                 advanced.ResultingDecision;
 
             Assert.NotNull(decision.ActiveCombatantId);
@@ -505,7 +505,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
                 .ToArray();
             EncounterMovementResult? movement = unreachable.Length == 0
                 ? null
-                : WatchtowerCombatPathSearch.FindMovement(
+                : EncounterCombatPathSearch.FindMovement(
                     encounter,
                     decision.ActiveCombatantId!,
                     unreachable[0].TargetCombatantId,
@@ -531,20 +531,20 @@ public sealed class WatchtowerOutcomeLifecycleTests
         string expectedWeaponId,
         string expectedTargetId)
     {
-        WatchtowerCombatResolutionResult advanced =
-            WatchtowerCombatRules.AdvanceToDecision(source);
-        WatchtowerCombatDecision decision =
+        EncounterCombatResolutionResult advanced =
+            EncounterCombatRules.AdvanceToDecision(source);
+        EncounterCombatDecision decision =
             advanced.ResultingDecision;
 
         AssertPlayerDecision(decision, expectedActorId);
 
-        WatchtowerCombatWeaponAttackOption weaponOption = Assert.Single(
+        EncounterCombatWeaponAttackOption weaponOption = Assert.Single(
             decision.WeaponAttacks,
             candidate => candidate.WeaponId == expectedWeaponId);
 
         Assert.True(weaponOption.IsAvailable);
 
-        WatchtowerCombatTargetOption target = Assert.Single(
+        EncounterCombatTargetOption target = Assert.Single(
             weaponOption.Targets,
             candidate => string.Equals(
                 candidate.TargetCombatantId,
@@ -553,8 +553,8 @@ public sealed class WatchtowerOutcomeLifecycleTests
 
         Assert.True(target.IsAvailable);
 
-        WatchtowerCombatResolutionResult result =
-            WatchtowerCombatRules.Execute(
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
                 advanced.State,
                 new CombatWeaponAttackIntent
                 {
@@ -595,16 +595,16 @@ public sealed class WatchtowerOutcomeLifecycleTests
         ApplicationSessionState source,
         string expectedActorId)
     {
-        WatchtowerCombatResolutionResult advanced =
-            WatchtowerCombatRules.AdvanceToDecision(source);
-        WatchtowerCombatDecision decision =
+        EncounterCombatResolutionResult advanced =
+            EncounterCombatRules.AdvanceToDecision(source);
+        EncounterCombatDecision decision =
             advanced.ResultingDecision;
 
         AssertPlayerDecision(decision, expectedActorId);
         Assert.True(decision.EndTurn!.IsAvailable);
 
-        WatchtowerCombatResolutionResult result =
-            WatchtowerCombatRules.Execute(
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
                 advanced.State,
                 new CombatEndTurnIntent
                 {
@@ -625,7 +625,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
             CombatStepKind.TurnAdvanced,
             result.PrimaryStep!.Kind);
         Assert.Equal(
-            WatchtowerCombatTurnAdvanceReason.PlayerEndTurn,
+            EncounterCombatTurnAdvanceReason.PlayerEndTurn,
             result.PrimaryStep.TurnAdvanceReason);
 
         return result.State;
@@ -636,16 +636,16 @@ public sealed class WatchtowerOutcomeLifecycleTests
         string expectedActorId,
         IReadOnlyList<GridPosition> path)
     {
-        WatchtowerCombatResolutionResult advanced =
-            WatchtowerCombatRules.AdvanceToDecision(source);
-        WatchtowerCombatDecision decision =
+        EncounterCombatResolutionResult advanced =
+            EncounterCombatRules.AdvanceToDecision(source);
+        EncounterCombatDecision decision =
             advanced.ResultingDecision;
 
         AssertPlayerDecision(decision, expectedActorId);
         Assert.True(decision.Movement!.IsAvailable);
 
-        WatchtowerCombatResolutionResult result =
-            WatchtowerCombatRules.Execute(
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
                 advanced.State,
                 new CombatMoveIntent
                 {
@@ -659,7 +659,7 @@ public sealed class WatchtowerOutcomeLifecycleTests
     }
 
     private static void AssertPlayerDecision(
-        WatchtowerCombatDecision decision,
+        EncounterCombatDecision decision,
         string expectedActorId)
     {
         Assert.Equal(

@@ -6,7 +6,7 @@ using FiveEGoldBox.Core.Runtime;
 namespace FiveEGoldBox.Application.Tests;
 
 /// Direct tests for the raider turn planner extracted from
-/// WatchtowerCombatOrchestrator. Planning is a pure function over encounter
+/// EncounterCombatOrchestrator. Planning is a pure function over encounter
 /// state, so these exercise its decision branches without driving a whole
 /// combat. The melee close-then-attack paths are covered end to end by the
 /// orchestrator characterization transcripts.
@@ -23,7 +23,7 @@ public sealed class EncounterTacticsTurnPlannerTests
     {
         ApplicationSessionState state = ActivateRaider(RangedRaiderId);
         EncounterState encounter =
-            WatchtowerCombatTestData.GetEncounter(state);
+            EncounterCombatTestData.GetEncounter(state);
 
         EncounterTacticsTurnPlan plan =
             EncounterTacticsTurnPlanner.Plan(encounter, state.Party);
@@ -35,7 +35,7 @@ public sealed class EncounterTacticsTurnPlannerTests
             GetFixedWeaponId(state, RangedRaiderId),
             attack.WeaponId);
         Assert.Equal(
-            WatchtowerCombatTurnAdvanceReason.RaiderTurnCompleted,
+            EncounterCombatTurnAdvanceReason.RaiderTurnCompleted,
             plan.TurnAdvanceReason);
     }
 
@@ -48,13 +48,13 @@ public sealed class EncounterTacticsTurnPlannerTests
             weapon => weapon with { AmmunitionQuantityAvailable = 0 });
 
         EncounterTacticsTurnPlan plan = EncounterTacticsTurnPlanner.Plan(
-            WatchtowerCombatTestData.GetEncounter(state),
+            EncounterCombatTestData.GetEncounter(state),
             state.Party);
 
         Assert.Null(plan.Movement);
         Assert.Null(plan.Attack);
         Assert.Equal(
-            WatchtowerCombatTurnAdvanceReason.NoProductiveEnemyAction,
+            EncounterCombatTurnAdvanceReason.NoProductiveEnemyAction,
             plan.TurnAdvanceReason);
     }
 
@@ -73,13 +73,13 @@ public sealed class EncounterTacticsTurnPlannerTests
             });
 
         EncounterTacticsTurnPlan plan = EncounterTacticsTurnPlanner.Plan(
-            WatchtowerCombatTestData.GetEncounter(state),
+            EncounterCombatTestData.GetEncounter(state),
             state.Party);
 
         Assert.Null(plan.Movement);
         Assert.Null(plan.Attack);
         Assert.Equal(
-            WatchtowerCombatTurnAdvanceReason.NoProductiveEnemyAction,
+            EncounterCombatTurnAdvanceReason.NoProductiveEnemyAction,
             plan.TurnAdvanceReason);
     }
 
@@ -91,7 +91,7 @@ public sealed class EncounterTacticsTurnPlannerTests
     {
         ApplicationSessionState state = ActivateRaider(raiderId);
         EncounterState encounter =
-            WatchtowerCombatTestData.GetEncounter(state);
+            EncounterCombatTestData.GetEncounter(state);
         long revisionBefore = encounter.Revision;
         GridPosition[] positionsBefore = encounter.Participants
             .Select(participant => participant.Position)
@@ -116,13 +116,13 @@ public sealed class EncounterTacticsTurnPlannerTests
                 .ToArray());
         Assert.Equal(
             revisionBefore,
-            WatchtowerCombatTestData.GetEncounter(state).Revision);
+            EncounterCombatTestData.GetEncounter(state).Revision);
     }
 
     private static ApplicationSessionState ActivateRaider(
         string raiderId)
     {
-        return WatchtowerCombatTestData.AdvanceToCombatant(
+        return EncounterCombatTestData.AdvanceToCombatant(
             WatchtowerSignalTestData.CreateEncounterSession(),
             raiderId);
     }
@@ -132,7 +132,7 @@ public sealed class EncounterTacticsTurnPlannerTests
         string combatantId)
     {
         return Assert.Single(
-            WatchtowerCombatTestData
+            EncounterCombatTestData
                 .GetParticipant(state, combatantId)
                 .CombatProfile.WeaponAttacks)
             .WeaponId;
@@ -144,11 +144,11 @@ public sealed class EncounterTacticsTurnPlannerTests
         Func<WeaponAttack, WeaponAttack> changeWeapon)
     {
         EncounterParticipantState raider =
-            WatchtowerCombatTestData.GetParticipant(state, raiderId);
+            EncounterCombatTestData.GetParticipant(state, raiderId);
         WeaponAttack weapon = Assert.Single(
             raider.CombatProfile.WeaponAttacks);
 
-        return WatchtowerCombatTestData.ReplaceParticipant(
+        return EncounterCombatTestData.ReplaceParticipant(
             state,
             raider with
             {

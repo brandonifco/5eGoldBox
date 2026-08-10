@@ -8,7 +8,7 @@ namespace FiveEGoldBox.Application.Combat;
 
 /// Decides how an opposing combatant spends its turn. Pure and deterministic:
 /// it reads the encounter, defers target choice to EncounterTacticsPolicy and
-/// reachability to WatchtowerCombatPathSearch, and returns a plan. It never
+/// reachability to EncounterCombatPathSearch, and returns a plan. It never
 /// mutates session state, appends steps, or consumes randomness — the
 /// orchestrator does that when it applies the plan.
 internal static class EncounterTacticsTurnPlanner
@@ -21,11 +21,11 @@ internal static class EncounterTacticsTurnPlanner
         ArgumentNullException.ThrowIfNull(party);
 
         EncounterParticipantState raider =
-            WatchtowerCombatDecisionFactory.FindParticipant(
+            EncounterCombatDecisionFactory.FindParticipant(
                 encounter,
                 encounter.ActiveCombatantId);
         WeaponAttack weapon =
-            WatchtowerCombatDecisionFactory.GetFixedWeapon(raider);
+            EncounterCombatDecisionFactory.GetFixedWeapon(raider);
 
         if (weapon.AmmunitionItemId is not null
             && weapon.AmmunitionQuantityAvailable <= 0)
@@ -52,8 +52,8 @@ internal static class EncounterTacticsTurnPlanner
         string actorId = raider.Combatant.CombatantId;
         string targetId = target.Combatant.CombatantId;
 
-        WatchtowerCombatAttackAvailability prerequisites =
-            WatchtowerCombatAttackStaging.EvaluateAvailability(
+        EncounterCombatAttackAvailability prerequisites =
+            EncounterCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 actorId,
                 targetId,
@@ -63,7 +63,7 @@ internal static class EncounterTacticsTurnPlanner
         if (!prerequisites.IsLegal
             && weapon.AttackKind == WeaponAttackKind.Melee)
         {
-            movement = WatchtowerCombatPathSearch.FindMovement(
+            movement = EncounterCombatPathSearch.FindMovement(
                 encounter,
                 actorId,
                 targetId,
@@ -72,7 +72,7 @@ internal static class EncounterTacticsTurnPlanner
             if (movement is not null)
             {
                 prerequisites =
-                    WatchtowerCombatAttackStaging.EvaluateAvailability(
+                    EncounterCombatAttackStaging.EvaluateAvailability(
                         movement.State,
                         actorId,
                         targetId,
@@ -94,7 +94,7 @@ internal static class EncounterTacticsTurnPlanner
                 WeaponId = weapon.WeaponId
             },
             TurnAdvanceReason =
-                WatchtowerCombatTurnAdvanceReason.RaiderTurnCompleted
+                EncounterCombatTurnAdvanceReason.RaiderTurnCompleted
         };
     }
 
@@ -119,7 +119,7 @@ internal static class EncounterTacticsTurnPlanner
 
         return progressTarget is null
             ? null
-            : WatchtowerCombatPathSearch.FindMovement(
+            : EncounterCombatPathSearch.FindMovement(
                 encounter,
                 raider.Combatant.CombatantId,
                 progressTarget.Combatant.CombatantId,
@@ -134,7 +134,7 @@ internal static class EncounterTacticsTurnPlanner
             Movement = movement,
             Attack = null,
             TurnAdvanceReason =
-                WatchtowerCombatTurnAdvanceReason.NoProductiveEnemyAction
+                EncounterCombatTurnAdvanceReason.NoProductiveEnemyAction
         };
     }
 }

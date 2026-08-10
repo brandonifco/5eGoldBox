@@ -1,0 +1,1217 @@
+using System.Collections;
+using FiveEGoldBox.Application.Combat;
+using FiveEGoldBox.Application.Randomness;
+using FiveEGoldBox.Application.Scenarios;
+using FiveEGoldBox.Application.Sessions;
+using FiveEGoldBox.Core.Characters;
+using FiveEGoldBox.Core.Definitions;
+using FiveEGoldBox.Core.Rules;
+using FiveEGoldBox.Core.Runtime;
+
+namespace FiveEGoldBox.Application.Tests;
+
+public sealed class EncounterCombatExecutionTests
+{
+    [Fact]
+    public void Execute_Move_UsesCompletePathAndConsumesNoRandomness()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision decision = GetDecision(source);
+        GridPosition[] path = FindLegalOneStepPath(source);
+        int cursor = source.RandomValuesConsumed;
+        EncounterState originalEncounter =
+            EncounterCombatTestData.GetEncounter(source);
+
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatMoveIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    Path = path
+                });
+
+        Assert.NotNull(result.PrimaryStep);
+        Assert.Equal(
+            CombatStepKind.Movement,
+            result.PrimaryStep.Kind);
+        Assert.Equal(path, result.PrimaryStep.Movement!.Path);
+        Assert.Equal(path[^1], result.PrimaryStep.Movement.EndingPosition);
+        Assert.Equal(cursor, result.RandomValuesConsumedAfter);
+        Assert.Equal(
+            CombatDecisionState.PlayerDecisionRequired,
+            result.ResultingDecision.State);
+        Assert.True(
+            EncounterCombatTestData.GetParticipant(
+                result.State,
+                decision.ActiveCombatantId!)
+            .TurnResources.HasActionAvailable);
+        Assert.Equal(1, originalEncounter.Revision);
+        Assert.NotEqual(
+            originalEncounter.Revision,
+            result.ResultingEncounterRevision);
+    }
+
+    [Fact]
+    public void Execute_EveryReturnedMovementOption_IsAcceptedIndependently()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision decision = GetDecision(source);
+        EncounterCombatMovementOption movement =
+            Assert.IsType<EncounterCombatMovementOption>(
+                decision.Movement);
+        EncounterParticipantState originalActor =
+            EncounterCombatTestData.GetParticipant(
+                source,
+                decision.ActiveCombatantId!);
+
+        Assert.NotEmpty(movement.DestinationOptions);
+
+        foreach (EncounterCombatMovementDestinationOption option
+            in movement.DestinationOptions)
+        {
+            EncounterCombatResolutionResult result =
+                EncounterCombatRules.Execute(
+                    source,
+                    new CombatMoveIntent
+                    {
+                        ExpectedEncounterRevision =
+                            decision.EncounterRevision,
+                        ActorCombatantId =
+                            decision.ActiveCombatantId!,
+                        Path = option.Path
+                    });
+            EncounterCombatIntentReceipt receipt =
+                Assert.IsType<EncounterCombatIntentReceipt>(
+                    result.SubmittedIntent);
+            EncounterCombatStepResult step =
+                Assert.IsType<EncounterCombatStepResult>(
+                    result.PrimaryStep);
+            EncounterMovementResult authoritativeMovement =
+                Assert.IsType<EncounterMovementResult>(
+                    step.Movement);
+            EncounterParticipantState movedActor =
+                EncounterCombatTestData.GetParticipant(
+                    result.State,
+                    decision.ActiveCombatantId!);
+
+            Assert.Equal(
+                CombatIntentKind.Move,
+                receipt.Kind);
+            Assert.Equal(
+                decision.ActiveCombatantId,
+                receipt.ActorCombatantId);
+            Assert.Equal(
+                decision.EncounterRevision,
+                receipt.ExpectedEncounterRevision);
+            Assert.Equal(
+                option.Path.ToArray(),
+                receipt.Path.ToArray());
+            Assert.Equal(
+                CombatStepKind.Movement,
+                step.Kind);
+            Assert.Equal(
+                option.Path.ToArray(),
+                authoritativeMovement.Path.ToArray());
+            Assert.Equal(
+                option.Destination,
+                authoritativeMovement.EndingPosition);
+            Assert.Equal(
+                option.MovementSpentFeet,
+                authoritativeMovement.MovementSpentFeet);
+            Assert.Equal(
+                option.Destination,
+                movedActor.Position);
+            Assert.Equal(
+                originalActor.TurnResources.MovementRemainingFeet
+                    - option.MovementSpentFeet,
+                movedActor.TurnResources.MovementRemainingFeet);
+            ApplicationSessionRules.Validate(result.State);
+        }
+    }
+
+    [Fact]
+    public void Execute_ModifiedReturnedPath_IsRevalidatedAndRejected()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision decision = GetDecision(source);
+        EncounterCombatMovementDestinationOption option =
+            decision.Movement!.DestinationOptions.First(
+                candidate => candidate.Path.Count == 1);
+        GridPosition[] modifiedPath =
+            [.. option.Path, new GridPosition(-1, -1)];
+        EncounterState encounterBefore =
+            EncounterCombatTestData.GetEncounter(source);
+        int cursorBefore = source.RandomValuesConsumed;
+
+        Assert.ThrowsAny<ArgumentException>(() =>
+            EncounterCombatRules.Execute(
+                source,
+                new CombatMoveIntent
+                {
+                    ExpectedEncounterRevision =
+                        decision.EncounterRevision,
+                    ActorCombatantId =
+                        decision.ActiveCombatantId!,
+                    Path = modifiedPath
+                }));
+
+        Assert.Equal(
+            encounterBefore,
+            EncounterCombatTestData.GetEncounter(source));
+        Assert.Equal(cursorBefore, source.RandomValuesConsumed);
+    }
+
+    [Fact]
+    public void Execute_Move_SupportsMultipleMovementIncrements()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision firstDecision = GetDecision(source);
+        GridPosition[] firstPath = FindLegalOneStepPath(source);
+        ApplicationSessionState afterFirst =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatMoveIntent
+                {
+                    ExpectedEncounterRevision = firstDecision.EncounterRevision,
+                    ActorCombatantId = firstDecision.ActiveCombatantId!,
+                    Path = firstPath
+                }).State;
+        EncounterCombatDecision secondDecision = GetDecision(afterFirst);
+        GridPosition[] secondPath = FindLegalOneStepPath(afterFirst);
+
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
+                afterFirst,
+                new CombatMoveIntent
+                {
+                    ExpectedEncounterRevision = secondDecision.EncounterRevision,
+                    ActorCombatantId = secondDecision.ActiveCombatantId!,
+                    Path = secondPath
+                });
+
+        EncounterParticipantState participant =
+            EncounterCombatTestData.GetParticipant(
+                result.State,
+                secondDecision.ActiveCombatantId!);
+
+        Assert.Equal(10, participant.TurnResources.MovementSpentFeet);
+        Assert.True(participant.TurnResources.HasActionAvailable);
+        Assert.Equal(source.RandomValuesConsumed, result.RandomValuesConsumedAfter);
+    }
+
+    [Fact]
+    public void Execute_WeaponAttack_GeneratesAuthoritativeDiceAndSpendsAction()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision decision = GetDecision(source);
+        EncounterCombatTargetOption target =
+            decision.WeaponAttacks.Single().Targets.First(
+                candidate => candidate.IsAvailable);
+        int cursorBefore = source.RandomValuesConsumed;
+
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    WeaponId = decision.WeaponAttacks.Single().WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
+                });
+
+        EncounterCombatStepResult step = Assert.IsType<EncounterCombatStepResult>(
+            result.PrimaryStep);
+        EncounterWeaponAttackResult attack = Assert.IsType<EncounterWeaponAttackResult>(
+            step.WeaponAttack);
+        int expectedAttackDice = target.AttackRollMode == FiveEGoldBox.Core.Rules.D20RollMode.Normal
+            ? 1
+            : 2;
+        int expectedDamageDice = attack.Attack.AttackRoll.Outcome
+            == FiveEGoldBox.Core.Rules.AttackRollOutcome.Miss
+                ? 0
+                : attack.Attack.Damage.DamageDice!.Count;
+
+        Assert.Equal(CombatStepKind.WeaponAttack, step.Kind);
+        Assert.Equal(expectedAttackDice, step.Dice.Count(die =>
+            die.Purpose == CombatDiePurpose.AttackRoll));
+        Assert.Equal(expectedDamageDice, step.Dice.Count(die =>
+            die.Purpose == CombatDiePurpose.DamageRoll));
+        Assert.Equal(
+            expectedAttackDice + expectedDamageDice,
+            result.RandomValuesConsumedAfter - cursorBefore);
+        Assert.False(
+            EncounterCombatTestData.GetParticipant(
+                result.State,
+                decision.ActiveCombatantId!)
+            .TurnResources.HasActionAvailable);
+        Assert.Equal(
+            CombatDecisionState.PlayerDecisionRequired,
+            result.ResultingDecision.State);
+    }
+
+    [Fact]
+    public void Execute_ArcherAttack_ConsumesCoreAmmunitionWithoutProjectingPartyState()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.AdvanceToCombatant(
+                EncounterCombatTestData.CreatePlayerDecisionSession(),
+                "party-member.rogue");
+        EncounterCombatDecision decision = GetDecision(source);
+        EncounterCombatWeaponAttackOption bow = decision.WeaponAttacks
+            .Single(candidate => candidate.WeaponId == "weapon.shortbow");
+        EncounterCombatTargetOption target =
+            bow.Targets.First(candidate => candidate.IsAvailable);
+        int persistentAmmunition =
+            source.Party.Members[CampaignTestParty.ArcherIndex()]
+                .Ammunition!.RemainingQuantity;
+        int encounterAmmunition = Assert.Single(
+            EncounterCombatTestData.GetParticipant(
+                source,
+                "party-member.rogue")
+            .CombatProfile.WeaponAttacks,
+            candidate => candidate.WeaponId == bow.WeaponId)
+            .AmmunitionQuantityAvailable!.Value;
+
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    WeaponId = bow.WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
+                });
+
+        Assert.Equal(
+            encounterAmmunition - 1,
+            Assert.Single(EncounterCombatTestData.GetParticipant(
+                result.State,
+                "party-member.rogue")
+            .CombatProfile.WeaponAttacks,
+            candidate => candidate.WeaponId == bow.WeaponId)
+            .AmmunitionQuantityAvailable);
+        Assert.Equal(
+            persistentAmmunition,
+            result.State.Party
+                .Members[CampaignTestParty.ArcherIndex()]
+                .Ammunition!.RemainingQuantity);
+    }
+
+    [Fact]
+    public void Execute_AdjacentArcherAttack_ConsumesTwoDisadvantageD20s()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.AdvanceToCombatant(
+                EncounterCombatTestData.CreatePlayerDecisionSession(),
+                "party-member.rogue");
+        EncounterParticipantState archer =
+            EncounterCombatTestData.GetParticipant(
+                source,
+                "party-member.rogue") with
+            {
+                Position = new GridPosition(2, 2)
+            };
+        source = EncounterCombatTestData.ReplaceParticipant(source, archer);
+        EncounterCombatDecision decision = GetDecision(source);
+        EncounterCombatWeaponAttackOption bow = decision.WeaponAttacks
+            .Single(candidate => candidate.WeaponId == "weapon.shortbow");
+        EncounterCombatTargetOption target = Assert.Single(
+            bow.Targets,
+            candidate => candidate.TargetCombatantId
+                == "combatant.watchtower-raider.melee");
+
+        Assert.Equal(
+            FiveEGoldBox.Core.Rules.D20RollMode.Disadvantage,
+            target.AttackRollMode);
+
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    WeaponId = bow.WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
+                });
+
+        Assert.Equal(2, result.PrimaryStep!.Dice.Count(die =>
+            die.Purpose == CombatDiePurpose.AttackRoll));
+        Assert.Equal(
+            FiveEGoldBox.Core.Rules.D20RollMode.Disadvantage,
+            result.PrimaryStep.WeaponAttack!.Attack.AttackRoll.RollMode);
+    }
+
+    [Fact]
+    public void Execute_WeaponAttackMiss_ConsumesAttackDieAndNoDamageDice()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession() with
+            {
+                RandomValuesConsumed = 3
+            };
+        EncounterCombatDecision decision = GetDecision(source);
+        EncounterCombatTargetOption target =
+            decision.WeaponAttacks.Single().Targets.First(candidate => candidate.IsAvailable);
+
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    WeaponId = decision.WeaponAttacks.Single().WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
+                });
+
+        Assert.Equal(
+            FiveEGoldBox.Core.Rules.AttackRollOutcome.Miss,
+            result.PrimaryStep!.WeaponAttack!.Attack.AttackRoll.Outcome);
+        Assert.Single(result.PrimaryStep.Dice);
+        Assert.Equal(
+            CombatDiePurpose.AttackRoll,
+            result.PrimaryStep.Dice[0].Purpose);
+        Assert.Equal(1, result.PrimaryStep.Dice[0].Value);
+        Assert.Equal(4, result.RandomValuesConsumedAfter);
+    }
+
+    [Fact]
+    public void Execute_WeaponCritical_ConsumesDoubledDamageDice()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession() with
+            {
+                RandomValuesConsumed = 35
+            };
+        EncounterCombatDecision decision = GetDecision(source);
+        EncounterCombatTargetOption target =
+            decision.WeaponAttacks.Single().Targets.First(candidate => candidate.IsAvailable);
+
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    WeaponId = decision.WeaponAttacks.Single().WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
+                });
+
+        Assert.Equal(
+            FiveEGoldBox.Core.Rules.AttackRollOutcome.CriticalHit,
+            result.PrimaryStep!.WeaponAttack!.Attack.AttackRoll.Outcome);
+        Assert.Equal(1, result.PrimaryStep.Dice.Count(die =>
+            die.Purpose == CombatDiePurpose.AttackRoll));
+        Assert.Equal(2, result.PrimaryStep.Dice.Count(die =>
+            die.Purpose == CombatDiePurpose.DamageRoll));
+        Assert.Equal(38, result.RandomValuesConsumedAfter);
+    }
+
+    [Fact]
+    public void Execute_WeaponAttack_PreservesRemainingMovementForLaterMove()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision attackDecision = GetDecision(source);
+        EncounterCombatTargetOption target =
+            attackDecision.WeaponAttacks.Single().Targets.First(
+                candidate => candidate.IsAvailable);
+        ApplicationSessionState afterAttack =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = attackDecision.EncounterRevision,
+                    ActorCombatantId = attackDecision.ActiveCombatantId!,
+                    WeaponId = attackDecision.WeaponAttacks.Single().WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
+                }).State;
+        EncounterCombatDecision moveDecision = GetDecision(afterAttack);
+        GridPosition[] path = FindLegalOneStepPath(afterAttack);
+
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
+                afterAttack,
+                new CombatMoveIntent
+                {
+                    ExpectedEncounterRevision = moveDecision.EncounterRevision,
+                    ActorCombatantId = moveDecision.ActiveCombatantId!,
+                    Path = path
+                });
+
+        EncounterParticipantState participant =
+            EncounterCombatTestData.GetParticipant(
+                result.State,
+                moveDecision.ActiveCombatantId!);
+
+        Assert.False(participant.TurnResources.HasActionAvailable);
+        Assert.Equal(5, participant.TurnResources.MovementSpentFeet);
+    }
+
+    [Fact]
+    public void Execute_MoveAttackMoveEndTurn_SupportsSplitMovementAroundAction()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision firstDecision = GetDecision(source);
+
+        ApplicationSessionState afterFirstMove =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatMoveIntent
+                {
+                    ExpectedEncounterRevision = firstDecision.EncounterRevision,
+                    ActorCombatantId = firstDecision.ActiveCombatantId!,
+                    Path = [new GridPosition(2, 0)]
+                }).State;
+        EncounterCombatDecision attackDecision = GetDecision(afterFirstMove);
+        EncounterCombatTargetOption target = Assert.Single(
+            attackDecision.WeaponAttacks.Single().Targets,
+            candidate => candidate.TargetCombatantId
+                == "combatant.watchtower-raider.melee");
+        Assert.True(target.IsAvailable);
+
+        ApplicationSessionState afterAttack =
+            EncounterCombatRules.Execute(
+                afterFirstMove,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = attackDecision.EncounterRevision,
+                    ActorCombatantId = attackDecision.ActiveCombatantId!,
+                    WeaponId = attackDecision.WeaponAttacks.Single().WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
+                }).State;
+        EncounterCombatDecision secondMoveDecision = GetDecision(afterAttack);
+
+        ApplicationSessionState afterSecondMove =
+            EncounterCombatRules.Execute(
+                afterAttack,
+                new CombatMoveIntent
+                {
+                    ExpectedEncounterRevision = secondMoveDecision.EncounterRevision,
+                    ActorCombatantId = secondMoveDecision.ActiveCombatantId!,
+                    Path = [new GridPosition(3, 0)]
+                }).State;
+        EncounterCombatDecision endDecision = GetDecision(afterSecondMove);
+        EncounterCombatResolutionResult ended =
+            EncounterCombatRules.Execute(
+                afterSecondMove,
+                new CombatEndTurnIntent
+                {
+                    ExpectedEncounterRevision = endDecision.EncounterRevision,
+                    ActorCombatantId = endDecision.ActiveCombatantId!
+                });
+
+        EncounterParticipantState fighter =
+            EncounterCombatTestData.GetParticipant(
+                afterSecondMove,
+                firstDecision.ActiveCombatantId!);
+
+        Assert.Equal(10, fighter.TurnResources.MovementSpentFeet);
+        Assert.False(fighter.TurnResources.HasActionAvailable);
+        Assert.Equal(
+            EncounterCombatTurnAdvanceReason.PlayerEndTurn,
+            ended.PrimaryStep!.TurnAdvanceReason);
+        Assert.Equal(
+            CombatDecisionState.PlayerDecisionRequired,
+            ended.ResultingDecision.State);
+    }
+
+    [Fact]
+    public void Execute_MoveMoveAttackMoveEndTurn_SupportsMultipleSplitIncrements()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision decision = GetDecision(source);
+        string actorId = decision.ActiveCombatantId!;
+
+        source = EncounterCombatRules.Execute(
+            source,
+            new CombatMoveIntent
+            {
+                ExpectedEncounterRevision = decision.EncounterRevision,
+                ActorCombatantId = actorId,
+                Path = [new GridPosition(2, 0)]
+            }).State;
+        decision = GetDecision(source);
+        source = EncounterCombatRules.Execute(
+            source,
+            new CombatMoveIntent
+            {
+                ExpectedEncounterRevision = decision.EncounterRevision,
+                ActorCombatantId = actorId,
+                Path = [new GridPosition(3, 0)]
+            }).State;
+        decision = GetDecision(source);
+        EncounterCombatTargetOption target = Assert.Single(
+            decision.WeaponAttacks.Single().Targets,
+            candidate => candidate.TargetCombatantId
+                == "combatant.watchtower-raider.melee");
+        Assert.True(target.IsAvailable);
+        source = EncounterCombatRules.Execute(
+            source,
+            new CombatWeaponAttackIntent
+            {
+                ExpectedEncounterRevision = decision.EncounterRevision,
+                ActorCombatantId = actorId,
+                WeaponId = decision.WeaponAttacks.Single().WeaponId,
+                TargetCombatantId = target.TargetCombatantId
+            }).State;
+        decision = GetDecision(source);
+        source = EncounterCombatRules.Execute(
+            source,
+            new CombatMoveIntent
+            {
+                ExpectedEncounterRevision = decision.EncounterRevision,
+                ActorCombatantId = actorId,
+                Path = [new GridPosition(4, 0)]
+            }).State;
+        decision = GetDecision(source);
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatEndTurnIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = actorId
+                });
+
+        EncounterParticipantState fighter =
+            EncounterCombatTestData.GetParticipant(source, actorId);
+        Assert.Equal(15, fighter.TurnResources.MovementSpentFeet);
+        Assert.False(fighter.TurnResources.HasActionAvailable);
+        Assert.Equal(
+            EncounterCombatTurnAdvanceReason.PlayerEndTurn,
+            result.PrimaryStep!.TurnAdvanceReason);
+    }
+
+    [Fact]
+    public void Execute_SecondWeaponAttack_RejectsWithoutGeneratingDice()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision decision = GetDecision(source);
+        EncounterCombatTargetOption target =
+            decision.WeaponAttacks.Single().Targets.First(candidate => candidate.IsAvailable);
+        ApplicationSessionState afterAttack =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    WeaponId = decision.WeaponAttacks.Single().WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
+                }).State;
+        EncounterCombatDecision afterDecision = GetDecision(afterAttack);
+        int cursor = afterAttack.RandomValuesConsumed;
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(afterAttack);
+
+        Assert.False(afterDecision.WeaponAttacks.Single().IsAvailable);
+        Assert.All(
+            afterDecision.WeaponAttacks.Single().Targets,
+            option => Assert.Equal(
+                EncounterActionUnavailabilityReason.ActionUnavailable,
+                option.UnavailabilityReason));
+        Assert.Throws<InvalidOperationException>(() =>
+            EncounterCombatRules.Execute(
+                afterAttack,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = afterDecision.EncounterRevision,
+                    ActorCombatantId = afterDecision.ActiveCombatantId!,
+                    WeaponId = afterDecision.WeaponAttacks.Single().WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
+                }));
+
+        Assert.Equal(cursor, afterAttack.RandomValuesConsumed);
+        Assert.Equal(encounter, EncounterCombatTestData.GetEncounter(afterAttack));
+    }
+
+    [Fact]
+    public void Execute_IllegalMovement_RejectsBeforeRandomnessAndPreservesNestedState()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision decision = GetDecision(source);
+        RejectedOperationSnapshot snapshot = CaptureRejectedOperation(source);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            EncounterCombatRules.Execute(
+                source,
+                new CombatMoveIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    Path = [new GridPosition(-1, -1)]
+                }));
+
+        AssertRejectedOperationPreserved(snapshot, source);
+    }
+
+    [Fact]
+    public void Execute_ZeroAmmunitionAttack_RejectsBeforeDiceAndLeavesTurnAvailable()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.AdvanceToCombatant(
+                EncounterCombatTestData.CreatePlayerDecisionSession(),
+                "party-member.rogue");
+        EncounterParticipantState archer =
+            EncounterCombatTestData.GetParticipant(
+                source,
+                "party-member.rogue");
+        WeaponAttack bow = Assert.Single(
+            archer.CombatProfile.WeaponAttacks,
+            candidate => candidate.WeaponId == "weapon.shortbow");
+
+        // Empties only the bow, leaving the archer's dagger carried and
+        // unaffected.
+        archer = archer with
+        {
+            CombatProfile = archer.CombatProfile with
+            {
+                WeaponAttacks = archer.CombatProfile.WeaponAttacks
+                    .Select(candidate => string.Equals(
+                        candidate.WeaponId,
+                        bow.WeaponId,
+                        StringComparison.Ordinal)
+                        ? candidate with
+                        {
+                            AmmunitionQuantityAvailable = 0
+                        }
+                        : candidate)
+                    .ToArray()
+            }
+        };
+        source = EncounterCombatTestData.ReplaceParticipant(source, archer);
+        EncounterCombatDecision decision = GetDecision(source);
+        EncounterCombatWeaponAttackOption bowOption = decision.WeaponAttacks
+            .Single(candidate => candidate.WeaponId == bow.WeaponId);
+        EncounterCombatTargetOption target = bowOption.Targets[0];
+        RejectedOperationSnapshot snapshot = CaptureRejectedOperation(source);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            EncounterCombatRules.Execute(
+                source,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    WeaponId = bowOption.WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
+                }));
+
+        AssertRejectedOperationPreserved(snapshot, source);
+        EncounterCombatDecision afterRejection = GetDecision(source);
+        Assert.False(
+            afterRejection.WeaponAttacks
+                .Single(candidate => candidate.WeaponId == bow.WeaponId)
+                .IsAvailable);
+        Assert.True(afterRejection.Movement!.IsAvailable);
+        Assert.True(afterRejection.EndTurn!.IsAvailable);
+        EncounterParticipantState unchangedArcher =
+            EncounterCombatTestData.GetParticipant(
+                source,
+                "party-member.rogue");
+        Assert.Equal(
+            0,
+            Assert.Single(
+                unchangedArcher.CombatProfile.WeaponAttacks,
+                candidate => candidate.WeaponId == bow.WeaponId)
+                .AmmunitionQuantityAvailable);
+        Assert.True(unchangedArcher.TurnResources.HasActionAvailable);
+        Assert.Equal(0, unchangedArcher.TurnResources.MovementSpentFeet);
+    }
+
+    [Fact]
+    public void Execute_NormalIntentWhileDeathSavePending_RejectsWithoutDiceOrTurnResourceChanges()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreateDyingActiveSession(
+                randomValuesConsumed: 10,
+                successes: 1,
+                failures: 0);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
+        RejectedOperationSnapshot snapshot = CaptureRejectedOperation(source);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            EncounterCombatRules.Execute(
+                source,
+                new CombatMoveIntent
+                {
+                    ExpectedEncounterRevision = encounter.Revision,
+                    ActorCombatantId = encounter.ActiveCombatantId,
+                    Path = [new GridPosition(2, 0)]
+                }));
+
+        AssertRejectedOperationPreserved(snapshot, source);
+        EncounterState unchanged = EncounterCombatTestData.GetEncounter(source);
+        Assert.Equal(
+            encounter.ActiveCombatantId,
+            unchanged.PendingDeathSavingThrowCombatantId);
+        EncounterParticipantState participant =
+            EncounterCombatTestData.GetParticipant(
+                source,
+                encounter.ActiveCombatantId);
+        Assert.True(participant.TurnResources.HasActionAvailable);
+        Assert.Equal(0, participant.TurnResources.MovementSpentFeet);
+        Assert.Equal(CombatantLifecycleState.Dying, participant.Combatant.LifecycleState);
+    }
+
+    [Fact]
+    public void Execute_FinalCoreResolutionFailure_DoesNotCommitProposedAttackOrDamageDice()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession() with
+            {
+                RandomValuesConsumed = 35
+            };
+        EncounterCombatDecision decision = GetDecision(source);
+        EncounterCombatTargetOption target =
+            decision.WeaponAttacks.Single().Targets.First(
+                candidate => candidate.IsAvailable);
+        EncounterParticipantState targetParticipant =
+            EncounterCombatTestData.GetParticipant(
+                source,
+                target.TargetCombatantId);
+        targetParticipant = targetParticipant with
+        {
+            CombatProfile = targetParticipant.CombatProfile with
+            {
+                DamageResponses = new ThrowingDamageResponseList()
+            }
+        };
+        source = EncounterCombatTestData.ReplaceParticipant(
+            source,
+            targetParticipant);
+        decision = GetDecision(source);
+        target = decision.WeaponAttacks.Single().Targets.First(
+            candidate => candidate.IsAvailable);
+        EncounterState encounter =
+            EncounterCombatTestData.GetEncounter(source);
+
+        EncounterCombatAttackAvailability prerequisites =
+            EncounterCombatAttackStaging.EvaluateAvailability(
+                encounter,
+                decision.ActiveCombatantId!,
+                target.TargetCombatantId,
+                decision.WeaponAttacks.Single().WeaponId);
+        Assert.True(prerequisites.IsLegal);
+
+        ApplicationRandomRoll attackRoll =
+            ApplicationRandomSequence.GenerateDie(
+                source.RandomSeed,
+                source.RandomValuesConsumed,
+                die: DieType.D20);
+        Assert.Equal(20, attackRoll.Value);
+
+        WeaponAttack weapon = Assert.Single(
+            EncounterCombatTestData.GetParticipant(
+                source,
+                decision.ActiveCombatantId!)
+            .CombatProfile.WeaponAttacks);
+        DamageDice requiredDamage = Assert.IsType<DamageDice>(
+            DamageRules.GetDamageDiceForAttackOutcome(
+                weapon.Damage,
+                AttackRollOutcome.CriticalHit));
+
+        List<int> proposedDamageValues = [];
+        int proposedCursor = attackRoll.UpdatedValuesConsumed;
+
+        for (int index = 0; index < requiredDamage.Count; index++)
+        {
+            ApplicationRandomRoll damageRoll =
+                ApplicationRandomSequence.GenerateDie(
+                    source.RandomSeed,
+                    proposedCursor,
+                    die: requiredDamage.Die);
+
+            proposedDamageValues.Add(damageRoll.Value);
+            proposedCursor = damageRoll.UpdatedValuesConsumed;
+        }
+
+        Assert.Equal(requiredDamage.Count, proposedDamageValues.Count);
+        Assert.All(
+            proposedDamageValues,
+            value => Assert.InRange(
+                value,
+                1,
+                (int)requiredDamage.Die));
+        Assert.True(proposedCursor > source.RandomValuesConsumed);
+
+        RejectedOperationSnapshot snapshot = CaptureRejectedOperation(source);
+        EncounterCombatResolutionResult? failedResult = null;
+
+        Assert.Throws<ControlledDamageResponseEnumerationException>(() =>
+            failedResult = EncounterCombatRules.Execute(
+                source,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    WeaponId = decision.WeaponAttacks.Single().WeaponId,
+                    TargetCombatantId = target.TargetCombatantId
+                }));
+
+        Assert.Null(failedResult);
+        AssertRejectedOperationPreserved(snapshot, source);
+
+        EncounterCombatResolutionResult reusable =
+            EncounterCombatRules.AdvanceToDecision(source);
+
+        Assert.Equal(
+            CombatDecisionState.PlayerDecisionRequired,
+            reusable.ResultingDecision.State);
+        Assert.Null(reusable.PrimaryStep);
+        Assert.Empty(reusable.AutomaticSteps);
+        Assert.Equal(
+            snapshot.RandomValuesConsumed,
+            reusable.RandomValuesConsumedBefore);
+        Assert.Equal(
+            snapshot.RandomValuesConsumed,
+            reusable.RandomValuesConsumedAfter);
+        AssertRejectedOperationPreserved(snapshot, reusable.State);
+    }
+
+    [Fact]
+    public void Execute_EndTurn_ConsumesNoRandomnessForPlayerStepAndNormalizes()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision decision = GetDecision(source);
+        int cursorBefore = source.RandomValuesConsumed;
+
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.Execute(
+                source,
+                new CombatEndTurnIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!
+                });
+
+        Assert.Equal(
+            CombatStepKind.TurnAdvanced,
+            result.PrimaryStep!.Kind);
+        Assert.Equal(
+            EncounterCombatTurnAdvanceReason.PlayerEndTurn,
+            result.PrimaryStep.TurnAdvanceReason);
+        Assert.Equal(
+            CombatDecisionState.PlayerDecisionRequired,
+            result.ResultingDecision.State);
+        Assert.Empty(result.PrimaryStep.Dice);
+        int automaticDice = result.AutomaticSteps.Sum(
+            step => step.Dice.Count);
+        Assert.Equal(
+            automaticDice,
+            result.RandomValuesConsumedAfter - cursorBefore);
+        Assert.Empty(result.AutomaticSteps);
+        Assert.Equal(cursorBefore, result.RandomValuesConsumedAfter);
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void Execute_WithStaleRevisionOrActor_RejectsBeforeRandomness(
+        bool staleRevision,
+        bool staleActor)
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision decision = GetDecision(source);
+        int cursor = source.RandomValuesConsumed;
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            EncounterCombatRules.Execute(
+                source,
+                new CombatEndTurnIntent
+                {
+                    ExpectedEncounterRevision = staleRevision
+                        ? decision.EncounterRevision + 1
+                        : decision.EncounterRevision,
+                    ActorCombatantId = staleActor
+                        ? "combatant.other"
+                        : decision.ActiveCombatantId!
+                }));
+
+        Assert.Equal(cursor, source.RandomValuesConsumed);
+        Assert.Equal(encounter, EncounterCombatTestData.GetEncounter(source));
+    }
+
+    [Fact]
+    public void Execute_UnavailableAttack_RejectsWithoutCursorOrStateCommitment()
+    {
+        ApplicationSessionState source =
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision decision = GetDecision(source);
+        int cursor = source.RandomValuesConsumed;
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            EncounterCombatRules.Execute(
+                source,
+                new CombatWeaponAttackIntent
+                {
+                    ExpectedEncounterRevision = decision.EncounterRevision,
+                    ActorCombatantId = decision.ActiveCombatantId!,
+                    WeaponId = decision.WeaponAttacks.Single().WeaponId,
+                    TargetCombatantId = decision.ActiveCombatantId!
+                }));
+
+        Assert.Equal(cursor, source.RandomValuesConsumed);
+        Assert.Equal(encounter, EncounterCombatTestData.GetEncounter(source));
+    }
+
+    private static RejectedOperationSnapshot CaptureRejectedOperation(
+        ApplicationSessionState source)
+    {
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
+        RejectedParticipantSnapshot[] participants = encounter.Participants
+            .Select(participant => new RejectedParticipantSnapshot(
+                participant.Combatant.CombatantId,
+                participant.Position,
+                participant.TurnResources.MovementSpentFeet,
+                participant.TurnResources.HasActionAvailable,
+                participant.CombatProfile.WeaponAttacks
+                    .Select(attack => new RejectedWeaponSnapshot(
+                        attack.WeaponId,
+                        attack.AmmunitionQuantityAvailable))
+                    .ToArray(),
+                participant.Combatant.Health.HitPoints.MaximumHitPoints,
+                participant.Combatant.Health.HitPoints.CurrentHitPoints,
+                participant.Combatant.Health.HitPoints.TemporaryHitPoints,
+                participant.Combatant.LifecycleState,
+                participant.Combatant.Health.DeathSavingThrows.SuccessCount,
+                participant.Combatant.Health.DeathSavingThrows.FailureCount))
+            .ToArray();
+
+        return new RejectedOperationSnapshot(
+            source.CurrentMode,
+            WatchtowerScenario.ProgressOf(source),
+            source.ActiveEncounter!.ReturnContext,
+            source.Party.PartyId,
+            source.Party.Members.ToArray(),
+            source.RandomSeed,
+            encounter.Revision,
+            encounter.ActiveCombatantId,
+            encounter.PendingDeathSavingThrowCombatantId,
+            encounter.LifecycleState,
+            encounter.WinningSideId,
+            participants,
+            source.RandomValuesConsumed);
+    }
+
+    private static void AssertRejectedOperationPreserved(
+        RejectedOperationSnapshot expected,
+        ApplicationSessionState actual)
+    {
+        Assert.Equal(expected.CurrentMode, actual.CurrentMode);
+        Assert.Equal(expected.ScenarioProgress, WatchtowerScenario.ProgressOf(actual));
+        Assert.Equal(expected.ReturnContext, actual.ActiveEncounter!.ReturnContext);
+        Assert.Equal(expected.PartyId, actual.Party.PartyId);
+        Assert.Equal(expected.PartyMembers.Length, actual.Party.Members.Count);
+        Assert.Equal(expected.RandomSeed, actual.RandomSeed);
+
+        for (int index = 0; index < expected.PartyMembers.Length; index++)
+        {
+            Assert.Equal(
+                expected.PartyMembers[index],
+                actual.Party.Members[index]);
+        }
+
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(actual);
+        Assert.Equal(expected.EncounterRevision, encounter.Revision);
+        Assert.Equal(expected.ActiveCombatantId, encounter.ActiveCombatantId);
+        Assert.Equal(
+            expected.PendingDeathSavingThrowCombatantId,
+            encounter.PendingDeathSavingThrowCombatantId);
+        Assert.Equal(expected.EncounterLifecycleState, encounter.LifecycleState);
+        Assert.Equal(expected.WinningSideId, encounter.WinningSideId);
+        Assert.Equal(expected.Participants.Length, encounter.Participants.Count);
+
+        for (int index = 0; index < expected.Participants.Length; index++)
+        {
+            RejectedParticipantSnapshot expectedParticipant =
+                expected.Participants[index];
+            EncounterParticipantState actualParticipant =
+                encounter.Participants[index];
+
+            Assert.Equal(
+                expectedParticipant.CombatantId,
+                actualParticipant.Combatant.CombatantId);
+            Assert.Equal(expectedParticipant.Position, actualParticipant.Position);
+            Assert.Equal(
+                expectedParticipant.MovementSpentFeet,
+                actualParticipant.TurnResources.MovementSpentFeet);
+            Assert.Equal(
+                expectedParticipant.HasActionAvailable,
+                actualParticipant.TurnResources.HasActionAvailable);
+            Assert.Equal(
+                expectedParticipant.MaximumHitPoints,
+                actualParticipant.Combatant.Health.HitPoints.MaximumHitPoints);
+            Assert.Equal(
+                expectedParticipant.CurrentHitPoints,
+                actualParticipant.Combatant.Health.HitPoints.CurrentHitPoints);
+            Assert.Equal(
+                expectedParticipant.TemporaryHitPoints,
+                actualParticipant.Combatant.Health.HitPoints.TemporaryHitPoints);
+            Assert.Equal(
+                expectedParticipant.LifecycleState,
+                actualParticipant.Combatant.LifecycleState);
+            Assert.Equal(
+                expectedParticipant.DeathSaveSuccesses,
+                actualParticipant.Combatant.Health.DeathSavingThrows.SuccessCount);
+            Assert.Equal(
+                expectedParticipant.DeathSaveFailures,
+                actualParticipant.Combatant.Health.DeathSavingThrows.FailureCount);
+            Assert.Equal(
+                expectedParticipant.Weapons.Length,
+                actualParticipant.CombatProfile.WeaponAttacks.Count);
+
+            for (int weaponIndex = 0;
+                weaponIndex < expectedParticipant.Weapons.Length;
+                weaponIndex++)
+            {
+                Assert.Equal(
+                    expectedParticipant.Weapons[weaponIndex].WeaponId,
+                    actualParticipant.CombatProfile
+                        .WeaponAttacks[weaponIndex]
+                        .WeaponId);
+                Assert.Equal(
+                    expectedParticipant.Weapons[weaponIndex]
+                        .AmmunitionQuantityAvailable,
+                    actualParticipant.CombatProfile
+                        .WeaponAttacks[weaponIndex]
+                        .AmmunitionQuantityAvailable);
+            }
+        }
+
+        Assert.Equal(expected.RandomValuesConsumed, actual.RandomValuesConsumed);
+    }
+
+    private sealed class ThrowingDamageResponseList
+        : IReadOnlyList<CharacterDamageResponse>
+    {
+        public int Count => 0;
+
+        public CharacterDamageResponse this[int index] =>
+            throw new ArgumentOutOfRangeException(nameof(index));
+
+        public IEnumerator<CharacterDamageResponse> GetEnumerator()
+        {
+            throw new ControlledDamageResponseEnumerationException();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+    }
+
+    private sealed class ControlledDamageResponseEnumerationException
+        : Exception
+    {
+    }
+
+    private sealed record RejectedOperationSnapshot(
+        ApplicationMode CurrentMode,
+        FiveEGoldBox.Application.Scenarios.WatchtowerScenarioProgress ScenarioProgress,
+        FiveEGoldBox.Application.Exploration.ExplorationState ReturnContext,
+        string PartyId,
+        FiveEGoldBox.Application.Parties.PartyMemberState[] PartyMembers,
+        int RandomSeed,
+        long EncounterRevision,
+        string ActiveCombatantId,
+        string? PendingDeathSavingThrowCombatantId,
+        EncounterLifecycleState EncounterLifecycleState,
+        string? WinningSideId,
+        RejectedParticipantSnapshot[] Participants,
+        int RandomValuesConsumed);
+
+    private sealed record RejectedParticipantSnapshot(
+        string CombatantId,
+        GridPosition Position,
+        int MovementSpentFeet,
+        bool HasActionAvailable,
+        RejectedWeaponSnapshot[] Weapons,
+        int MaximumHitPoints,
+        int CurrentHitPoints,
+        int TemporaryHitPoints,
+        CombatantLifecycleState LifecycleState,
+        int DeathSaveSuccesses,
+        int DeathSaveFailures);
+
+    private sealed record RejectedWeaponSnapshot(
+        string WeaponId,
+        int? AmmunitionQuantityAvailable);
+
+    private static EncounterCombatDecision GetDecision(
+        ApplicationSessionState state)
+    {
+        return EncounterCombatRules.AdvanceToDecision(state)
+            .ResultingDecision;
+    }
+
+    private static GridPosition[] FindLegalOneStepPath(
+        ApplicationSessionState state)
+    {
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(state);
+        EncounterParticipantState actor =
+            EncounterCombatTestData.GetParticipant(
+                state,
+                encounter.ActiveCombatantId);
+        GridPosition[] offsets =
+        [
+            new(0, -1),
+            new(-1, 0),
+            new(1, 0),
+            new(0, 1),
+            new(-1, -1),
+            new(1, -1),
+            new(-1, 1),
+            new(1, 1)
+        ];
+
+        foreach (GridPosition offset in offsets)
+        {
+            GridPosition candidate = new(
+                actor.Position.X + offset.X,
+                actor.Position.Y + offset.Y);
+
+            try
+            {
+                _ = EncounterMovementRules.Resolve(
+                    encounter,
+                    new EncounterMovementCommand
+                    {
+                        ExpectedRevision = encounter.Revision,
+                        ActorCombatantId = actor.Combatant.CombatantId,
+                        Path = [candidate]
+                    });
+
+                return [candidate];
+            }
+            catch (ArgumentException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+
+        throw new InvalidOperationException(
+            "The test player has no legal one-step movement path.");
+    }
+}

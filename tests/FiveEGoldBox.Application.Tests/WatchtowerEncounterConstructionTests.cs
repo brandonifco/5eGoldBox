@@ -443,8 +443,8 @@ public sealed class WatchtowerEncounterConstructionTests
             GetEncounter(state),
             "combatant.watchtower-raider.melee");
 
-        WatchtowerCombatAttackAvailability evaluation =
-            WatchtowerCombatAttackStaging.EvaluateAvailability(
+        EncounterCombatAttackAvailability evaluation =
+            EncounterCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 "combatant.watchtower-raider.melee",
                 state.Party.Members[0].PartyMemberId,
@@ -462,8 +462,8 @@ public sealed class WatchtowerEncounterConstructionTests
             GetEncounter(state),
             "combatant.watchtower-raider.ranged");
 
-        WatchtowerCombatAttackAvailability evaluation =
-            WatchtowerCombatAttackStaging.EvaluateAvailability(
+        EncounterCombatAttackAvailability evaluation =
+            EncounterCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 "combatant.watchtower-raider.ranged",
                 state.Party.Members[1].PartyMemberId,

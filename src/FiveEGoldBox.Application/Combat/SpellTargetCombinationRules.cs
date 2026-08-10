@@ -2,7 +2,7 @@ using FiveEGoldBox.Core.Characters;
 
 namespace FiveEGoldBox.Application.Combat;
 
-/// Shared between WatchtowerCombatDecisionFactory and CombatViewFactory,
+/// Shared between EncounterCombatDecisionFactory and CombatViewFactory,
 /// which independently build the same spell options for the write and the
 /// read-only Query() paths — one algorithm rather than two copies that
 /// could drift.

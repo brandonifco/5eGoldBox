@@ -11,12 +11,12 @@ public sealed class EncounterTacticsPolicyTests
     public void SelectTarget_EqualDistanceUsesPersistentPartyOrder()
     {
         ApplicationSessionState source =
-            WatchtowerCombatTestData.AdvanceToCombatant(
+            EncounterCombatTestData.AdvanceToCombatant(
                 WatchtowerSignalTestData.CreateEncounterSession(),
                 "combatant.watchtower-raider.melee");
-        EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
         EncounterParticipantState raider =
-            WatchtowerCombatTestData.GetParticipant(
+            EncounterCombatTestData.GetParticipant(
                 source,
                 "combatant.watchtower-raider.melee");
 
@@ -41,19 +41,19 @@ public sealed class EncounterTacticsPolicyTests
         NonConsciousTargetState targetState)
     {
         ApplicationSessionState source =
-            WatchtowerCombatTestData.AdvanceToCombatant(
+            EncounterCombatTestData.AdvanceToCombatant(
                 WatchtowerSignalTestData.CreateEncounterSession(),
                 "combatant.watchtower-raider.melee");
         EncounterParticipantState fighter =
             ApplyNonConsciousState(
-                WatchtowerCombatTestData.GetParticipant(
+                EncounterCombatTestData.GetParticipant(
                     source,
                     "party-member.fighter"),
                 targetState);
-        source = WatchtowerCombatTestData.ReplaceParticipant(source, fighter);
-        EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
+        source = EncounterCombatTestData.ReplaceParticipant(source, fighter);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
         EncounterParticipantState raider =
-            WatchtowerCombatTestData.GetParticipant(
+            EncounterCombatTestData.GetParticipant(
                 source,
                 "combatant.watchtower-raider.melee");
         int cursorBefore = source.RandomValuesConsumed;
@@ -78,12 +78,12 @@ public sealed class EncounterTacticsPolicyTests
     public void SelectTarget_ChangedDisplayNamesDoNotChangeSelection()
     {
         ApplicationSessionState source =
-            WatchtowerCombatTestData.AdvanceToCombatant(
+            EncounterCombatTestData.AdvanceToCombatant(
                 WatchtowerSignalTestData.CreateEncounterSession(),
                 "combatant.watchtower-raider.melee");
-        EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
         EncounterParticipantState raider =
-            WatchtowerCombatTestData.GetParticipant(
+            EncounterCombatTestData.GetParticipant(
                 source,
                 "combatant.watchtower-raider.melee");
         EncounterParticipantState expected =
@@ -126,18 +126,18 @@ public sealed class EncounterTacticsPolicyTests
     public void SelectTarget_ReorderedParticipantCollectionKeepsTargetAndPath()
     {
         ApplicationSessionState source =
-            WatchtowerCombatTestData.AdvanceToCombatant(
+            EncounterCombatTestData.AdvanceToCombatant(
                 WatchtowerSignalTestData.CreateEncounterSession(),
                 "combatant.watchtower-raider.melee");
         EncounterParticipantState raider =
-            WatchtowerCombatTestData.GetParticipant(
+            EncounterCombatTestData.GetParticipant(
                 source,
                 "combatant.watchtower-raider.melee") with
             {
                 Position = new GridPosition(4, 3)
             };
-        source = WatchtowerCombatTestData.ReplaceParticipant(source, raider);
-        EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
+        source = EncounterCombatTestData.ReplaceParticipant(source, raider);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
         EncounterParticipantState expectedTarget =
             Assert.IsType<EncounterParticipantState>(
                 EncounterTacticsPolicy.SelectTarget(
@@ -148,7 +148,7 @@ public sealed class EncounterTacticsPolicyTests
             raider.CombatProfile.WeaponAttacks).WeaponId;
         EncounterMovementResult expectedMovement =
             Assert.IsType<EncounterMovementResult>(
-                WatchtowerCombatPathSearch.FindMovement(
+                EncounterCombatPathSearch.FindMovement(
                     encounter,
                     raider.Combatant.CombatantId,
                     expectedTarget.Combatant.CombatantId,
@@ -161,11 +161,11 @@ public sealed class EncounterTacticsPolicyTests
                 encounter.Participants.Reverse().ToArray())
         };
         ApplicationSessionState reorderedSource =
-            WatchtowerCombatTestData.ReplaceEncounter(
+            EncounterCombatTestData.ReplaceEncounter(
                 source,
                 reorderedEncounter);
         EncounterParticipantState reorderedRaider =
-            WatchtowerCombatTestData.GetParticipant(
+            EncounterCombatTestData.GetParticipant(
                 reorderedSource,
                 "combatant.watchtower-raider.melee");
         EncounterParticipantState actualTarget =
@@ -176,7 +176,7 @@ public sealed class EncounterTacticsPolicyTests
                     reorderedRaider));
         EncounterMovementResult actualMovement =
             Assert.IsType<EncounterMovementResult>(
-                WatchtowerCombatPathSearch.FindMovement(
+                EncounterCombatPathSearch.FindMovement(
                     reorderedEncounter,
                     reorderedRaider.Combatant.CombatantId,
                     actualTarget.Combatant.CombatantId,
@@ -192,13 +192,13 @@ public sealed class EncounterTacticsPolicyTests
             expectedMovement.EndingPosition,
             actualMovement.EndingPosition);
         Assert.True(
-            WatchtowerCombatAttackStaging.EvaluateAvailability(
+            EncounterCombatAttackStaging.EvaluateAvailability(
                 expectedMovement.State,
                 raider.Combatant.CombatantId,
                 expectedTarget.Combatant.CombatantId,
                 weaponId).IsLegal);
         Assert.True(
-            WatchtowerCombatAttackStaging.EvaluateAvailability(
+            EncounterCombatAttackStaging.EvaluateAvailability(
                 actualMovement.State,
                 reorderedRaider.Combatant.CombatantId,
                 actualTarget.Combatant.CombatantId,
@@ -211,7 +211,7 @@ public sealed class EncounterTacticsPolicyTests
     public void SelectTarget_WhenPartyOrderCannotResolveTie_UsesOrdinalCombatantId()
     {
         ApplicationSessionState source =
-            WatchtowerCombatTestData.AdvanceToCombatant(
+            EncounterCombatTestData.AdvanceToCombatant(
                 WatchtowerSignalTestData.CreateEncounterSession(),
                 "combatant.watchtower-raider.melee");
         PartyMemberState[] unrelatedMembers = source.Party.Members
@@ -224,9 +224,9 @@ public sealed class EncounterTacticsPolicyTests
         {
             Members = Array.AsReadOnly(unrelatedMembers)
         };
-        EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
         EncounterParticipantState raider =
-            WatchtowerCombatTestData.GetParticipant(
+            EncounterCombatTestData.GetParticipant(
                 source,
                 "combatant.watchtower-raider.melee");
 
@@ -246,21 +246,21 @@ public sealed class EncounterTacticsPolicyTests
     public void FindMovement_SymmetricChoicesUseBoundedDestinationAndPathOrdering()
     {
         ApplicationSessionState source =
-            WatchtowerCombatTestData.AdvanceToCombatant(
+            EncounterCombatTestData.AdvanceToCombatant(
                 WatchtowerSignalTestData.CreateEncounterSession(),
                 "combatant.watchtower-raider.melee");
         EncounterParticipantState raider =
-            WatchtowerCombatTestData.GetParticipant(
+            EncounterCombatTestData.GetParticipant(
                 source,
                 "combatant.watchtower-raider.melee") with
             {
                 Position = new GridPosition(4, 3)
             };
-        source = WatchtowerCombatTestData.ReplaceParticipant(source, raider);
-        EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
+        source = EncounterCombatTestData.ReplaceParticipant(source, raider);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
 
         EncounterMovementResult? movement =
-            WatchtowerCombatPathSearch.FindMovement(
+            EncounterCombatPathSearch.FindMovement(
                 encounter,
                 "combatant.watchtower-raider.melee",
                 "party-member.fighter",
@@ -286,10 +286,10 @@ public sealed class EncounterTacticsPolicyTests
             [
                 new GridPosition(2, 0)
             ]);
-        EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
 
         EncounterMovementResult? movement =
-            WatchtowerCombatPathSearch.FindMovement(
+            EncounterCombatPathSearch.FindMovement(
                 encounter,
                 "combatant.watchtower-raider.melee",
                 "party-member.fighter",
@@ -316,10 +316,10 @@ public sealed class EncounterTacticsPolicyTests
                 new GridPosition(1, 0),
                 new GridPosition(1, 1)
             ]);
-        EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
 
         EncounterMovementResult? movement =
-            WatchtowerCombatPathSearch.FindMovement(
+            EncounterCombatPathSearch.FindMovement(
                 encounter,
                 "combatant.watchtower-raider.melee",
                 "party-member.fighter",
@@ -341,11 +341,11 @@ public sealed class EncounterTacticsPolicyTests
     public void FindMovement_UnexpectedCoreInvariantFailurePropagates()
     {
         ApplicationSessionState source =
-            WatchtowerCombatTestData.AdvanceToCombatant(
+            EncounterCombatTestData.AdvanceToCombatant(
                 WatchtowerSignalTestData.CreateEncounterSession(),
                 "combatant.watchtower-raider.ranged");
         EncounterParticipantState meleeRaider =
-            WatchtowerCombatTestData.GetParticipant(
+            EncounterCombatTestData.GetParticipant(
                 source,
                 "combatant.watchtower-raider.melee");
         meleeRaider = meleeRaider with
@@ -355,13 +355,13 @@ public sealed class EncounterTacticsPolicyTests
                 MovementSpentFeet = 0
             }
         };
-        source = WatchtowerCombatTestData.ReplaceParticipant(
+        source = EncounterCombatTestData.ReplaceParticipant(
             source,
             meleeRaider);
-        EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
 
         Assert.Throws<InvalidOperationException>(() =>
-            WatchtowerCombatPathSearch.FindMovement(
+            EncounterCombatPathSearch.FindMovement(
                 encounter,
                 "combatant.watchtower-raider.melee",
                 "party-member.fighter",
@@ -372,11 +372,11 @@ public sealed class EncounterTacticsPolicyTests
     public void FindMovement_WithNoMovementRemaining_ReturnsNull()
     {
         ApplicationSessionState source =
-            WatchtowerCombatTestData.AdvanceToCombatant(
+            EncounterCombatTestData.AdvanceToCombatant(
                 WatchtowerSignalTestData.CreateEncounterSession(),
                 "combatant.watchtower-raider.melee");
         EncounterParticipantState raider =
-            WatchtowerCombatTestData.GetParticipant(
+            EncounterCombatTestData.GetParticipant(
                 source,
                 "combatant.watchtower-raider.melee");
         raider = raider with
@@ -387,11 +387,11 @@ public sealed class EncounterTacticsPolicyTests
                     raider.TurnResources.MovementSpeedFeet
             }
         };
-        source = WatchtowerCombatTestData.ReplaceParticipant(source, raider);
-        EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
+        source = EncounterCombatTestData.ReplaceParticipant(source, raider);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
 
         EncounterMovementResult? movement =
-            WatchtowerCombatPathSearch.FindMovement(
+            EncounterCombatPathSearch.FindMovement(
                 encounter,
                 "combatant.watchtower-raider.melee",
                 "party-member.fighter",
@@ -413,7 +413,7 @@ public sealed class EncounterTacticsPolicyTests
             {
                 Combatant = participant.Combatant with
                 {
-                    Health = WatchtowerCombatTestData.CreateZeroHealth(
+                    Health = EncounterCombatTestData.CreateZeroHealth(
                         maximumHitPoints,
                         successes: 0,
                         failures: 0,
@@ -424,7 +424,7 @@ public sealed class EncounterTacticsPolicyTests
             {
                 Combatant = participant.Combatant with
                 {
-                    Health = WatchtowerCombatTestData.CreateZeroHealth(
+                    Health = EncounterCombatTestData.CreateZeroHealth(
                         maximumHitPoints,
                         successes: 0,
                         failures: 0,
@@ -435,7 +435,7 @@ public sealed class EncounterTacticsPolicyTests
             {
                 Combatant = participant.Combatant with
                 {
-                    Health = WatchtowerCombatTestData.CreateZeroHealth(
+                    Health = EncounterCombatTestData.CreateZeroHealth(
                         maximumHitPoints,
                         successes: 0,
                         failures: 3,
@@ -447,7 +447,7 @@ public sealed class EncounterTacticsPolicyTests
                 Combatant = participant.Combatant with
                 {
                     ZeroHitPointPolicy = CombatantZeroHitPointPolicy.Defeated,
-                    Health = WatchtowerCombatTestData.CreateZeroHealth(
+                    Health = EncounterCombatTestData.CreateZeroHealth(
                         maximumHitPoints,
                         successes: 0,
                         failures: 0,
@@ -472,7 +472,7 @@ public sealed class EncounterTacticsPolicyTests
         IReadOnlyList<GridPosition> blockedPositions)
     {
         ApplicationSessionState source =
-            WatchtowerCombatTestData.AdvanceToCombatant(
+            EncounterCombatTestData.AdvanceToCombatant(
                 WatchtowerSignalTestData.CreateEncounterSession(),
                 "combatant.watchtower-raider.melee");
 
@@ -494,7 +494,7 @@ public sealed class EncounterTacticsPolicyTests
             new GridPosition(4, 3));
 
         EncounterParticipantState raider =
-            WatchtowerCombatTestData.GetParticipant(
+            EncounterCombatTestData.GetParticipant(
                 source,
                 "combatant.watchtower-raider.melee") with
             {
@@ -507,9 +507,9 @@ public sealed class EncounterTacticsPolicyTests
                 MovementSpentFeet = 20
             }
         };
-        source = WatchtowerCombatTestData.ReplaceParticipant(source, raider);
+        source = EncounterCombatTestData.ReplaceParticipant(source, raider);
 
-        EncounterState encounter = WatchtowerCombatTestData.GetEncounter(source);
+        EncounterState encounter = EncounterCombatTestData.GetEncounter(source);
         encounter = encounter with
         {
             Battlefield = encounter.Battlefield with
@@ -519,7 +519,7 @@ public sealed class EncounterTacticsPolicyTests
             }
         };
 
-        return WatchtowerCombatTestData.ReplaceEncounter(source, encounter);
+        return EncounterCombatTestData.ReplaceEncounter(source, encounter);
     }
 
     private static ApplicationSessionState SetPosition(
@@ -528,14 +528,14 @@ public sealed class EncounterTacticsPolicyTests
         GridPosition position)
     {
         EncounterParticipantState participant =
-            WatchtowerCombatTestData.GetParticipant(
+            EncounterCombatTestData.GetParticipant(
                 source,
                 combatantId) with
             {
                 Position = position
             };
 
-        return WatchtowerCombatTestData.ReplaceParticipant(
+        return EncounterCombatTestData.ReplaceParticipant(
             source,
             participant);
     }

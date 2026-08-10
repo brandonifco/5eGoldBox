@@ -18,5 +18,5 @@ internal sealed record EncounterTacticsTurnPlan
 
     /// Reason recorded when the turn advances. Unused when a planned attack
     /// ends the encounter, because combat completion pre-empts advancement.
-    internal required WatchtowerCombatTurnAdvanceReason TurnAdvanceReason { get; init; }
+    internal required EncounterCombatTurnAdvanceReason TurnAdvanceReason { get; init; }
 }

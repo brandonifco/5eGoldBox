@@ -27,7 +27,7 @@ internal static class EncounterTacticsPolicy
         ArgumentNullException.ThrowIfNull(raider);
 
         WeaponAttack weapon =
-            WatchtowerCombatDecisionFactory.GetFixedWeapon(raider);
+            EncounterCombatDecisionFactory.GetFixedWeapon(raider);
 
         IEnumerable<EncounterParticipantState> legalTargets =
             GetOpposingTargets(encounter, raider)
@@ -56,7 +56,7 @@ internal static class EncounterTacticsPolicy
         ArgumentNullException.ThrowIfNull(raider);
 
         WeaponAttack weapon =
-            WatchtowerCombatDecisionFactory.GetFixedWeapon(raider);
+            EncounterCombatDecisionFactory.GetFixedWeapon(raider);
 
         if (weapon.AttackKind != WeaponAttackKind.Melee)
         {
@@ -66,7 +66,7 @@ internal static class EncounterTacticsPolicy
         IEnumerable<EncounterParticipantState> progressTargets =
             GetOpposingTargets(encounter, raider)
                 .Where(target =>
-                    WatchtowerCombatPathSearch.FindMovement(
+                    EncounterCombatPathSearch.FindMovement(
                         encounter,
                         raider.Combatant.CombatantId,
                         target.Combatant.CombatantId,
@@ -91,8 +91,8 @@ internal static class EncounterTacticsPolicy
         string targetId =
             target.Combatant.CombatantId;
 
-        WatchtowerCombatAttackAvailability prerequisites =
-            WatchtowerCombatAttackStaging.EvaluateAvailability(
+        EncounterCombatAttackAvailability prerequisites =
+            EncounterCombatAttackStaging.EvaluateAvailability(
                 encounter,
                 actorId,
                 targetId,
@@ -109,7 +109,7 @@ internal static class EncounterTacticsPolicy
         }
 
         EncounterMovementResult? movement =
-            WatchtowerCombatPathSearch.FindMovement(
+            EncounterCombatPathSearch.FindMovement(
                 encounter,
                 actorId,
                 targetId,
@@ -120,7 +120,7 @@ internal static class EncounterTacticsPolicy
             return false;
         }
 
-        return WatchtowerCombatAttackStaging.EvaluateAvailability(
+        return EncounterCombatAttackStaging.EvaluateAvailability(
             movement.State,
             actorId,
             targetId,

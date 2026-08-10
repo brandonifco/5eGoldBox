@@ -22,7 +22,7 @@ public sealed class WatchtowerCombatScenarioTests
         ScenarioResolution resolution = ResolvePartyVictoryScenario(source);
         ApplicationSessionState completed = resolution.State;
         EncounterState encounter =
-            WatchtowerCombatTestData.GetEncounter(completed);
+            EncounterCombatTestData.GetEncounter(completed);
 
         Assert.Equal(EncounterLifecycleState.Completed, encounter.LifecycleState);
         Assert.Equal("side.party", encounter.WinningSideId);
@@ -50,7 +50,7 @@ public sealed class WatchtowerCombatScenarioTests
         Assert.True(resolution.RaiderWeaponAttacks > 0);
         Assert.True(
             Assert.Single(
-                WatchtowerCombatTestData.GetParticipant(
+                EncounterCombatTestData.GetParticipant(
                     completed,
                     "party-member.rogue")
                 .CombatProfile.WeaponAttacks,
@@ -103,7 +103,7 @@ public sealed class WatchtowerCombatScenarioTests
             new ScenarioMetrics());
         ApplicationSessionState completed = resolution.State;
         EncounterState encounter =
-            WatchtowerCombatTestData.GetEncounter(completed);
+            EncounterCombatTestData.GetEncounter(completed);
 
         Assert.Equal(EncounterLifecycleState.Completed, encounter.LifecycleState);
         Assert.Equal("side.watchtower-raiders", encounter.WinningSideId);
@@ -164,8 +164,8 @@ public sealed class WatchtowerCombatScenarioTests
 
         for (int operation = 0; operation < 1000; operation++)
         {
-            WatchtowerCombatResolutionResult advanced =
-                WatchtowerCombatRules.AdvanceToDecision(state);
+            EncounterCombatResolutionResult advanced =
+                EncounterCombatRules.AdvanceToDecision(state);
             metrics.Record(advanced);
             state = advanced.State;
 
@@ -175,7 +175,7 @@ public sealed class WatchtowerCombatScenarioTests
                 return metrics.Complete(state);
             }
 
-            WatchtowerCombatDecision decision =
+            EncounterCombatDecision decision =
                 advanced.ResultingDecision;
 
             // Every carried weapon offers its own targets, so the driver
@@ -187,7 +187,7 @@ public sealed class WatchtowerCombatScenarioTests
                     .Where(candidate => candidate.IsAvailable)
                     .Select(candidate => (weapon.WeaponId, Target: candidate)))
                 .OrderBy(candidate =>
-                    WatchtowerCombatTestData.GetParticipant(
+                    EncounterCombatTestData.GetParticipant(
                         state,
                         candidate.Target.TargetCombatantId)
                     .Combatant.Health.HitPoints.CurrentHitPoints)
@@ -196,8 +196,8 @@ public sealed class WatchtowerCombatScenarioTests
 
             if (attackWhenPossible && attacks.Length > 0)
             {
-                WatchtowerCombatResolutionResult attacked =
-                    WatchtowerCombatRules.Execute(
+                EncounterCombatResolutionResult attacked =
+                    EncounterCombatRules.Execute(
                         state,
                         new CombatWeaponAttackIntent
                         {
@@ -229,13 +229,13 @@ public sealed class WatchtowerCombatScenarioTests
                 && outOfRange.Length > 0)
             {
                 EncounterState encounter =
-                    WatchtowerCombatTestData.GetEncounter(state);
+                    EncounterCombatTestData.GetEncounter(state);
                 EncounterParticipantState actor =
-                    WatchtowerCombatTestData.GetParticipant(
+                    EncounterCombatTestData.GetParticipant(
                         state,
                         decision.ActiveCombatantId!);
                 EncounterMovementResult? movement =
-                    WatchtowerCombatPathSearch.FindMovement(
+                    EncounterCombatPathSearch.FindMovement(
                         encounter,
                         actor.Combatant.CombatantId,
                         outOfRange[0].TargetCombatantId,
@@ -243,8 +243,8 @@ public sealed class WatchtowerCombatScenarioTests
 
                 if (movement is not null)
                 {
-                    WatchtowerCombatResolutionResult moved =
-                        WatchtowerCombatRules.Execute(
+                    EncounterCombatResolutionResult moved =
+                        EncounterCombatRules.Execute(
                             state,
                             new CombatMoveIntent
                             {
@@ -258,8 +258,8 @@ public sealed class WatchtowerCombatScenarioTests
                 }
             }
 
-            WatchtowerCombatResolutionResult ended =
-                WatchtowerCombatRules.Execute(
+            EncounterCombatResolutionResult ended =
+                EncounterCombatRules.Execute(
                     state,
                     new CombatEndTurnIntent
                     {
@@ -292,14 +292,14 @@ public sealed class WatchtowerCombatScenarioTests
 
         internal int NoProductiveEnemyTurns { get; private set; }
 
-        internal void Record(WatchtowerCombatResolutionResult result)
+        internal void Record(EncounterCombatResolutionResult result)
         {
             if (result.PrimaryStep is not null)
             {
                 RecordStep(result.PrimaryStep);
             }
 
-            foreach (WatchtowerCombatStepResult step in result.AutomaticSteps)
+            foreach (EncounterCombatStepResult step in result.AutomaticSteps)
             {
                 RecordStep(step);
             }
@@ -319,7 +319,7 @@ public sealed class WatchtowerCombatScenarioTests
                 NoProductiveEnemyTurns);
         }
 
-        private void RecordStep(WatchtowerCombatStepResult step)
+        private void RecordStep(EncounterCombatStepResult step)
         {
             GeneratedDice += step.Dice.Count;
 
@@ -355,7 +355,7 @@ public sealed class WatchtowerCombatScenarioTests
             }
 
             if (step.TurnAdvanceReason
-                == WatchtowerCombatTurnAdvanceReason.PlayerEndTurn)
+                == EncounterCombatTurnAdvanceReason.PlayerEndTurn)
             {
                 PlayerEndTurns++;
             }
@@ -366,7 +366,7 @@ public sealed class WatchtowerCombatScenarioTests
             }
 
             if (step.TurnAdvanceReason
-                == WatchtowerCombatTurnAdvanceReason.NoProductiveEnemyAction)
+                == EncounterCombatTurnAdvanceReason.NoProductiveEnemyAction)
             {
                 NoProductiveEnemyTurns++;
             }

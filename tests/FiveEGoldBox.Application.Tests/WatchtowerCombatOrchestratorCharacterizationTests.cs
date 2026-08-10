@@ -10,7 +10,7 @@ using FiveEGoldBox.Core.Runtime;
 namespace FiveEGoldBox.Application.Tests;
 
 /// Characterization tests recorded before the Phase 5 decomposition of
-/// WatchtowerCombatOrchestrator. They assert the orchestrator's observable
+/// EncounterCombatOrchestrator. They assert the orchestrator's observable
 /// transcript rather than any internal structure, so the coming extraction of
 /// policy, action-resolution, and outcome-mapping components can be verified as
 /// behaviour-preserving. A failure here means the refactor changed behaviour,
@@ -72,21 +72,21 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
     public void SubmittedIntentReceipts_EchoEachIntentKind()
     {
         ApplicationSessionState state =
-            WatchtowerCombatTestData.CreatePlayerDecisionSession();
-        WatchtowerCombatDecision decision =
-            WatchtowerCombatRules.AdvanceToDecision(state).ResultingDecision;
+            EncounterCombatTestData.CreatePlayerDecisionSession();
+        EncounterCombatDecision decision =
+            EncounterCombatRules.AdvanceToDecision(state).ResultingDecision;
         string actorId = Assert.IsType<string>(decision.ActiveCombatantId);
-        WatchtowerCombatWeaponAttackOption weapon =
+        EncounterCombatWeaponAttackOption weapon =
             decision.WeaponAttacks.Single();
-        WatchtowerCombatTargetOption target = Assert.Single(
+        EncounterCombatTargetOption target = Assert.Single(
             weapon.Targets,
             candidate => candidate.IsAvailable);
         IReadOnlyList<GridPosition> path = Assert.IsType<
-            WatchtowerCombatMovementOption>(decision.Movement)
+            EncounterCombatMovementOption>(decision.Movement)
             .DestinationOptions[0].Path;
 
-        WatchtowerCombatIntentReceipt attack = RequireReceipt(
-            WatchtowerCombatRules.Execute(
+        EncounterCombatIntentReceipt attack = RequireReceipt(
+            EncounterCombatRules.Execute(
                 state,
                 new CombatWeaponAttackIntent
                 {
@@ -103,8 +103,8 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
         Assert.Equal(target.TargetCombatantId, attack.TargetCombatantId);
         Assert.Empty(attack.Path);
 
-        WatchtowerCombatIntentReceipt move = RequireReceipt(
-            WatchtowerCombatRules.Execute(
+        EncounterCombatIntentReceipt move = RequireReceipt(
+            EncounterCombatRules.Execute(
                 state,
                 new CombatMoveIntent
                 {
@@ -120,8 +120,8 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
         Assert.Null(move.WeaponId);
         Assert.Null(move.TargetCombatantId);
 
-        WatchtowerCombatIntentReceipt endTurn = RequireReceipt(
-            WatchtowerCombatRules.Execute(
+        EncounterCombatIntentReceipt endTurn = RequireReceipt(
+            EncounterCombatRules.Execute(
                 state,
                 new CombatEndTurnIntent
                 {
@@ -143,7 +143,7 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
     public void AdvanceToDecision_ReportsNoSubmittedIntent()
     {
         Assert.Null(
-            WatchtowerCombatRules.AdvanceToDecision(
+            EncounterCombatRules.AdvanceToDecision(
                 WatchtowerSignalTestData.CreateEncounterSession())
             .SubmittedIntent);
     }
@@ -161,8 +161,8 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
                 : CreateFragilePartyEncounterSession(),
             aggressive);
 
-        WatchtowerCombatStepResult[] steps = run.Steps.ToArray();
-        WatchtowerCombatStepResult completion = Assert.Single(
+        EncounterCombatStepResult[] steps = run.Steps.ToArray();
+        EncounterCombatStepResult completion = Assert.Single(
             steps,
             step => step.Kind == CombatStepKind.CombatCompleted);
 
@@ -189,7 +189,7 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
         long revision = -1;
         int cursor = -1;
 
-        foreach (WatchtowerCombatResolutionResult result in run.Results)
+        foreach (EncounterCombatResolutionResult result in run.Results)
         {
             if (revision >= 0)
             {
@@ -212,25 +212,25 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
             cursor = result.RandomValuesConsumedAfter;
         }
 
-        Assert.Equal(revision, WatchtowerCombatTestData.GetEncounter(run.State).Revision);
+        Assert.Equal(revision, EncounterCombatTestData.GetEncounter(run.State).Revision);
         Assert.Equal(cursor, run.State.RandomValuesConsumed);
     }
 
-    private static WatchtowerCombatIntentReceipt RequireReceipt(
-        WatchtowerCombatResolutionResult result)
+    private static EncounterCombatIntentReceipt RequireReceipt(
+        EncounterCombatResolutionResult result)
     {
-        return Assert.IsType<WatchtowerCombatIntentReceipt>(result.SubmittedIntent);
+        return Assert.IsType<EncounterCombatIntentReceipt>(result.SubmittedIntent);
     }
 
-    private static IEnumerable<WatchtowerCombatStepResult> CollectSteps(
-        WatchtowerCombatResolutionResult result)
+    private static IEnumerable<EncounterCombatStepResult> CollectSteps(
+        EncounterCombatResolutionResult result)
     {
         if (result.PrimaryStep is not null)
         {
             yield return result.PrimaryStep;
         }
 
-        foreach (WatchtowerCombatStepResult step in result.AutomaticSteps)
+        foreach (EncounterCombatStepResult step in result.AutomaticSteps)
         {
             yield return step;
         }
@@ -290,17 +290,17 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
     {
         ApplicationSessionState state = source;
         List<string> lines = [];
-        List<WatchtowerCombatResolutionResult> results = [];
+        List<EncounterCombatResolutionResult> results = [];
 
-        WatchtowerCombatResolutionResult result =
-            WatchtowerCombatRules.AdvanceToDecision(state);
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.AdvanceToDecision(state);
         AppendOperation(lines, "AdvanceToDecision", result);
         results.Add(result);
         state = result.State;
 
         for (int operation = 0; operation < OperationLimit; operation++)
         {
-            WatchtowerCombatDecision decision = result.ResultingDecision;
+            EncounterCombatDecision decision = result.ResultingDecision;
 
             if (decision.State != CombatDecisionState.PlayerDecisionRequired)
             {
@@ -333,9 +333,9 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
     /// otherwise ends the turn. The passive script ends every turn immediately,
     /// handing each round to the raiders so the automatic enemy-turn and
     /// death-saving-throw paths are exercised without movement noise.
-    private static WatchtowerCombatResolutionResult SubmitScriptedIntent(
+    private static EncounterCombatResolutionResult SubmitScriptedIntent(
         ApplicationSessionState state,
-        WatchtowerCombatDecision decision,
+        EncounterCombatDecision decision,
         bool aggressive,
         List<string> lines)
     {
@@ -346,12 +346,12 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
         // combatant carrying one weapon behaves exactly as before; a
         // combatant carrying more than one tries them in the order equipped
         // rather than picking whichever looks best.
-        (string WeaponId, WatchtowerCombatTargetOption Target)? attackChoice =
+        (string WeaponId, EncounterCombatTargetOption Target)? attackChoice =
             null;
 
         if (aggressive)
         {
-            foreach (WatchtowerCombatWeaponAttackOption weapon
+            foreach (EncounterCombatWeaponAttackOption weapon
                 in decision.WeaponAttacks)
             {
                 if (!weapon.IsAvailable)
@@ -359,7 +359,7 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
                     continue;
                 }
 
-                WatchtowerCombatTargetOption? target =
+                EncounterCombatTargetOption? target =
                     weapon.Targets.FirstOrDefault(
                         candidate => candidate.IsAvailable);
 
@@ -373,8 +373,8 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
 
         if (attackChoice is not null)
         {
-            WatchtowerCombatResolutionResult attack =
-                WatchtowerCombatRules.Execute(
+            EncounterCombatResolutionResult attack =
+                EncounterCombatRules.Execute(
                     state,
                     new CombatWeaponAttackIntent
                     {
@@ -389,7 +389,7 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
             return attack;
         }
 
-        WatchtowerCombatMovementDestinationOption? destination =
+        EncounterCombatMovementDestinationOption? destination =
             aggressive
                 && decision.Movement is { IsAvailable: true } movement
                 ? movement.DestinationOptions.FirstOrDefault()
@@ -397,8 +397,8 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
 
         if (destination is not null)
         {
-            WatchtowerCombatResolutionResult move =
-                WatchtowerCombatRules.Execute(
+            EncounterCombatResolutionResult move =
+                EncounterCombatRules.Execute(
                     state,
                     new CombatMoveIntent
                     {
@@ -411,8 +411,8 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
             return move;
         }
 
-        WatchtowerCombatResolutionResult endTurn =
-            WatchtowerCombatRules.Execute(
+        EncounterCombatResolutionResult endTurn =
+            EncounterCombatRules.Execute(
                 state,
                 new CombatEndTurnIntent
                 {
@@ -427,7 +427,7 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
     private static void AppendOperation(
         List<string> lines,
         string label,
-        WatchtowerCombatResolutionResult result)
+        EncounterCombatResolutionResult result)
     {
         lines.Add(string.Create(
             CultureInfo.InvariantCulture,
@@ -438,17 +438,17 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
             lines.Add("   primary   " + RenderStep(result.PrimaryStep));
         }
 
-        foreach (WatchtowerCombatStepResult step in result.AutomaticSteps)
+        foreach (EncounterCombatStepResult step in result.AutomaticSteps)
         {
             lines.Add("   automatic " + RenderStep(step));
         }
     }
 
-    private static string RenderStep(WatchtowerCombatStepResult step)
+    private static string RenderStep(EncounterCombatStepResult step)
     {
         StringBuilder dice = new();
 
-        foreach (WatchtowerCombatDieRoll die in step.Dice)
+        foreach (EncounterCombatDieRoll die in step.Dice)
         {
             if (dice.Length > 0)
             {
@@ -467,8 +467,8 @@ public sealed partial class WatchtowerCombatOrchestratorCharacterizationTests
 
     private sealed record ScriptedRun(
         IReadOnlyList<string> Lines,
-        IReadOnlyList<WatchtowerCombatResolutionResult> Results,
-        IReadOnlyList<WatchtowerCombatStepResult> Steps,
+        IReadOnlyList<EncounterCombatResolutionResult> Results,
+        IReadOnlyList<EncounterCombatStepResult> Steps,
         ApplicationSessionState State,
-        WatchtowerCombatResolutionResult Result);
+        EncounterCombatResolutionResult Result);
 }

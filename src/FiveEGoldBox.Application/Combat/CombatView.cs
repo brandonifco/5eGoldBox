@@ -93,7 +93,7 @@ public sealed record CombatView
     public string? WinningSideId { get; }
 
     /// Which SideId is the party's, for whichever scenario is running --
-    /// the same fact WatchtowerCombatDecisionFactory already resolves
+    /// the same fact EncounterCombatDecisionFactory already resolves
     /// internally (via EncounterPartySideResolver, internal to Application)
     /// to decide whose turn requires a player decision. A client needing
     /// "is this combatant an ally" no longer has to re-derive its own

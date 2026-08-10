@@ -62,8 +62,8 @@ public static class CombatOperations
     {
         ArgumentNullException.ThrowIfNull(session);
 
-        return WatchtowerCombatResultMapper.ToCombatResolutionResult(
-            WatchtowerCombatOrchestrator.AdvanceToDecision(session));
+        return EncounterCombatResultMapper.ToCombatResolutionResult(
+            EncounterCombatOrchestrator.AdvanceToDecision(session));
     }
 
     public static CombatResolutionResult Execute(
@@ -74,8 +74,8 @@ public static class CombatOperations
         ArgumentNullException.ThrowIfNull(intent);
         ArgumentNullException.ThrowIfNull(intent.Path);
 
-        return WatchtowerCombatResultMapper.ToCombatResolutionResult(
-            WatchtowerCombatOrchestrator.Execute(
+        return EncounterCombatResultMapper.ToCombatResolutionResult(
+            EncounterCombatOrchestrator.Execute(
                 session,
                 intent));
     }
@@ -87,8 +87,8 @@ public static class CombatOperations
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(intent);
 
-        return WatchtowerCombatResultMapper.ToCombatResolutionResult(
-            WatchtowerCombatOrchestrator.Execute(
+        return EncounterCombatResultMapper.ToCombatResolutionResult(
+            EncounterCombatOrchestrator.Execute(
                 session,
                 intent));
     }
@@ -100,8 +100,8 @@ public static class CombatOperations
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(intent);
 
-        return WatchtowerCombatResultMapper.ToCombatResolutionResult(
-            WatchtowerCombatOrchestrator.Execute(
+        return EncounterCombatResultMapper.ToCombatResolutionResult(
+            EncounterCombatOrchestrator.Execute(
                 session,
                 intent));
     }
@@ -113,8 +113,8 @@ public static class CombatOperations
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(intent);
 
-        return WatchtowerCombatResultMapper.ToCombatResolutionResult(
-            WatchtowerCombatOrchestrator.Execute(
+        return EncounterCombatResultMapper.ToCombatResolutionResult(
+            EncounterCombatOrchestrator.Execute(
                 session,
                 intent));
     }

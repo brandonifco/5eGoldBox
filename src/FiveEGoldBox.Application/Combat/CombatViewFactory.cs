@@ -336,7 +336,7 @@ internal static class CombatViewFactory
         return Array.AsReadOnly(spellOptions.ToArray());
     }
 
-    /// See SpellTargetCombinationRules — WatchtowerCombatDecisionFactory
+    /// See SpellTargetCombinationRules — EncounterCombatDecisionFactory
     /// builds the same options independently for the write path, so the
     /// combination algorithm itself lives there rather than here twice.
     private static IReadOnlyList<CombatTargetCombinationOption>
