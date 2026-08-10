@@ -55,12 +55,15 @@ public sealed record ClassDefinition
     /// The ability this class casts with. Null for a class that does not cast.
     public Ability? SpellcastingAbility { get; init; }
 
-    /// Slots this class has, keyed by slot level. Derived at character
-    /// creation the way hit points are derived from the hit die, so a
-    /// character does not restate what its class already says.
+    /// Slots this class has, keyed by character level and then by slot level.
+    /// Derived at character creation the way hit points are derived from the
+    /// hit die, so a character does not restate what its class already says.
     ///
-    /// There is no character-level dimension because every character is level
-    /// one. Advancement is what adds it.
-    public IReadOnlyDictionary<int, int> SpellSlotsByLevel { get; init; }
-        = new Dictionary<int, int>();
+    /// The outer key is the character level an entry takes effect at, not
+    /// every level it applies to: a level is resolved to the highest authored
+    /// entry at or below it, so content only declares the levels where the
+    /// table actually changes. A class whose slots never change past level one
+    /// authors one entry, and a class with no slots at all authors none.
+    public IReadOnlyDictionary<int, IReadOnlyDictionary<int, int>> SpellSlotsByCharacterLevel { get; init; }
+        = new Dictionary<int, IReadOnlyDictionary<int, int>>();
 }

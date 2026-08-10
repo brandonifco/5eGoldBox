@@ -38,6 +38,6 @@ internal sealed record ClassDefinitionV1
 
     public AbilityV1? SpellcastingAbility { get; init; }
 
-    public IReadOnlyDictionary<int, int> SpellSlotsByLevel { get; init; }
-        = new Dictionary<int, int>();
+    public IReadOnlyDictionary<int, IReadOnlyDictionary<int, int>> SpellSlotsByCharacterLevel { get; init; }
+        = new Dictionary<int, IReadOnlyDictionary<int, int>>();
 }

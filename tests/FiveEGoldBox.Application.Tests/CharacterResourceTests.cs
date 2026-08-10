@@ -80,8 +80,13 @@ public sealed class CharacterResourceTests
 
         Assert.Equal(Ability.Wisdom, cleric.SpellcastingAbility);
         Assert.Equal(Ability.Intelligence, wizard.SpellcastingAbility);
-        Assert.Equal(2, cleric.SpellSlotsByLevel[1]);
-        Assert.Equal(2, wizard.SpellSlotsByLevel[1]);
+        Assert.Equal(2, cleric.SpellSlotsByCharacterLevel[1][1]);
+        Assert.Equal(2, wizard.SpellSlotsByCharacterLevel[1][1]);
+
+        // The one thing level two actually changes for either caster: a third
+        // first-level slot, matching real 5e's own spellcasting table.
+        Assert.Equal(3, cleric.SpellSlotsByCharacterLevel[2][1]);
+        Assert.Equal(3, wizard.SpellSlotsByCharacterLevel[2][1]);
 
         // Every other class casts nothing.
         Assert.All(
@@ -91,8 +96,57 @@ public sealed class CharacterResourceTests
             candidate =>
             {
                 Assert.Null(candidate.SpellcastingAbility);
-                Assert.Empty(candidate.SpellSlotsByLevel);
+                Assert.Empty(candidate.SpellSlotsByCharacterLevel);
             });
+    }
+
+    /// The level table resolves against real shipped content: the cleric's
+    /// two authored entries at the levels they are authored for.
+    [Theory]
+    [InlineData(1, 2)]
+    [InlineData(2, 3)]
+    public void ForClass_GrantsTheSlotTableAuthoredForTheLevel(
+        int characterLevel,
+        int expectedFirstLevelSlots)
+    {
+        IReadOnlyDictionary<string, int> granted =
+            CampaignResourceGrants.ForClass(
+                RulesetRegistry.CampaignRulesetId,
+                CampaignRulesetIds.ClericClassId,
+                characterLevel);
+
+        Assert.Equal(
+            expectedFirstLevelSlots,
+            granted[SpellSlotResources.ForLevel(1)]);
+    }
+
+    /// Content authors only the levels where the table changes, so a level
+    /// past everything authored holds at the last authored table rather than
+    /// dropping to no slots at all. Levels 3-5 have thresholds
+    /// AdvancementRules can already reach but no slot content yet, so this is
+    /// live behaviour rather than a hypothetical.
+    [Fact]
+    public void ForClass_AboveTheHighestAuthoredLevel_HoldsAtTheLastAuthoredTable()
+    {
+        IReadOnlyDictionary<string, int> atLevel5 =
+            CampaignResourceGrants.ForClass(
+                RulesetRegistry.CampaignRulesetId,
+                CampaignRulesetIds.ClericClassId,
+                AdvancementRules.MaximumLevel);
+
+        Assert.Equal(3, atLevel5[SpellSlotResources.ForLevel(1)]);
+    }
+
+    /// A class with no slot table authored at all grants nothing at any
+    /// level, rather than falling through to some other class's table or
+    /// throwing.
+    [Fact]
+    public void ForClass_ForANonCaster_GrantsNothingAtAnyLevel()
+    {
+        Assert.Empty(CampaignResourceGrants.ForClass(
+            RulesetRegistry.CampaignRulesetId,
+            CampaignRulesetIds.FighterClassId,
+            AdvancementRules.MaximumLevel));
     }
 
     [Theory]

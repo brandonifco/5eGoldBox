@@ -213,7 +213,7 @@ internal static class RulesetPackMapper
         ClassDefinitionV1 characterClass)
     {
         ArgumentNullException.ThrowIfNull(characterClass.FeaturesByLevel);
-        ArgumentNullException.ThrowIfNull(characterClass.SpellSlotsByLevel);
+        ArgumentNullException.ThrowIfNull(characterClass.SpellSlotsByCharacterLevel);
 
         return new ClassDefinition
         {
@@ -239,8 +239,11 @@ internal static class RulesetPackMapper
             SpellcastingAbility = characterClass.SpellcastingAbility is null
                 ? null
                 : ToRuntimeAbility(characterClass.SpellcastingAbility.Value),
-            SpellSlotsByLevel = characterClass.SpellSlotsByLevel
-                .ToDictionary(entry => entry.Key, entry => entry.Value),
+            SpellSlotsByCharacterLevel = characterClass.SpellSlotsByCharacterLevel
+                .ToDictionary(
+                    entry => entry.Key,
+                    entry => (IReadOnlyDictionary<int, int>)entry.Value
+                        .ToDictionary(slots => slots.Key, slots => slots.Value)),
             Subclasses = characterClass.Subclasses
                 .Select(ToRuntimeSubclass)
                 .ToArray()

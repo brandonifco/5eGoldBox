@@ -97,7 +97,7 @@ internal static class CampaignPartyCompositionValidator
         }
 
         ValidateAmmunition(character, member);
-        ValidateResources(campaign, character, member);
+        ValidateResources(campaign, character, member, level);
     }
 
     /// The custom-build equivalent of ValidateMember above: there is no
@@ -156,8 +156,10 @@ internal static class CampaignPartyCompositionValidator
 
         ValidateCustomBuildAmmunition(ruleset, build, member);
 
-        IReadOnlyDictionary<string, int> granted =
-            CampaignResourceGrants.ForClass(campaign.RulesetId, build.ClassId!);
+        IReadOnlyDictionary<string, int> granted = CampaignResourceGrants.ForClass(
+            campaign.RulesetId,
+            build.ClassId!,
+            level);
 
         ValidateResourceGrants(granted, member);
     }
@@ -265,15 +267,19 @@ internal static class CampaignPartyCompositionValidator
         }
     }
 
-    /// A character has exactly the resources its class grants, at exactly the
-    /// ceilings the class sets. How much is left is play.
+    /// A character has exactly the resources its class grants at the party's
+    /// current level, at exactly the ceilings the class sets. How much is left
+    /// is play.
     private static void ValidateResources(
         CampaignDefinition campaign,
         CampaignCharacterDefinition character,
-        PartyMemberState member)
+        PartyMemberState member,
+        int level)
     {
-        IReadOnlyDictionary<string, int> granted =
-            CampaignResourceGrants.ForClass(campaign.RulesetId, character.ClassId);
+        IReadOnlyDictionary<string, int> granted = CampaignResourceGrants.ForClass(
+            campaign.RulesetId,
+            character.ClassId,
+            level);
 
         ValidateResourceGrants(granted, member);
     }

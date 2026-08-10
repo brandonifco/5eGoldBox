@@ -181,7 +181,10 @@
             ],
             "NumberOfSkillChoices": 2,
             "SpellcastingAbility": "Wisdom",
-            "SpellSlotsByLevel": { "1": 2 },
+            "SpellSlotsByCharacterLevel": {
+                "1": { "1": 2 },
+                "2": { "1": 3 }
+            },
             "Subclasses": [
                 {
                     "Id": "subclass.life-domain",
@@ -213,7 +216,10 @@
             ],
             "NumberOfSkillChoices": 2,
             "SpellcastingAbility": "Intelligence",
-            "SpellSlotsByLevel": { "1": 2 },
+            "SpellSlotsByCharacterLevel": {
+                "1": { "1": 2 },
+                "2": { "1": 3 }
+            },
             "Subclasses": [
                 {
                     "Id": "subclass.evocation",

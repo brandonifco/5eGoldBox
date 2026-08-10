@@ -103,15 +103,74 @@ public sealed class CampaignPartyCompositionValidatorTests
             CampaignPartyCompositionValidator.Validate(Campaign(), party));
     }
 
+    /// The slot half of the rule above: a caster on a level-2 party carries
+    /// the level-2 slot table, and still holding the level-1 one is as wrong
+    /// as still holding level-1 hit points.
+    ///
+    /// The expected count is written out rather than asked of
+    /// CampaignResourceGrants, so this fails if the shipped table changes
+    /// instead of moving along with it.
+    [Fact]
+    public void Validate_RejectsLevel1SlotsOnALevel2Party()
+    {
+        CampaignDefinition campaign = Campaign();
+        PartyState party = LevelUpHitPoints(campaign, CreateParty(), 2);
+
+        Assert.Contains(
+            party.Members,
+            member => member.Resources.Any(resource =>
+                resource.ResourceId == SpellSlotResources.ForLevel(1)
+                && resource.Maximum == 2));
+
+        Assert.Throws<ArgumentException>(() =>
+            CampaignPartyCompositionValidator.Validate(
+                campaign,
+                party with { Level = 2 }));
+    }
+
     /// The positive case: every member's hit points bumped by exactly the
     /// delta CharacterResolver says levels 1-to-2 are worth for their own
-    /// class and Constitution is a party this campaign could have produced.
+    /// class and Constitution, and every caster's slots raised to the
+    /// level-2 table, is a party this campaign could have produced.
     [Fact]
     public void Validate_AcceptsCorrectLevel2HitPoints()
     {
         CampaignDefinition campaign = Campaign();
+        PartyState party = LevelUpHitPoints(campaign, CreateParty(), 2);
+
+        // Three first-level slots at level two, written out rather than
+        // derived, for the same reason as the test above.
+        PartyMemberState[] leveled = party.Members
+            .Select(member => member.Resources.Count == 0
+                ? member
+                : member with
+                {
+                    Resources = member.Resources
+                        .Select(resource => resource with
+                        {
+                            Maximum = 3,
+                            Remaining = 3
+                        })
+                        .ToArray()
+                })
+            .ToArray();
+
+        CampaignPartyCompositionValidator.Validate(
+            campaign,
+            party with { Members = Array.AsReadOnly(leveled), Level = 2 });
+    }
+
+    /// Raises every member's hit points by exactly the delta
+    /// CharacterResolver says reaching a level is worth for their own class
+    /// and Constitution -- the half of advancement that predates spell slots
+    /// having a level table, shared by the two tests above so neither
+    /// restates it.
+    private static PartyState LevelUpHitPoints(
+        CampaignDefinition campaign,
+        PartyState party,
+        int level)
+    {
         ValidatedRuleset ruleset = RulesetRegistry.Resolve(campaign.RulesetId);
-        PartyState party = CreateParty();
 
         PartyMemberState[] leveled = party.Members
             .Select(member =>
@@ -121,7 +180,7 @@ public sealed class CampaignPartyCompositionValidatorTests
                         member,
                         campaign,
                         ruleset,
-                        2);
+                        level);
 
                 return member with
                 {
@@ -141,9 +200,7 @@ public sealed class CampaignPartyCompositionValidatorTests
             })
             .ToArray();
 
-        CampaignPartyCompositionValidator.Validate(
-            campaign,
-            party with { Members = Array.AsReadOnly(leveled), Level = 2 });
+        return party with { Members = Array.AsReadOnly(leveled) };
     }
 
     [Fact]

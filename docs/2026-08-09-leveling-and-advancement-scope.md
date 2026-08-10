@@ -35,10 +35,12 @@ shape as a whole allows." A deliberate scope decision, not an engine limitation.
    level after creation — no XP tracking, no level-up trigger. `PartyMemberState` has no
    `Level`/XP field of its own; level only lives inside the creation-time `CharacterDraft`,
    which nothing currently mutates through play.
-2. **Spell slots have no character-level table.** `SpellSlotsByLevel` is keyed by *spell-slot
-   level* only (1st-level slots, 2nd-level slots...) and `CampaignResourceGrants.ForClass
-   (rulesetId, classId)` grants a flat count with no character-level parameter at all — a
-   level-1 and level-9 Cleric would get identical slots today.
+2. ~~**Spell slots have no character-level table.**~~ **Closed by Phase 2, 2026-08-10.**
+   `SpellSlotsByLevel` was keyed by *spell-slot level* only (1st-level slots, 2nd-level
+   slots...) and `CampaignResourceGrants.ForClass(rulesetId, classId)` granted a flat count
+   with no character-level parameter at all — a level-1 and level-9 Cleric got identical
+   slots. It is now `SpellSlotsByCharacterLevel`, keyed by character level then slot level,
+   and `ForClass` takes the level. See CLAUDE.md's Phase 2 entry for what that cost.
 3. **No content past level 1 is authored** — every class's `FeaturesByLevel` has only a
    level-1 entry.
 4. **No rest system exists anywhere** (`Encamp` is mock-only per the regional-travel gap
@@ -146,9 +148,12 @@ level 3+ to show off, not part of this slice.
    re-resolution on level-up. Provable headless the same way `CharacterCreationRules` was —
    a throwaway console/test harness driving a fight to victory and asserting the party leveled,
    before any journal/UX wiring.
-2. **Spell slot re-authoring:** `SpellSlotsByLevel` becomes level-keyed (or a parallel
-   level-keyed table) for Cleric and Wizard; `CampaignResourceGrants.ForClass` gains a
-   character-level parameter.
+2. ~~**Spell slot re-authoring:**~~ **Done 2026-08-10.** `SpellSlotsByLevel` became
+   `SpellSlotsByCharacterLevel` (character level → slot level → count) for Cleric and Wizard;
+   `CampaignResourceGrants.ForClass` gained a character-level parameter and is now the single
+   place resolving which table applies, with `CampaignPartyFactory` delegating to it rather
+   than reading the class table a second time. Level-up in `CombatOutcomeRules` grants the new
+   level's slots, preserving spent-ness.
 3. **Content:** author level-2 `FeaturesByLevel` entries for all four classes; build the two
    real mechanics (Action Surge, Cunning Action); document the two identity-only ones.
 4. **Presentation:** the journal line. No Godot structural change expected beyond that.

@@ -325,7 +325,10 @@ public static class CharacterCreationRules
                 IsInstantlyDead = false
             },
             Ammunition = ResolveStartingAmmunition(ruleset, draft),
-            Resources = CreateStartingResources(ruleset.Definition.Id, draft.ClassId!),
+            Resources = CreateStartingResources(
+                ruleset.Definition.Id,
+                draft.ClassId!,
+                draft.Level),
             CustomBuild = draft
         };
     }
@@ -373,12 +376,17 @@ public static class CharacterCreationRules
             .Select(weapon => weapon!);
     }
 
+    /// The draft's own level is passed rather than assumed to be one:
+    /// CheckCreationScope does hold player creation to level one today, but a
+    /// grant that silently ignored the level it was handed would be wrong the
+    /// moment that gate moves, and wrong invisibly.
     private static IReadOnlyList<CharacterResourceState> CreateStartingResources(
         string rulesetId,
-        string classId)
+        string classId,
+        int characterLevel)
     {
         return CampaignResourceGrants
-            .ForClass(rulesetId, classId)
+            .ForClass(rulesetId, classId, characterLevel)
             .Select(grant => new CharacterResourceState
             {
                 ResourceId = grant.Key,
