@@ -1034,7 +1034,7 @@ public sealed class ManualSaveSerializerTests
         ActiveEncounterState active =
             Assert.IsType<ActiveEncounterState>(
                 state.ActiveEncounter);
-        state = WatchtowerCombatTestData.ReplaceEncounter(
+        state = EncounterCombatTestData.ReplaceEncounter(
             state,
             EncounterRules.Complete(
                 active.Encounter,

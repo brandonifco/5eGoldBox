@@ -19,8 +19,8 @@ public sealed class ConsoleSessionRunnerCombatTests
         ApplicationSessionState encounter =
             CreateEncounterSession();
         string originalEncounter = CaptureEncounterState(encounter);
-        WatchtowerCombatResolutionResult expected =
-            WatchtowerCombatRules.AdvanceToDecision(encounter);
+        EncounterCombatResolutionResult expected =
+            EncounterCombatRules.AdvanceToDecision(encounter);
 
         string output = RunSession(
             string.Empty,
@@ -50,8 +50,8 @@ public sealed class ConsoleSessionRunnerCombatTests
         using TemporaryDirectory temporary = new();
         ApplicationSessionState encounter =
             CreateEncounterSession();
-        WatchtowerCombatDecision decision =
-            WatchtowerCombatRules.AdvanceToDecision(encounter)
+        EncounterCombatDecision decision =
+            EncounterCombatRules.AdvanceToDecision(encounter)
                 .ResultingDecision;
 
         string output = RunSession(
@@ -130,14 +130,14 @@ public sealed class ConsoleSessionRunnerCombatTests
         using TemporaryDirectory temporary = new();
         ApplicationSessionState encounter =
             CreateEncounterSession();
-        WatchtowerCombatResolutionResult normalized =
-            WatchtowerCombatRules.AdvanceToDecision(encounter);
-        WatchtowerCombatMovementDestinationOption destination =
+        EncounterCombatResolutionResult normalized =
+            EncounterCombatRules.AdvanceToDecision(encounter);
+        EncounterCombatMovementDestinationOption destination =
             normalized.ResultingDecision.Movement!
                 .DestinationOptions[0];
         string originalEncounter = CaptureEncounterState(encounter);
-        WatchtowerCombatResolutionResult expected =
-            WatchtowerCombatRules.Execute(
+        EncounterCombatResolutionResult expected =
+            EncounterCombatRules.Execute(
                 normalized.State,
                 new CombatMoveIntent
                 {
@@ -182,15 +182,15 @@ public sealed class ConsoleSessionRunnerCombatTests
             CreateAttackReadyState();
         string originalEncounter =
             CaptureEncounterState(attackReady.Session);
-        WatchtowerCombatResolutionResult normalized =
-            WatchtowerCombatRules.AdvanceToDecision(
+        EncounterCombatResolutionResult normalized =
+            EncounterCombatRules.AdvanceToDecision(
                 attackReady.Session);
-        WatchtowerCombatDecision decision =
+        EncounterCombatDecision decision =
             normalized.ResultingDecision;
-        (string WeaponId, WatchtowerCombatTargetOption Target) chosen =
+        (string WeaponId, EncounterCombatTargetOption Target) chosen =
             GetAvailableWeaponTargetPairs(decision).First();
-        WatchtowerCombatResolutionResult expected =
-            WatchtowerCombatRules.Execute(
+        EncounterCombatResolutionResult expected =
+            EncounterCombatRules.Execute(
                 normalized.State,
                 new CombatWeaponAttackIntent
                 {
@@ -240,15 +240,15 @@ public sealed class ConsoleSessionRunnerCombatTests
         using TemporaryDirectory temporary = new();
         AttackReadyState attackReady =
             CreateAttackReadyState();
-        WatchtowerCombatResolutionResult normalized =
-            WatchtowerCombatRules.AdvanceToDecision(
+        EncounterCombatResolutionResult normalized =
+            EncounterCombatRules.AdvanceToDecision(
                 attackReady.Session);
-        WatchtowerCombatDecision decision =
+        EncounterCombatDecision decision =
             normalized.ResultingDecision;
-        (string WeaponId, WatchtowerCombatTargetOption Target) chosen =
+        (string WeaponId, EncounterCombatTargetOption Target) chosen =
             GetAvailableWeaponTargetPairs(decision).First();
-        WatchtowerCombatResolutionResult expected =
-            WatchtowerCombatRules.Execute(
+        EncounterCombatResolutionResult expected =
+            EncounterCombatRules.Execute(
                 normalized.State,
                 new CombatWeaponAttackIntent
                 {
@@ -268,12 +268,12 @@ public sealed class ConsoleSessionRunnerCombatTests
             $"{selection}\n",
             temporary.SavePath,
             attackReady.Session);
-        IReadOnlyList<WatchtowerCombatDieRoll> dice =
+        IReadOnlyList<EncounterCombatDieRoll> dice =
             expected.PrimaryStep!.Dice;
 
         int previous = -1;
 
-        foreach (WatchtowerCombatDieRoll die in dice)
+        foreach (EncounterCombatDieRoll die in dice)
         {
             string line =
                 $"Die {die.Ordinal}: Purpose={die.Purpose}, Sides={die.Sides}, Value={die.Value}";
@@ -293,14 +293,14 @@ public sealed class ConsoleSessionRunnerCombatTests
         using TemporaryDirectory temporary = new();
         ApplicationSessionState encounter =
             CreateEncounterSession();
-        WatchtowerCombatResolutionResult normalized =
-            WatchtowerCombatRules.AdvanceToDecision(encounter);
-        WatchtowerCombatDecision decision =
+        EncounterCombatResolutionResult normalized =
+            EncounterCombatRules.AdvanceToDecision(encounter);
+        EncounterCombatDecision decision =
             normalized.ResultingDecision;
         int selection = GetEndTurnSelection(decision);
         string originalEncounter = CaptureEncounterState(encounter);
-        WatchtowerCombatResolutionResult expected =
-            WatchtowerCombatRules.Execute(
+        EncounterCombatResolutionResult expected =
+            EncounterCombatRules.Execute(
                 normalized.State,
                 new CombatEndTurnIntent
                 {
@@ -332,12 +332,12 @@ public sealed class ConsoleSessionRunnerCombatTests
         using TemporaryDirectory temporary = new();
         ApplicationSessionState encounter =
             CreateEncounterSession();
-        WatchtowerCombatResolutionResult normalized =
-            WatchtowerCombatRules.AdvanceToDecision(encounter);
-        WatchtowerCombatDecision decision =
+        EncounterCombatResolutionResult normalized =
+            EncounterCombatRules.AdvanceToDecision(encounter);
+        EncounterCombatDecision decision =
             normalized.ResultingDecision;
-        WatchtowerCombatResolutionResult expected =
-            WatchtowerCombatRules.Execute(
+        EncounterCombatResolutionResult expected =
+            EncounterCombatRules.Execute(
                 normalized.State,
                 new CombatEndTurnIntent
                 {
@@ -377,8 +377,8 @@ public sealed class ConsoleSessionRunnerCombatTests
         using TemporaryDirectory temporary = new();
         ApplicationSessionState encounter =
             CreateEncounterSession();
-        WatchtowerCombatResolutionResult normalized =
-            WatchtowerCombatRules.AdvanceToDecision(encounter);
+        EncounterCombatResolutionResult normalized =
+            EncounterCombatRules.AdvanceToDecision(encounter);
         int inspectSelection =
             GetInspectSelection(normalized.ResultingDecision);
 
@@ -424,8 +424,8 @@ public sealed class ConsoleSessionRunnerCombatTests
         using TemporaryDirectory temporary = new();
         ApplicationSessionState encounter =
             CreateEncounterSession();
-        WatchtowerCombatResolutionResult normalized =
-            WatchtowerCombatRules.AdvanceToDecision(encounter);
+        EncounterCombatResolutionResult normalized =
+            EncounterCombatRules.AdvanceToDecision(encounter);
         int inspectSelection =
             GetInspectSelection(normalized.ResultingDecision);
         string input = $"{inspectSelection}\n{inspectSelection}\n";
@@ -504,8 +504,8 @@ public sealed class ConsoleSessionRunnerCombatTests
         using TemporaryDirectory temporary = new();
         ApplicationSessionState encounter =
             CreateEncounterSession();
-        WatchtowerCombatDecision decision =
-            WatchtowerCombatRules.AdvanceToDecision(encounter)
+        EncounterCombatDecision decision =
+            EncounterCombatRules.AdvanceToDecision(encounter)
                 .ResultingDecision;
         int exitSelection = GetExitSelection(decision);
 
@@ -830,10 +830,10 @@ public sealed class ConsoleSessionRunnerCombatTests
         CombatStrategy strategy)
     {
         List<string> selections = new();
-        WatchtowerCombatResolutionResult result =
-            WatchtowerCombatRules.AdvanceToDecision(encounter);
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.AdvanceToDecision(encounter);
         ApplicationSessionState state = result.State;
-        WatchtowerCombatDecision decision =
+        EncounterCombatDecision decision =
             result.ResultingDecision;
 
         for (int operation = 0; operation < 1000; operation++)
@@ -854,15 +854,15 @@ public sealed class ConsoleSessionRunnerCombatTests
                 CombatDecisionState.PlayerDecisionRequired,
                 decision.State);
 
-            IReadOnlyList<WatchtowerCombatMovementDestinationOption>
+            IReadOnlyList<EncounterCombatMovementDestinationOption>
                 movements = GetAvailableMovements(decision);
-            IReadOnlyList<(string WeaponId, WatchtowerCombatTargetOption Target)>
+            IReadOnlyList<(string WeaponId, EncounterCombatTargetOption Target)>
                 pairs = GetAvailableWeaponTargetPairs(decision);
 
             if (strategy == CombatStrategy.AttackWhenPossible
                 && pairs.Count > 0)
             {
-                (string WeaponId, WatchtowerCombatTargetOption Target)
+                (string WeaponId, EncounterCombatTargetOption Target)
                     chosen = pairs
                         .OrderBy(pair =>
                             GetParticipantCurrentHitPoints(
@@ -878,7 +878,7 @@ public sealed class ConsoleSessionRunnerCombatTests
                 int pairIndex = pairs.ToList().IndexOf(chosen);
                 int selection = movements.Count + pairIndex + 1;
                 selections.Add(selection.ToString());
-                result = WatchtowerCombatRules.Execute(
+                result = EncounterCombatRules.Execute(
                     state,
                     new CombatWeaponAttackIntent
                     {
@@ -895,7 +895,7 @@ public sealed class ConsoleSessionRunnerCombatTests
                 == CombatStrategy.AttackWhenPossible
                 && movements.Count > 0)
             {
-                WatchtowerCombatMovementDestinationOption movement =
+                EncounterCombatMovementDestinationOption movement =
                     SelectMovementTowardNearestTarget(
                         state,
                         decision,
@@ -903,7 +903,7 @@ public sealed class ConsoleSessionRunnerCombatTests
                 int selection = movements.ToList()
                     .IndexOf(movement) + 1;
                 selections.Add(selection.ToString());
-                result = WatchtowerCombatRules.Execute(
+                result = EncounterCombatRules.Execute(
                     state,
                     new CombatMoveIntent
                     {
@@ -918,7 +918,7 @@ public sealed class ConsoleSessionRunnerCombatTests
             {
                 int selection = GetEndTurnSelection(decision);
                 selections.Add(selection.ToString());
-                result = WatchtowerCombatRules.Execute(
+                result = EncounterCombatRules.Execute(
                     state,
                     new CombatEndTurnIntent
                     {
@@ -937,14 +937,14 @@ public sealed class ConsoleSessionRunnerCombatTests
             "The deterministic combat script did not complete.");
     }
 
-    private static WatchtowerCombatMovementDestinationOption
+    private static EncounterCombatMovementDestinationOption
         SelectMovementTowardNearestTarget(
             ApplicationSessionState state,
-            WatchtowerCombatDecision decision,
-            IReadOnlyList<WatchtowerCombatMovementDestinationOption>
+            EncounterCombatDecision decision,
+            IReadOnlyList<EncounterCombatMovementDestinationOption>
                 movements)
     {
-        WatchtowerCombatTargetOption target =
+        EncounterCombatTargetOption target =
             decision.WeaponAttacks
                 .SelectMany(weapon => weapon.Targets)
                 .OrderBy(candidate =>
@@ -978,15 +978,15 @@ public sealed class ConsoleSessionRunnerCombatTests
     {
         ApplicationSessionState encounter =
             CreateEncounterSession();
-        WatchtowerCombatResolutionResult normalized =
-            WatchtowerCombatRules.AdvanceToDecision(encounter);
+        EncounterCombatResolutionResult normalized =
+            EncounterCombatRules.AdvanceToDecision(encounter);
 
-        foreach (WatchtowerCombatMovementDestinationOption movement
+        foreach (EncounterCombatMovementDestinationOption movement
             in normalized.ResultingDecision.Movement!
                 .DestinationOptions)
         {
-            WatchtowerCombatResolutionResult moved =
-                WatchtowerCombatRules.Execute(
+            EncounterCombatResolutionResult moved =
+                EncounterCombatRules.Execute(
                     normalized.State,
                     new CombatMoveIntent
                     {
@@ -1012,18 +1012,18 @@ public sealed class ConsoleSessionRunnerCombatTests
     }
 
     private static IReadOnlyList<string> CreateCombatLabels(
-        WatchtowerCombatDecision decision)
+        EncounterCombatDecision decision)
     {
         List<string> labels = new();
 
-        foreach (WatchtowerCombatMovementDestinationOption movement
+        foreach (EncounterCombatMovementDestinationOption movement
             in GetAvailableMovements(decision))
         {
             labels.Add(
                 $"Move to ({movement.Destination.X}, {movement.Destination.Y}) - {movement.MovementSpentFeet} ft");
         }
 
-        foreach ((string weaponId, WatchtowerCombatTargetOption target)
+        foreach ((string weaponId, EncounterCombatTargetOption target)
             in GetAvailableWeaponTargetPairs(decision))
         {
             string label =
@@ -1044,7 +1044,7 @@ public sealed class ConsoleSessionRunnerCombatTests
             labels.Add(label);
         }
 
-        foreach (WatchtowerCombatSpellAttackOption spellAttack
+        foreach (EncounterCombatSpellAttackOption spellAttack
             in decision.SpellAttacks)
         {
             if (!spellAttack.IsAvailable)
@@ -1052,7 +1052,7 @@ public sealed class ConsoleSessionRunnerCombatTests
                 continue;
             }
 
-            foreach (WatchtowerCombatTargetOption target
+            foreach (EncounterCombatTargetOption target
                 in spellAttack.Targets.Where(
                     target => target.IsAvailable))
             {
@@ -1083,7 +1083,7 @@ public sealed class ConsoleSessionRunnerCombatTests
                 labels.Add(label);
             }
 
-            foreach (WatchtowerCombatTargetCombinationOption combination
+            foreach (EncounterCombatTargetCombinationOption combination
                 in spellAttack.TargetCombinations)
             {
                 labels.Add(
@@ -1101,18 +1101,18 @@ public sealed class ConsoleSessionRunnerCombatTests
         return labels.AsReadOnly();
     }
 
-    private static IReadOnlyList<WatchtowerCombatMovementDestinationOption>
+    private static IReadOnlyList<EncounterCombatMovementDestinationOption>
         GetAvailableMovements(
-            WatchtowerCombatDecision decision)
+            EncounterCombatDecision decision)
     {
         return decision.Movement!.IsAvailable
             ? decision.Movement.DestinationOptions
-            : Array.Empty<WatchtowerCombatMovementDestinationOption>();
+            : Array.Empty<EncounterCombatMovementDestinationOption>();
     }
 
-    private static IReadOnlyList<(string WeaponId, WatchtowerCombatTargetOption Target)>
+    private static IReadOnlyList<(string WeaponId, EncounterCombatTargetOption Target)>
         GetAvailableWeaponTargetPairs(
-            WatchtowerCombatDecision decision)
+            EncounterCombatDecision decision)
     {
         return decision.WeaponAttacks
             .Where(weapon => weapon.IsAvailable)
@@ -1122,9 +1122,9 @@ public sealed class ConsoleSessionRunnerCombatTests
             .ToArray();
     }
 
-    private static IReadOnlyList<(string SpellId, WatchtowerCombatTargetOption Target)>
+    private static IReadOnlyList<(string SpellId, EncounterCombatTargetOption Target)>
         GetAvailableSpellTargetPairs(
-            WatchtowerCombatDecision decision)
+            EncounterCombatDecision decision)
     {
         return decision.SpellAttacks
             .Where(spell => spell.IsAvailable)
@@ -1138,9 +1138,9 @@ public sealed class ConsoleSessionRunnerCombatTests
     /// spells — the same order the real menu builds them in — so a
     /// selection index computed from this count lands on End Turn rather
     /// than a spell the driver never asked for.
-    private static IReadOnlyList<WatchtowerCombatTargetOption>
+    private static IReadOnlyList<EncounterCombatTargetOption>
         GetAvailableTargets(
-            WatchtowerCombatDecision decision)
+            EncounterCombatDecision decision)
     {
         return GetAvailableWeaponTargetPairs(decision)
             .Select(pair => pair.Target)
@@ -1153,20 +1153,20 @@ public sealed class ConsoleSessionRunnerCombatTests
     /// rows CreateSpellAttackCombinationLabel adds to the real menu, after
     /// every spell's single-target rows.
     private static int GetSpellCombinationRowCount(
-        WatchtowerCombatDecision decision)
+        EncounterCombatDecision decision)
     {
         return decision.SpellAttacks
             .Sum(spell => spell.TargetCombinations.Count);
     }
 
     private static int GetMovementCount(
-        WatchtowerCombatDecision decision)
+        EncounterCombatDecision decision)
     {
         return GetAvailableMovements(decision).Count;
     }
 
     private static int GetEndTurnSelection(
-        WatchtowerCombatDecision decision)
+        EncounterCombatDecision decision)
     {
         Assert.True(decision.EndTurn!.IsAvailable);
         return GetAvailableMovements(decision).Count
@@ -1176,7 +1176,7 @@ public sealed class ConsoleSessionRunnerCombatTests
     }
 
     private static int GetInspectSelection(
-        WatchtowerCombatDecision decision)
+        EncounterCombatDecision decision)
     {
         return GetAvailableMovements(decision).Count
             + GetAvailableTargets(decision).Count
@@ -1186,7 +1186,7 @@ public sealed class ConsoleSessionRunnerCombatTests
     }
 
     private static int GetExitSelection(
-        WatchtowerCombatDecision decision)
+        EncounterCombatDecision decision)
     {
         return GetInspectSelection(decision) + 1;
     }

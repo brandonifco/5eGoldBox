@@ -1,0 +1,10 @@
+using FiveEGoldBox.Core.Runtime;
+
+namespace FiveEGoldBox.Application.Combat;
+
+internal sealed record EncounterCombatEndTurnOption
+{
+    public required bool IsAvailable { get; init; }
+
+    public required EncounterActionUnavailabilityReason UnavailabilityReason { get; init; }
+}

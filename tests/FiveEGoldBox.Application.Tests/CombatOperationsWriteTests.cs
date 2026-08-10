@@ -104,7 +104,7 @@ public sealed class CombatOperationsWriteTests
     public void EnemyTurns_AreReportedAsEnemyTurnCompleted()
     {
         ApplicationSessionState state =
-            WatchtowerCombatTestData.AdvanceToCombatant(
+            EncounterCombatTestData.AdvanceToCombatant(
                 WatchtowerSignalTestData.CreateEncounterSession(),
                 "combatant.watchtower-raider.melee");
 

@@ -527,8 +527,8 @@ public sealed class ConsoleProcessRestartTests
         SignalReadyPlan signalReady = CreateSignalReadyPlan();
         ApplicationSessionState encounter =
             ScenarioTriggerRules.Activate(signalReady.State);
-        WatchtowerCombatResolutionResult normalized =
-            WatchtowerCombatRules.AdvanceToDecision(encounter);
+        EncounterCombatResolutionResult normalized =
+            EncounterCombatRules.AdvanceToDecision(encounter);
         int exitSelection = GetCombatExitSelection(
             normalized.ResultingDecision);
 
@@ -780,10 +780,10 @@ public sealed class ConsoleProcessRestartTests
         CombatStrategy strategy)
     {
         List<string> selections = new();
-        WatchtowerCombatResolutionResult result =
-            WatchtowerCombatRules.AdvanceToDecision(encounter);
+        EncounterCombatResolutionResult result =
+            EncounterCombatRules.AdvanceToDecision(encounter);
         ApplicationSessionState state = result.State;
-        WatchtowerCombatDecision decision =
+        EncounterCombatDecision decision =
             result.ResultingDecision;
 
         for (int operation = 0; operation < 1000; operation++)
@@ -807,15 +807,15 @@ public sealed class ConsoleProcessRestartTests
                     $"The public combat seam returned unexpected decision state '{decision.State}'.");
             }
 
-            IReadOnlyList<WatchtowerCombatMovementDestinationOption>
+            IReadOnlyList<EncounterCombatMovementDestinationOption>
                 movements = GetAvailableMovements(decision);
-            IReadOnlyList<(string WeaponId, WatchtowerCombatTargetOption Target)>
+            IReadOnlyList<(string WeaponId, EncounterCombatTargetOption Target)>
                 pairs = GetAvailableWeaponTargetPairs(decision);
 
             if (strategy == CombatStrategy.PartyVictory
                 && pairs.Count > 0)
             {
-                (string WeaponId, WatchtowerCombatTargetOption Target)
+                (string WeaponId, EncounterCombatTargetOption Target)
                     chosen = pairs
                         .OrderBy(pair =>
                             GetParticipantCurrentHitPoints(
@@ -833,7 +833,7 @@ public sealed class ConsoleProcessRestartTests
                     + pairIndex
                     + 1;
                 selections.Add(ToSelection(selection));
-                result = WatchtowerCombatRules.Execute(
+                result = EncounterCombatRules.Execute(
                     state,
                     new CombatWeaponAttackIntent
                     {
@@ -851,7 +851,7 @@ public sealed class ConsoleProcessRestartTests
             else if (strategy == CombatStrategy.PartyVictory
                 && movements.Count > 0)
             {
-                WatchtowerCombatMovementDestinationOption movement =
+                EncounterCombatMovementDestinationOption movement =
                     SelectMovementTowardNearestTarget(
                         state,
                         decision,
@@ -860,7 +860,7 @@ public sealed class ConsoleProcessRestartTests
                     .IndexOf(movement)
                     + 1;
                 selections.Add(ToSelection(selection));
-                result = WatchtowerCombatRules.Execute(
+                result = EncounterCombatRules.Execute(
                     state,
                     new CombatMoveIntent
                     {
@@ -886,7 +886,7 @@ public sealed class ConsoleProcessRestartTests
                     + GetSpellCombinationRowCount(decision)
                     + 1;
                 selections.Add(ToSelection(selection));
-                result = WatchtowerCombatRules.Execute(
+                result = EncounterCombatRules.Execute(
                     state,
                     new CombatEndTurnIntent
                     {
@@ -907,14 +907,14 @@ public sealed class ConsoleProcessRestartTests
             "The deterministic public combat strategy did not complete within 1000 player operations.");
     }
 
-    private static WatchtowerCombatMovementDestinationOption
+    private static EncounterCombatMovementDestinationOption
         SelectMovementTowardNearestTarget(
             ApplicationSessionState state,
-            WatchtowerCombatDecision decision,
-            IReadOnlyList<WatchtowerCombatMovementDestinationOption>
+            EncounterCombatDecision decision,
+            IReadOnlyList<EncounterCombatMovementDestinationOption>
                 movements)
     {
-        WatchtowerCombatTargetOption target =
+        EncounterCombatTargetOption target =
             decision.WeaponAttacks
                 .SelectMany(weapon => weapon.Targets)
                 .OrderBy(candidate =>
@@ -944,18 +944,18 @@ public sealed class ConsoleProcessRestartTests
             .First();
     }
 
-    private static IReadOnlyList<WatchtowerCombatMovementDestinationOption>
+    private static IReadOnlyList<EncounterCombatMovementDestinationOption>
         GetAvailableMovements(
-            WatchtowerCombatDecision decision)
+            EncounterCombatDecision decision)
     {
         return decision.Movement?.IsAvailable == true
             ? decision.Movement.DestinationOptions
-            : Array.Empty<WatchtowerCombatMovementDestinationOption>();
+            : Array.Empty<EncounterCombatMovementDestinationOption>();
     }
 
-    private static IReadOnlyList<(string WeaponId, WatchtowerCombatTargetOption Target)>
+    private static IReadOnlyList<(string WeaponId, EncounterCombatTargetOption Target)>
         GetAvailableWeaponTargetPairs(
-            WatchtowerCombatDecision decision)
+            EncounterCombatDecision decision)
     {
         return decision.WeaponAttacks
             .Where(weapon => weapon.IsAvailable)
@@ -965,9 +965,9 @@ public sealed class ConsoleProcessRestartTests
             .ToArray();
     }
 
-    private static IReadOnlyList<(string SpellId, WatchtowerCombatTargetOption Target)>
+    private static IReadOnlyList<(string SpellId, EncounterCombatTargetOption Target)>
         GetAvailableSpellTargetPairs(
-            WatchtowerCombatDecision decision)
+            EncounterCombatDecision decision)
     {
         return decision.SpellAttacks
             .Where(spell => spell.IsAvailable)
@@ -979,9 +979,9 @@ public sealed class ConsoleProcessRestartTests
 
     /// Every menu row an attack or a cast could occupy, weapons first then
     /// spells — the same order the real menu builds them in.
-    private static IReadOnlyList<WatchtowerCombatTargetOption>
+    private static IReadOnlyList<EncounterCombatTargetOption>
         GetAvailableTargets(
-            WatchtowerCombatDecision decision)
+            EncounterCombatDecision decision)
     {
         return GetAvailableWeaponTargetPairs(decision)
             .Select(pair => pair.Target)
@@ -994,14 +994,14 @@ public sealed class ConsoleProcessRestartTests
     /// rows CreateSpellAttackCombinationLabel adds to the real menu, after
     /// every spell's single-target rows.
     private static int GetSpellCombinationRowCount(
-        WatchtowerCombatDecision decision)
+        EncounterCombatDecision decision)
     {
         return decision.SpellAttacks
             .Sum(spell => spell.TargetCombinations.Count);
     }
 
     private static int GetCombatExitSelection(
-        WatchtowerCombatDecision decision)
+        EncounterCombatDecision decision)
     {
         if (decision.State
             != CombatDecisionState.PlayerDecisionRequired)
