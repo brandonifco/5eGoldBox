@@ -202,7 +202,8 @@ internal static class EncounterCombatDecisionFactory
             IsAvailable = evaluation.IsLegal,
             UnavailabilityReason = evaluation.UnavailabilityReason,
             AttackRollMode = evaluation.AttackRollMode,
-            DistanceFeet = evaluation.DistanceFeet
+            DistanceFeet = evaluation.DistanceFeet,
+            Cover = evaluation.Cover
         };
     }
 
@@ -288,6 +289,7 @@ internal static class EncounterCombatDecisionFactory
             UnavailabilityReason = evaluation.UnavailabilityReason,
             AttackRollMode = evaluation.AttackRollMode,
             DistanceFeet = evaluation.DistanceFeet,
+            Cover = evaluation.Cover,
             SaveAbility = spell.SaveAbility,
             SaveDc = spell.Resolution == SpellResolutionKind.SavingThrow
                 ? spell.SaveDc

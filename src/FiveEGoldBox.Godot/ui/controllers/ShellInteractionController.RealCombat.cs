@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FiveEGoldBox.Application.Combat;
+using FiveEGoldBox.Core.Rules;
+using FiveEGoldBox.Core.Runtime;
 using Godot;
 
 // The real integration seam's own combat handling — split out of
@@ -49,6 +51,11 @@ internal sealed partial class ShellInteractionController
 	// against — see EnterRealCombatSpellTargeting's own comment on why
 	// spell targeting drives its cursor from cells, not the pins.
 	private Dictionary<(int X, int Y), string>? _pendingRealSpellTargetPositions;
+	// Combatant id -> the display name the pins and the journal already
+	// use, captured when either targeting flow opens. CombatTargetOption
+	// carries only an id, and both the cursor preview and the confirmation
+	// dialog want the real name rather than "combatant.mill-rat.first".
+	private Dictionary<string, string>? _pendingRealTargetLabels;
 
 	// Called from ShellInteractionController.RealSession.cs's
 	// ApplicationMode.Encounter case (isNewCombat true or false depending
@@ -312,6 +319,139 @@ internal sealed partial class ShellInteractionController
 		_presentationController.SetMessage($"{reason} Press Esc to cancel.");
 	}
 
+	// Weapon-attack targeting's own cursor report, the pin-driven twin of
+	// ResolveRealMoveCursorFocused above. Only legal targets are focusable
+	// while attack targeting is open (CombatView.ApplyCombatantFocusability),
+	// so there is no illegal case to describe here — every pin the cursor
+	// can reach is one this attack could actually be made against.
+	//
+	// Resolves the weapon the same way ResolveRealCombatantTargeted does —
+	// first available weapon that lists this target — so the preview
+	// describes the exact attack pressing Enter would make. Two weapons
+	// reaching the same enemy can genuinely disagree (a bow shot from an
+	// adjacent square has disadvantage where a sword swing does not), and a
+	// preview drawn from a different weapon than the one that fires would
+	// be worse than none.
+	private void ResolveRealCombatantCursorFocused(string combatantId)
+	{
+		if (_pendingRealCombatCommand != "attack" ||
+			_pendingRealWeaponAttacks is null)
+		{
+			return;
+		}
+
+		foreach (CombatWeaponAttackOption weapon in _pendingRealWeaponAttacks)
+		{
+			if (!weapon.IsAvailable)
+			{
+				continue;
+			}
+
+			CombatTargetOption? target = weapon.Targets.FirstOrDefault(
+				candidate => candidate.IsAvailable &&
+					candidate.TargetCombatantId == combatantId);
+
+			if (target is null)
+			{
+				continue;
+			}
+
+			_presentationController.SetMessage(
+				$"{DescribeTargetPreview(combatantId, target)} Press Esc to cancel.");
+			return;
+		}
+	}
+
+	// What attacking or casting at this target actually costs, before the
+	// player commits to it: how far away it is, whether the roll is swung
+	// either way, and what its cover adds to what the roll has to beat.
+	//
+	// Every number is Core's own, computed for this exact actor/target/
+	// weapon-or-spell triple by the same prerequisite evaluation that will
+	// resolve the real roll a moment later — nothing here is re-derived or
+	// estimated client-side, which is the whole reason it can be trusted.
+	// Cover in particular has been computed and applied to every attack
+	// since long before this; it simply never crossed the Application
+	// boundary, so the player was hit by it without warning.
+	//
+	// Deliberately not a hit-chance percentage, which the Gold Box design
+	// reference also asks for (§21.3): a blessed attacker's bonus is a d4,
+	// so the real chance is a distribution rather than a figure, and
+	// collapsing it to one number would be confidently wrong exactly when
+	// a player leans on it hardest. The inputs are all shown instead.
+	private string DescribeTargetPreview(
+		string combatantId,
+		CombatTargetOption target)
+	{
+		string label = ResolveTargetLabel(combatantId);
+		List<string> parts = new();
+
+		if (target.DistanceFeet is int distance)
+		{
+			parts.Add($"{distance} ft");
+		}
+
+		switch (target.AttackRollMode)
+		{
+			case D20RollMode.Advantage:
+				parts.Add("advantage");
+				break;
+			case D20RollMode.Disadvantage:
+				parts.Add("disadvantage");
+				break;
+		}
+
+		if (DescribeCover(target) is string cover)
+		{
+			parts.Add(cover);
+		}
+
+		if (target.SaveDc is int saveDc && target.SaveAbility is Ability ability)
+		{
+			parts.Add($"DC {saveDc} {ability.ToString().ToUpperInvariant()[..3]} save");
+		}
+
+		return parts.Count == 0
+			? $"{label}."
+			: $"{label} — {string.Join(", ", parts)}.";
+	}
+
+	// Falls back to the raw id rather than throwing: a label map that
+	// somehow doesn't name this combatant is a cosmetic problem, and the
+	// id is exactly what every one of these call sites used to show.
+	private string ResolveTargetLabel(string combatantId)
+	{
+		return _pendingRealTargetLabels is not null &&
+			_pendingRealTargetLabels.TryGetValue(
+				combatantId,
+				out string? resolved)
+			? resolved
+			: combatantId;
+	}
+
+	// Null for no cover, so the caller can leave the phrase out entirely
+	// rather than printing a reassuring "no cover" on every single target.
+	// Which bonus is quoted follows how the target actually resists: an
+	// attack roll has to clear the armor-class bonus, a saving-throw spell
+	// has to clear the Dexterity save bonus. Both are on the same
+	// evaluation; naming the wrong one would misstate the cost.
+	private static string? DescribeCover(CombatTargetOption target)
+	{
+		if (target.Cover is not { } cover ||
+			cover.CoverLevel == EncounterCoverLevel.None)
+		{
+			return null;
+		}
+
+		string level = cover.CoverLevel == EncounterCoverLevel.Half
+			? "half cover"
+			: "three-quarters cover";
+
+		return target.SaveDc is not null
+			? $"{level} (+{cover.DexteritySavingThrowBonus} to its save)"
+			: $"{level} (+{cover.ArmorClassBonus} AC)";
+	}
+
 	// Reports whether the cursor's current tile is a legal target for the
 	// spell being cast. Every spell today only ever resolves against a
 	// specific creature, so there is only one reason a tile can be
@@ -329,10 +469,20 @@ internal sealed partial class ShellInteractionController
 
 		string spellName = _pendingRealSpellName ?? "this spell";
 
-		if (_pendingRealSpellTargetPositions.ContainsKey((gridX, gridY)))
+		if (_pendingRealSpellTargetPositions.TryGetValue(
+			(gridX, gridY),
+			out string? targetCombatantId))
 		{
+			CombatTargetOption? target = _pendingRealSpellTargets?
+				.FirstOrDefault(candidate =>
+					candidate.IsAvailable &&
+					candidate.TargetCombatantId == targetCombatantId);
+
 			_presentationController.SetMessage(
-				$"Choose a target for {spellName}. Press Esc to cancel.");
+				target is null
+					? $"Choose a target for {spellName}. Press Esc to cancel."
+					: $"{spellName} — {DescribeTargetPreview(targetCombatantId, target)} "
+						+ "Press Esc to cancel.");
 			return;
 		}
 
@@ -354,6 +504,7 @@ internal sealed partial class ShellInteractionController
 		Dictionary<string, CombatantMarkerViewModel> combatantsById =
 			combatSnapshot.View.Combatants
 				.ToDictionary(combatant => combatant.Id, StringComparer.Ordinal);
+		_pendingRealTargetLabels = CaptureTargetLabels(combatSnapshot);
 		HashSet<string> seenTargets = new(StringComparer.Ordinal);
 		List<CombatHighlightViewModel> highlights = new();
 		List<string> targetIds = new();
@@ -399,9 +550,29 @@ internal sealed partial class ShellInteractionController
 
 		PushContext(ShellInteractionContext.Targeting);
 		_presentationController.ShowCombatHighlights(highlights);
-		_presentationController.SetCombatTargetableCombatants(targetIds);
+
+		// Before SetCombatTargetableCombatants, not after: that call grabs
+		// focus onto the first legal target, which synchronously fires
+		// CombatantCursorFocused and writes the real per-target preview.
+		// Setting the generic prompt afterwards would overwrite it with a
+		// less useful line every single time targeting opened -- the same
+		// append/overwrite ordering trap the journal wiring already hit.
 		_presentationController.SetMessage(
 			"Choose a target to attack. Press Esc to cancel.");
+		_presentationController.SetCombatTargetableCombatants(targetIds);
+	}
+
+	// The display names for every combatant on the field, keyed by id.
+	// Captured whole rather than filtered to the current legal targets --
+	// it costs nothing, and both targeting flows plus the two confirmation
+	// dialogs read from the same map.
+	private static Dictionary<string, string> CaptureTargetLabels(
+		RealCombatSnapshot combatSnapshot)
+	{
+		return combatSnapshot.View.Combatants.ToDictionary(
+			combatant => combatant.Id,
+			combatant => combatant.Label,
+			StringComparer.Ordinal);
 	}
 
 
@@ -441,6 +612,7 @@ internal sealed partial class ShellInteractionController
 		_pendingRealSpellId = spellId;
 		_pendingRealSpellName = spell.SpellName;
 		_pendingRealSpellTargets = spell.Targets;
+		_pendingRealTargetLabels = CaptureTargetLabels(combatSnapshot);
 
 		Dictionary<string, CombatantMarkerViewModel> combatantsById =
 			combatSnapshot.View.Combatants
@@ -602,9 +774,14 @@ internal sealed partial class ShellInteractionController
 				continue;
 			}
 
+			string targetLabel = ResolveTargetLabel(combatantId);
+
 			PopContext(ShellInteractionContext.Targeting);
 			ClearRealCombatTargeting();
-			ShowRealAttackConfirmation(weapon.WeaponId, combatantId);
+			ShowRealAttackConfirmation(
+				weapon.WeaponId,
+				combatantId,
+				targetLabel);
 			return;
 		}
 	}
@@ -627,10 +804,15 @@ internal sealed partial class ShellInteractionController
 		}
 
 		string spellName = _pendingRealSpellName ?? spellId;
+		string targetLabel = ResolveTargetLabel(combatantId);
 
 		PopContext(ShellInteractionContext.Targeting);
 		ClearRealCombatTargeting();
-		ShowRealSpellCastConfirmation(spellId, spellName, combatantId);
+		ShowRealSpellCastConfirmation(
+			spellId,
+			spellName,
+			combatantId,
+			targetLabel);
 	}
 
 	// Shared by both cancel paths (Esc via ShellInputRouter's
@@ -647,6 +829,7 @@ internal sealed partial class ShellInteractionController
 		_pendingRealSpellName = null;
 		_pendingRealSpellTargets = null;
 		_pendingRealSpellTargetPositions = null;
+		_pendingRealTargetLabels = null;
 		_presentationController.ShowCombatHighlights(null);
 		_presentationController.SetCombatTargetableCombatants(null);
 	}
@@ -658,18 +841,24 @@ internal sealed partial class ShellInteractionController
 	}
 
 	// Reuses the same ConfirmationDialog mechanism M6e/M8e already
-	// established for the one combat command with real consequence —
-	// enemy combatants have no public display name to show here (see
-	// RealCombatSession.DescribeLabel), so the raw combatant ID is what
-	// the confirmation names, the same limitation Console has always had.
-	private void ShowRealAttackConfirmation(string weaponId, string targetCombatantId)
+	// established for the one combat command with real consequence. This
+	// used to name the raw combatant ID, on the since-outdated belief that
+	// an enemy had no display name to show -- CombatantView.DisplayName is
+	// resolved for every combatant and already drives both the pins and
+	// the journal, so the confirmation now says what the rest of the
+	// screen says. Captured before the targeting state is cleared, since
+	// ResolveRealCombatantTargeted clears it on the way in here.
+	private void ShowRealAttackConfirmation(
+		string weaponId,
+		string targetCombatantId,
+		string targetLabel)
 	{
 		PushContext(ShellInteractionContext.Confirmation);
 		_presentationController.SelectCombatTarget(targetCombatantId);
 
 		_confirmation.ShowConfirmation(
 			"Attack",
-			$"Attack {targetCombatantId}?",
+			$"Attack {targetLabel}?",
 			"Attack",
 			"Cancel",
 			onConfirmed: () =>
@@ -690,14 +879,15 @@ internal sealed partial class ShellInteractionController
 	private void ShowRealSpellCastConfirmation(
 		string spellId,
 		string spellName,
-		string targetCombatantId)
+		string targetCombatantId,
+		string targetLabel)
 	{
 		PushContext(ShellInteractionContext.Confirmation);
 		_presentationController.SelectCombatTarget(targetCombatantId);
 
 		_confirmation.ShowConfirmation(
 			"Cast",
-			$"Cast {spellName} on {targetCombatantId}?",
+			$"Cast {spellName} on {targetLabel}?",
 			"Cast",
 			"Cancel",
 			onConfirmed: () =>

@@ -114,6 +114,7 @@ internal static class EncounterCombatResultMapper
             target.UnavailabilityReason,
             target.AttackRollMode,
             target.DistanceFeet,
+            target.Cover,
             target.SaveAbility,
             target.SaveDc);
     }

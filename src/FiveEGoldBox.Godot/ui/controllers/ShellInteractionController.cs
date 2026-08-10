@@ -60,6 +60,8 @@ internal sealed partial class ShellInteractionController : IShellInteractionStat
 		_presentationController.CombatantTargeted += OnCombatantTargeted;
 		_presentationController.CombatCellTargeted += OnCombatCellTargeted;
 		_presentationController.CombatCellCursorFocused += OnCombatCellCursorFocused;
+		_presentationController.CombatCombatantCursorFocused +=
+			OnCombatCombatantCursorFocused;
 	}
 
 	public ShellInteractionContext CurrentContext => _contextStack.Peek();

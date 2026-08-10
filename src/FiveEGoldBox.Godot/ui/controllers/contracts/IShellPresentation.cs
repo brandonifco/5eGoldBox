@@ -58,6 +58,7 @@ internal interface IShellPresentation
 	event Action<string>? CombatantTargeted;
 	event Action<int, int>? CombatCellTargeted;
 	event Action<int, int>? CombatCellCursorFocused;
+	event Action<string>? CombatCombatantCursorFocused;
 
 	CombatantMarkerViewModel? ActiveCombatant { get; }
 

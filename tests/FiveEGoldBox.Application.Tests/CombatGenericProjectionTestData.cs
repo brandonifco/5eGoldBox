@@ -117,10 +117,36 @@ internal static class CombatGenericProjectionTestData
             activePosition: 1);
     }
 
+    /// The scout's own shortbow line to the archer runs straight along
+    /// row 2, so a cover feature dropped at (4, 2) sits between them and
+    /// nothing else -- the guard, brute and spear reach are all untouched
+    /// by it, which is what makes this a clean single-variable case.
+    internal static EncounterState CreateCoveredTargetEncounter(
+        EncounterCoverLevel coverLevel)
+    {
+        return CreateEncounter(
+            scoutWeapons:
+            [
+                CreateSpear(),
+                CreateShortbow(ammunitionQuantity: 4)
+            ],
+            scoutHasAction: true,
+            activePosition: 1,
+            coverPositions:
+            [
+                new EncounterCoverPosition
+                {
+                    Position = new GridPosition(4, 2),
+                    CoverLevel = coverLevel
+                }
+            ]);
+    }
+
     private static EncounterState CreateEncounter(
         IReadOnlyList<WeaponAttack> scoutWeapons,
         bool scoutHasAction,
-        int activePosition)
+        int activePosition,
+        IReadOnlyList<EncounterCoverPosition>? coverPositions = null)
     {
         EncounterParticipantSetup[] participants =
         [
@@ -173,7 +199,8 @@ internal static class CombatGenericProjectionTestData
                     Array.AsReadOnly(
                         new[] { new GridPosition(1, 1) }),
                 CoverPositions =
-                    Array.Empty<EncounterCoverPosition>(),
+                    coverPositions
+                        ?? Array.Empty<EncounterCoverPosition>(),
                 DifficultTerrainPositions =
                     Array.Empty<GridPosition>()
             },

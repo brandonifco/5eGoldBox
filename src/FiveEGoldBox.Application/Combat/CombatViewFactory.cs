@@ -255,7 +255,8 @@ internal static class CombatViewFactory
                     evaluation.IsLegal,
                     evaluation.UnavailabilityReason,
                     evaluation.AttackRollMode,
-                    evaluation.DistanceFeet);
+                    evaluation.DistanceFeet,
+                    evaluation.Cover);
             }
 
             bool hasLegalTarget = targets.Any(target => target.IsAvailable);
@@ -311,6 +312,7 @@ internal static class CombatViewFactory
                     evaluation.UnavailabilityReason,
                     evaluation.AttackRollMode,
                     evaluation.DistanceFeet,
+                    evaluation.Cover,
                     spell.SaveAbility,
                     spell.Resolution == SpellResolutionKind.SavingThrow
                         ? spell.SaveDc

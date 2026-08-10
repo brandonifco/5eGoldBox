@@ -15,6 +15,10 @@ internal sealed record EncounterCombatTargetOption
 
     public int? DistanceFeet { get; init; }
 
+    /// See CombatTargetOption.Cover — carried here too so the write path's
+    /// own decision surface says the same thing the read path's does.
+    public EncounterCoverEvaluation? Cover { get; init; }
+
     /// Set only for a spell target resolved by a saving throw.
     public Ability? SaveAbility { get; init; }
 
