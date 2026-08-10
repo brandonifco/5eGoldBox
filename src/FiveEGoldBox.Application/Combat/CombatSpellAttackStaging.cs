@@ -22,7 +22,8 @@ internal static class CombatSpellAttackStaging
             evaluation.IsLegal,
             evaluation.UnavailabilityReason,
             evaluation.AttackRollMode,
-            evaluation.DistanceFeet);
+            evaluation.DistanceFeet,
+            evaluation.Cover);
     }
 }
 
@@ -30,4 +31,5 @@ internal sealed record CombatSpellAttackAvailability(
     bool IsLegal,
     EncounterActionUnavailabilityReason UnavailabilityReason,
     D20RollMode? AttackRollMode,
-    int? DistanceFeet);
+    int? DistanceFeet,
+    EncounterCoverEvaluation? Cover);

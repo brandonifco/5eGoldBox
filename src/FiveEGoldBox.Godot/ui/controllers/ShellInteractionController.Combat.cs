@@ -110,6 +110,19 @@ internal sealed partial class ShellInteractionController
 		}
 	}
 
+	// Same split as OnCombatCellCursorFocused above, for the pin cursor
+	// weapon-attack targeting drives instead of cells. Mock combat's pins
+	// stay focusable the whole time (nothing ever restricts them), so
+	// gating on a real session is what keeps an idle mouse drifting over
+	// the mock battlefield from overwriting the message line.
+	private void OnCombatCombatantCursorFocused(string combatantId)
+	{
+		if (_activeCombatSession is not null)
+		{
+			ResolveRealCombatantCursorFocused(combatantId);
+		}
+	}
+
 	private void OnCombatantTargeted(string combatantId)
 	{
 		if (_activeCombatSession is not null)

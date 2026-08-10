@@ -93,6 +93,12 @@ public partial class CombatView : Control
 	// destination/target data it built the cursor grid from, so this only
 	// needs to report where the cursor is now, not judge it itself.
 	public event Action<int, int>? CellCursorFocused;
+	// The same idea for a combatant pin gaining focus. Weapon-attack
+	// targeting resolves by combatant id and so cycles pins rather than
+	// cells, which means CellCursorFocused is silent for the whole of it —
+	// without this there is no moment at which a client could describe the
+	// target the cursor is sitting on before the player commits.
+	public event Action<string>? CombatantCursorFocused;
 
 	public override void _Ready()
 	{

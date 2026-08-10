@@ -115,6 +115,14 @@ public partial class CombatView
 
 			string combatantId = combatant.Id;
 			pin.Pressed += () => CombatantActivated?.Invoke(combatantId);
+			// The pin twin of the cursor cells' own FocusEntered wiring
+			// below. Weapon-attack targeting cycles the *pins*, not cells
+			// (ApplyCombatantFocusability explains why), so a preview of
+			// what attacking this target would actually cost has to hang
+			// off the pin gaining focus -- CellCursorFocused never fires
+			// during an attack.
+			pin.FocusEntered += () =>
+				CombatantCursorFocused?.Invoke(combatantId);
 
 			PositionCombatant(pin, combatant.GridX, combatant.GridY);
 			_combatantPins.Add(pin);

@@ -60,6 +60,8 @@ internal sealed partial class ShellPresentationController : IShellPresentation
 		_combatView.CombatantActivated += id => CombatantTargeted?.Invoke(id);
 		_combatView.CellActivated += (x, y) => CombatCellTargeted?.Invoke(x, y);
 		_combatView.CellCursorFocused += (x, y) => CombatCellCursorFocused?.Invoke(x, y);
+		_combatView.CombatantCursorFocused +=
+			id => CombatCombatantCursorFocused?.Invoke(id);
 	}
 
 	public PresentationMode CurrentMode { get; private set; }

@@ -122,6 +122,79 @@ public sealed class CombatOperationsTests
         AssertDecisionAgreesWithView(view);
     }
 
+    /// Core has always computed cover per attack and added it to the armor
+    /// class the roll has to beat; until this crossed the projection it was
+    /// invisible to any client, so a player was penalised by it with no way
+    /// to see it coming. Both bonuses are asserted, not just the level: the
+    /// numbers are what a preview actually shows.
+    [Theory]
+    [InlineData(EncounterCoverLevel.Half, 2)]
+    [InlineData(EncounterCoverLevel.ThreeQuarters, 5)]
+    public void Create_TargetBehindCover_ProjectsCoverOntoTheTargetOption(
+        EncounterCoverLevel coverLevel,
+        int expectedBonus)
+    {
+        EncounterState encounter =
+            CombatGenericProjectionTestData.CreateCoveredTargetEncounter(
+                coverLevel);
+
+        CombatView view = CombatViewFactory.Create(
+            encounter,
+            CombatGenericProjectionTestData.CreateControlledCombatantIds());
+
+        CombatTargetOption target = FindTarget(
+            view,
+            CombatGenericProjectionTestData.ShortbowId,
+            CombatGenericProjectionTestData.ArcherId);
+
+        Assert.NotNull(target.Cover);
+        Assert.Equal(coverLevel, target.Cover.CoverLevel);
+        Assert.Equal(expectedBonus, target.Cover.ArmorClassBonus);
+        Assert.Equal(expectedBonus, target.Cover.DexteritySavingThrowBonus);
+    }
+
+    /// The absent case has to be a real "no cover" rather than a null,
+    /// because a client cannot tell "nothing in the way" apart from "the
+    /// engine did not tell me" from a null alone — and would have to
+    /// choose between warning about cover that isn't there and staying
+    /// silent about cover that is.
+    [Fact]
+    public void Create_TargetInTheOpen_ProjectsNoCoverRatherThanNull()
+    {
+        EncounterState encounter =
+            CombatGenericProjectionTestData.CreatePlayerEncounter();
+
+        CombatView view = CombatViewFactory.Create(
+            encounter,
+            CombatGenericProjectionTestData.CreateControlledCombatantIds());
+
+        CombatTargetOption target = FindTarget(
+            view,
+            CombatGenericProjectionTestData.ShortbowId,
+            CombatGenericProjectionTestData.ArcherId);
+
+        Assert.NotNull(target.Cover);
+        Assert.Equal(EncounterCoverLevel.None, target.Cover.CoverLevel);
+        Assert.Equal(0, target.Cover.ArmorClassBonus);
+    }
+
+    private static CombatTargetOption FindTarget(
+        CombatView view,
+        string weaponId,
+        string targetCombatantId)
+    {
+        return view.Decision.WeaponAttacks
+            .Single(weapon => string.Equals(
+                weapon.WeaponId,
+                weaponId,
+                StringComparison.Ordinal))
+            .Targets
+            .Single(target => string.Equals(
+                target.TargetCombatantId,
+                targetCombatantId,
+                StringComparison.Ordinal));
+    }
+
     [Fact]
     public void Create_AutomaticDecision_HasAutomaticOnlyShape()
     {

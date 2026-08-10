@@ -24,7 +24,8 @@ internal static class CombatAttackStaging
             evaluation.UnavailabilityReason,
             evaluation.AttackRollMode,
             evaluation.DistanceFeet,
-            evaluation.AttackRollContributions);
+            evaluation.AttackRollContributions,
+            evaluation.Cover);
     }
 
     internal static CombatAttackEvaluation Evaluate(
@@ -62,7 +63,8 @@ internal sealed record CombatAttackAvailability(
     EncounterActionUnavailabilityReason UnavailabilityReason,
     D20RollMode? AttackRollMode,
     int? DistanceFeet,
-    RollContributionSet AttackRollContributions);
+    RollContributionSet AttackRollContributions,
+    EncounterCoverEvaluation Cover);
 
 internal sealed record CombatAttackEvaluation(
     DamageDice? RequiredDamageDice,

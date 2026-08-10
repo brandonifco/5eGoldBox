@@ -25,7 +25,8 @@ internal static class EncounterCombatAttackStaging
             evaluation.UnavailabilityReason,
             evaluation.AttackRollMode,
             evaluation.DistanceFeet,
-            evaluation.AttackRollContributions);
+            evaluation.AttackRollContributions,
+            evaluation.Cover);
     }
 
     internal static EncounterCombatAttackExecution Resolve(
@@ -268,7 +269,8 @@ internal sealed record EncounterCombatAttackAvailability(
     EncounterActionUnavailabilityReason UnavailabilityReason,
     D20RollMode? AttackRollMode,
     int? DistanceFeet,
-    RollContributionSet AttackRollContributions);
+    RollContributionSet AttackRollContributions,
+    EncounterCoverEvaluation Cover);
 
 internal sealed record EncounterCombatAttackExecution(
     EncounterWeaponAttackResult Result,

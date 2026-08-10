@@ -27,7 +27,8 @@ internal static class EncounterCombatSpellAttackStaging
             evaluation.AttackRollMode,
             evaluation.DistanceFeet,
             evaluation.AttackRollContributions,
-            evaluation.SavingThrowContributions);
+            evaluation.SavingThrowContributions,
+            evaluation.Cover);
     }
 
     internal static EncounterCombatSpellAttackExecution Resolve(
@@ -313,7 +314,8 @@ internal sealed record EncounterCombatSpellAttackAvailability(
     D20RollMode? AttackRollMode,
     int? DistanceFeet,
     RollContributionSet AttackRollContributions,
-    RollContributionSet SavingThrowContributions);
+    RollContributionSet SavingThrowContributions,
+    EncounterCoverEvaluation? Cover);
 
 internal sealed record EncounterCombatSpellAttackExecution(
     EncounterSpellCastResult Result,
