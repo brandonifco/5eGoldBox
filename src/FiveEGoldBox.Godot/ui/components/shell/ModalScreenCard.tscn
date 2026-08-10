@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://g9r3t6w8y2b5d" path="res://ui/components/selection/SelectionList.tscn" id="2_selection_list"]
 
 [node name="ModalScreenCard" type="PanelContainer"]
-custom_minimum_size = Vector2(560, 0)
+custom_minimum_size = Vector2(1000, 0)
 theme_type_variation = &"ShellModalPanel"
 script = ExtResource("1_modal_screen_card")
 
@@ -22,6 +22,7 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_type_variation = &"ShellBodyLabel"
+theme_override_font_sizes/font_size = 13
 text = "Breadcrumb"
 autowrap_mode = 2
 
@@ -32,11 +33,39 @@ theme_type_variation = &"ShellSectionTitle"
 text = "Screen Title"
 autowrap_mode = 2
 
-[node name="BodyLabel" type="Label" parent="ScreenMargin/ScreenLayout"]
+[node name="TwoColumnRow" type="HBoxContainer" parent="ScreenMargin/ScreenLayout"]
 unique_name_in_owner = true
 visible = false
+custom_minimum_size = Vector2(0, 380)
 layout_mode = 2
+theme_override_constants/separation = 28
+
+[node name="LeftColumn" type="VBoxContainer" parent="ScreenMargin/ScreenLayout/TwoColumnRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="RightColumn" type="VBoxContainer" parent="ScreenMargin/ScreenLayout/TwoColumnRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="BodyScroll" type="ScrollContainer" parent="ScreenMargin/ScreenLayout"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="BodyLabel" type="Label" parent="ScreenMargin/ScreenLayout/BodyScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
 theme_type_variation = &"ShellBodyLabel"
+theme_override_font_sizes/font_size = 13
+vertical_alignment = 0
 text = "Body text."
 autowrap_mode = 2
 
@@ -89,8 +118,9 @@ autowrap_mode = 2
 [node name="ItemList" parent="ScreenMargin/ScreenLayout" instance=ExtResource("2_selection_list")]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(0, 220)
+custom_minimum_size = Vector2(0, 280)
 layout_mode = 2
+size_flags_vertical = 3
 theme_type_variation = &"ImmersiveOverlayPanel"
 TitleText = ""
 EmptyText = "Nothing here."

@@ -60,6 +60,13 @@ internal sealed partial class CharacterCreationSession
 
 	private int _stepIndex;
 	private int _abilityAssignmentIndex;
+	// The ability a row activation has marked as this placement's target,
+	// not yet actually assigned -- assignment is a real, consequential
+	// commit (it consumes the current standard-array value and can't be
+	// un-clicked the way a checkbox can), so it happens on Next, not on
+	// activating the row. Cleared once committed, once Back cancels it,
+	// or between characters.
+	private Ability? _pendingAbilityAssignment;
 
 	private string? _raceId;
 	private string? _subraceId;
@@ -144,7 +151,7 @@ internal sealed partial class CharacterCreationSession
 				break;
 
 			case CharacterCreationStep.AbilityScores:
-				AssignAbilityScore(optionId);
+				SelectPendingAbility(optionId);
 				break;
 
 			case CharacterCreationStep.Skills:
@@ -167,9 +174,30 @@ internal sealed partial class CharacterCreationSession
 	/// Moves to the next step, or -- from Review -- confirms the character
 	/// and starts the next one. Returns false with a reason when the current
 	/// step is not satisfied, or when the engine rejects the finished draft.
+	///
+	/// Within Assign Ability Scores specifically, "next" means something
+	/// narrower while a placement is still in progress: commit whichever
+	/// ability a row activation marked as pending, consuming the current
+	/// standard-array value, and stay on this same step for the next one --
+	/// only once all six are placed does Next mean "leave this step" the
+	/// way it does everywhere else.
 	internal bool TryAdvance(out string? error)
 	{
 		error = null;
+
+		if (CurrentStep() == CharacterCreationStep.AbilityScores
+			&& _abilityAssignmentIndex < StandardArrayScores.Count)
+		{
+			if (_pendingAbilityAssignment is not Ability pending)
+			{
+				error = "Choose an ability for this score to continue.";
+				return false;
+			}
+
+			AssignAbilityScore(pending.ToString());
+			_pendingAbilityAssignment = null;
+			return true;
+		}
 
 		CharacterCreationStepView view = Describe();
 
@@ -213,16 +241,26 @@ internal sealed partial class CharacterCreationSession
 
 	/// Steps back one choice. Within ability assignment that means undoing
 	/// the last score placed rather than leaving the step, since each score
-	/// is its own decision.
+	/// is its own decision -- but a pending, not-yet-committed pick (one
+	/// marked by a row activation, not yet locked in by Next) is undone
+	/// first, before reaching back into an actual past placement.
 	internal void Back()
 	{
-		if (CurrentStep() == CharacterCreationStep.AbilityScores
-			&& _abilityAssignmentIndex > 0)
+		if (CurrentStep() == CharacterCreationStep.AbilityScores)
 		{
-			_abilityAssignmentIndex--;
-			Ability assigned = AbilityAssignedAt(_abilityAssignmentIndex);
-			_abilityScores.Remove(assigned);
-			return;
+			if (_pendingAbilityAssignment is not null)
+			{
+				_pendingAbilityAssignment = null;
+				return;
+			}
+
+			if (_abilityAssignmentIndex > 0)
+			{
+				_abilityAssignmentIndex--;
+				Ability assigned = AbilityAssignedAt(_abilityAssignmentIndex);
+				_abilityScores.Remove(assigned);
+				return;
+			}
 		}
 
 		if (_stepIndex > 0)

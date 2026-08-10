@@ -42,4 +42,11 @@ internal sealed class ShellModalScreenController : IShellModalScreen
 	{
 		_view.UpdateBody(bodyText);
 	}
+
+	public void UpdateCommands(
+		IReadOnlyList<CommandViewModel> commands,
+		IReadOnlyDictionary<string, Action> commandHandlers)
+	{
+		_view.UpdateCommands(commands, commandHandlers);
+	}
 }

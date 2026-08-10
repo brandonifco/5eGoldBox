@@ -15,4 +15,8 @@ internal interface IShellModalScreen
 	void CloseScreen();
 
 	void UpdateBody(string? bodyText);
+
+	void UpdateCommands(
+		IReadOnlyList<CommandViewModel> commands,
+		IReadOnlyDictionary<string, Action> commandHandlers);
 }

@@ -81,7 +81,8 @@ internal sealed partial class CharacterCreationSession
 			_options.Races.Select(race => new CommandViewModel(
 				race.Id,
 				race.Name,
-				TooltipText: DescribeRaceTraits(race))),
+				TooltipText: CombineDescription(
+					race.Description, DescribeRaceTraits(race)))),
 			_raceId,
 			"Choose a race to continue.");
 	}
@@ -98,7 +99,9 @@ internal sealed partial class CharacterCreationSession
 			race.Subraces.Select(subrace => new CommandViewModel(
 				subrace.Id,
 				subrace.Name,
-				TooltipText: DescribeIncreases(subrace.AbilityScoreIncreases))),
+				TooltipText: CombineDescription(
+					subrace.Description,
+					DescribeIncreases(subrace.AbilityScoreIncreases)))),
 			_subraceId,
 			"Choose a subrace to continue.");
 	}
@@ -114,7 +117,9 @@ internal sealed partial class CharacterCreationSession
 			_options.Classes.Select(characterClass => new CommandViewModel(
 				characterClass.Id,
 				characterClass.Name,
-				TooltipText: DescribeClassSummary(characterClass))),
+				TooltipText: CombineDescription(
+					characterClass.Description,
+					DescribeClassSummary(characterClass)))),
 			_classId,
 			"Choose a class to continue.");
 	}
@@ -126,7 +131,8 @@ internal sealed partial class CharacterCreationSession
 		List<CommandViewModel> options = characterClass.Subclasses
 			.Select(subclass => new CommandViewModel(
 				subclass.Id,
-				subclass.Name))
+				subclass.Name,
+				TooltipText: subclass.Description))
 			.ToList();
 
 		// A subclass is genuinely optional at level 1 -- real 5e picks one
@@ -160,7 +166,9 @@ internal sealed partial class CharacterCreationSession
 			_options.Backgrounds.Select(background => new CommandViewModel(
 				background.Id,
 				background.Name,
-				TooltipText: DescribeSkillList(background.SkillProficiencies))),
+				TooltipText: CombineDescription(
+					background.Description,
+					$"Grants: {DescribeSkillList(background.SkillProficiencies)}"))),
 			_backgroundId,
 			"Choose a background to continue.");
 	}
@@ -178,10 +186,21 @@ internal sealed partial class CharacterCreationSession
 					.Select(ability =>
 						$"{Abbreviate(ability)} {_abilityScores[ability]}"));
 
-		string body = finished
-			? $"All six assigned.   {assignedSoFar}"
-			: $"Assign {StandardArrayScores[_abilityAssignmentIndex]} to "
-				+ $"which ability?\n{assignedSoFar}";
+		string body;
+
+		if (finished)
+		{
+			body = $"All six assigned.   {assignedSoFar}";
+		}
+		else
+		{
+			int scoreToPlace = StandardArrayScores[_abilityAssignmentIndex];
+
+			body = _pendingAbilityAssignment is Ability pending
+				? $"Assign {scoreToPlace} to {pending}? Press Next to "
+					+ $"confirm, or pick a different ability.\n{assignedSoFar}"
+				: $"Assign {scoreToPlace} to which ability?\n{assignedSoFar}";
+		}
 
 		IReadOnlyList<CommandViewModel> options = finished
 			? Array.Empty<CommandViewModel>()
@@ -190,8 +209,15 @@ internal sealed partial class CharacterCreationSession
 				.Select(ability => new CommandViewModel(
 					ability.ToString(),
 					ability.ToString(),
-					TooltipText: DescribeRacialBonusFor(ability)))
+					TooltipText: CombineAbilityTooltip(ability)))
 				.ToArray();
+
+		HashSet<string> selected = new(StringComparer.Ordinal);
+
+		if (_pendingAbilityAssignment is Ability pendingId)
+		{
+			selected.Add(pendingId.ToString());
+		}
 
 		return new CharacterCreationStepView(
 			CharacterCreationStep.AbilityScores,
@@ -199,14 +225,14 @@ internal sealed partial class CharacterCreationSession
 			Breadcrumb("Abilities"),
 			body,
 			options,
-			new HashSet<string>(StringComparer.Ordinal),
+			selected,
 			IsMultiSelect: false,
 			IsTextEntry: false,
 			TextValue: string.Empty,
-			CanAdvance: finished,
-			BlockedReason: finished
+			CanAdvance: finished || _pendingAbilityAssignment is not null,
+			BlockedReason: finished || _pendingAbilityAssignment is not null
 				? null
-				: "Assign all six scores to continue.");
+				: "Choose an ability for this score to continue.");
 	}
 
 	private CharacterCreationStepView DescribeSkills()
@@ -217,7 +243,8 @@ internal sealed partial class CharacterCreationSession
 		IReadOnlyList<CommandViewModel> options = characterClass.SkillChoices
 			.Select(skillId => new CommandViewModel(
 				skillId,
-				SkillName(skillId)))
+				SkillName(skillId),
+				TooltipText: SkillDescription(skillId)))
 			.ToArray();
 
 		bool satisfied = _skillIds.Count == required;
@@ -253,10 +280,18 @@ internal sealed partial class CharacterCreationSession
 	{
 		ClassDefinition characterClass = SelectedClass()!;
 
+		// Only spells this class's own list actually includes -- without
+		// this, every caster saw every spell in the ruleset regardless of
+		// class, which is exactly the restriction ClassIds exists to
+		// enforce. This is the wizard's own convenience filter; the real
+		// gate is CharacterCreationRules.CheckPreparedSpells, which rejects
+		// an off-list spell even if a client never offered it.
 		IReadOnlyList<CommandViewModel> options = _options.Spells
+			.Where(spell => spell.ClassIds.Contains(characterClass.Id))
 			.Select(spell => new CommandViewModel(
 				spell.Id,
-				spell.Name))
+				spell.Name,
+				TooltipText: spell.Description))
 			.ToArray();
 
 		return new CharacterCreationStepView(

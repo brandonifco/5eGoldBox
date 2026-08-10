@@ -14,6 +14,20 @@ public partial class SelectionList : PanelContainer
 		int index,
 		string itemId);
 
+	// Mouse hover alone, deliberately independent of SelectionChanged --
+	// the row's own theme already supplies a distinct hover stylebox
+	// (ShellSelectionRowButton/styles/hover), so the visual highlight is
+	// free and this only needs to carry the "which row is the mouse over"
+	// fact outward. Never touches _selectedIndex/UpdateButtonStates or
+	// grabs focus: if it did, moving the mouse across the list while
+	// navigating with the arrow keys would fight keyboard focus for which
+	// row is "current," since a hovered row and a keyboard-focused row are
+	// not the same thing and don't need to be kept in sync.
+	[Signal]
+	public delegate void RowHoveredEventHandler(
+		int index,
+		string itemId);
+
 	[Export]
 	public string TitleText { get; set; } = "Selection";
 
@@ -29,11 +43,38 @@ public partial class SelectionList : PanelContainer
 	private Label _emptyLabel = null!;
 	private ScrollContainer _itemScroll = null!;
 	private VBoxContainer _itemList = null!;
+	private bool _compactLayout;
 	private int _selectedIndex = -1;
 
 	public int SelectedIndex => _selectedIndex;
 
 	public string SelectedId => GetSelectedEntry()?.Id ?? string.Empty;
+
+	// Character creation's own option lists (races, classes, ...) turn
+	// this on; every other consumer (Character, Inventory, Spellbook, ...)
+	// never sets it and is unaffected. Still the same vertical, one-row-
+	// per-entry, scrollable-if-it-overflows list -- only each row's own
+	// button changes, sized to its own text and left-aligned instead of
+	// stretched to the container's full width (see CreateButton), with
+	// this component's own panel background dropped so it reads as part
+	// of whatever page it sits in rather than a nested boxed widget.
+	//
+	// An HFlowContainer (packing rows left-to-right, wrapping) was tried
+	// first and reverted -- the user asked directly for "a vertically
+	// oriented list," not options flowing sideways.
+	public bool CompactLayout
+	{
+		get => _compactLayout;
+		set
+		{
+			_compactLayout = value;
+
+			if (IsNodeReady())
+			{
+				ApplyCompactStyling();
+			}
+		}
+	}
 
 	public override void _Ready()
 	{
@@ -43,7 +84,28 @@ public partial class SelectionList : PanelContainer
 		_itemList = GetNode<VBoxContainer>("%ItemList");
 
 		ApplyText();
+		ApplyCompactStyling();
 		RebuildButtons();
+	}
+
+	// No fixed height of its own -- character creation (the only caller of
+	// CompactLayout) reparents this into ModalScreenCard's own right
+	// column and expects it to fill that column's height, which is what
+	// TwoColumnRow's own fixed minimum actually controls. Imposing a
+	// second, separate minimum here would just fight that instead of
+	// cooperating with it.
+	private void ApplyCompactStyling()
+	{
+		if (_compactLayout)
+		{
+			CustomMinimumSize = Vector2.Zero;
+			SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+			AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
+		}
+		else
+		{
+			RemoveThemeStyleboxOverride("panel");
+		}
 	}
 
 	public void SetItems(IEnumerable<SelectionListEntry> entries)

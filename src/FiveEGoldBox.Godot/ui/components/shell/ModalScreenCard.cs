@@ -27,11 +27,33 @@ public partial class ModalScreenCard : PanelContainer
 
 	private Label _breadcrumbLabel = null!;
 	private Label _titleLabel = null!;
+	// BodyLabel sits inside its own fixed-height ScrollContainer, the same
+	// pattern ItemList already uses -- a ScrollContainer never reports its
+	// content's full height as its own minimum size, so however long the
+	// current description is, the label can grow freely inside it without
+	// changing BodyScroll's own size and shifting everything below it.
+	// Letting the label itself drive the outer layout (its old shape) was
+	// what caused the whole card to visibly resize and re-center every
+	// time a longer or shorter option was hovered.
+	private ScrollContainer _bodyScroll = null!;
 	private Label _bodyLabel = null!;
 	private SelectionList _itemList = null!;
 	private HBoxContainer _commandRow = null!;
 	private PackedScene _commandButtonScene = null!;
 	private bool _nodesResolved;
+
+	// Character creation's two-column layout: BodyScroll and ItemList are
+	// reparented in here (from their normal stacked positions directly in
+	// ScreenLayout) when CompactOptionsLayout is set, so the description
+	// and the option list each get the row's full height instead of
+	// splitting one shared vertical budget between them -- which is what
+	// kept forcing either one or the other to scroll no matter how the
+	// numbers were tuned. Every other screen leaves this hidden and never
+	// touches it, so BodyScroll/ItemList stay in their original stacked
+	// position for them, completely unaffected.
+	private HBoxContainer _twoColumnRow = null!;
+	private VBoxContainer _leftColumn = null!;
+	private VBoxContainer _rightColumn = null!;
 
 	// The Character screen's own boxed stat-block -- a real grid layout,
 	// not text, which is why it's a separate section rather than more
@@ -67,8 +89,12 @@ public partial class ModalScreenCard : PanelContainer
 
 		_breadcrumbLabel = GetNode<Label>("%BreadcrumbLabel");
 		_titleLabel = GetNode<Label>("%TitleLabel");
+		_bodyScroll = GetNode<ScrollContainer>("%BodyScroll");
 		_bodyLabel = GetNode<Label>("%BodyLabel");
 		_itemList = GetNode<SelectionList>("%ItemList");
+		_twoColumnRow = GetNode<HBoxContainer>("%TwoColumnRow");
+		_leftColumn = GetNode<VBoxContainer>("%LeftColumn");
+		_rightColumn = GetNode<VBoxContainer>("%RightColumn");
 		_commandRow = GetNode<HBoxContainer>("%CommandRow");
 		_textEntryField = GetNode<LineEdit>("%TextEntryField");
 		_commandButtonScene = GD.Load<PackedScene>(
@@ -83,6 +109,11 @@ public partial class ModalScreenCard : PanelContainer
 		_purseLabel = GetNode<Label>("%PurseLabel");
 
 		_itemList.SelectionChanged += (_, itemId) => RowFocused?.Invoke(itemId);
+		// Mouse hover drives the exact same RowFocused callback keyboard
+		// navigation already does -- a caller showing a description on
+		// focus (CharacterCreation's HandleCreationRowFocused) gets
+		// hover-to-preview for free, with no separate wiring needed.
+		_itemList.RowHovered += (_, itemId) => RowFocused?.Invoke(itemId);
 		_itemList.SelectionActivated += (_, itemId) => RowActivated?.Invoke(itemId);
 		_textEntryField.TextChanged += text => TextChanged?.Invoke(text);
 		_textEntryField.TextSubmitted += _ => TextSubmitted?.Invoke();
@@ -101,7 +132,46 @@ public partial class ModalScreenCard : PanelContainer
 		_titleLabel.Text = model.Title;
 
 		_bodyLabel.Text = model.BodyText ?? string.Empty;
-		_bodyLabel.Visible = !string.IsNullOrWhiteSpace(model.BodyText);
+		_bodyScroll.Visible = !string.IsNullOrWhiteSpace(model.BodyText);
+
+		bool hasItems = model.ListItems is { Count: > 0 };
+
+		// Every CompactOptionsLayout step reserves the same two-column
+		// height now, whether or not it actually has a right-column list --
+		// deliberately not gated on hasItems the way this first shipped.
+		// Character creation is the one caller of CompactOptionsLayout, and
+		// it moves between steps with a list (Race, Class, Skills...) and
+		// steps without one (Name, Review, and Assign Ability Scores' own
+		// "all six assigned" summary) constantly. Gating the reservation on
+		// hasItems meant the card's whole height -- and with it, the Back/
+		// Next/Cancel row's screen position -- changed under the player's
+		// feet the instant a step's option list emptied out. Confirmed
+		// live: finishing ability-score assignment (a list-bearing step
+		// collapsing to a bare summary) moved the button row by roughly
+		// 190px, so a player clicking "Next" at the position that had
+		// worked for the five score placements just before it missed
+		// entirely, landed on the game view behind the now-smaller modal,
+		// and silently abandoned the whole party build with no
+		// confirmation. A little empty space on the right of a no-list
+		// step is a much smaller cost than that.
+		//
+		// Reparenting must happen before _itemList.CompactLayout/SetItems
+		// below, though it doesn't strictly depend on that order -- kept
+		// together for clarity. A fresh ModalScreenCard is instantiated
+		// per ShowScreen call (see ModalScreenView), so this always starts
+		// from the pristine .tscn-authored position -- no "undo the
+		// reparent" branch is needed for a step that doesn't use it.
+		bool useTwoColumns = model.CompactOptionsLayout;
+
+		_twoColumnRow.Visible = useTwoColumns;
+
+		if (useTwoColumns)
+		{
+			_bodyScroll.Reparent(_leftColumn);
+			_bodyScroll.CustomMinimumSize = Vector2.Zero;
+			_bodyScroll.SizeFlagsVertical = SizeFlags.ExpandFill;
+			_itemList.Reparent(_rightColumn);
+		}
 
 		_characterSheetPanel.Visible = model.CharacterSheet is not null;
 
@@ -120,10 +190,22 @@ public partial class ModalScreenCard : PanelContainer
 			// Put the caret after any text carried back in (stepping back
 			// onto an already-named character), rather than before it.
 			_textEntryField.CaretColumn = model.TextEntry.InitialValue.Length;
+
+			// Same reservation as BodyScroll/ItemList just above -- the
+			// Name step is a CompactOptionsLayout step with no list, so its
+			// field belongs in the same reserved left column its prompt
+			// text renders in, not floating in its own row below a mostly-
+			// empty two-column area.
+			if (useTwoColumns)
+			{
+				_textEntryField.Reparent(_leftColumn);
+			}
 		}
 
-		bool hasItems = model.ListItems is { Count: > 0 };
-
+		// Set before SetItems -- RebuildButtons (triggered by SetItems)
+		// reads this to decide which container new rows go into, so it has
+		// to already be correct by the time items are actually built.
+		_itemList.CompactLayout = model.CompactOptionsLayout;
 		_itemList.Visible = hasItems;
 
 		if (hasItems)
@@ -185,7 +267,13 @@ public partial class ModalScreenCard : PanelContainer
 		EnsureNodesResolved();
 
 		_bodyLabel.Text = bodyText ?? string.Empty;
-		_bodyLabel.Visible = !string.IsNullOrWhiteSpace(bodyText);
+		_bodyScroll.Visible = !string.IsNullOrWhiteSpace(bodyText);
+
+		// The label's own scroll position doesn't reset just because its
+		// text changed -- without this, hovering from a long description
+		// to a short one can leave the (now-empty) view scrolled past
+		// what little text is there, reading as blank.
+		_bodyScroll.ScrollVertical = 0;
 	}
 
 	private void ApplyCharacterSheet(CharacterSheetViewModel sheet)
@@ -221,6 +309,22 @@ public partial class ModalScreenCard : PanelContainer
 				ThemeTypeVariation = "ShellBodyLabel",
 			});
 		}
+	}
+
+	// Lets a caller refresh just the command row -- specifically, whether
+	// "Next" is enabled -- without the full Configure() a text-entry step
+	// would otherwise need on every keystroke. Configure() rebuilds the
+	// whole card layout (two-column reparenting, item list, character
+	// sheet); calling it per keystroke would fight the text field for
+	// focus while the player is still typing. RebuildCommandRow only
+	// touches the button row, so this is safe to call as often as the
+	// underlying step's CanAdvance might have changed.
+	internal void UpdateCommands(
+		IReadOnlyList<CommandViewModel> commands,
+		IReadOnlyDictionary<string, Action> commandHandlers)
+	{
+		EnsureNodesResolved();
+		RebuildCommandRow(commands, commandHandlers);
 	}
 
 	private void RebuildCommandRow(

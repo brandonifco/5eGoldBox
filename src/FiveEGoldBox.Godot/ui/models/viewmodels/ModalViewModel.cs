@@ -21,7 +21,11 @@ internal sealed record ModalViewModel(
 	// picks: their character's name. Null everywhere else, and mutually
 	// exclusive with ListItems in practice -- a step either offers choices
 	// or asks for text, never both.
-	ModalTextEntryViewModel? TextEntry = null);
+	ModalTextEntryViewModel? TextEntry = null,
+	// Character creation's own option lists (races, classes, ...) set
+	// this; every other screen defaults to false and is unaffected. See
+	// SelectionList.CompactLayout for what it actually changes.
+	bool CompactOptionsLayout = false);
 
 internal sealed record ModalTextEntryViewModel(
 	string InitialValue,
