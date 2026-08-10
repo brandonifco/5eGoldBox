@@ -22,13 +22,18 @@ public partial class ModalBackdrop : Control
 	public bool IsModalOpen => Visible;
 
 	private PanelContainer _backdropSurface = null!;
-	private CenterContainer _contentHost = null!;
+	// A MarginContainer, not a CenterContainer -- the modal card should
+	// fill the safe area rather than shrink-wrap to its own content and
+	// float in the middle of a lot of unused space (the actual complaint
+	// that prompted this: character creation's step body/list wanted more
+	// room than a fixed-width centered card gave it).
+	private MarginContainer _contentHost = null!;
 	private Control? _previousFocus;
 
 	public override void _Ready()
 	{
 		_backdropSurface = GetNode<PanelContainer>("%BackdropSurface");
-		_contentHost = GetNode<CenterContainer>("%ContentHost");
+		_contentHost = GetNode<MarginContainer>("%ContentHost");
 		_backdropSurface.GuiInput += OnBackdropGuiInput;
 		Hide();
 	}
