@@ -74,6 +74,13 @@ public partial class ModalScreenView : Control
 		_card?.SetBodyText(bodyText);
 	}
 
+	internal void UpdateCommands(
+		IReadOnlyList<CommandViewModel> commands,
+		IReadOnlyDictionary<string, Action> commandHandlers)
+	{
+		_card?.UpdateCommands(commands, commandHandlers);
+	}
+
 	public void Close()
 	{
 		if (!IsOpen)

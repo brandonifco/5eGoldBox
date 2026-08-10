@@ -112,7 +112,46 @@ internal sealed partial class ShellInteractionController
 			body = $"{body}\n({step.BlockedReason})";
 		}
 
-		Dictionary<string, Action> handlers = new(StringComparer.Ordinal)
+		_creationAdvancing = true;
+
+		_modalScreen.ShowScreen(
+			new ModalViewModel(
+				step.Title,
+				body,
+				ListItems: BuildCreationRows(step),
+				Commands: BuildCreationCommands(step),
+				// Re-entering a step (Back, or returning after Next was
+				// blocked) starts the cursor on whatever's already chosen
+				// rather than the top of the list, and — since this also
+				// drives HandleCreationRowFocused below — shows that
+				// option's own description immediately instead of the
+				// step's generic intro text.
+				SelectedRowId: step.SelectedOptionIds.FirstOrDefault(),
+				BreadcrumbText: step.Breadcrumb,
+				TextEntry: step.IsTextEntry
+					? new ModalTextEntryViewModel(
+						step.TextValue,
+						"Enter a name")
+					: null,
+				// Small, content-sized buttons that pack left and wrap,
+				// sitting directly in the same page as the description
+				// above them -- not a separate scrollable boxed list. See
+				// SelectionList.CompactLayout.
+				CompactOptionsLayout: true),
+			BuildCreationHandlers(),
+			onRowFocused: HandleCreationRowFocused,
+			onRowActivated: HandleCreationRow,
+			onClosed: RestoreTitleScreenIfAbandoned,
+			onTextChanged: HandleCreationTextChanged,
+			onTextSubmitted: CreationNext);
+
+		PushContext(ShellInteractionContext.ModalScreen);
+		_commandBarController.SuppressShortcuts();
+	}
+
+	private Dictionary<string, Action> BuildCreationHandlers()
+	{
+		return new(StringComparer.Ordinal)
 		{
 			["creation.back"] = CreationBack,
 			["creation.next"] = CreationNext,
@@ -123,48 +162,75 @@ internal sealed partial class ShellInteractionController
 				ShowTitleScreen();
 			}
 		};
-
-		_creationAdvancing = true;
-
-		_modalScreen.ShowScreen(
-			new ModalViewModel(
-				step.Title,
-				body,
-				ListItems: BuildCreationRows(step),
-				Commands: BuildCreationCommands(step),
-				BreadcrumbText: step.Breadcrumb,
-				TextEntry: step.IsTextEntry
-					? new ModalTextEntryViewModel(
-						step.TextValue,
-						"Enter a name")
-					: null),
-			handlers,
-			onRowFocused: null,
-			onRowActivated: HandleCreationRow,
-			onClosed: RestoreTitleScreenIfAbandoned,
-			onTextChanged: text => _creationSession?.SetName(text),
-			onTextSubmitted: CreationNext);
-
-		PushContext(ShellInteractionContext.ModalScreen);
-		_commandBarController.SuppressShortcuts();
 	}
 
-	// A multi-select step marks what is already chosen inline, since
-	// SelectionList has no checkbox of its own and a row is only ever a
-	// label to it.
+	// TextChanged fires on every keystroke on the Name step, and "Next"'s
+	// own Enabled state (bound to CanAdvance, which the Name step computes
+	// from whether anything has been typed) needs to track that live --
+	// otherwise the button stays exactly as disabled as it was the moment
+	// the step first rendered with an empty field, forever, regardless of
+	// what gets typed afterward. Refreshes only the command row rather
+	// than going through ShowCreationStep()'s full rebuild, which would
+	// tear down and reinstantiate the card -- stealing focus from the
+	// field the player is actively typing into.
+	private void HandleCreationTextChanged(string text)
+	{
+		_creationSession?.SetName(text);
+
+		if (_creationSession is null)
+		{
+			return;
+		}
+
+		CharacterCreationStepView step = _creationSession.Describe();
+		_modalScreen.UpdateCommands(
+			BuildCreationCommands(step),
+			BuildCreationHandlers());
+	}
+
+	// Every step marks what is already chosen inline, not just multi-select
+	// ones -- SelectionList has no checkbox of its own and a row is only
+	// ever a label to it, and a single-choice step needs this exactly as
+	// much now that HandleCreationRow no longer auto-advances the moment a
+	// row is activated: without some visible mark, a player who picked
+	// Human and is now just browsing Elf/Dwarf/Halfling for their
+	// descriptions would have no way to tell which one is still their
+	// actual choice.
 	private static IReadOnlyList<CommandViewModel> BuildCreationRows(
 		CharacterCreationStepView step)
 	{
 		return step.Options
-			.Select(option => step.IsMultiSelect
-				? option with
-				{
-					Label = step.SelectedOptionIds.Contains(option.CommandId)
-						? $"[x] {option.Label}"
-						: $"[ ] {option.Label}"
-				}
-				: option)
+			.Select(option => option with
+			{
+				Label = step.SelectedOptionIds.Contains(option.CommandId)
+					? $"[x] {option.Label}"
+					: $"[ ] {option.Label}"
+			})
 			.ToArray();
+	}
+
+	// Fired as the keyboard/mouse cursor moves to a different row, not
+	// when one is chosen -- browsing options to read their descriptions
+	// must never itself commit to one. SetBodyText is the same lighter,
+	// no-full-rebuild update M9's Character screen already uses for
+	// exactly this shape of change (switching which party member's sheet
+	// is shown).
+	//
+	// Appends the option's own description below the step's own body text
+	// rather than replacing it -- step.BodyText carries live state on some
+	// steps (Assign Ability Scores says which score is being placed and
+	// what's already been assigned), and an earlier version of this that
+	// swapped the whole body for the focused option's TooltipText silently
+	// discarded that the moment focus landed on any option that had one.
+	private void HandleCreationRowFocused(string optionId)
+	{
+		CharacterCreationStepView step = _creationSession!.Describe();
+		CommandViewModel? option = step.Options.FirstOrDefault(
+			candidate => candidate.CommandId == optionId);
+
+		_modalScreen.UpdateBody(option?.TooltipText is string tooltip
+			? $"{step.BodyText}\n\n{tooltip}"
+			: step.BodyText);
 	}
 
 	private IReadOnlyList<CommandViewModel> BuildCreationCommands(
@@ -201,23 +267,16 @@ internal sealed partial class ShellInteractionController
 		return commands;
 	}
 
+	// Activating a row -- Enter or a click, as opposed to merely focusing
+	// it while browsing -- records the choice and re-renders the step, but
+	// deliberately never advances on its own, for a single-choice step any
+	// more than a multi-select one. Highlighting Elf to read its
+	// description used to be indistinguishable from committing to Elf;
+	// now every step works the same way multi-select already did: pick,
+	// see it marked, and say "Next" only when actually ready to move on.
 	private void HandleCreationRow(string optionId)
 	{
-		CharacterCreationSession session = _creationSession!;
-		CharacterCreationStepView step = session.Describe();
-
-		session.SelectOption(optionId);
-
-		// A single-choice row is the choice, so taking it moves on; a
-		// multi-select one only toggles, and the player says when they are
-		// done via Next.
-		if (!step.IsMultiSelect
-			&& step.Step != CharacterCreationStep.AbilityScores)
-		{
-			CreationNext();
-			return;
-		}
-
+		_creationSession!.SelectOption(optionId);
 		ShowCreationStep();
 	}
 

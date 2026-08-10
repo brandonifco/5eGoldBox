@@ -51,6 +51,23 @@ internal sealed partial class CharacterCreationSession
 		_spellIds.Clear();
 	}
 
+	// Marks which ability a row activation targeted, without touching
+	// _abilityScores yet -- the actual commit (AssignAbilityScore) only
+	// happens when TryAdvance ("Next") is called, so browsing/reselecting
+	// among the remaining abilities before confirming never burns a
+	// standard-array value.
+	private void SelectPendingAbility(string abilityName)
+	{
+		if (_abilityAssignmentIndex >= StandardArrayScores.Count
+			|| !Enum.TryParse(abilityName, out Ability ability)
+			|| _abilityScores.ContainsKey(ability))
+		{
+			return;
+		}
+
+		_pendingAbilityAssignment = ability;
+	}
+
 	private void AssignAbilityScore(string abilityName)
 	{
 		if (_abilityAssignmentIndex >= StandardArrayScores.Count)
@@ -93,6 +110,7 @@ internal sealed partial class CharacterCreationSession
 	{
 		_stepIndex = 0;
 		_abilityAssignmentIndex = 0;
+		_pendingAbilityAssignment = null;
 		_raceId = null;
 		_subraceId = null;
 		_classId = null;
@@ -200,6 +218,30 @@ internal sealed partial class CharacterCreationSession
 			?.Name ?? skillId;
 	}
 
+	private string? SkillDescription(string skillId)
+	{
+		return _options.Skills
+			.FirstOrDefault(skill => string.Equals(
+				skill.Id,
+				skillId,
+				StringComparison.Ordinal))
+			?.Description;
+	}
+
+	// Every step's own preview text is the option's real authored prose
+	// first (the same PHB-style descriptions Phase 2 wrote for exactly
+	// this purpose, never previously connected to any screen) followed by
+	// the mechanical summary that already existed -- so a player who
+	// wants the flavor gets it, and the numbers are still right there
+	// underneath it, not replaced by it. Prose is genuinely optional
+	// content (a spell has none authored yet), so this degrades to just
+	// the summary rather than leaving a blank line where the description
+	// would go.
+	private static string CombineDescription(string? prose, string mechanicalSummary)
+	{
+		return prose is null ? mechanicalSummary : $"{prose}\n\n{mechanicalSummary}";
+	}
+
 	private string SpellName(string spellId)
 	{
 		return _options.Spells
@@ -254,6 +296,79 @@ internal sealed partial class CharacterCreationSession
 		return $"Hit die {characterClass.HitDie}.  "
 			+ $"Chooses {characterClass.NumberOfSkillChoices} of "
 			+ $"{characterClass.SkillChoices.Count} skills.  {casting}";
+	}
+
+	// What this ability actually governs at this table -- original,
+	// short, and scoped to what this ruleset's own content actually does
+	// with it (only Cleric casts on Wisdom and Wizard on Intelligence
+	// today; no class here uses Charisma to cast), not a restatement of
+	// the Player's Handbook's own text. The skill lists match Skills.
+	// Ability in the ruleset exactly, not general 5e lore, so this stays
+	// correct if the skill-to-ability mapping is ever re-authored.
+	private static string DescribeAbilityUse(Ability ability)
+	{
+		return ability switch
+		{
+			Ability.Strength =>
+				"Melee attack and damage rolls, Athletics checks, and how "
+					+ "much you can carry.",
+			Ability.Dexterity =>
+				"Armor Class, initiative, ranged and finesse attacks, and "
+					+ "Acrobatics, Sleight of Hand and Stealth checks.",
+			Ability.Constitution =>
+				"How many hit points you have, and resisting poison, "
+					+ "disease and exhaustion.",
+			Ability.Intelligence =>
+				"Arcana, History, Investigation, Nature and Religion "
+					+ "checks, and how a Wizard casts spells.",
+			Ability.Wisdom =>
+				"Animal Handling, Insight, Medicine, Perception and "
+					+ "Survival checks, and how a Cleric casts spells.",
+			Ability.Charisma =>
+				"Deception, Intimidation, Performance and Persuasion "
+					+ "checks.",
+			_ => ability.ToString()
+		};
+	}
+
+	// What this ability does, plus class-reliance and racial-bonus notes
+	// sharing one line when either or both apply -- each used to be its
+	// own paragraph, which cost a blank-line gap per note and pushed the
+	// whole thing well past the space actually reserved for it.
+	private string CombineAbilityTooltip(Ability ability)
+	{
+		List<string> notes = new();
+
+		if (DescribeClassRelianceFor(ability) is string classReliance)
+		{
+			notes.Add(classReliance);
+		}
+
+		if (DescribeRacialBonusFor(ability) is string bonus)
+		{
+			notes.Add(bonus);
+		}
+
+		string use = DescribeAbilityUse(ability);
+
+		return notes.Count == 0 ? use : $"{use}\n\n{string.Join(" ", notes)}";
+	}
+
+	// The class step always comes before this one (see StepPlan), so the
+	// player already has a class by the time this renders -- this answers
+	// "which ability should I favor" against their own actual pick rather
+	// than dumping every class's PrimaryAbilities, which would bury the
+	// one line that's actually relevant to them under five that aren't.
+	private string? DescribeClassRelianceFor(Ability ability)
+	{
+		ClassDefinition? characterClass = SelectedClass();
+
+		if (characterClass is null || !characterClass.PrimaryAbilities.Contains(ability))
+		{
+			return null;
+		}
+
+		return $"Your {characterClass.Name} relies on this ability.";
 	}
 
 	/// What the already-chosen race and subrace would add to this ability,
