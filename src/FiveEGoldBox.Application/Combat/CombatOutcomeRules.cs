@@ -300,7 +300,11 @@ public static class CombatOutcomeRules
                                     + hitPointsGained
                                 : member.Health.HitPoints.CurrentHitPoints
                         }
-                    }
+                    },
+                    Resources = GrantNewLevelResources(
+                        member,
+                        campaign.RulesetId,
+                        newLevel)
                 };
             })
             .ToArray();
@@ -311,6 +315,52 @@ public static class CombatOutcomeRules
             ExperienceTotal = newExperienceTotal,
             Level = newLevel
         };
+    }
+
+    /// Rebuilds a member's resources against what its class grants at the new
+    /// level, carrying however much it had already spent across.
+    ///
+    /// Derived from the grants rather than adjusted in place, because a level
+    /// can add a resource that did not exist before (a slot level a caster
+    /// only reaches partway up) as easily as it can raise one that did, and
+    /// CampaignPartyCompositionValidator requires the set to match the grants
+    /// exactly -- not merely to have grown.
+    ///
+    /// Spent-ness is preserved rather than refilled: leveling up is not a
+    /// rest. A caster who levels with an empty slot gets the new slot the
+    /// level grants and still has the old one empty.
+    private static IReadOnlyList<CharacterResourceState> GrantNewLevelResources(
+        PartyMemberState member,
+        string rulesetId,
+        int newLevel)
+    {
+        IReadOnlyDictionary<string, int> granted = CampaignResourceGrants.ForClass(
+            rulesetId,
+            member.ClassId,
+            newLevel);
+
+        return granted
+            .OrderBy(grant => grant.Key, StringComparer.Ordinal)
+            .Select(grant =>
+            {
+                CharacterResourceState? held = member.Resources
+                    .FirstOrDefault(resource => string.Equals(
+                        resource.ResourceId,
+                        grant.Key,
+                        StringComparison.Ordinal));
+
+                int spent = held is null
+                    ? 0
+                    : held.Maximum - held.Remaining;
+
+                return new CharacterResourceState
+                {
+                    ResourceId = grant.Key,
+                    Maximum = grant.Value,
+                    Remaining = Math.Max(0, grant.Value - spent)
+                };
+            })
+            .ToArray();
     }
 
     /// A member who tracks ammunition between encounters carries out of one

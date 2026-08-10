@@ -53,7 +53,7 @@ public sealed class RulesetPackLoaderTests
                     "HitDie": "D8",
                     "SavingThrowProficiencies": [ "Wisdom", "Charisma" ],
                     "SpellcastingAbility": "Wisdom",
-                    "SpellSlotsByLevel": { "1": 2 },
+                    "SpellSlotsByCharacterLevel": { "1": { "1": 2 } },
                     "FeaturesByLevel": { "1": [ "feature.test" ] }
                 }
             ],
@@ -214,7 +214,7 @@ public sealed class RulesetPackLoaderTests
             [Ability.Wisdom, Ability.Charisma],
             characterClass.SavingThrowProficiencies);
         Assert.Equal(Ability.Wisdom, characterClass.SpellcastingAbility);
-        Assert.Equal(2, characterClass.SpellSlotsByLevel[1]);
+        Assert.Equal(2, characterClass.SpellSlotsByCharacterLevel[1][1]);
         Assert.Equal(
             "feature.test",
             Assert.Single(characterClass.FeaturesByLevel[1]));

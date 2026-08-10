@@ -100,7 +100,8 @@ internal static class RulesetDefinitionCanonicalizer
             ToolProficiencies = Protect(characterClass.ToolProficiencies),
             SkillChoices = Protect(characterClass.SkillChoices),
             FeaturesByLevel = ProtectFeatures(characterClass.FeaturesByLevel),
-            SpellSlotsByLevel = ProtectSlots(characterClass.SpellSlotsByLevel)
+            SpellSlotsByCharacterLevel =
+                ProtectSlots(characterClass.SpellSlotsByCharacterLevel)
         };
     }
 
@@ -140,13 +141,21 @@ internal static class RulesetDefinitionCanonicalizer
         };
     }
 
-    private static IReadOnlyDictionary<int, int> ProtectSlots(
-        IReadOnlyDictionary<int, int> slotsByLevel)
+    /// Both levels of the nesting are copied, not just the outer one -- an
+    /// outer copy alone would still hand out the caller's own inner
+    /// dictionaries.
+    private static IReadOnlyDictionary<int, IReadOnlyDictionary<int, int>> ProtectSlots(
+        IReadOnlyDictionary<int, IReadOnlyDictionary<int, int>> slotsByCharacterLevel)
     {
-        return new ReadOnlyDictionary<int, int>(
-            slotsByLevel.ToDictionary(
+        Dictionary<int, IReadOnlyDictionary<int, int>> protectedSlots =
+            slotsByCharacterLevel.ToDictionary(
                 entry => entry.Key,
-                entry => entry.Value));
+                entry => (IReadOnlyDictionary<int, int>)new ReadOnlyDictionary<int, int>(
+                    entry.Value.ToDictionary(
+                        slots => slots.Key,
+                        slots => slots.Value)));
+
+        return new ReadOnlyDictionary<int, IReadOnlyDictionary<int, int>>(protectedSlots);
     }
 
     private static IReadOnlyDictionary<int, IReadOnlyList<string>> ProtectFeatures(

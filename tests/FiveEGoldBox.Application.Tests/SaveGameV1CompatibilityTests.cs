@@ -260,7 +260,25 @@ public sealed class SaveGameV1CompatibilityTests
                                             .CurrentHitPoints
                                             + delta
                                 }
-                            }
+                            },
+                            // A level-2 caster carries the level-2 slot table.
+                            // This test is about the save format round-
+                            // tripping experience and level, so it asks for
+                            // the grants rather than restating them -- what
+                            // those grants should be is pinned in
+                            // CampaignPartyCompositionValidatorTests.
+                            Resources = CampaignResourceGrants
+                                .ForClass(campaign.RulesetId, member.ClassId, 2)
+                                .OrderBy(
+                                    grant => grant.Key,
+                                    StringComparer.Ordinal)
+                                .Select(grant => new CharacterResourceState
+                                {
+                                    ResourceId = grant.Key,
+                                    Maximum = grant.Value,
+                                    Remaining = grant.Value
+                                })
+                                .ToArray()
                         };
                     })
                     .ToArray(),

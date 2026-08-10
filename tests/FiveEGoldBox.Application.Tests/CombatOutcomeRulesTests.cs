@@ -566,6 +566,108 @@ public sealed class CombatOutcomeRulesTests
         ApplicationSessionRules.Validate(result);
     }
 
+    /// The slot half of the level-up above: a caster reaching level two comes
+    /// out of the fight holding the level-two table (three first-level slots,
+    /// up from two), and a slot it had already spent stays spent -- leveling
+    /// up is not a rest.
+    [Fact]
+    public void Finalize_PartyVictory_WhenLevelingUp_GrantsTheNewLevelsSlotsWithoutRefillingSpentOnes()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatOutcomeTestData
+                .CreatePartyVictorySession();
+
+        PartyMemberState[] members = source.Party.Members
+            .Select(member => member.Resources.Count == 0
+                ? member
+                : member with
+                {
+                    Resources = member.Resources
+                        .Select(resource => resource with { Remaining = 0 })
+                        .ToArray()
+                })
+            .ToArray();
+
+        source = source with
+        {
+            Party = source.Party with
+            {
+                Members = Array.AsReadOnly(members),
+                ExperienceTotal = 250
+            }
+        };
+
+        // Every slot the party holds going in is spent, and there is at least
+        // one caster to hold any -- otherwise this asserts nothing below.
+        Assert.Contains(
+            source.Party.Members,
+            member => member.Resources.Count > 0);
+
+        ApplicationSessionState result =
+            CombatOutcomeRules.Finalize(source).State;
+
+        Assert.Equal(2, result.Party.Level);
+
+        foreach (PartyMemberState caster in result.Party.Members
+            .Where(member => member.Resources.Count > 0))
+        {
+            CharacterResourceState slot = Assert.Single(
+                caster.Resources,
+                resource => resource.ResourceId
+                    == SpellSlotResources.ForLevel(1));
+
+            Assert.Equal(3, slot.Maximum);
+
+            // One more than it had left going in (none), not a full three:
+            // the ceiling rose by one and the one already spent is still
+            // spent.
+            Assert.Equal(1, slot.Remaining);
+        }
+
+        ApplicationSessionRules.Validate(result);
+    }
+
+    /// A party that gains experience without crossing a threshold keeps the
+    /// slots it had, spent-ness included -- nothing about an ordinary fight
+    /// ending touches them.
+    [Fact]
+    public void Finalize_PartyVictory_WithoutLevelingUp_LeavesSlotsAlone()
+    {
+        ApplicationSessionState source =
+            WatchtowerCombatOutcomeTestData
+                .CreatePartyVictorySession();
+
+        PartyMemberState[] members = source.Party.Members
+            .Select(member => member.Resources.Count == 0
+                ? member
+                : member with
+                {
+                    Resources = member.Resources
+                        .Select(resource => resource with { Remaining = 0 })
+                        .ToArray()
+                })
+            .ToArray();
+
+        source = source with
+        {
+            Party = source.Party with { Members = Array.AsReadOnly(members) }
+        };
+
+        ApplicationSessionState result =
+            CombatOutcomeRules.Finalize(source).State;
+
+        Assert.Equal(1, result.Party.Level);
+        Assert.All(
+            result.Party.Members.Where(member => member.Resources.Count > 0),
+            member => Assert.All(
+                member.Resources,
+                resource =>
+                {
+                    Assert.Equal(2, resource.Maximum);
+                    Assert.Equal(0, resource.Remaining);
+                }));
+    }
+
     /// 200 (starting) + 50 (this fight) = 250, short of the 300 threshold --
     /// the party gains experience but neither Level nor anyone's hit points
     /// move.

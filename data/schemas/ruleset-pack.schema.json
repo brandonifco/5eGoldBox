@@ -253,10 +253,13 @@
             "type": "string"
           }
         },
-        "SpellSlotsByLevel": {
+        "SpellSlotsByCharacterLevel": {
           "type": "object",
           "additionalProperties": {
-            "type": "integer"
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
           }
         },
         "SpellcastingAbility": {
