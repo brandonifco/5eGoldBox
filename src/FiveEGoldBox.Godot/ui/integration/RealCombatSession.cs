@@ -106,6 +106,21 @@ internal sealed class RealCombatSession
 		return Advance(result);
 	}
 
+	internal IReadOnlyList<string> SubmitDisengage()
+	{
+		CombatDecision decision = CombatOperations.Query(_state).Decision;
+
+		CombatResolutionResult result = CombatOperations.Execute(
+			_state,
+			new CombatDisengageIntent
+			{
+				ExpectedEncounterRevision = decision.EncounterRevision,
+				ActorCombatantId = decision.ActiveCombatantId!,
+			});
+
+		return Advance(result);
+	}
+
 	internal IReadOnlyList<string> SubmitEndTurn()
 	{
 		CombatDecision decision = CombatOperations.Query(_state).Decision;
@@ -255,6 +270,7 @@ internal sealed class RealCombatSession
 			isPlayerTurn ? decision.Movement!.DestinationOptions : Array.Empty<CombatMovementDestinationOption>(),
 			isPlayerTurn ? decision.WeaponAttacks : Array.Empty<CombatWeaponAttackOption>(),
 			isPlayerTurn ? decision.SpellAttacks : Array.Empty<CombatSpellAttackOption>(),
+			isPlayerTurn && decision.Disengage!.IsAvailable,
 			isPlayerTurn && decision.EndTurn!.IsAvailable,
 			isCompleted,
 			statusMessage);
@@ -280,6 +296,10 @@ internal sealed class RealCombatSession
 				lines.Add(
 					$"{DescribeLabel(displayNames, step.TurnAdvancement!.EndedTurnCombatantId)}'s turn ends.");
 				break;
+			case CombatStepKind.Disengage:
+				lines.Add(
+					$"{DescribeLabel(displayNames, step.ActorCombatantId!)} disengages.");
+				break;
 			case CombatStepKind.CombatCompleted:
 				break;
 		}
@@ -293,15 +313,26 @@ internal sealed class RealCombatSession
 		string actor = DescribeLabel(displayNames, step.ActorCombatantId!);
 		string target = DescribeLabel(displayNames, step.TargetCombatantId!);
 
+		// An opportunity attack has to read as one. Narrated identically to
+		// an ordinary swing, it looks like an enemy who already acted just
+		// attacked again out of turn -- which is exactly the complaint a
+		// player would (reasonably) raise as a bug.
+		string verb = attack.IsOpportunityAttack
+			? "takes an opportunity attack against"
+			: "attacks";
+
 		if (attack.Outcome == AttackRollOutcome.Miss)
 		{
-			return $"{actor} attacks {target} and misses.";
+			return $"{actor} {verb} {target} and misses.";
 		}
 
 		string hitWord = attack.Outcome == AttackRollOutcome.CriticalHit
 			? "critically hits"
 			: "hits";
-		string result = $"{actor} {hitWord} {target} for {attack.FinalDamage} damage.";
+		string opening = attack.IsOpportunityAttack
+			? $"{actor} takes an opportunity attack and {hitWord} {target}"
+			: $"{actor} {hitWord} {target}";
+		string result = $"{opening} for {attack.FinalDamage} damage.";
 
 		return AppendDownSuffix(result, target, attack.DamagedTarget);
 	}
@@ -430,6 +461,7 @@ internal sealed record RealCombatSnapshot(
 	IReadOnlyList<CombatMovementDestinationOption> MoveDestinations,
 	IReadOnlyList<CombatWeaponAttackOption> WeaponAttacks,
 	IReadOnlyList<CombatSpellAttackOption> SpellAttacks,
+	bool CanDisengage,
 	bool CanEndTurn,
 	bool IsCompleted,
 	string? StatusMessage);

@@ -171,6 +171,19 @@ internal sealed partial class ShellInteractionController
 				() => EnterRealCombatSpellMenu(combatSnapshot)));
 		}
 
+		// Only offered while it can still change something: once the action
+		// is spent (or already spent on disengaging), the button would be a
+		// promise the engine refuses -- and this command bar's own
+		// convention is that a command that exists is a command that works.
+		if (combatSnapshot.CanDisengage)
+		{
+			commands.Add(new CommandDefinition(
+				"Disengage",
+				"[b]D[/b]isengage",
+				Key.D,
+				SubmitRealDisengage));
+		}
+
 		if (combatSnapshot.CanEndTurn)
 		{
 			commands.Add(new CommandDefinition(
@@ -832,6 +845,16 @@ internal sealed partial class ShellInteractionController
 		_pendingRealTargetLabels = null;
 		_presentationController.ShowCombatHighlights(null);
 		_presentationController.SetCombatTargetableCombatants(null);
+	}
+
+	// No targeting pass and no confirmation: unlike an attack it cannot be
+	// aimed at the wrong thing, and unlike ending the turn it does not give
+	// the turn away -- the worst case is spending an action, which every
+	// other action button already does without asking.
+	private void SubmitRealDisengage()
+	{
+		IReadOnlyList<string> lines = _activeCombatSession!.SubmitDisengage();
+		ContinueRealCombat(lines);
 	}
 
 	private void SubmitRealEndTurn()

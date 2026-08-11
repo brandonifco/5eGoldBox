@@ -6,6 +6,11 @@ internal sealed record EncounterCombatStepResult
 {
     public required CombatStepKind Kind { get; init; }
 
+    /// True when this weapon attack was a reaction provoked by movement
+    /// rather than an action somebody chose to take on their own turn.
+    /// Always false for every other kind.
+    public bool IsOpportunityAttack { get; init; }
+
     public required long StartingEncounterRevision { get; init; }
 
     public required long ResultingEncounterRevision { get; init; }

@@ -132,6 +132,7 @@ internal static class CombatViewFactory
                 Array.Empty<CombatWeaponAttackOption>(),
                 Array.Empty<CombatSpellAttackOption>(),
                 null,
+                null,
                 winningSideId);
         }
 
@@ -155,6 +156,7 @@ internal static class CombatViewFactory
                 Array.Empty<CombatWeaponAttackOption>(),
                 Array.Empty<CombatSpellAttackOption>(),
                 null,
+                null,
                 null);
         }
 
@@ -169,6 +171,18 @@ internal static class CombatViewFactory
             CreateSpellAttackOptions(
                 encounter,
                 activeParticipant);
+        // Mirrors EncounterCombatDecisionFactory.CreateDisengageOption --
+        // both decision surfaces have to agree about whether the action is
+        // on offer, or the client would show a button the write path then
+        // refuses.
+        bool canDisengage = EncounterDisengageRules.CanDisengage(
+            encounter,
+            activeCombatantId!);
+        CombatDisengageOption disengage = new(
+            canDisengage,
+            canDisengage
+                ? EncounterActionUnavailabilityReason.None
+                : EncounterActionUnavailabilityReason.ActionUnavailable);
         CombatEndTurnOption endTurn = new(
             true,
             EncounterActionUnavailabilityReason.None);
@@ -181,6 +195,7 @@ internal static class CombatViewFactory
             movement,
             weaponAttacks,
             spellAttacks,
+            disengage,
             endTurn,
             null);
     }

@@ -11,14 +11,19 @@ namespace FiveEGoldBox.Application.Tests;
 /// EncounterCombatExecutionTests and the characterization transcripts.
 public sealed class EncounterPlayerCommandResolverTests
 {
+    /// Movement itself rolls nothing — the dice a move can now consume all
+    /// belong to opportunity attacks it provoked, never to the movement.
+    /// Hence a destination chosen specifically for provoking nothing: the
+    /// Watchtower ambush starts the party in contact, so plenty of its
+    /// legal destinations do provoke, and picking one arbitrarily would
+    /// make this assert the opposite of what it means on some fixtures and
+    /// not others.
     [Fact]
     public void Resolve_Move_ReportsMovementStepAndConsumesNoRandomness()
     {
         Fixture fixture = Fixture.Create();
         EncounterCombatMovementDestinationOption destination =
-            Assert.IsType<EncounterCombatMovementOption>(
-                fixture.Decision.Movement)
-            .DestinationOptions[0];
+            FindDestination(fixture, provoking: false);
 
         EncounterPlayerCommandResolution resolution =
             EncounterPlayerCommandResolver.Resolve(
@@ -33,13 +38,99 @@ public sealed class EncounterPlayerCommandResolverTests
                 });
 
         Assert.Equal(fixture.CursorBefore, resolution.CursorAfter);
+        // PrimaryStep is nullable now that an opportunity attack can stop a
+        // move before its first square; this path provokes nothing, so it
+        // is still a real movement step.
+        Assert.NotNull(resolution.PrimaryStep);
         Assert.Equal(
             CombatStepKind.Movement,
             resolution.PrimaryStep.Kind);
         Assert.Empty(resolution.PrimaryStep.Dice);
+        Assert.Empty(resolution.ReactionSteps);
         Assert.Equal(CombatIntentKind.Move, resolution.Receipt.Kind);
         Assert.Equal(destination.Path, resolution.Receipt.Path);
         Assert.True(resolution.State.Revision > fixture.Revision);
+    }
+
+    /// The other half of the same fact: walking out of an enemy's reach
+    /// costs a free attack, and the dice for it are drawn against the
+    /// caller's own cursor rather than appearing from nowhere.
+    [Fact]
+    public void Resolve_Move_OutOfReach_ProvokesAnOpportunityAttack()
+    {
+        Fixture fixture = Fixture.Create();
+        EncounterCombatMovementDestinationOption destination =
+            FindDestination(fixture, provoking: true);
+
+        EncounterPlayerCommandResolution resolution =
+            EncounterPlayerCommandResolver.Resolve(
+                fixture.Encounter,
+                fixture.RandomSeed,
+                fixture.CursorBefore,
+                new CombatMoveIntent
+                {
+                    ExpectedEncounterRevision = fixture.Revision,
+                    ActorCombatantId = fixture.ActorId,
+                    Path = destination.Path
+                });
+
+        EncounterCombatStepResult reaction =
+            Assert.Single(resolution.ReactionSteps);
+
+        Assert.Equal(CombatStepKind.WeaponAttack, reaction.Kind);
+        Assert.True(reaction.IsOpportunityAttack);
+        Assert.Equal(fixture.ActorId, reaction.TargetCombatantId);
+        Assert.NotEmpty(reaction.Dice);
+        Assert.Equal(
+            fixture.CursorBefore + reaction.Dice.Count,
+            resolution.CursorAfter);
+    }
+
+    /// Uses the same rule the resolver does rather than a hardcoded square,
+    /// so the fixture's own layout can change without silently turning one
+    /// of these two tests into a duplicate of the other.
+    private static EncounterCombatMovementDestinationOption FindDestination(
+        Fixture fixture,
+        bool provoking)
+    {
+        EncounterCombatMovementOption movement =
+            Assert.IsType<EncounterCombatMovementOption>(
+                fixture.Decision.Movement);
+        GridPosition start = fixture.Encounter.Participants
+            .Single(participant => string.Equals(
+                participant.Combatant.CombatantId,
+                fixture.ActorId,
+                StringComparison.Ordinal))
+            .Position;
+
+        return movement.DestinationOptions.First(destination =>
+            PathProvokes(fixture.Encounter, fixture.ActorId, start, destination)
+                == provoking);
+    }
+
+    private static bool PathProvokes(
+        EncounterState encounter,
+        string actorId,
+        GridPosition start,
+        EncounterCombatMovementDestinationOption destination)
+    {
+        GridPosition previous = start;
+
+        foreach (GridPosition next in destination.Path)
+        {
+            if (EncounterOpportunityAttackRules.FindProvocations(
+                encounter,
+                actorId,
+                previous,
+                next).Count > 0)
+            {
+                return true;
+            }
+
+            previous = next;
+        }
+
+        return false;
     }
 
     [Fact]
@@ -59,6 +150,7 @@ public sealed class EncounterPlayerCommandResolverTests
                 });
 
         Assert.Equal(fixture.CursorBefore, resolution.CursorAfter);
+        Assert.NotNull(resolution.PrimaryStep);
         Assert.Equal(
             CombatStepKind.TurnAdvanced,
             resolution.PrimaryStep.Kind);
@@ -96,6 +188,7 @@ public sealed class EncounterPlayerCommandResolverTests
                     TargetCombatantId = target.TargetCombatantId
                 });
 
+        Assert.NotNull(resolution.PrimaryStep);
         Assert.Equal(
             CombatStepKind.WeaponAttack,
             resolution.PrimaryStep.Kind);

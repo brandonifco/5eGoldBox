@@ -14,7 +14,9 @@ internal static class EncounterWeaponAttackPrerequisiteRules
         EncounterState state,
         string actorCombatantId,
         string targetCombatantId,
-        string weaponId)
+        string weaponId,
+        EncounterWeaponAttackTiming timing =
+            EncounterWeaponAttackTiming.Action)
     {
         ArgumentNullException.ThrowIfNull(state);
 
@@ -83,10 +85,16 @@ internal static class EncounterWeaponAttackPrerequisiteRules
                     .TargetNotParticipant);
         }
 
-        if (!string.Equals(
-            actorCombatantId,
-            state.ActiveCombatantId,
-            StringComparison.Ordinal))
+        // A reaction is taken on somebody else's turn by definition, so
+        // the active-combatant requirement is exactly the thing that does
+        // not apply to it. Every other check below is unchanged: a
+        // reacting combatant still has to be conscious, still cannot hit
+        // its own side, still needs a real weapon in reach.
+        if (timing != EncounterWeaponAttackTiming.Reaction
+            && !string.Equals(
+                actorCombatantId,
+                state.ActiveCombatantId,
+                StringComparison.Ordinal))
         {
             return CreateUnavailable(
                 EncounterActionUnavailabilityReason
@@ -101,7 +109,16 @@ internal static class EncounterWeaponAttackPrerequisiteRules
                     .ActorCannotAct);
         }
 
-        if (!actor.TurnResources.HasActionAvailable)
+        if (timing == EncounterWeaponAttackTiming.Reaction)
+        {
+            if (!actor.TurnResources.HasReactionAvailable)
+            {
+                return CreateUnavailable(
+                    EncounterActionUnavailabilityReason
+                        .ReactionUnavailable);
+            }
+        }
+        else if (!actor.TurnResources.HasActionAvailable)
         {
             return CreateUnavailable(
                 EncounterActionUnavailabilityReason

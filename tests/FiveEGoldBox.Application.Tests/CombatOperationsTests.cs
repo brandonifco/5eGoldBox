@@ -617,10 +617,12 @@ public sealed class CombatOperationsTests
             typeof(CombatWeaponAttackOption),
             typeof(CombatSpellAttackOption),
             typeof(CombatTargetOption),
+            typeof(CombatDisengageOption),
             typeof(CombatEndTurnOption),
             typeof(CombatMoveIntent),
             typeof(CombatWeaponAttackIntent),
             typeof(CombatSpellAttackIntent),
+            typeof(CombatDisengageIntent),
             typeof(CombatEndTurnIntent),
             typeof(CombatIntentKind),
             typeof(CombatIntentReceipt),
@@ -654,6 +656,7 @@ public sealed class CombatOperationsTests
             typeof(CombatMoveIntent),
             typeof(CombatWeaponAttackIntent),
             typeof(CombatSpellAttackIntent),
+            typeof(CombatDisengageIntent),
             typeof(CombatEndTurnIntent)
         ];
 

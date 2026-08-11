@@ -108,6 +108,19 @@ public static class CombatOperations
 
     public static CombatResolutionResult Execute(
         ApplicationSessionState session,
+        CombatDisengageIntent intent)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(intent);
+
+        return EncounterCombatResultMapper.ToCombatResolutionResult(
+            EncounterCombatOrchestrator.Execute(
+                session,
+                intent));
+    }
+
+    public static CombatResolutionResult Execute(
+        ApplicationSessionState session,
         CombatEndTurnIntent intent)
     {
         ArgumentNullException.ThrowIfNull(session);

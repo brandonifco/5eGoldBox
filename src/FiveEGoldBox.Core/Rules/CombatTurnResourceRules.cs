@@ -19,7 +19,29 @@ public static class CombatTurnResourceRules
             HasBonusActionAvailable = true,
             HasReactionAvailable = true,
             MovementSpeedFeet = movementSpeedFeet,
-            MovementSpentFeet = 0
+            MovementSpentFeet = 0,
+            HasDisengaged = false
+        };
+    }
+
+    /// Spends the Action and marks the rest of this turn's movement as
+    /// non-provoking. Disengaging twice is refused rather than ignored —
+    /// it would cost a second Action for nothing, which is a caller bug
+    /// rather than a legal move.
+    public static CombatTurnResources Disengage(
+        CombatTurnResources resources)
+    {
+        ArgumentNullException.ThrowIfNull(resources);
+
+        if (resources.HasDisengaged)
+        {
+            throw new InvalidOperationException(
+                "The combatant has already disengaged this turn.");
+        }
+
+        return SpendAction(resources) with
+        {
+            HasDisengaged = true
         };
     }
 

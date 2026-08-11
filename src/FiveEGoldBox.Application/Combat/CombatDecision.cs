@@ -10,6 +10,7 @@ public sealed record CombatDecision
         CombatMovementOption? movement,
         IReadOnlyList<CombatWeaponAttackOption> weaponAttacks,
         IReadOnlyList<CombatSpellAttackOption> spellAttacks,
+        CombatDisengageOption? disengage,
         CombatEndTurnOption? endTurn,
         string? winningSideId)
     {
@@ -28,6 +29,7 @@ public sealed record CombatDecision
             movement,
             protectedWeaponAttacks,
             protectedSpellAttacks,
+            disengage,
             endTurn,
             winningSideId);
 
@@ -39,6 +41,7 @@ public sealed record CombatDecision
         Movement = movement;
         WeaponAttacks = Array.AsReadOnly(protectedWeaponAttacks);
         SpellAttacks = Array.AsReadOnly(protectedSpellAttacks);
+        Disengage = disengage;
         EndTurn = endTurn;
         WinningSideId = winningSideId;
     }
@@ -57,6 +60,11 @@ public sealed record CombatDecision
 
     public IReadOnlyList<CombatSpellAttackOption> SpellAttacks { get; }
 
+    /// Present exactly when a player decision is required, alongside
+    /// Movement and EndTurn. Its own IsAvailable says whether the action
+    /// is actually still affordable this turn.
+    public CombatDisengageOption? Disengage { get; }
+
     public CombatEndTurnOption? EndTurn { get; }
 
     public string? WinningSideId { get; }
@@ -68,6 +76,7 @@ public sealed record CombatDecision
         CombatMovementOption? movement,
         IReadOnlyList<CombatWeaponAttackOption> weaponAttacks,
         IReadOnlyList<CombatSpellAttackOption> spellAttacks,
+        CombatDisengageOption? disengage,
         CombatEndTurnOption? endTurn,
         string? winningSideId)
     {
@@ -77,6 +86,7 @@ public sealed record CombatDecision
                 if (string.IsNullOrWhiteSpace(activeCombatantId)
                     || pendingDeathSavingThrowCombatantId is not null
                     || movement is null
+                    || disengage is null
                     || endTurn is null
                     || winningSideId is not null)
                 {
@@ -91,6 +101,7 @@ public sealed record CombatDecision
                     || movement is not null
                     || weaponAttacks.Count != 0
                     || spellAttacks.Count != 0
+                    || disengage is not null
                     || endTurn is not null
                     || winningSideId is not null)
                 {
@@ -106,6 +117,7 @@ public sealed record CombatDecision
                     || movement is not null
                     || weaponAttacks.Count != 0
                     || spellAttacks.Count != 0
+                    || disengage is not null
                     || endTurn is not null)
                 {
                     throw new ArgumentException(

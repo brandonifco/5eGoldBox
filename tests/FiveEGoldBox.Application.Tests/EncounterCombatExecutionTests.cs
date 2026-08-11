@@ -1190,6 +1190,20 @@ public sealed class EncounterCombatExecutionTests
                 actor.Position.X + offset.X,
                 actor.Position.Y + offset.Y);
 
+            // Skips squares whose step would provoke: this helper exists
+            // for tests about movement accounting (feet spent, action left,
+            // dice untouched), and a step that draws an opportunity attack
+            // makes all three say something else. A test that wants the
+            // provoking case asks for it explicitly.
+            if (EncounterOpportunityAttackRules.FindProvocations(
+                encounter,
+                actor.Combatant.CombatantId,
+                actor.Position,
+                candidate).Count > 0)
+            {
+                continue;
+            }
+
             try
             {
                 _ = EncounterMovementRules.Resolve(

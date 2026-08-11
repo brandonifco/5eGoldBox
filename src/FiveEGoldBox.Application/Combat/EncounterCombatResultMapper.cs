@@ -53,6 +53,11 @@ internal static class EncounterCombatResultMapper
                 : ToCombatMovementOption(source.Movement),
             weaponAttacks,
             spellAttacks,
+            source.Disengage is null
+                ? null
+                : new CombatDisengageOption(
+                    source.Disengage.IsAvailable,
+                    source.Disengage.UnavailabilityReason),
             source.EndTurn is null
                 ? null
                 : new CombatEndTurnOption(
@@ -140,7 +145,9 @@ internal static class EncounterCombatResultMapper
                 : ToMovementDetail(source.Movement),
             source.WeaponAttack is null
                 ? null
-                : ToWeaponAttackDetail(source.WeaponAttack),
+                : ToWeaponAttackDetail(
+                    source.WeaponAttack,
+                    source.IsOpportunityAttack),
             source.SpellAttack is null
                 ? null
                 : ToSpellAttackDetail(source.SpellAttack),
@@ -170,7 +177,8 @@ internal static class EncounterCombatResultMapper
     }
 
     private static CombatWeaponAttackStepDetail ToWeaponAttackDetail(
-        EncounterWeaponAttackResult source)
+        EncounterWeaponAttackResult source,
+        bool isOpportunityAttack)
     {
         AttackRollResult attackRoll = source.Attack.AttackRoll;
 
@@ -191,7 +199,8 @@ internal static class EncounterCombatResultMapper
             source.Attack.Damage.FinalDamage,
             source.TargetDamage is null
                 ? null
-                : ToDamagedTargetDetail(source.TargetDamage));
+                : ToDamagedTargetDetail(source.TargetDamage),
+            isOpportunityAttack);
     }
 
     private static CombatSpellAttackStepDetail ToSpellAttackDetail(
@@ -354,6 +363,7 @@ internal static class EncounterCombatResultMapper
             CombatStepKind.Movement => CombatStepKind.Movement,
             CombatStepKind.WeaponAttack => CombatStepKind.WeaponAttack,
             CombatStepKind.SpellAttack => CombatStepKind.SpellAttack,
+            CombatStepKind.Disengage => CombatStepKind.Disengage,
             CombatStepKind.DeathSavingThrow =>
                 CombatStepKind.DeathSavingThrow,
             CombatStepKind.TurnAdvanced => CombatStepKind.TurnAdvanced,
@@ -398,6 +408,7 @@ internal static class EncounterCombatResultMapper
                 CombatIntentKind.WeaponAttack,
             CombatIntentKind.SpellAttack =>
                 CombatIntentKind.SpellAttack,
+            CombatIntentKind.Disengage => CombatIntentKind.Disengage,
             CombatIntentKind.EndTurn => CombatIntentKind.EndTurn,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(source),
@@ -419,6 +430,8 @@ internal static class EncounterCombatResultMapper
                 CombatTurnAdvanceReason.StableParticipant,
             EncounterCombatTurnAdvanceReason.DyingParticipantAfterSave =>
                 CombatTurnAdvanceReason.DyingParticipantAfterSave,
+            EncounterCombatTurnAdvanceReason.DroppedOnOwnTurn =>
+                CombatTurnAdvanceReason.DroppedOnOwnTurn,
             EncounterCombatTurnAdvanceReason.NoProductiveEnemyAction =>
                 CombatTurnAdvanceReason.NoProductiveEnemyAction,
             EncounterCombatTurnAdvanceReason.RaiderTurnCompleted =>
