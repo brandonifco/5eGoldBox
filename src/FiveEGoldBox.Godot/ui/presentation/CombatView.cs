@@ -131,7 +131,14 @@ public partial class CombatView : Control
 	// player's current zoom alone.
 	internal void Configure(CombatViewModel model)
 	{
-		_zoomIndex = 0;
+		// Starts at the existing 2.0x zoom preset (ZoomLevels' own last
+		// entry, CombatView.Zoom.cs) rather than the smallest one -- the
+		// user's own ask, "make everything appear about twice as large."
+		// Reuses the zoom/pan/clamp pipeline mouse-wheel zoom already
+		// exercises instead of touching the base tile-size constant
+		// (ReferenceSpan) that floor/grid drawing and hit-testing all
+		// depend on.
+		_zoomIndex = 2;
 		// Forces Refresh's own "did the active combatant change" check
 		// below to read as true on this first call, so a fresh encounter
 		// centers on the opening turn the same way any later turn change
