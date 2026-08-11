@@ -110,6 +110,7 @@ public sealed class ConsoleSessionRunnerCombatTests
             movement: null,
             weaponAttacks: [],
             spellAttacks: [],
+            disengage: null,
             endTurn: null,
             winningSideId: null);
         ConsoleSessionRunner runner = new();

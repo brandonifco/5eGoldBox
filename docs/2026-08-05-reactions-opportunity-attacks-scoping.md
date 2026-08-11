@@ -1,5 +1,23 @@
 # Reactions / opportunity attacks — implementation scoping
 
+> **Status, 2026-08-10: Increment A is built and merged.** Read this doc for
+> the analysis that shaped it, but note three places where reality diverged
+> from the plan below, all recorded in CLAUDE.md's own entry:
+> 1. **The frozen-transcript prediction in "Risks / verification" was wrong.**
+>    The aggressive scripted run *does* retreat after adjacency (it attacks an
+>    adjacent raider, then walks away), so the transcript changed and was
+>    deliberately regenerated. The doc's insistence on actually running the
+>    suite rather than assuming is exactly what caught it.
+> 2. **Both sides got opportunity attacks, not just the enemies.** Increment B
+>    is about surfacing a player *choice*; auto-taking the party's reaction
+>    costs nothing today because no other reaction exists to save it for.
+> 3. **Stepwise movement is scoped to paths that actually provoke.** A path
+>    nothing reacts to still resolves in one atomic call and one revision.
+>
+> Increment B — a real player-facing "take the attack?" interrupt — remains
+> unbuilt and unscoped, and only becomes a genuine decision once a second
+> reaction option exists.
+
 **Date:** 2026-08-05. Follow-up to `docs/2026-08-04-gold-box-combat-design-gap-analysis.md`'s tier-2 finding #3 ("the biggest real gap"), which flagged this as needing real scoping before any code — this is that scoping pass, not the implementation itself.
 
 **Method:** every claim below is sourced to an actual file:line, read directly this session, not assumed from the gap-analysis doc's own summary.

@@ -106,6 +106,7 @@ internal static class EncounterCombatDecisionFactory
             },
             WeaponAttacks = Array.AsReadOnly(weaponAttacks),
             SpellAttacks = Array.AsReadOnly(spellAttacks),
+            Disengage = CreateDisengageOption(encounter),
             EndTurn = new EncounterCombatEndTurnOption
             {
                 IsAvailable = true,
@@ -294,6 +295,28 @@ internal static class EncounterCombatDecisionFactory
             SaveDc = spell.Resolution == SpellResolutionKind.SavingThrow
                 ? spell.SaveDc
                 : null
+        };
+    }
+
+    /// Unavailable collapses to ActionUnavailable, which is honest for
+    /// every way this can currently be refused on a live player turn: the
+    /// action is gone, either spent outright or spent on disengaging
+    /// already. The other CanDisengage guards (not active, not conscious)
+    /// cannot be false here — a player decision only exists for a
+    /// conscious active combatant in the first place.
+    private static EncounterCombatDisengageOption CreateDisengageOption(
+        EncounterState encounter)
+    {
+        bool canDisengage = EncounterDisengageRules.CanDisengage(
+            encounter,
+            encounter.ActiveCombatantId);
+
+        return new EncounterCombatDisengageOption
+        {
+            IsAvailable = canDisengage,
+            UnavailabilityReason = canDisengage
+                ? EncounterActionUnavailabilityReason.None
+                : EncounterActionUnavailabilityReason.ActionUnavailable
         };
     }
 

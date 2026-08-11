@@ -66,9 +66,29 @@ internal static class EncounterAutomaticTurnProcessor
                 return state;
             }
 
+            // A death save is only ever *pending* because the turn
+            // advanced onto someone already dying. Opportunity attacks
+            // introduced a state that could not previously exist: the
+            // active combatant dropping during its own turn, hit by a
+            // reaction. It has no pending save, and RAW does not give it
+            // one until its turn comes round again — so end the turn
+            // rather than rolling a save nothing asked for. Resolving one
+            // here is what threw "the active combatant does not have a
+            // pending death saving throw".
             if (active.Combatant.LifecycleState
                 == CombatantLifecycleState.Dying)
             {
+                if (encounter.PendingDeathSavingThrowCombatantId is null)
+                {
+                    state = SkipTurn(
+                        state,
+                        steps,
+                        encounter,
+                        activeId,
+                        EncounterCombatTurnAdvanceReason.DroppedOnOwnTurn);
+                    continue;
+                }
+
                 state = ResolveDeathSave(state, steps);
                 continue;
             }
@@ -188,15 +208,52 @@ internal static class EncounterAutomaticTurnProcessor
 
         if (plan.Movement is not null)
         {
-            steps.Add(EncounterCombatStepFactory.CreateMovement(
-                encounter,
-                plan.Movement));
+            // The planner resolved the move already, to know where it was
+            // going -- but it resolved it atomically, which cannot be
+            // interrupted. Re-resolve the same path through the staging so
+            // the party gets its opportunity attacks against an enemy who
+            // walks away from them, and discard the planner's own state.
+            // Free of side effects: movement consumes no dice.
+            EncounterMovementStagingResult movement =
+                EncounterMovementStaging.Resolve(
+                    encounter,
+                    state.RandomSeed,
+                    state.RandomValuesConsumed,
+                    actorId,
+                    plan.Movement.Path);
+
+            if (movement.MovementStep is not null)
+            {
+                steps.Add(movement.MovementStep);
+            }
+
+            steps.AddRange(movement.ReactionSteps);
 
             state = EncounterCombatSessionMapper.ReplaceEncounter(
                 state,
-                plan.Movement.State,
-                state.RandomValuesConsumed);
-            encounter = plan.Movement.State;
+                movement.State,
+                movement.CursorAfter);
+            encounter = movement.State;
+
+            // A free hit can drop the mover, or end the fight outright.
+            // Either way there is no attack for this turn to follow with,
+            // and SkipTurn below would be advancing past a combatant the
+            // encounter has already finished with.
+            if (encounter.LifecycleState
+                != EncounterLifecycleState.Active)
+            {
+                return state;
+            }
+
+            if (!IsConscious(encounter, actorId))
+            {
+                return SkipTurn(
+                    state,
+                    steps,
+                    encounter,
+                    actorId,
+                    EncounterCombatTurnAdvanceReason.DroppedOnOwnTurn);
+            }
         }
 
         if (plan.Attack is { } attackPlan)
@@ -235,6 +292,19 @@ internal static class EncounterAutomaticTurnProcessor
             encounter,
             actorId,
             plan.TurnAdvanceReason);
+    }
+
+    private static bool IsConscious(
+        EncounterState encounter,
+        string combatantId)
+    {
+        return encounter.Participants.Any(participant =>
+            string.Equals(
+                participant.Combatant.CombatantId,
+                combatantId,
+                StringComparison.Ordinal)
+            && participant.Combatant.LifecycleState
+                == CombatantLifecycleState.Conscious);
     }
 
     /// Advances past the active combatant, recording why.

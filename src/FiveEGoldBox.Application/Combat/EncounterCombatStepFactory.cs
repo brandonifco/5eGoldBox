@@ -31,14 +31,22 @@ internal static class EncounterCombatStepFactory
         };
     }
 
+    /// isOpportunityAttack rides on the ordinary weapon-attack step rather
+    /// than getting a CombatStepKind of its own: mechanically it *is* a
+    /// weapon attack, and every switch over the kind — narration, the
+    /// journal, the transcripts — would otherwise need a new arm to say
+    /// the same thing. The flag is only there so a client can tell the
+    /// player it was a free hit rather than an ordinary one.
     internal static EncounterCombatStepResult CreateWeaponAttack(
         EncounterState startingState,
         EncounterWeaponAttackResult attack,
-        IReadOnlyList<EncounterCombatDieRoll> dice)
+        IReadOnlyList<EncounterCombatDieRoll> dice,
+        bool isOpportunityAttack = false)
     {
         return new EncounterCombatStepResult
         {
             Kind = CombatStepKind.WeaponAttack,
+            IsOpportunityAttack = isOpportunityAttack,
             StartingEncounterRevision = startingState.Revision,
             ResultingEncounterRevision = attack.State.Revision,
             ActorCombatantId = attack.ActorCombatantId,
@@ -76,6 +84,29 @@ internal static class EncounterCombatStepFactory
             TurnAdvancement = null,
             TurnAdvanceReason = null,
             WinningSideId = spellAttack.State.WinningSideId
+        };
+    }
+
+    internal static EncounterCombatStepResult CreateDisengage(
+        EncounterState startingState,
+        EncounterDisengageResult disengage)
+    {
+        return new EncounterCombatStepResult
+        {
+            Kind = CombatStepKind.Disengage,
+            StartingEncounterRevision = startingState.Revision,
+            ResultingEncounterRevision = disengage.State.Revision,
+            ActorCombatantId = disengage.ActorCombatantId,
+            TargetCombatantId = null,
+            Dice = Array.Empty<EncounterCombatDieRoll>(),
+            Movement = null,
+            WeaponAttack = null,
+            SpellAttack = null,
+            ConcentrationCheck = null,
+            DeathSavingThrow = null,
+            TurnAdvancement = null,
+            TurnAdvanceReason = null,
+            WinningSideId = disengage.State.WinningSideId
         };
     }
 

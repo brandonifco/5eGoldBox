@@ -10,6 +10,12 @@ internal sealed record EncounterWeaponAttackEvaluationCommand
 
     public required string WeaponId { get; init; }
 
+    /// See EncounterWeaponAttackCommand.Timing — the evaluation has to agree
+    /// with the resolution about this or the two would disagree on whether
+    /// the attack is legal at all.
+    public EncounterWeaponAttackTiming Timing { get; init; }
+        = EncounterWeaponAttackTiming.Action;
+
     public required int FirstAttackRoll { get; init; }
 
     public int? SecondAttackRoll { get; init; }

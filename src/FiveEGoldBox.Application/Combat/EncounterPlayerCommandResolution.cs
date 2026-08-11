@@ -13,8 +13,17 @@ internal sealed record EncounterPlayerCommandResolution
     /// commands that consume no dice.
     internal required int CursorAfter { get; init; }
 
-    /// The step describing what the command did.
-    internal required EncounterCombatStepResult PrimaryStep { get; init; }
+    /// The step describing what the command did. Null only when the command
+    /// produced nothing to describe — a move whose very first square was
+    /// stopped by an opportunity attack that dropped the mover.
+    internal required EncounterCombatStepResult? PrimaryStep { get; init; }
+
+    /// Anything that reacted to the command, in the order it happened.
+    /// Opportunity attacks today; a Ready trigger would land here too.
+    /// Reported separately from the automatic steps that follow because
+    /// these happened *during* the player's own command, not after it.
+    internal IReadOnlyList<EncounterCombatStepResult> ReactionSteps
+    { get; init; } = Array.Empty<EncounterCombatStepResult>();
 
     /// The submitted command echoed back to the caller.
     internal required EncounterCombatIntentReceipt Receipt { get; init; }

@@ -10,14 +10,17 @@ internal static class CombatAttackStaging
         EncounterState encounter,
         string actorCombatantId,
         string targetCombatantId,
-        string weaponId)
+        string weaponId,
+        EncounterWeaponAttackTiming timing =
+            EncounterWeaponAttackTiming.Action)
     {
         EncounterWeaponAttackPrerequisiteEvaluation evaluation =
             EncounterWeaponAttackPrerequisiteRules.Evaluate(
                 encounter,
                 actorCombatantId,
                 targetCombatantId,
-                weaponId);
+                weaponId,
+                timing);
 
         return new CombatAttackAvailability(
             evaluation.IsLegal,
@@ -36,7 +39,9 @@ internal static class CombatAttackStaging
         string weaponId,
         int firstAttackRoll,
         int? secondAttackRoll,
-        IReadOnlyList<int> contributionRolls)
+        IReadOnlyList<int> contributionRolls,
+        EncounterWeaponAttackTiming timing =
+            EncounterWeaponAttackTiming.Action)
     {
         EncounterWeaponAttackEvaluation evaluation =
             EncounterWeaponAttackRules.Evaluate(
@@ -47,6 +52,7 @@ internal static class CombatAttackStaging
                     ActorCombatantId = actorCombatantId,
                     TargetCombatantId = targetCombatantId,
                     WeaponId = weaponId,
+                    Timing = timing,
                     FirstAttackRoll = firstAttackRoll,
                     SecondAttackRoll = secondAttackRoll,
                     ContributionRolls = contributionRolls

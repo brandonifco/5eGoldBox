@@ -30,23 +30,31 @@ internal static class EncounterPlayerCommandResolver
                 nameof(intent));
         }
 
-        EncounterMovementResult movement =
-            EncounterMovementRules.Resolve(
+        if (intent.ExpectedEncounterRevision != encounter.Revision)
+        {
+            throw new InvalidOperationException(
+                $"Expected encounter revision '{intent.ExpectedEncounterRevision}', but the current revision is '{encounter.Revision}'.");
+        }
+
+        // Goes through the staging rather than Core directly because the
+        // path may be interrupted -- see EncounterMovementStaging for why
+        // stepwise-ness lives in this layer. A path nothing reacts to comes
+        // back from it byte-identical to the single atomic Resolve this
+        // used to call.
+        EncounterMovementStagingResult movement =
+            EncounterMovementStaging.Resolve(
                 encounter,
-                new EncounterMovementCommand
-                {
-                    ExpectedRevision = intent.ExpectedEncounterRevision,
-                    ActorCombatantId = intent.ActorCombatantId,
-                    Path = Array.AsReadOnly(path)
-                });
+                randomSeed,
+                cursorBefore,
+                intent.ActorCombatantId,
+                path);
 
         return new EncounterPlayerCommandResolution
         {
             State = movement.State,
-            CursorAfter = cursorBefore,
-            PrimaryStep = EncounterCombatStepFactory.CreateMovement(
-                encounter,
-                movement),
+            CursorAfter = movement.CursorAfter,
+            PrimaryStep = movement.MovementStep,
+            ReactionSteps = movement.ReactionSteps,
             Receipt = new EncounterCombatIntentReceipt
             {
                 Kind = CombatIntentKind.Move,
@@ -163,6 +171,43 @@ internal static class EncounterPlayerCommandResolver
                 WeaponId = null,
                 SpellId = intent.SpellId,
                 TargetCombatantId = intent.TargetCombatantId
+            }
+        };
+    }
+
+    internal static EncounterPlayerCommandResolution Resolve(
+        EncounterState encounter,
+        int randomSeed,
+        int cursorBefore,
+        CombatDisengageIntent intent)
+    {
+        ArgumentNullException.ThrowIfNull(encounter);
+        ArgumentNullException.ThrowIfNull(intent);
+
+        EncounterDisengageResult disengage =
+            EncounterDisengageRules.Resolve(
+                encounter,
+                new EncounterDisengageCommand
+                {
+                    ExpectedRevision = intent.ExpectedEncounterRevision,
+                    ActorCombatantId = intent.ActorCombatantId
+                });
+
+        return new EncounterPlayerCommandResolution
+        {
+            State = disengage.State,
+            CursorAfter = cursorBefore,
+            PrimaryStep = EncounterCombatStepFactory.CreateDisengage(
+                encounter,
+                disengage),
+            Receipt = new EncounterCombatIntentReceipt
+            {
+                Kind = CombatIntentKind.Disengage,
+                ExpectedEncounterRevision = intent.ExpectedEncounterRevision,
+                ActorCombatantId = intent.ActorCombatantId,
+                Path = Array.Empty<GridPosition>(),
+                WeaponId = null,
+                TargetCombatantId = null
             }
         };
     }

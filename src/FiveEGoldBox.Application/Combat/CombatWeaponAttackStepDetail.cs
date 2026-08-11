@@ -22,7 +22,8 @@ public sealed record CombatWeaponAttackStepDetail
         int targetArmorClass,
         AttackRollOutcome outcome,
         int finalDamage,
-        CombatDamagedTargetDetail? damagedTarget)
+        CombatDamagedTargetDetail? damagedTarget,
+        bool isOpportunityAttack = false)
     {
         WeaponId = weaponId;
         DistanceFeet = distanceFeet;
@@ -39,9 +40,16 @@ public sealed record CombatWeaponAttackStepDetail
         Outcome = outcome;
         FinalDamage = finalDamage;
         DamagedTarget = damagedTarget;
+        IsOpportunityAttack = isOpportunityAttack;
     }
 
     public string WeaponId { get; }
+
+    /// True when this was a reaction provoked by the target's own movement
+    /// rather than an attack somebody spent an action on. A client that
+    /// narrates the two identically leaves the player wondering why an
+    /// enemy who had already acted just hit them again.
+    public bool IsOpportunityAttack { get; }
 
     public int DistanceFeet { get; }
 

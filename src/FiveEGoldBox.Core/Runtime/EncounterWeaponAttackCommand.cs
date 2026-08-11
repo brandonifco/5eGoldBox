@@ -10,6 +10,11 @@ public sealed record EncounterWeaponAttackCommand
 
     public required string WeaponId { get; init; }
 
+    /// Defaults to Action, so every pre-existing caller keeps the exact
+    /// behaviour it had: the active combatant spending its Action.
+    public EncounterWeaponAttackTiming Timing { get; init; }
+        = EncounterWeaponAttackTiming.Action;
+
     public required int FirstAttackRoll { get; init; }
 
     public int? SecondAttackRoll { get; init; }

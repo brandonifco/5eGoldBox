@@ -23,6 +23,9 @@ internal sealed record EncounterCombatDecision
     public IReadOnlyList<EncounterCombatSpellAttackOption> SpellAttacks
     { get; init; } = Array.Empty<EncounterCombatSpellAttackOption>();
 
+    /// Null outside a player decision, exactly like Movement and EndTurn.
+    public EncounterCombatDisengageOption? Disengage { get; init; }
+
     public EncounterCombatEndTurnOption? EndTurn { get; init; }
 
     public string? WinningSideId { get; init; }

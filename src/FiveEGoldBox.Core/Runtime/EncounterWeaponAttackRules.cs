@@ -25,6 +25,7 @@ public static class EncounterWeaponAttackRules
             command.ActorCombatantId,
             command.TargetCombatantId,
             command.WeaponId,
+            command.Timing,
             command.FirstAttackRoll,
             command.SecondAttackRoll,
             command.ContributionRolls);
@@ -47,6 +48,7 @@ public static class EncounterWeaponAttackRules
                 command.ActorCombatantId,
                 command.TargetCombatantId,
                 command.WeaponId,
+                command.Timing,
                 command.FirstAttackRoll,
                 command.SecondAttackRoll,
                 command.ContributionRolls);
@@ -108,7 +110,8 @@ public static class EncounterWeaponAttackRules
         participants[actorIndex] =
             PrepareActorAfterAttack(
                 actor,
-                weapon);
+                weapon,
+                command.Timing);
 
         EncounterState actionSpentState = state with
         {
@@ -191,6 +194,7 @@ public static class EncounterWeaponAttackRules
             string actorCombatantId,
             string targetCombatantId,
             string weaponId,
+            EncounterWeaponAttackTiming timing,
             int firstAttackRoll,
             int? secondAttackRoll,
             IReadOnlyList<int> contributionRolls)
@@ -213,7 +217,8 @@ public static class EncounterWeaponAttackRules
                 state,
                 actorCombatantId,
                 targetCombatantId,
-                weaponId);
+                weaponId,
+                timing);
 
         EnsurePrerequisitesAreLegal(
             state,
@@ -370,6 +375,11 @@ public static class EncounterWeaponAttackRules
                 .ActionUnavailable:
                 throw new InvalidOperationException(
                     "The attacking combatant has already spent its action.");
+
+            case EncounterActionUnavailabilityReason
+                .ReactionUnavailable:
+                throw new InvalidOperationException(
+                    "The attacking combatant has already spent its reaction.");
 
             case EncounterActionUnavailabilityReason
                 .TargetNotHostile:
@@ -549,7 +559,8 @@ public static class EncounterWeaponAttackRules
     private static EncounterParticipantState
         PrepareActorAfterAttack(
             EncounterParticipantState actor,
-            WeaponAttack weapon)
+            WeaponAttack weapon,
+            EncounterWeaponAttackTiming timing)
     {
         EncounterCombatProfile resolvedCombatProfile =
             actor.CombatProfile;
@@ -598,8 +609,11 @@ public static class EncounterWeaponAttackRules
             CombatProfile =
                 resolvedCombatProfile,
             TurnResources =
-                CombatTurnResourceRules.SpendAction(
-                    actor.TurnResources)
+                timing == EncounterWeaponAttackTiming.Reaction
+                    ? CombatTurnResourceRules.SpendReaction(
+                        actor.TurnResources)
+                    : CombatTurnResourceRules.SpendAction(
+                        actor.TurnResources)
         };
     }
 

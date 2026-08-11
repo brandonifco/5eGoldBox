@@ -97,6 +97,24 @@ internal static class EncounterCombatOrchestrator
 
     internal static EncounterCombatResolutionResult Execute(
         ApplicationSessionState source,
+        CombatDisengageIntent intent)
+    {
+        ArgumentNullException.ThrowIfNull(intent);
+
+        return ExecutePlayerCommand(
+            source,
+            intent.ExpectedEncounterRevision,
+            intent.ActorCombatantId,
+            (encounter, randomSeed, cursorBefore) =>
+                EncounterPlayerCommandResolver.Resolve(
+                    encounter,
+                    randomSeed,
+                    cursorBefore,
+                    intent));
+    }
+
+    internal static EncounterCombatResolutionResult Execute(
+        ApplicationSessionState source,
         CombatEndTurnIntent intent)
     {
         ArgumentNullException.ThrowIfNull(intent);
@@ -139,7 +157,11 @@ internal static class EncounterCombatOrchestrator
             resolution.State,
             resolution.CursorAfter);
 
-        List<EncounterCombatStepResult> automaticSteps = [];
+        // Reactions first, then whatever automatic processing follows: an
+        // opportunity attack happened during the player's own command, so
+        // it belongs before an enemy's subsequent turn, not after it.
+        List<EncounterCombatStepResult> automaticSteps =
+            [.. resolution.ReactionSteps];
         state = EncounterAutomaticTurnProcessor.ProcessUntilDecision(state, automaticSteps);
 
         return CreateResult(

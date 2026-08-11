@@ -28,9 +28,16 @@ public sealed class CombatOperationsWriteTests
         CombatResolutionResult opening = CombatOperations.AdvanceToDecision(
             WatchtowerSignalTestData.CreateEncounterSession());
         CombatDecision decision = opening.ResultingDecision;
+        // The furthest reachable destination, not the first: the ambush
+        // starts the party in contact, so the nearest options are single
+        // steps that stay inside a raider's reach and provoke nothing,
+        // while this one leaves it and draws an opportunity attack. Picking
+        // by index made this test quietly depend on enumeration order.
         CombatMovementDestinationOption destination =
             Assert.IsType<CombatMovementOption>(decision.Movement)
-                .DestinationOptions[0];
+                .DestinationOptions
+                .OrderByDescending(option => option.Path.Count)
+                .First();
 
         CombatResolutionResult result = CombatOperations.Execute(
             opening.State,
@@ -56,10 +63,95 @@ public sealed class CombatOperationsWriteTests
         Assert.Equal(CombatIntentKind.Move, receipt.Kind);
         Assert.Equal(destination.Path, receipt.Path);
 
-        // Movement draws no dice.
+        // Movement itself still draws no dice -- primary.Dice above is
+        // empty. What this move does draw is the opportunity attack it
+        // provoked by leaving a raider's reach, reported as its own step
+        // ahead of any automatic processing.
+        CombatStepResult reaction = result.AutomaticSteps[0];
+
+        Assert.Equal(CombatStepKind.WeaponAttack, reaction.Kind);
+        Assert.True(
+            Assert.IsType<CombatWeaponAttackStepDetail>(reaction.WeaponAttack)
+                .IsOpportunityAttack);
+        Assert.True(
+            result.RandomValuesConsumedAfter
+                > result.RandomValuesConsumedBefore);
+    }
+
+    /// The two features only make sense together, and only an end-to-end
+    /// test can show it: the same path that draws a free attack above draws
+    /// nothing at all once the mover has disengaged. Asserted on the dice
+    /// cursor as well as the step list, because "no reaction step" would
+    /// also be true if the attack had silently failed to resolve.
+    [Fact]
+    public void Execute_MoveAfterDisengaging_ProvokesNothing()
+    {
+        CombatResolutionResult opening = CombatOperations.AdvanceToDecision(
+            WatchtowerSignalTestData.CreateEncounterSession());
+        CombatDecision decision = opening.ResultingDecision;
+        string actorId = Assert.IsType<string>(decision.ActiveCombatantId);
+        CombatMovementDestinationOption destination =
+            Assert.IsType<CombatMovementOption>(decision.Movement)
+                .DestinationOptions
+                .OrderByDescending(option => option.Path.Count)
+                .First();
+
+        Assert.True(
+            Assert.IsType<CombatDisengageOption>(decision.Disengage)
+                .IsAvailable);
+
+        CombatResolutionResult disengaged = CombatOperations.Execute(
+            opening.State,
+            new CombatDisengageIntent
+            {
+                ExpectedEncounterRevision = decision.EncounterRevision,
+                ActorCombatantId = actorId
+            });
+
         Assert.Equal(
-            result.RandomValuesConsumedBefore,
-            result.RandomValuesConsumedAfter);
+            CombatStepKind.Disengage,
+            Assert.IsType<CombatStepResult>(disengaged.PrimaryStep).Kind);
+
+        CombatResolutionResult moved = CombatOperations.Execute(
+            disengaged.State,
+            new CombatMoveIntent
+            {
+                ExpectedEncounterRevision =
+                    disengaged.ResultingDecision.EncounterRevision,
+                ActorCombatantId = actorId,
+                Path = destination.Path
+            });
+
+        Assert.DoesNotContain(
+            moved.AutomaticSteps,
+            step => step.Kind == CombatStepKind.WeaponAttack);
+        Assert.Equal(
+            moved.RandomValuesConsumedBefore,
+            moved.RandomValuesConsumedAfter);
+    }
+
+    /// Disengage costs the Action, so it has to stop being on offer once
+    /// the action is gone — a button the write path would then refuse is
+    /// worse than no button.
+    [Fact]
+    public void Execute_Disengage_IsNoLongerOfferedAfterwards()
+    {
+        CombatResolutionResult opening = CombatOperations.AdvanceToDecision(
+            WatchtowerSignalTestData.CreateEncounterSession());
+        CombatDecision decision = opening.ResultingDecision;
+
+        CombatResolutionResult disengaged = CombatOperations.Execute(
+            opening.State,
+            new CombatDisengageIntent
+            {
+                ExpectedEncounterRevision = decision.EncounterRevision,
+                ActorCombatantId = Assert.IsType<string>(
+                    decision.ActiveCombatantId)
+            });
+
+        Assert.False(
+            Assert.IsType<CombatDisengageOption>(
+                disengaged.ResultingDecision.Disengage).IsAvailable);
     }
 
     [Fact]

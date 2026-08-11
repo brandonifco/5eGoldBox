@@ -11,14 +11,17 @@ internal static class EncounterCombatAttackStaging
         EncounterState encounter,
         string actorCombatantId,
         string targetCombatantId,
-        string weaponId)
+        string weaponId,
+        EncounterWeaponAttackTiming timing =
+            EncounterWeaponAttackTiming.Action)
     {
         CombatAttackAvailability evaluation =
             CombatAttackStaging.EvaluateAvailability(
                 encounter,
                 actorCombatantId,
                 targetCombatantId,
-                weaponId);
+                weaponId,
+                timing);
 
         return new EncounterCombatAttackAvailability(
             evaluation.IsLegal,
@@ -35,14 +38,17 @@ internal static class EncounterCombatAttackStaging
         int cursor,
         string actorCombatantId,
         string targetCombatantId,
-        string weaponId)
+        string weaponId,
+        EncounterWeaponAttackTiming timing =
+            EncounterWeaponAttackTiming.Action)
     {
         EncounterCombatAttackAvailability availability =
             EvaluateAvailability(
                 encounter,
                 actorCombatantId,
                 targetCombatantId,
-                weaponId);
+                weaponId,
+                timing);
 
         if (!availability.IsLegal
             || availability.AttackRollMode is null)
@@ -119,7 +125,8 @@ internal static class EncounterCombatAttackStaging
                 weaponId,
                 first.Value,
                 secondValue,
-                contributionRolls);
+                contributionRolls,
+                timing);
 
         List<int> damageValues = [];
         DamageDice? requiredDamage =
@@ -229,6 +236,7 @@ internal static class EncounterCombatAttackStaging
                     ActorCombatantId = actorCombatantId,
                     TargetCombatantId = targetCombatantId,
                     WeaponId = weaponId,
+                    Timing = timing,
                     FirstAttackRoll = first.Value,
                     SecondAttackRoll = secondValue,
                     ContributionRolls = contributionRolls,
